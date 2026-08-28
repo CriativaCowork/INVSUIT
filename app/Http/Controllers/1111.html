@@ -1,0 +1,537 @@
+
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ladjum/GOV - Menu de Aplicações</title>
+    <style>
+        :root {
+            --orange: #F7941D;
+            --orange-strong: #EA580C;
+            --orange-deep: #C2410C;
+            --coffee: #3B2314;
+            --coffee-soft: #6B4A2F;
+            --cream: #FCF3D9;
+            --border: #EADFCB;
+            --text: #2E1A0F;
+            --text-light: #8A6B54;
+            --success: #16A34A;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background: linear-gradient(180deg, #FDC233 0%, #F7941D 45%, #E96D0C 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+        }
+
+        /* ===== Cabeçalho ===== */
+       
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg,#FBB03B,#EA580C); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(234,88,12,.35); flex-shrink: 0; }
+        .brand-icon svg { width: 22px; height: 22px; fill: #fff; }
+        .brand-text strong { display: block; font-size: 19px; font-weight: 800; color: var(--coffee); line-height: 1.1; }
+        .brand-text strong span { color: var(--orange); }
+        .brand-text small { font-size: 12px; color: var(--coffee-soft); font-weight: 600; }
+        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .user-chip { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#D24BE0,#8B2FD6); color: #fff; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(139,47,214,.35); }
+        .user-meta strong { display: block; font-size: 14px; color: var(--coffee); line-height: 1.1; }
+        .user-meta small { font-size: 12px; color: var(--coffee-soft); font-weight: 600; }
+        .btn-logout { display: flex; align-items: center; gap: 7px; padding: 9px 14px; border: 2px solid var(--coffee); background: transparent; color: var(--coffee); border-radius: 999px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: .2s; }
+        .btn-logout:hover { background: var(--coffee); color: #fff; }
+        .btn-logout svg { width: 15px; height: 15px; fill: currentColor; }
+
+        /* ===== Conteúdo ===== */
+        .menu-wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; flex: 1; }
+        .hello { margin-bottom: 20px; }
+        .hello h2 { font-size: 27px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(59,35,20,.35); margin-bottom: 4px; }
+        .hello p { font-size: 15px; font-weight: 600; color: #FFF6E6; text-shadow: 0 1px 2px rgba(59,35,20,.35); }
+
+        /* ===== Barra de Busca e Filtros ===== */
+        .filters {
+            position: sticky; top: 78px; z-index: 40;
+            background: rgba(252,243,217,.94);
+            backdrop-filter: blur(8px);
+            border-radius: 16px; padding: 14px;
+            box-shadow: 0 6px 16px rgba(59,35,20,.14);
+            display: flex; flex-direction: column; gap: 12px;
+            margin-bottom: 12px;
+        }
+        .search-row { position: relative; }
+        .search-row svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: var(--text-light); }
+        .search-row input { width: 100%; padding: 13px 16px 13px 42px; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-size: 15px; color: var(--text); }
+        .search-row input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 4px rgba(247,148,29,.18); }
+        .filters-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+        .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--coffee); background: transparent; color: var(--coffee); font-weight: 700; font-size: 13px; cursor: pointer; transition: .2s; }
+        .chip.active { background: linear-gradient(135deg,#F7941D,#EA580C); border-color: transparent; color: #fff; box-shadow: 0 4px 10px rgba(234,88,12,.3); }
+        .selects { display: flex; gap: 8px; flex-wrap: wrap; }
+        .selects select { padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: #fff; color: var(--coffee); font-weight: 600; font-size: 13px; cursor: pointer; }
+        .selects select:focus { outline: none; border-color: var(--orange); }
+        .count { font-size: 13px; font-weight: 700; color: #FFF6E6; text-shadow: 0 1px 2px rgba(59,35,20,.4); margin: 2px 2px 16px; }
+
+        /* ===== Grelha de Apps ===== */
+        .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
+        .app-card { background: #fff; border: 2px solid transparent; border-radius: 18px; padding: 22px; box-shadow: 0 8px 20px rgba(59,35,20,.14); display: flex; flex-direction: column; gap: 14px; text-align: left; cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; font: inherit; color: inherit; }
+        .app-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(59,35,20,.2); }
+        .app-card.disponivel:hover { border-color: var(--orange); }
+        .app-card.embreve { cursor: not-allowed; }
+        .app-card.embreve .app-icon { filter: grayscale(.35); opacity: .85; }
+        .app-card:focus-visible { outline: 3px solid rgba(247,148,29,.5); outline-offset: 2px; }
+        .app-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .app-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 6px 12px rgba(0,0,0,.15); flex-shrink: 0; }
+        .badge { font-size: 11.5px; font-weight: 700; padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+        .badge.ok { background: #E8F7EE; color: #16A34A; }
+        .badge.soon { background: #F1EDE7; color: #8A6B54; }
+        .app-info h3 { font-size: 17px; font-weight: 800; color: var(--coffee); margin-bottom: 5px; }
+        .app-info p { font-size: 13px; line-height: 1.5; color: var(--text-light); font-weight: 500; }
+        .app-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .app-meta { display: flex; flex-direction: column; gap: 2px; }
+        .app-meta small { font-size: 12.5px; font-weight: 700; color: var(--coffee-soft); }
+        .app-meta .app-date { font-weight: 600; color: var(--text-light); font-size: 11.5px; }
+        .app-action { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0; }
+        .disponivel .app-action { background: linear-gradient(135deg,#F7941D,#EA580C); color: #fff; box-shadow: 0 4px 10px rgba(234,88,12,.35); }
+        .embreve .app-action { background: #F1EDE7; font-size: 14px; }
+
+        /* ===== Estado vazio ===== */
+        .empty { display: none; flex-direction: column; align-items: center; gap: 10px; padding: 44px 20px; background: #fff; border-radius: 18px; text-align: center; }
+        .empty .emoji { font-size: 42px; }
+        .empty h3 { color: var(--coffee); font-size: 18px; }
+        .empty p { color: var(--text-light); font-size: 14px; max-width: 380px; }
+        .empty button { margin-top: 6px; padding: 10px 18px; border: none; border-radius: 999px; background: linear-gradient(135deg,#F7941D,#EA580C); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(234,88,12,.35); }
+
+        /* ===== Nota de responsabilidade ===== */
+        .nota { margin-top: 30px; background: #FFF8EC; border: 2px solid var(--coffee); border-radius: 16px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; box-shadow: 0 8px 20px rgba(59,35,20,.18); }
+        .nota-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+        .nota strong { display: block; color: var(--coffee); font-size: 15px; margin-bottom: 5px; }
+        .nota p { color: var(--coffee-soft); font-size: 13px; line-height: 1.6; }
+
+        /* ===== Botão voltar ao topo ===== */
+        .btn-top { position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px; border-radius: 50%; border: none; background: var(--coffee); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 18px rgba(0,0,0,.28); opacity: 0; pointer-events: none; transform: translateY(12px); transition: .3s; z-index: 900; }
+        .btn-top.show { opacity: 1; pointer-events: auto; transform: none; }
+        .btn-top:hover { background: var(--orange-strong); }
+        .btn-top svg { width: 20px; height: 20px; fill: #fff; }
+
+        /* ===== Rodapé ===== */
+        .footer { text-align: center; padding: 24px 20px 30px; max-width: 640px; margin: 0 auto; }
+        .footer p { font-size: 12.5px; line-height: 1.65; color: #FFF6E6; text-shadow: 0 1px 2px rgba(59,35,20,.4); }
+        .footer strong { display: block; margin-top: 8px; font-size: 13px; color: #fff; letter-spacing: .6px; text-shadow: 0 1px 2px rgba(59,35,20,.4); }
+
+        /* ===== Toast ===== */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 10px; color: white; font-weight: 600; box-shadow: 0 8px 16px rgba(0,0,0,.2); transform: translateX(150%); transition: transform .4s cubic-bezier(.68,-.55,.265,1.55); z-index: 1000; max-width: 380px; }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background-color: var(--success); }
+        .toast.coffee { background-color: var(--coffee); }
+
+        /* ===== Responsivo ===== */
+        @media (max-width: 768px) {
+            .filters { position: static; }
+        }
+        @media (max-width: 560px) {
+            .user-meta { display: none; }
+            .btn-logout span { display: none; }
+            .btn-logout { padding: 9px 11px; }
+            .hello h2 { font-size: 23px; }
+            .apps-grid { grid-template-columns: 1fr; }
+            .filters-row { flex-direction: column; align-items: stretch; }
+            .toast { top: auto; bottom: 20px; right: 20px; left: 20px; max-width: none; transform: translateY(150%); }
+            .toast.show { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            
+            <div class="topbar-actions">
+               
+                <button class="btn-logout" id="btnLogout" title="Terminar sessão">
+                    <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0 1 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.27 1.08-4.28 2.76-5.56L6.34 5.02A8.94 8.94 0 0 0 3 12a9 9 0 0 0 18 0 8.94 8.94 0 0 0-3.17-6.83z"/></svg>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="menu-wrap">
+        <section class="hello">
+            <h2>Bem-vindo! 👋</h2>
+            <p>Escolha uma aplicação para começar os seus estudos.</p>
+        </section>
+
+        <!-- Barra de busca e filtros -->
+        <div class="filters">
+            <div class="search-row" id="searchRow">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+                <input type="search" id="searchInput" placeholder="Buscar por ministério, instituto, universidade, sigla...">
+            </div>
+            <div class="filters-row">
+                <div class="chips" id="statusChips">
+                    <button class="chip active" data-status="todos">Todos</button>
+                    <button class="chip" data-status="disponivel">Disponíveis</button>
+                    <button class="chip" data-status="embreve">Em breve</button>
+                </div>
+                <div class="selects">
+                    <select id="tipoSelect" title="Filtrar por tipo"></select>
+                    <select id="grupoSelect" title="Filtrar por setor"></select>
+                    <select id="ordemSelect" title="Ordenar">
+                        <option value="recentes">📅 Mais recentes</option>
+                        <option value="antigos">📅 Mais antigos</option>
+                        <option value="nome">🔤 Nome (A–Z)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <p class="count" id="countLabel"></p>
+
+        <section class="apps-grid" id="appsGrid"></section>
+
+        <div class="empty" id="emptyState">
+            <div class="emoji">🔍</div>
+            <h3>Nenhuma aplicação encontrada</h3>
+            <p>Tente ajustar a busca ou limpar os filtros ativos para ver mais resultados.</p>
+            <button id="clearFilters">Limpar filtros</button>
+        </div>
+
+        <!-- Nota de responsabilidade -->
+        <section class="nota">
+            <div class="nota-icon">☕</div>
+            <div>
+                <strong>Nota importante</strong>
+                <p>Os exames preparados pelo staff do Ladjum/GOV não são oficiais destas instituições. São baseados nos tópicos oficiais divulgados pelas próprias entidades, em inquéritos a estudantes antigos e recentes (não admitidos ou aprovados para o serviço público) e em pesquisa aberta, atendendo à natureza e aos diplomas legais de cada instituição.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Este software é desenvolvido e mantido pela Criativa Cowork SU e não é um produto/serviço público do governo de Angola, é uma iniciativa privada.</p>
+        <strong>Ladjum/GOV Copyright 2026</strong>
+    </footer>
+
+    <button class="btn-top" id="btnTop" title="Voltar ao topo">
+        <svg viewBox="0 0 24 24"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
+    </button>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // =====================================================
+        // CONFIGURAÇÃO GERAL
+        // =====================================================
+        const LOGIN_URL = "0000.html"; // ⚠️ Ajuste para o nome real do arquivo de login
+        const EXIGIR_SESSAO = false;
+
+        // Ative/desative cada filtro aqui (personalização no código)
+        const CONFIG_FILTROS = {
+            busca: true,
+            status: true,
+            tipo: true,
+            grupo: true,
+            ordenar: true
+        };
+
+        // Tipos de instituição (personalizável: adicione/remova aqui)
+        const TIPOS = {
+            ministerio: "Ministérios",
+            instituto: "Institutos",
+            universidade: "Universidades",
+            faculdade: "Faculdades",
+            academia: "Academias",
+            orgao: "Órgãos da Presidência",
+            tematico: "Temáticos Gerais"
+        };
+
+        // Grupos setoriais (personalizável: adicione/remova aqui)
+        const GRUPOS = {
+            defesa: "Defesa, Segurança e Ordem Pública",
+            governanca: "Relações Exteriores e Governança",
+            economia: "Economia, Finanças e Produção",
+            infraestruturas: "Energia, Recursos e Infraestruturas",
+            social: "Educação, Saúde e Desenvolvimento Social",
+            presidencia: "Órgãos Auxiliares da Presidência",
+            ensino: "Universidades, Academias e Institutos",
+            tematico: "Temáticos Gerais"
+        };
+
+        // Paleta de gradientes dos ícones
+        const G = {
+            laranja: "linear-gradient(135deg,#FBB03B,#EA580C)",
+            vermelho: "linear-gradient(135deg,#F87171,#DC2626)",
+            verde: "linear-gradient(135deg,#34D399,#059669)",
+            azul: "linear-gradient(135deg,#60A5FA,#2563EB)",
+            roxo: "linear-gradient(135deg,#A78BFA,#7C3AED)",
+            teal: "linear-gradient(135deg,#2DD4BF,#0D9488)",
+            rosa: "linear-gradient(135deg,#F472B6,#DB2777)",
+            cafe: "linear-gradient(135deg,#A16207,#713F12)",
+            cinza: "linear-gradient(135deg,#94A3B8,#475569)",
+            indigo: "linear-gradient(135deg,#818CF8,#4338CA)"
+        };
+
+        // =====================================================
+        // CATÁLOGO DE APPS
+        // =====================================================
+        // Helper para apps "Em breve" (mantém o código curto)
+        const breve = (titulo, nome, tipo, grupo, icone, grad, tags = []) => ({
+            titulo, nome, tipo, grupo, icone, tags,
+            desc: "Módulo de preparação em desenvolvimento. Aguarde novidades.",
+            grad: G[grad], status: "embreve", data: "2026-08-08", url: "", meta: ""
+        });
+
+        const APPS = [
+            // ---------- APPS ATIVOS ----------
+            {
+                titulo: "Prep MININT", nome: "Ministério do Interior",
+                desc: "Ingresso por todo o país: SME, SIC, Fronteira, Bombeiros, Ordem Pública e Penitenciária.",
+                meta: "105 Questões • 4 Modos", tipo: "ministerio", grupo: "defesa",
+                icone: "🛡️", grad: G.laranja, status: "disponivel", data: "2026-07-13",
+                url: "ladjumgov_minint1(v4).html", // ⚠️ Ajuste para o URL real
+                tags: ["SME", "SIC", "fronteira", "bombeiros", "ordem pública", "penitenciária", "polícia", "segurança"]
+            },
+            {
+                titulo: "Prep MINSA", nome: "Ministério da Saúde",
+                desc: "Ingresso na saúde um pouco por todo o país.",
+                meta: "Exame nacional", tipo: "ministerio", grupo: "social",
+                icone: "🏥", grad: G.verde, status: "disponivel", data: "2026-08-01",
+                url: "ladjumgov_minsa1.html", // ⚠️ Ajuste para o URL real
+                tags: ["saúde", "hospitais", "enfermagem", "médicos"]
+            },
+            {
+                titulo: "História de Angola", nome: "História de Angola",
+                desc: "Dos reinos e resistências à República: domine os marcos históricos nacionais.",
+                meta: "Temático geral", tipo: "tematico", grupo: "tematico",
+                icone: "📜", grad: G.cafe, status: "disponivel", data: "2026-08-03",
+                url: "ladjumgov_historia1.html", // ⚠️ Ajuste para o URL real
+                tags: ["história", "cultura", "república", "angola"]
+            },
+            {
+                titulo: "Organização Política e Administrativa de Angola", nome: "Organização Política e Administrativa de Angola",
+                desc: "Constituição, órgãos de soberania, administração local e estrutura do Estado.",
+                meta: "Temático geral", tipo: "tematico", grupo: "tematico",
+                icone: "🏛️", grad: G.azul, status: "disponivel", data: "2026-08-05",
+                url: "ladjumgov_opa1.html", // ⚠️ Ajuste para o URL real
+                tags: ["constituição", "estado", "política", "órgãos de soberania"]
+            },
+            {
+                titulo: "Noções Gerais de Administração Pública", nome: "Noções Gerais de Administração Pública",
+                desc: "Princípios, deveres, carreira e ética no serviço público angolano.",
+                meta: "Temático geral", tipo: "tematico", grupo: "tematico",
+                icone: "📋", grad: G.teal, status: "disponivel", data: "2026-08-05",
+                url: "ladjumgov_ap1.html", // ⚠️ Ajuste para o URL real
+                tags: ["administração pública", "ética", "função pública", "carreira"]
+            },
+
+            // ---------- EM BREVE: Defesa, Segurança e Ordem Pública ----------
+            breve("MINDENVP", "Ministério da Defesa Nacional e Veteranos da Pátria", "ministerio", "defesa", "🎖️", "vermelho", ["defesa", "veteranos", "militar"]),
+
+            // ---------- EM BREVE: Relações Exteriores e Governança ----------
+            breve("MIREX", "Ministério das Relações Exteriores", "ministerio", "governanca", "🌐", "indigo", ["diplomacia", "embaixadas"]),
+            breve("MAT", "Ministério da Administração do Território", "ministerio", "governanca", "🗺️", "azul", ["território"]),
+            breve("MINJUSDH", "Ministério da Justiça e dos Direitos Humanos", "ministerio", "governanca", "⚖️", "roxo", ["justiça", "direitos humanos"]),
+            breve("MAPTSS", "Ministério da Administração Pública, Trabalho e Segurança Social", "ministerio", "governanca", "🧑‍💼", "teal", ["trabalho", "segurança social"]),
+
+            // ---------- EM BREVE: Economia, Finanças e Produção ----------
+            breve("MINFIN", "Ministério das Finanças", "ministerio", "economia", "💰", "verde", ["finanças", "impostos", "orçamento"]),
+            breve("MINPLAN", "Ministério do Planeamento", "ministerio", "economia", "📊", "azul", ["planeamento"]),
+            breve("MINCOM", "Ministério da Indústria e Comércio", "ministerio", "economia", "🏭", "cinza", ["indústria", "comércio"]),
+            breve("MINAGRI", "Ministério da Agricultura e Florestas", "ministerio", "economia", "🌾", "verde", ["agricultura", "florestas"]),
+            breve("MINPERMAR", "Ministério das Pescas e Recursos Marinhos", "ministerio", "economia", "🎣", "teal", ["pescas", "mar"]),
+            breve("MINTUR", "Ministério do Turismo", "ministerio", "economia", "🧳", "rosa", ["turismo", "hotelaria"]),
+
+            // ---------- EM BREVE: Energia, Recursos e Infraestruturas ----------
+            breve("MIREMPET", "Ministério dos Recursos Minerais, Petróleo e Gás", "ministerio", "infraestruturas", "⛏️", "cafe", ["petróleo", "gás", "diamantes"]),
+            breve("MINEA", "Ministério da Energia e Águas", "ministerio", "infraestruturas", "⚡", "azul", ["energia", "águas", "barragens"]),
+            breve("MINOPUH", "Ministério das Obras Públicas, Urbanismo e Habitação", "ministerio", "infraestruturas", "🏗️", "laranja", ["obras públicas", "habitação"]),
+            breve("MINTRANS", "Ministério dos Transportes", "ministerio", "infraestruturas", "🚆", "indigo", ["transportes", "aviação"]),
+            breve("MINTTICS", "Ministério das Telecomunicações, TIC e Comunicação Social", "ministerio", "infraestruturas", "📡", "roxo", ["telecomunicações", "internet", "media"]),
+
+            // ---------- EM BREVE: Educação, Saúde e Desenvolvimento Social ----------
+            breve("MED", "Ministério da Educação", "ministerio", "social", "📚", "azul", ["educação", "escolas", "professores"]),
+            breve("MESCTI", "Ministério do Ensino Superior, Ciência, Tecnologia e Inovação", "ministerio", "social", "🎓", "indigo", ["ensino superior", "ciência"]),
+            breve("MASFAMU", "Ministério da Acção Social, Família e Promoção da Mulher", "ministerio", "social", "👪", "rosa", ["acção social", "família"]),
+            breve("MINJUD", "Ministério da Juventude e Desportos", "ministerio", "social", "🏅", "verde", ["juventude", "desportos"]),
+            breve("MINCULT", "Ministério da Cultura", "ministerio", "social", "🎭", "roxo", ["cultura", "artes"]),
+            breve("MINAMB", "Ministério do Ambiente", "ministerio", "social", "🌿", "verde", ["ambiente", "clima"]),
+
+            // ---------- EM BREVE: Órgãos Auxiliares da Presidência ----------
+            breve("Coordenação Económica", "Gabinete do Ministro de Estado para a Coordenação Económica", "orgao", "presidencia", "💼", "cafe", ["economia"]),
+            breve("Casa Civil", "Casa Civil do Presidente da República", "orgao", "presidencia", "🏛️", "cinza", ["presidência"]),
+            breve("Área Social", "Gabinete da Ministra de Estado para a Área Social", "orgao", "presidencia", "🤝", "rosa", ["social"]),
+            breve("Casa Militar", "Casa Militar do Presidente da República", "orgao", "presidencia", "🎖️", "vermelho", ["militar"]),
+            breve("Gabinete-Geral", "Gabinete-Geral da Presidência da República", "orgao", "presidencia", "🗂️", "azul", ["presidência"]),
+            breve("Secretaria-Geral", "Secretaria-Geral da Presidência da República", "orgao", "presidencia", "📑", "teal", ["presidência"]),
+
+            // ---------- EM BREVE: Universidades, Academias e Institutos ----------
+            breve("UAN", "Universidade Agostinho Neto", "universidade", "ensino", "🎓", "roxo", ["universidade", "uan"]),
+            breve("ISTM", "Instituto Superior Técnico Militar", "instituto", "ensino", "🛠️", "cinza", ["técnico", "militar"]),
+            breve("AMEX", "Academia Militar do Exército", "academia", "ensino", "⚔️", "vermelho", ["exército", "lobito"]),
+            breve("FAN", "Academia da Força Aérea Nacional", "academia", "ensino", "✈️", "azul", ["força aérea", "catumbela"]),
+            breve("NAVAL", "Academia Naval Angolana", "academia", "ensino", "⚓", "teal", ["marinha", "naval"]),
+            breve("ESG", "Escola Superior de Guerra", "academia", "ensino", "🪖", "cafe", ["guerra", "estratégia"]),
+            breve("ISCPC", "Instituto Superior de Ciências Policiais e Criminais", "instituto", "ensino", "🚔", "azul", ["polícia", "criminais", "osvaldo serra van-dúnem"])
+        ];
+
+        // =====================================================
+        // SESSÃO
+        // =====================================================
+        let sessao = null;
+        try { sessao = JSON.parse(sessionStorage.getItem('lg_session')); } catch (e) { }
+
+        if (sessao && sessao.nome) {
+            document.getElementById('userName').textContent = sessao.nome;
+            document.getElementById('avatar').textContent = sessao.nome.trim().charAt(0).toUpperCase();
+        } else if (EXIGIR_SESSAO) {
+            showToast("Sessão não encontrada. Por favor, inicie sessão novamente.", "coffee");
+            setTimeout(() => { window.location.href = LOGIN_URL; }, 1500);
+        }
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            sessionStorage.removeItem('lg_session');
+            window.location.href = LOGIN_URL;
+        });
+
+        // =====================================================
+        // FILTROS + BUSCA + ORDENAÇÃO
+        // =====================================================
+        const estado = { termo: "", status: "todos", tipo: "todos", grupo: "todos", ordem: "recentes" };
+
+        const grid = document.getElementById('appsGrid');
+        const countLabel = document.getElementById('countLabel');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const tipoSelect = document.getElementById('tipoSelect');
+        const grupoSelect = document.getElementById('grupoSelect');
+        const ordemSelect = document.getElementById('ordemSelect');
+
+        // Personalização no código: esconde os filtros desativados
+        if (!CONFIG_FILTROS.busca) document.getElementById('searchRow').style.display = 'none';
+        if (!CONFIG_FILTROS.status) document.getElementById('statusChips').style.display = 'none';
+        if (!CONFIG_FILTROS.tipo) tipoSelect.style.display = 'none';
+        if (!CONFIG_FILTROS.grupo) grupoSelect.style.display = 'none';
+        if (!CONFIG_FILTROS.ordenar) ordemSelect.style.display = 'none';
+
+        // Preenche os selects a partir das constantes TIPOS e GRUPOS
+        tipoSelect.innerHTML = `<option value="todos">🏷️ Todos os tipos</option>` +
+            Object.entries(TIPOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+        grupoSelect.innerHTML = `<option value="todos"> Todos os setores</option>` +
+            Object.entries(GRUPOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+
+        // Remove acentos para a busca ("historia" encontra "História")
+        const normalizar = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        function formatarData(iso) {
+            const [a, m, d] = iso.split("-");
+            return `${d}/${m}/${a}`;
+        }
+
+        function render() {
+            let lista = APPS.filter(app => {
+                if (estado.status !== "todos" && app.status !== estado.status) return false;
+                if (estado.tipo !== "todos" && app.tipo !== estado.tipo) return false;
+                if (estado.grupo !== "todos" && app.grupo !== estado.grupo) return false;
+                if (estado.termo) {
+                    const alvo = normalizar([app.titulo, app.nome, app.desc, (app.tags || []).join(" ")].join(" "));
+                    if (!alvo.includes(estado.termo)) return false;
+                }
+                return true;
+            });
+
+            // Ordenação por data de publicação ou nome
+            if (estado.ordem === "recentes") lista.sort((a, b) => b.data.localeCompare(a.data));
+            if (estado.ordem === "antigos") lista.sort((a, b) => a.data.localeCompare(b.data));
+            if (estado.ordem === "nome") lista.sort((a, b) => a.titulo.localeCompare(b.titulo, "pt"));
+
+            grid.innerHTML = "";
+            lista.forEach(app => {
+                const card = document.createElement('button');
+                card.type = "button";
+                card.className = `app-card ${app.status}`;
+                card.innerHTML = `
+                    <div class="app-top">
+                        <div class="app-icon" style="background:${app.grad}">${app.icone}</div>
+                        <span class="badge ${app.status === 'disponivel' ? 'ok' : 'soon'}">
+                            ${app.status === 'disponivel' ? 'Disponível' : 'Em breve'}
+                        </span>
+                    </div>
+                    <div class="app-info">
+                        <h3>${app.titulo}</h3>
+                        <p>${app.desc}</p>
+                    </div>
+                    <div class="app-foot">
+                        <div class="app-meta">
+                            ${app.meta ? `<small>${app.meta}</small>` : ""}
+                            <small class="app-date">📅 Publicado em ${formatarData(app.data)}</small>
+                        </div>
+                        <span class="app-action">${app.status === 'disponivel' ? '→' : '🔒'}</span>
+                    </div>`;
+                card.addEventListener('click', () => openApp(app));
+                grid.appendChild(card);
+            });
+
+            countLabel.textContent = `${lista.length} ${lista.length === 1 ? 'aplicação encontrada' : 'aplicações encontradas'} de ${APPS.length} no catálogo`;
+            emptyState.style.display = lista.length ? "none" : "flex";
+        }
+
+        // Eventos dos filtros
+        searchInput.addEventListener('input', e => { estado.termo = normalizar(e.target.value.trim()); render(); });
+
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                estado.status = chip.dataset.status;
+                render();
+            });
+        });
+
+        tipoSelect.addEventListener('change', e => { estado.tipo = e.target.value; render(); });
+        grupoSelect.addEventListener('change', e => { estado.grupo = e.target.value; render(); });
+        ordemSelect.addEventListener('change', e => { estado.ordem = e.target.value; render(); });
+
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            estado.termo = ""; estado.status = "todos"; estado.tipo = "todos"; estado.grupo = "todos"; estado.ordem = "recentes";
+            searchInput.value = "";
+            tipoSelect.value = "todos"; grupoSelect.value = "todos"; ordemSelect.value = "recentes";
+            document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.status === "todos"));
+            render();
+        });
+
+        function openApp(app) {
+            if (app.status !== 'disponivel') {
+                showToast(`🔒 ${app.titulo} estará disponível em breve.`, "coffee");
+                return;
+            }
+            showToast(`A abrir ${app.titulo}...`, "success");
+            setTimeout(() => { window.location.href = app.url; }, 900);
+        }
+
+        // =====================================================
+        // BOTÃO VOLTAR AO TOPO
+        // =====================================================
+        const btnTop = document.getElementById('btnTop');
+        window.addEventListener('scroll', () => {
+            btnTop.classList.toggle('show', window.scrollY > 300);
+        });
+        btnTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // =====================================================
+        // TOAST
+        // =====================================================
+        const toast = document.getElementById('toast');
+        function showToast(message, type) {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => { toast.classList.remove('show'); }, 4000);
+        }
+
+        // Renderização inicial
+        render();
+    </script>
+</body>
+</html>
