@@ -1,0 +1,2469 @@
+
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS CalcFin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body { box-sizing: border-box; }
+    * { font-family: 'Inter', sans-serif; }
+    
+    .tab-btn { transition: all 0.2s ease; }
+    .tab-btn:hover { background: #E0F4FD; }
+    .tab-btn.active { background: #66CFF5; color: white; }
+    
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    
+    .btn-primary { 
+      background: #33BEF2; 
+      color: white; 
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover { background: #CCEEFB; }
+    
+    .btn-secondary { 
+      background: #F8F9FA; 
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: #E0E0E0; }
+    
+    .btn-success { background: #4CAF50; color: white; }
+    .btn-success:hover { background: #388E3C; }
+    
+    .btn-warning { background: #FF9800; color: white; }
+    .btn-warning:hover { background: #F57C00; }
+    
+    .btn-danger { background: #F44336; color: white; }
+    .btn-danger:hover { background: #D32F2F; }
+    
+    .currency-btn { 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      border: 2px solid #E0E0E0;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    .currency-btn.active { 
+      border-color: #66CFF5; 
+      background: #E0F4FD; 
+      color: #66CFF5;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .tape-line {
+      border-bottom: 1px dashed #E0E0E0;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      padding-bottom: 28px;
+    }
+    
+    .tape-line:hover { background: #F8F9FA; }
+    .tape-line.highlighted { background: #E0F4FD; border-left: 4px solid #66CFF5; }
+    .tape-line.edit-mode { background: #FFF8E1; border-left: 4px solid #FFC107; }
+    .tape-line.subtotal { color: #FF9800; font-style: italic; font-weight: 600; }
+    
+    .insert-subtotal-line {
+      position: absolute;
+      bottom: -15px;
+      left: 0;
+      right: 0;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      z-index: 10;
+    }
+    
+    .tape-line:hover .insert-subtotal-line {
+      opacity: 1;
+    }
+    
+    .insert-subtotal-btn {
+      background: #E8D5FF;
+      border: 2px dashed #B39DDB;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #7B1FA2;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    
+    .insert-subtotal-btn:hover {
+      background: #D1C4E9;
+      border-color: #9575CD;
+    }
+    
+    .insert-calc-btn {
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .insert-calc-btn.before {
+      background: #FF9800;
+    }
+    
+    .insert-calc-btn.before:hover {
+      background: #F57C00;
+      transform: scale(1.15);
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4);
+    }
+    
+    .insert-calc-btn.after {
+      background: #2196F3;
+    }
+    
+    .insert-calc-btn.after:hover {
+      background: #1976D2;
+      transform: scale(1.15);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+    
+    .input-field {
+      border: 1px solid #E0E0E0;
+      border-radius: 8px;
+      padding: 12px;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    
+    .scenario-card {
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .scenario-card:hover { border-color: #66CFF5; }
+    .scenario-card.selected { border-color: #66CFF5; background: #E0F4FD; }
+    
+    .edu-tip {
+      background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+      border-left: 4px solid #FFC107;
+    }
+    
+    .chart-container { 
+      position: relative; 
+      height: 250px;
+      max-height: 250px;
+    }
+    
+    .chart-canvas {
+      cursor: pointer;
+    }
+    
+    .edit-mode-banner {
+      background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+      border-left: 4px solid #FFC107;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-between;
+      items-center;
+      gap: 12px;
+    }
+    
+    .keypad-hidden #keypad-container {
+      display: none;
+    }
+    
+    .keypad-hidden #inline-comment-box {
+      display: block;
+    }
+    
+    #inline-comment-box {
+      display: none;
+    }
+    
+    .new-calc-mode-banner {
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      border-left: 4px solid #4CAF50;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-between;
+      items-center;
+      gap: 12px;
+    }
+    
+    .tape-expanded {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      border: none;
+    }
+    
+    .tape-expanded-header {
+      padding: 16px;
+      border-bottom: 1px solid #CCEEFB;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    
+    .tape-expanded-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .tape-expanded-footer {
+      padding: 16px;
+      border-top: 2px solid #E0E0E0;
+      background: #E0F4FD;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    
+    .tape-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .tape-table th {
+      background: #66CFF5;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    
+    .tape-table td {
+      border-bottom: 1px solid #E0E0E0;
+      padding: 12px;
+    }
+    
+    .tape-table tr:hover {
+      background: #E0F4FD;
+    }
+    
+    .tape-table tr.subtotal-row {
+      background: #FFF8E1;
+      font-weight: bold;
+    }
+    
+    .scenario-edit-input {
+      background: white;
+      border: 1px solid #66CFF5;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    @media print {
+      .no-print { display: none !important; }
+      .chart-container { height: 200px !important; }
+      body { padding: 0; }
+      .insert-subtotal-line { display: none !important; }
+    }
+  </style>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 sticky top-0 z-50 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+     <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+       <!--<svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg>-->
+       <!--<h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS CalcFin</h1>-->
+      </div>
+      <div class="flex items-center gap-2"><button onclick="openCurrencyModal()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2"> <span id="current-currency-display">AOA</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button> <button onclick="openSettingsModal()" class="btn-secondary p-2 rounded-lg">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg></button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 sticky top-16 z-40 no-print overflow-x-auto">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex gap-1 py-2 min-w-max"><button onclick="switchTab('calculator')" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 text-gray-600 active" data-tab="calculator">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg><span class="text-sm font-medium">Calculadora</span> </button> <button onclick="switchTab('scenarios')" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 text-gray-600" data-tab="scenarios">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+       </svg><span class="text-sm font-medium">Cenários</span> </button> <button onclick="switchTab('examples')" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 text-gray-600" data-tab="examples">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+       </svg><span class="text-sm font-medium">Exemplos Práticos</span> </button> <button onclick="switchTab('education')" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 text-gray-600" data-tab="education">
+       <!--<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg><span class="text-sm font-medium">Educação</span> </button> <button onclick="switchTab('about')" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 text-gray-600" data-tab="about">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg><span class="text-sm font-medium">Sobre</span> </button>-->
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Calculator Tab -->
+    <section id="tab-calculator" class="tab-content"><!-- New Calc Mode Banner -->
+     <div id="new-calc-mode-banner" class="new-calc-mode-banner hidden" role="status" aria-live="polite">
+      <div class="flex items-center gap-2 flex-1">
+       <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0h6" />
+       </svg>
+       <div>
+        <p class="font-semibold text-gray-800">Novo Cálculo</p>
+        <p class="text-sm text-gray-600">Inserindo <span id="insert-position-text"></span></p>
+       </div>
+      </div>
+      <div class="flex gap-2"><button onclick="cancelNewCalcMode()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg> Cancelar </button>
+      </div>
+     </div><!-- Edit Mode Banner -->
+     <div id="edit-mode-banner" class="edit-mode-banner hidden" role="status" aria-live="polite">
+      <div class="flex items-center gap-2 flex-1">
+       <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+       </svg>
+       <div>
+        <p class="font-semibold text-gray-800">Modo de Edição Ativo</p>
+        <p class="text-sm text-gray-600">Editando cálculo #<span id="edit-index"></span></p>
+       </div>
+      </div>
+      <div class="flex gap-2"><button onclick="saveEditedEntry()" class="btn-success px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg> Guardar Alterações </button> <button onclick="cancelEditMode()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg> Cancelar </button>
+      </div>
+     </div>
+     <div class="grid lg:grid-cols-2 gap-6"><!-- Calculator Input -->
+      <div class="card p-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Calculadora de Fita</h2>
+       <div class="space-y-4">
+        <div><label class="block text-sm font-medium text-gray-600 mb-2">Introduza valores e operações</label> <input type="text" id="calc-input" class="input-field text-lg" placeholder="Ex: 1500 + 2300 * 1.14 ou 4% ou -4%" onkeypress="handleCalcKeypress(event)">
+        </div><button id="toggle-keypad-btn" onclick="toggleKeypad()" class="btn-secondary w-full p-2 rounded-lg text-sm flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+         </svg> Ocultar Teclado </button>
+        <div id="keypad-container" class="space-y-2">
+         <div class="grid grid-cols-4 gap-2"><button onclick="appendToCalc('7')" class="btn-secondary p-3 rounded-lg text-lg font-medium">7</button> <button onclick="appendToCalc('8')" class="btn-secondary p-3 rounded-lg text-lg font-medium">8</button> <button onclick="appendToCalc('9')" class="btn-secondary p-3 rounded-lg text-lg font-medium">9</button> <button onclick="appendToCalc('/')" class="btn-primary p-3 rounded-lg text-lg font-medium">÷</button> <button onclick="appendToCalc('4')" class="btn-secondary p-3 rounded-lg text-lg font-medium">4</button> <button onclick="appendToCalc('5')" class="btn-secondary p-3 rounded-lg text-lg font-medium">5</button> <button onclick="appendToCalc('6')" class="btn-secondary p-3 rounded-lg text-lg font-medium">6</button> <button onclick="appendToCalc('*')" class="btn-primary p-3 rounded-lg text-lg font-medium">×</button> <button onclick="appendToCalc('1')" class="btn-secondary p-3 rounded-lg text-lg font-medium">1</button> <button onclick="appendToCalc('2')" class="btn-secondary p-3 rounded-lg text-lg font-medium">2</button> <button onclick="appendToCalc('3')" class="btn-secondary p-3 rounded-lg text-lg font-medium">3</button> <button onclick="appendToCalc('-')" class="btn-primary p-3 rounded-lg text-lg font-medium">−</button> <button onclick="appendToCalc('0')" class="btn-secondary p-3 rounded-lg text-lg font-medium">0</button> <button onclick="appendToCalc('.')" class="btn-secondary p-3 rounded-lg text-lg font-medium">,</button> <button onclick="calculateResult()" class="btn-success p-3 rounded-lg text-lg font-medium">=</button> <button onclick="appendToCalc('+')" class="btn-primary p-3 rounded-lg text-lg font-medium">+</button>
+         </div>
+         <div class="flex gap-2"><button onclick="appendToCalc('%')" class="btn-secondary flex-1 p-3 rounded-lg font-medium">%</button> <button onclick="appendToCalc('(')" class="btn-secondary flex-1 p-3 rounded-lg font-medium">(</button> <button onclick="appendToCalc(')')" class="btn-secondary flex-1 p-3 rounded-lg font-medium">)</button> <button onclick="clearCalc()" class="btn-danger flex-1 p-3 rounded-lg font-medium">C</button> <button onclick="backspace()" class="btn-warning flex-1 p-3 rounded-lg font-medium">⌫</button>
+         </div>
+        </div><!-- Inline Comment Box (shown when keypad is hidden) -->
+        <div id="inline-comment-box" class="border-t pt-4"><label class="block text-sm font-medium text-gray-600 mb-2">Comentário (opcional)</label> <textarea id="inline-comment-input" class="input-field resize-none h-20" placeholder="Descreva este cálculo..." onkeypress="handleCommentKeypress(event)"></textarea>
+        </div>
+        <div class="flex gap-2 pt-2"><button onclick="editSelectedComment()" class="btn-secondary flex-1 p-3 rounded-lg text-sm flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          </svg> Comentário </button> <button onclick="addSubtotal()" class="btn-secondary flex-1 p-3 rounded-lg text-sm flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg> Subtotal </button>
+        </div>
+       </div>
+      </div><!-- Tape Display -->
+      <div class="card p-6">
+       <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg> Fita de Cálculo</h2>
+        <div class="flex gap-2"><input type="text" id="tape-search" class="input-field" placeholder="🔍 Pesquisar..." style="width: 150px; padding: 6px 12px; font-size: 13px;" onkeyup="filterTape()"> <button onclick="expandTapeFullscreen()" class="btn-secondary p-2 rounded-lg" title="Expandir tela cheia">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 20v-4m0 4h4m-4 0l5-5m11 1v4m0-4h-4m4 0l-5-5" />
+          </svg></button> <button onclick="exportTapePDF()" class="btn-secondary p-2 rounded-lg" title="Exportar PDF">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg></button> <button onclick="exportTapeJSON()" class="btn-secondary p-2 rounded-lg" title="Salvar Cenário">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg></button> <button onclick="importTapeJSON()" class="btn-secondary p-2 rounded-lg" title="Abrir Cenário">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg></button> <button onclick="clearTape()" class="btn-danger p-2 rounded-lg" title="Limpar fita">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg></button>
+        </div>
+       </div>
+       <div id="tape-display" class="bg-gray-50 rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
+        <div class="text-gray-400 text-center py-8">
+         <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg>
+         <p>A fita está vazia</p>
+         <p class="text-xs mt-1">Comece a calcular para ver os resultados aqui</p>
+        </div>
+       </div>
+       <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+        <div class="flex items-center justify-between"><span class="text-sm font-medium text-gray-600">Total Acumulado:</span> <span id="running-total" class="text-2xl font-bold text-blue-600">0,00 AOA</span>
+        </div>
+       </div>
+       <div class="flex gap-2 mt-4"><button onclick="saveCurrentAsScenario()" class="btn-primary flex-1 p-3 rounded-lg flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário </button>
+       </div>
+      </div>
+     </div><!-- Real-time Chart with Comment Labels -->
+     <div class="card p-6 mt-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+       </svg> Gráfico em Tempo Real</h2>
+      <p class="text-xs text-gray-500 mb-4">Clique nas barras para editar o cálculo correspondente</p>
+      <div class="chart-container">
+       <canvas id="calc-chart" class="chart-canvas"></canvas>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">💡 Dica: Clique numa barra para navegar e editar o cálculo correspondente</p>
+     </div>
+    </section><!-- Scenarios Tab -->
+    <section id="tab-scenarios" class="tab-content hidden">
+     <div class="card p-6 mb-6">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg> Cenários Guardados</h2>
+       <div class="flex gap-2"><input type="text" id="scenarios-search" class="input-field" placeholder="🔍 Pesquisar cenários..." style="width: 200px; padding: 6px 12px; font-size: 13px;" onkeyup="filterScenarios()"> <button onclick="exportAllData()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+         </svg> Salvar Projeto </button> <button onclick="triggerImport()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+         </svg> Abrir Projeto </button> <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+       </div>
+      </div>
+      <div id="scenarios-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+       <div class="text-center py-12 text-gray-400 col-span-full">
+        <svg class="w-16 h-16 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <p class="font-medium">Nenhum cenário guardado</p>
+        <p class="text-sm mt-1">Guarde os seus cálculos na aba Calculadora</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- Examples Tab -->
+    <section id="tab-examples" class="tab-content hidden">
+     <div class="card p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+       </svg> Exemplos Práticos de Uso</h2>
+      <p class="text-gray-600 mb-6">Carregue um exemplo para ver como pode usar a calculadora no seu dia a dia.</p>
+      <div class="grid md:grid-cols-2 gap-4" id="examples-grid"><!-- Examples will be rendered here -->
+      </div>
+     </div><!-- Active Example Area -->
+     <div id="example-area" class="hidden">
+      <div class="card p-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 id="ex-title" class="text-lg font-semibold text-gray-800"></h3><button onclick="closeExample()" class="btn-secondary p-2 rounded-lg">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg></button>
+       </div>
+       <p id="ex-description" class="text-gray-600 mb-6"></p>
+       <div id="ex-content" class="space-y-4"></div><button onclick="loadExampleToCalculator()" class="btn-primary w-full mt-6 p-3 rounded-lg font-medium"> Carregar na Calculadora </button>
+      </div>
+     </div>
+    </section><!-- Education Tab -->
+    <section id="tab-education" class="tab-content hidden">
+     <div class="space-y-6"><!-- How to Use -->
+      <div class="card p-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg> Como Usar</h2>
+       <div class="space-y-4" id="howto-container"><!-- How to sections will be rendered here -->
+       </div>
+      </div><!-- Key Concepts -->
+      <div class="card p-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg> Conceitos da Calculadora</h2>
+       <div class="grid md:grid-cols-2 gap-4" id="concepts-container"><!-- Concepts will be rendered -->
+       </div>
+      </div><!-- Formulas -->
+      <div class="card p-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Operações Básicas</h2>
+       <div class="space-y-4" id="formulas-container"><!-- Formulas will be rendered -->
+       </div>
+      </div><!-- Tips -->
+      <div class="card p-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> 💡 Dicas de Uso</h2>
+       <div class="space-y-4" id="tips-container"><!-- Tips will be rendered dynamically -->
+       </div>
+      </div>
+     </div>
+    </section><!-- About Tab -->
+    <section id="tab-about" class="tab-content hidden">
+     <div class="card p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Sobre o IS CalcFin</h2>
+      <div class="prose max-w-none text-gray-600">
+       <p class="mb-4">O <strong>IS CalcFin</strong> é uma calculadora visual de fita desenvolvida especificamente para o empreendedor. Inspirada no conceito da CalcTape, esta ferramenta oferece uma experiência de cálculo intuitiva com histórico visual completo.</p>
+       <h3 class="text-md font-semibold text-gray-800 mt-6 mb-3">🎯 Funcionalidades Principais</h3>
+       <ul class="list-disc pl-6 space-y-2">
+        <li><strong>Calculadora de Fita:</strong> Visualize todos os cálculos como uma fita de máquina registadora</li>
+        <li><strong>Percentagens Simples Corretas:</strong> Digite apenas "4%" ou "-4%" para calcular percentagens sobre o TOTAL ACUMULADO!</li>
+        <li><strong>Percentagens com Operações:</strong> Use "2000+20%" para cálculos completos com valor mostrado em parênteses</li>
+        <li><strong>Edição Completa:</strong> Clique em qualquer cálculo para editá-lo e os subtotais recalculam automaticamente</li>
+        <li><strong>Inserir Cálculos em Qualquer Lugar:</strong> Setas laranja (↑) e azul (↓) em cada linha para inserir antes ou depois!</li>
+        <li><strong>Comentários:</strong> Adicione descrições a cada cálculo para melhor localização e documentação</li>
+        <li><strong>Subtotais em Qualquer Lugar:</strong> Insira subtotais em posições específicas da fita - não apenas no final!</li>
+        <li><strong>Gráficos Interativos:</strong> Clique nas barras para navegar e editar cálculos</li>
+        <li><strong>Múltiplas Moedas:</strong> Suporte para AOA, BRL, EUR, MZN, STN, CVE e USD</li>
+        <li><strong>Cenários:</strong> Guarde, edite nomes e reutilize conjuntos de cálculos</li>
+        <li><strong>Pesquisa:</strong> Filtre cálculos e cenários por palavras-chave</li>
+        <li><strong>Modo Expandido:</strong> Visualize a fita em modo tabela com filtros, como Excel</li>
+        <li><strong>Exemplos Práticos:</strong> Aprenda com casos reais de uso</li>
+        <li><strong>Exportação:</strong> PDF e JSON para fita de cálculo e cenários</li>
+       </ul>
+       <h3 class="text-md font-semibold text-gray-800 mt-6 mb-3">✨ Novidades Versão 2.8</h3>
+       <ul class="list-disc pl-6 space-y-2">
+        <li>✅ <strong>BUG CRÍTICO CORRIGIDO:</strong> Percentagens simples (4%) agora usam o TOTAL ACUMULADO correto!</li>
+        <li>✅ <strong>Percentagens negativas funcionam:</strong> Digite "-4%" para subtrair uma percentagem do total!</li>
+        <li>✅ <strong>Cálculos matematicamente correctos:</strong> Todos os totais agora batem certinho!</li>
+        <li>✅ <strong>Melhor feedback visual:</strong> Expressão mostra claramente "4% do total (X,XXX)"</li>
+        <li>✅ <strong>Modo expandido com total:</strong> O total acumulado agora mostra em tela cheia, como no modo normal!</li>
+       </ul>
+      </div>
+     </div>
+    </section>
+   </main><!-- Expanded Tape Fullscreen Modal -->
+   <div id="expanded-tape-modal" class="tape-expanded hidden">
+    <div class="tape-expanded-header">
+     <div class="flex items-center gap-4">
+      <h2 class="text-xl font-semibold text-gray-800">Fita Expandida</h2><input type="text" id="expanded-tape-search" class="input-field" placeholder="🔍 Pesquisar..." style="width: 250px;" onkeyup="filterExpandedTape()">
+     </div><button onclick="closeExpandedTape()" class="btn-secondary p-3 rounded-lg">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="tape-expanded-content">
+     <table class="tape-table">
+      <thead>
+       <tr>
+        <th style="width: 60px;">#</th>
+        <th>Expressão</th>
+        <th>Comentário</th>
+        <th style="width: 120px; text-align: right;">Resultado</th>
+        <th style="width: 100px; text-align: center;">Ações</th>
+       </tr>
+      </thead>
+      <tbody id="expanded-tape-body"><!-- Will be populated dynamically -->
+      </tbody>
+     </table>
+    </div>
+    <div class="tape-expanded-footer"><span class="text-sm font-medium text-gray-600">Total Acumulado:</span> <span id="expanded-tape-total" class="text-2xl font-bold text-blue-600">0,00 AOA</span>
+    </div>
+   </div><!-- Currency Modal -->
+   <div id="currency-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Selecionar Moeda</h3><button onclick="closeCurrencyModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="flex flex-wrap gap-2 mb-6" id="currency-buttons"><!-- Currency buttons rendered dynamically -->
+     </div>
+     <div class="border-t pt-4">
+      <h4 class="text-sm font-medium text-gray-600 mb-3">Taxas de Câmbio (base: AOA)</h4>
+      <div class="space-y-2" id="exchange-rates"><!-- Exchange rates rendered dynamically -->
+      </div><button onclick="openExchangeEditor()" class="btn-secondary w-full mt-3 p-2 rounded-lg text-sm"> ✏️ Editar Taxas Manualmente </button>
+     </div>
+    </div>
+   </div><!-- Settings Modal -->
+   <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 max-h-[90%] overflow-y-auto">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">⚙️ Configurações</h3><button onclick="closeSettingsModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-600 mb-2">Casas Decimais</label> <select id="decimal-places" class="input-field" onchange="updateNumberFormat()"> <option value="0">0</option> <option value="2" selected>2</option> <option value="3">3</option> <option value="4">4</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-600 mb-2">Separador Decimal</label> <select id="decimal-separator" class="input-field" onchange="updateNumberFormat()"> <option value="," selected>Vírgula (,)</option> <option value=".">Ponto (.)</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-600 mb-2">Separador de Milhares</label> <select id="thousand-separator" class="input-field" onchange="updateNumberFormat()"> <option value="." selected>Ponto (.)</option> <option value=",">Vírgula (,)</option> <option value=" ">Espaço ( )</option> <option value="">Nenhum</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-600 mb-2">Posição do Símbolo</label> <select id="symbol-position" class="input-field" onchange="updateNumberFormat()"> <option value="after" selected>Após o valor (100,00 AOA)</option> <option value="before">Antes do valor (AOA 100,00)</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-600 mb-2">Símbolo da Moeda Atual</label> <input type="text" id="currency-symbol" class="input-field" placeholder="AOA" onchange="updateNumberFormat()">
+      </div>
+     </div><button onclick="closeSettingsModal()" class="btn-primary w-full mt-6 p-3 rounded-lg"> Guardar Configurações </button>
+    </div>
+   </div><!-- Exchange Rate Editor Modal -->
+   <div id="exchange-editor-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Editar Taxas de Câmbio</h3><button onclick="closeExchangeEditor()" class="p-2 hover:bg-gray-100 rounded-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <p class="text-sm text-gray-500 mb-4">Defina quanto vale 1 unidade de cada moeda em AOA (Kwanza)</p>
+     <div class="space-y-3" id="exchange-inputs"><!-- Exchange inputs rendered dynamically -->
+     </div><button onclick="saveExchangeRates()" class="btn-primary w-full mt-4 p-3 rounded-lg"> Guardar Taxas </button>
+    </div>
+   </div><!-- Scenario Name Modal -->
+   <div id="scenario-name-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-sm w-full p-6">
+     <h3 class="text-lg font-semibold text-gray-800 mb-4">Nomear Cenário</h3><input type="text" id="scenario-name-input" class="input-field mb-4" placeholder="Ex: Cenário 1">
+     <div class="flex gap-2"><button onclick="closeScenarioNameModal()" class="btn-secondary flex-1 p-3 rounded-lg">Cancelar</button> <button onclick="confirmSaveScenario()" class="btn-primary flex-1 p-3 rounded-lg">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Comment Modal -->
+   <div id="comment-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-sm w-full p-6">
+     <h3 class="text-lg font-semibold text-gray-800 mb-4">Editar Comentário</h3><textarea id="comment-input" class="input-field mb-4 h-24 resize-none" placeholder="Descreva este cálculo..."></textarea>
+     <div class="flex gap-2"><button onclick="closeCommentModal()" class="btn-secondary flex-1 p-3 rounded-lg">Cancelar</button> <button onclick="confirmComment()" class="btn-primary flex-1 p-3 rounded-lg">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Toast Container -->
+   <div id="toast-container"></div>
+  </div>
+  <script>
+    // ============ STATE MANAGEMENT ============
+    const defaultConfig = {
+      app_title: 'IS CalcFin',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#1F2937',
+      accent_color: '#FFC107',
+      font_family: 'Inter'
+    };
+
+    let config = { ...defaultConfig };
+    let scenarios = [];
+    let currentCurrency = 'AOA';
+    let tapeEntries = [];
+    let runningTotal = 0;
+    let calcChart = null;
+    let currentExample = null;
+    let pendingScenarioData = null;
+    let highlightedEntryIndex = -1;
+    let editModeIndex = -1;
+    let newCalcModeIndex = -1;
+    let newCalcModePosition = null;
+    let keypadVisible = true;
+    let editingCommentIndex = -1;
+    let currentEditingScenarioIndex = -1;
+    let tapeFilterText = '';
+    let scenariosFilterText = '';
+    let expandedTapeFilterText = '';
+
+    // Currency configuration
+    const currencies = {
+      AOA: { symbol: 'AOA', name: 'Kwanza', flag: '🇦🇴', locale: 'pt-AO' },
+      BRL: { symbol: 'BRL', name: 'Real', flag: '🇧🇷', locale: 'pt-BR' },
+      EUR: { symbol: 'EUR', name: 'Euro', flag: '🇪🇺', locale: 'pt-PT' },
+      MZN: { symbol: 'MZN', name: 'Metical', flag: '🇲🇿', locale: 'pt-MZ' },
+      STN: { symbol: 'STN', name: 'Dobra', flag: '🇸🇹', locale: 'pt-ST' },
+      CVE: { symbol: 'CVE', name: 'Escudo', flag: '🇨🇻', locale: 'pt-CV' },
+      USD: { symbol: 'USD', name: 'Dólar', flag: '🇺🇸', locale: 'en-US' }
+    };
+
+    let exchangeRates = {
+      AOA: 1,
+      BRL: 166.5,
+      EUR: 898.2,
+      MZN: 13.1,
+      STN: 36.8,
+      CVE: 8.14,
+      USD: 828.5
+    };
+
+    let numberFormat = {
+      decimalPlaces: 2,
+      decimalSeparator: ',',
+      thousandSeparator: '.',
+      symbolPosition: 'after',
+      customSymbol: null
+    };
+
+    const examples = [
+      {
+        id: 'budget',
+        title: '💰 Orçamento Mensal',
+        emoji: '📊',
+        description: 'Calcule o total de despesas mensais e veja quanto sobra do seu ordenado.',
+        steps: [
+          { label: 'Ordenado', value: 150000 },
+          { label: 'Aluguel', value: -45000 },
+          { label: 'Comida', value: -30000 },
+          { label: 'Transporte', value: -8000 },
+          { label: 'SUBTOTAL de Despesas', isSubtotal: true },
+          { label: 'Saldo Disponível', value: 150000 }
+        ]
+      },
+      {
+        id: 'sales',
+        title: '🛍️ Vendas Diárias',
+        emoji: '📈',
+        description: 'Registre vendas ao longo do dia e veja o total de receita.',
+        steps: [
+          { label: 'Venda Manhã', value: 25000 },
+          { label: 'Venda Tarde', value: 18000 },
+          { label: 'Venda Noite', value: 12000 },
+          { label: 'SUBTOTAL Vendas', isSubtotal: true },
+          { label: 'Desconto Dado', value: -2000 },
+          { label: 'Total Final', value: 0 }
+        ]
+      },
+      {
+        id: 'project',
+        title: '🔨 Custos de Projeto',
+        emoji: '📐',
+        description: 'Some todos os custos de um projeto para ver o orçamento total.',
+        steps: [
+          { label: 'Mão de obra', value: 500000 },
+          { label: 'Materiais', value: 200000 },
+          { label: 'Equipamento', value: 150000 },
+          { label: 'SUBTOTAL Diretos', isSubtotal: true },
+          { label: 'Despesas Administrativas', value: 50000 },
+          { label: 'Custo Total do Projeto', value: 0 }
+        ]
+      },
+      {
+        id: 'split',
+        title: '🍽️ Dividir Conta com Gorjeta',
+        emoji: '🤝',
+        description: 'Divida uma conta de refeição entre amigos, incluindo gorjeta.',
+        steps: [
+          { label: 'Total da Conta', value: 100000 },
+          { label: 'Gorjeta (10%)', value: 10000 },
+          { label: 'Total com Gorjeta', value: 110000 },
+          { label: 'Dividido por 3 pessoas', value: 0 }
+        ]
+      },
+      {
+        id: 'trip',
+        title: '🚗 Custo de Viagem',
+        emoji: '🛣️',
+        description: 'Calcule o custo total de uma viagem incluindo combustível, portagens e outros.',
+        steps: [
+          { label: 'Combustível', value: 15000 },
+          { label: 'Portagens', value: 3000 },
+          { label: 'Refeições', value: 8000 },
+          { label: 'Hotel', value: 25000 },
+          { label: 'SUBTOTAL Custos', isSubtotal: true },
+          { label: 'Custo Total da Viagem', value: 0 }
+        ]
+      }
+    ];
+
+    const educationalContent = {
+      howto: [
+        { 
+          title: '📝 Adicionar Cálculos', 
+          content: 'Digite uma expressão matemática ou use o teclado. Pressione ENTER ou clique =. Cada cálculo fica registado na fita.' 
+        },
+        { 
+          title: '📊 Percentagens Simples Corretas ✅', 
+          content: 'Digite apenas "4%" ou "-4%" para adicionar uma percentagem! Agora calcula sobre o TOTAL ACUMULADO de todos os valores anteriores (não apenas o último!).' 
+        },
+        { 
+          title: '➕ Percentagens com Operações', 
+          content: 'Use "2000+20%" para ver o resultado e o valor da percentagem em parênteses: 2000+20% (400)=2400' 
+        },
+        { 
+          title: '➕ Inserir Cálculos em Qualquer Lugar', 
+          content: 'Faça hover em qualquer linha da fita - verá seta laranja ↑ para inserir antes e seta azul ↓ para inserir depois. Clique e a calculadora sobe pronta para digitar!' 
+        },
+        { 
+          title: '💬 Comentar Cálculos', 
+          content: 'Ao adicionar um novo cálculo com teclado oculto, pode comentar direto. Ao editar um cálculo existente, clique "Comentário" para atualizar.' 
+        },
+        { 
+          title: '📊 Criar Subtotais em Qualquer Posição', 
+          content: 'Faça hover em qualquer linha da fita - verá um botão roxo "Subtotal aqui". Clique para inserir um subtotal nessa posição exata, sem perder dados!' 
+        },
+        { 
+          title: '✏️ Editar Cálculos', 
+          content: 'Clique em qualquer linha da fita para editá-la. Todos os subtotais posteriores recalculam automaticamente com os novos valores.' 
+        },
+        { 
+          title: '🔍 Pesquisar na Fita', 
+          content: 'Use o campo de pesquisa para filtrar cálculos por expressão ou comentário. Muito útil em fitas longas!' 
+        },
+        { 
+          title: '📈 Ver Gráfico', 
+          content: 'O gráfico em tempo real mostra todos os seus cálculos. Clique nas barras para navegar e editar rapidamente.' 
+        },
+        { 
+          title: '💾 Guardar Cenários', 
+          content: 'Clique "Guardar Cenário" para salvar toda a fita de cálculo. Depois pode carregá-la quando precisar e editar nomes!' 
+        }
+      ],
+      concepts: [
+        { term: 'Fita', definition: 'Histórico visual de todos os seus cálculos, como uma máquina registadora tradicional.' },
+        { term: 'Inserir em Qualquer Lugar', definition: 'Capacidade de adicionar cálculos em qualquer posição da fita. Use as setas laranja (↑) e azul (↓) ao fazer hover.' },
+        { term: 'Comentário', definition: 'Descrição que adiciona ao cálculo para explicar o que significa. Aparece em azul na fita.' },
+        { term: 'Subtotal', definition: 'Soma parcial dos cálculos anteriores. Aparece em laranja/itálico para ser claramente diferenciado.' },
+        { term: 'Percentagem Simples', definition: 'Digitar apenas "%" para calcular percentagens diretas sobre o TOTAL ACUMULADO de todos os valores anteriores.' },
+        { term: 'Cenário', definition: 'Guarda completa de uma fita de cálculos para reutilizar posteriormente com possibilidade de editar nomes.' },
+        { term: 'Total Acumulado', definition: 'A soma de todos os cálculos feitos até agora na fita atual.' },
+        { term: 'Modo Expandido', definition: 'Visualização em tela cheia da fita como uma tabela Excel com pesquisa e filtragem.' }
+      ],
+      formulas: [
+        { name: 'Adição', operation: '+', example: '150 + 50 = 200', description: 'Soma dois ou mais números' },
+        { name: 'Subtração', operation: '-', example: '150 - 50 = 100', description: 'Remove um número de outro' },
+        { name: 'Multiplicação', operation: '×', example: '20 × 5 = 100', description: 'Repete um número várias vezes' },
+        { name: 'Divisão', operation: '÷', example: '100 ÷ 5 = 20', description: 'Divide um número em partes iguais' },
+        { name: 'Percentagem Simples', operation: '%', example: '4% = percentagem do total acumulado', description: 'Calcula percentagem sobre o total acumulado' },
+        { name: 'Percentagem Negativa', operation: '-%', example: '-4% = reduz do total acumulado', description: 'Subtrai uma percentagem do total' },
+        { name: 'Percentagem com Operação', operation: '%', example: '10000 - 10% (1000) = 9000', description: 'Mostra valor da percentagem em parênteses' },
+        { name: 'Parênteses', operation: '( )', example: '(10 + 5) × 2 = 30', description: 'Agrupa operações para calcular primeiro' }
+      ],
+      tips: [
+        { title: '✅ Percentagens Agora Correctas!', content: 'Se tem 1000 + 500 (total 1500) e digita "4%", agora calcula 4% de 1500 = 60. Antes estava errado! 🎉' },
+        { title: '➖ Percentagens Negativas', content: 'Pode agora digitar "-4%" para subtrair uma percentagem direto. Perfeito para descontos!' },
+        { title: '🎯 Organize Perfeitamente', content: 'Use a nova funcionalidade de setas (↑↓) para reorganizar sua fita sem perder nada. Não precisa mais de recomeços!' },
+        { title: '💬 Use Comentários', content: 'Não deixe a fita sem comentários. Uma semana depois, pode não lembrar o que significa aquele número!' },
+        { title: '🔢 Subtotais são seus amigos', content: 'Use subtotais para separar grupos de cálculos. Torna fácil verificar se não cometeu erros.' },
+        { title: '✨ Flexibilidade Total', content: 'Com as setas laranja (↑) e azul (↓) em cada linha, pode construir sua fita exatamente como desejar, linha por linha.' },
+        { title: '🔄 Edite com Segurança', content: 'Descobriu um erro? Clique na linha e corrija. Os subtotais posteriores ajustam automaticamente!' },
+        { title: '🔍 Pesquise e Filtre', content: 'Fitas longas? Use a pesquisa para encontrar cálculos específicos ou o modo expandido para ver tudo como Excel!' },
+        { title: '💾 Guarde Tudo', content: 'Antes de limpar a fita, guarde como cenário. Pode precisar depois para comparar ou verificar. Edite nomes conforme necessário!' }
+      ]
+    };
+
+    // ============ INITIALIZATION ============
+    async function init() {
+      loadFromLocalStorage();
+      renderCurrencyButtons();
+      renderExchangeRates();
+      renderExamples();
+      renderEducationalContent();
+      initChart();
+      updateCurrencyDisplay();
+      
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (newConfig) => {
+            config = { ...config, ...newConfig };
+            applyConfig();
+          },
+          mapToCapabilities: (cfg) => ({
+            recolorables: [
+              {
+                get: () => cfg.primary_color || defaultConfig.primary_color,
+                set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => cfg.font_family || defaultConfig.font_family,
+              set: (v) => { cfg.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+            },
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['app_title', cfg.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+      
+      applyConfig();
+    }
+
+    function applyConfig() {
+      document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+      document.documentElement.style.setProperty('--primary-color', config.primary_color || defaultConfig.primary_color);
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('simulafin_state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          currentCurrency = state.currency || 'AOA';
+          exchangeRates = { ...exchangeRates, ...state.exchangeRates };
+          numberFormat = { ...numberFormat, ...state.numberFormat };
+          tapeEntries = state.tapeEntries || [];
+          runningTotal = state.runningTotal || 0;
+          scenarios = state.scenarios || [];
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
+      }
+      
+      setTimeout(() => {
+        document.getElementById('decimal-places').value = numberFormat.decimalPlaces;
+        document.getElementById('decimal-separator').value = numberFormat.decimalSeparator;
+        document.getElementById('thousand-separator').value = numberFormat.thousandSeparator;
+        document.getElementById('symbol-position').value = numberFormat.symbolPosition;
+        
+        if (tapeEntries.length > 0) {
+          renderTape();
+        }
+        if (scenarios.length > 0) {
+          renderScenarios();
+        }
+      }, 100);
+    }
+
+    function saveToLocalStorage() {
+      try {
+        const state = {
+          currency: currentCurrency,
+          exchangeRates,
+          numberFormat,
+          tapeEntries,
+          runningTotal,
+          scenarios
+        };
+        localStorage.setItem('simulafin_state', JSON.stringify(state));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    }
+
+    // ============ FILTERING ============
+    function filterTape() {
+      tapeFilterText = document.getElementById('tape-search').value.toLowerCase();
+      renderTape();
+    }
+
+    function filterScenarios() {
+      scenariosFilterText = document.getElementById('scenarios-search').value.toLowerCase();
+      renderScenarios();
+    }
+
+    function filterExpandedTape() {
+      expandedTapeFilterText = document.getElementById('expanded-tape-search').value.toLowerCase();
+      renderExpandedTape();
+    }
+
+    // ============ EXPANDED TAPE MODE ============
+    function expandTapeFullscreen() {
+      if (tapeEntries.length === 0) {
+        showToast('A fita está vazia', 'warning');
+        return;
+      }
+      document.getElementById('expanded-tape-modal').classList.remove('hidden');
+      renderExpandedTape();
+    }
+
+    function closeExpandedTape() {
+      document.getElementById('expanded-tape-modal').classList.add('hidden');
+      expandedTapeFilterText = '';
+      document.getElementById('expanded-tape-search').value = '';
+    }
+
+    function renderExpandedTape() {
+      const tbody = document.getElementById('expanded-tape-body');
+      
+      const filteredEntries = tapeEntries.filter(entry => {
+        if (!expandedTapeFilterText) return true;
+        return entry.expression.toLowerCase().includes(expandedTapeFilterText) ||
+               (entry.comment && entry.comment.toLowerCase().includes(expandedTapeFilterText));
+      });
+      
+      tbody.innerHTML = filteredEntries.map((entry, displayIndex) => {
+        const realIndex = tapeEntries.indexOf(entry);
+        const rowClass = entry.isSubtotal ? 'subtotal-row' : '';
+        
+        return `
+          <tr class="${rowClass}">
+            <td>${realIndex + 1}</td>
+            <td>${entry.expression}</td>
+            <td>${entry.comment ? `💬 ${entry.comment}` : '—'}</td>
+            <td style="text-align: right; font-weight: bold; color: ${entry.isSubtotal ? '#FF9800' : (entry.result >= 0 ? '#4CAF50' : '#F44336')};">
+              ${entry.result !== 0 ? formatCurrency(entry.result) : ''}
+            </td>
+            <td style="text-align: center;">
+              ${!entry.isSubtotal ? `
+                <button onclick="loadEntryForEdit(${realIndex})" class="text-blue-500 hover:text-blue-700" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+              ` : ''}
+              <button onclick="removeTapeEntry(event, ${realIndex})" class="text-red-500 hover:text-red-700" title="Remover">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      document.getElementById('expanded-tape-total').textContent = formatCurrency(runningTotal);
+    }
+
+    // ============ NEW CALC MODE ============
+    function startNewCalcMode(index, position) {
+      newCalcModeIndex = index;
+      newCalcModePosition = position;
+      
+      const positionText = position === 'before' ? `ANTES do cálculo #${index + 1}` : `DEPOIS do cálculo #${index + 1}`;
+      document.getElementById('insert-position-text').textContent = positionText;
+      document.getElementById('new-calc-mode-banner').classList.remove('hidden');
+      
+      document.getElementById('calc-input').value = '';
+      document.getElementById('calc-input').focus();
+      document.getElementById('inline-comment-input').value = '';
+      
+      showToast(`Novo cálculo inserindo ${positionText.toLowerCase()}`, 'info');
+      
+      setTimeout(() => {
+        document.querySelector('.card p-6').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    function cancelNewCalcMode() {
+      newCalcModeIndex = -1;
+      newCalcModePosition = null;
+      document.getElementById('new-calc-mode-banner').classList.add('hidden');
+      document.getElementById('calc-input').value = '';
+      document.getElementById('inline-comment-input').value = '';
+      showToast('Inserção cancelada', 'info');
+    }
+
+    function insertCalcBefore(event, index) {
+      event.stopPropagation();
+      startNewCalcMode(index, 'before');
+    }
+
+    function insertCalcAfter(event, index) {
+      event.stopPropagation();
+      startNewCalcMode(index, 'after');
+    }
+
+    // ============ KEYPAD TOGGLE ============
+    function toggleKeypad() {
+      keypadVisible = !keypadVisible;
+      const btn = document.getElementById('toggle-keypad-btn');
+      const app = document.getElementById('app');
+      
+      if (keypadVisible) {
+        app.classList.remove('keypad-hidden');
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          Ocultar Teclado
+        `;
+        showToast('Teclado visível', 'info');
+      } else {
+        app.classList.add('keypad-hidden');
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          Mostrar Teclado
+        `;
+        showToast('Teclado oculto - Comentários diretos ativados', 'info');
+      }
+    }
+
+    // ============ FORMATTING ============
+    function formatCurrency(value, showSymbol = true) {
+      const abs = Math.abs(value);
+      const sign = value < 0 ? '-' : '';
+      
+      const [intPart, decPart] = abs.toFixed(numberFormat.decimalPlaces).split('.');
+      
+      let formattedInt = intPart;
+      if (numberFormat.thousandSeparator) {
+        formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, numberFormat.thousandSeparator);
+      }
+      
+      const formatted = decPart ? `${formattedInt}${numberFormat.decimalSeparator}${decPart}` : formattedInt;
+      
+      if (!showSymbol) return sign + formatted;
+      
+      const symbol = numberFormat.customSymbol || currencies[currentCurrency].symbol;
+      
+      if (numberFormat.symbolPosition === 'before') {
+        return `${sign}${symbol} ${formatted}`;
+      } else {
+        return `${sign}${formatted} ${symbol}`;
+      }
+    }
+
+    function updateNumberFormat() {
+      numberFormat.decimalPlaces = parseInt(document.getElementById('decimal-places').value);
+      numberFormat.decimalSeparator = document.getElementById('decimal-separator').value;
+      numberFormat.thousandSeparator = document.getElementById('thousand-separator').value;
+      numberFormat.symbolPosition = document.getElementById('symbol-position').value;
+      numberFormat.customSymbol = document.getElementById('currency-symbol').value || null;
+      
+      saveToLocalStorage();
+      updateRunningTotal();
+      renderTape();
+      renderScenarios();
+    }
+
+    // ============ CURRENCY ============
+    function renderCurrencyButtons() {
+      const container = document.getElementById('currency-buttons');
+      container.innerHTML = Object.entries(currencies).map(([code, info]) => `
+        <button onclick="selectCurrency('${code}')" class="currency-btn ${currentCurrency === code ? 'active' : ''}">
+          ${info.flag} ${code}
+        </button>
+      `).join('');
+    }
+
+    function renderExchangeRates() {
+      const container = document.getElementById('exchange-rates');
+      container.innerHTML = Object.entries(currencies).filter(([code]) => code !== 'AOA').map(([code, info]) => `
+        <div class="flex justify-between text-sm">
+          <span>${info.flag} 1 ${code}</span>
+          <span class="font-medium">${formatCurrency(exchangeRates[code], false)} AOA</span>
+        </div>
+      `).join('');
+      
+      const inputs = document.getElementById('exchange-inputs');
+      inputs.innerHTML = Object.entries(currencies).filter(([code]) => code !== 'AOA').map(([code, info]) => `
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">${info.flag} ${code} = ? AOA</label>
+          <input type="number" id="rate-${code}" class="input-field" value="${exchangeRates[code]}" step="0.01">
+        </div>
+      `).join('');
+    }
+
+    function selectCurrency(code) {
+      currentCurrency = code;
+      renderCurrencyButtons();
+      updateCurrencyDisplay();
+      saveToLocalStorage();
+      showToast(`Moeda alterada para ${currencies[code].name}`, 'success');
+    }
+
+    function updateCurrencyDisplay() {
+      document.getElementById('current-currency-display').textContent = currentCurrency;
+      document.getElementById('currency-symbol').value = numberFormat.customSymbol || currencies[currentCurrency].symbol;
+      updateRunningTotal();
+      renderTape();
+    }
+
+    function openCurrencyModal() {
+      document.getElementById('currency-modal').classList.remove('hidden');
+    }
+
+    function closeCurrencyModal() {
+      document.getElementById('currency-modal').classList.add('hidden');
+    }
+
+    function openExchangeEditor() {
+      closeCurrencyModal();
+      document.getElementById('exchange-editor-modal').classList.remove('hidden');
+    }
+
+    function closeExchangeEditor() {
+      document.getElementById('exchange-editor-modal').classList.add('hidden');
+    }
+
+    function saveExchangeRates() {
+      Object.keys(currencies).filter(code => code !== 'AOA').forEach(code => {
+        const input = document.getElementById(`rate-${code}`);
+        if (input) {
+          exchangeRates[code] = parseFloat(input.value) || exchangeRates[code];
+        }
+      });
+      
+      renderExchangeRates();
+      saveToLocalStorage();
+      closeExchangeEditor();
+      showToast('Taxas de câmbio atualizadas', 'success');
+    }
+
+    // ============ PERCENTAGE HANDLING ============
+    function parsePercentageExpression(expr) {
+      const match = expr.match(/(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)%/);
+      if (match) {
+        const n1 = parseFloat(match[1]);
+        const p = parseFloat(match[3]);
+        return { baseValue: n1, percentage: p, percentageValue: (n1 * p) / 100, operation: match[2] };
+      }
+      return null;
+    }
+
+    function handlePercentageInExpression(expr) {
+      // FIX: Check if it's just a simple percentage like "4%" or "-4%"
+      if (/^-?\d+(?:\.\d+)?%$/.test(expr.trim())) {
+        // Simple percentage - calculate based on RUNNING TOTAL (all accumulated values), not last value!
+        const percentValue = parseFloat(expr.trim());
+        const baseValue = runningTotal; // FIX: Use running total, not last value!
+        const calculatedPercentage = (baseValue * percentValue) / 100;
+        return { isSimplePercentage: true, result: calculatedPercentage, displayExpr: `${percentValue}% do total (${formatCurrency(baseValue, false)})` };
+      }
+      
+      // Complex percentage with operation like "2000+20%" or "2000-4%"
+      return expr.replace(/(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)%/g, (match, num1, op, percent) => {
+        const n1 = parseFloat(num1);
+        const p = parseFloat(percent);
+        const percentValue = (n1 * p) / 100;
+        
+        if (op === '+') {
+          return `(${n1}+${percentValue})`;
+        } else if (op === '-') {
+          return `(${n1}-${percentValue})`;
+        } else if (op === '*') {
+          return `(${n1}*${percentValue}/100)`;
+        } else if (op === '/') {
+          return `(${n1}/${percentValue}*100)`;
+        }
+        return match;
+      });
+    }
+
+    // ============ EDIT MODE ============
+    function loadEntryForEdit(index) {
+      const entry = tapeEntries[index];
+      if (!entry) return;
+      
+      if (entry.isSubtotal) {
+        return;
+      }
+      
+      newCalcModeIndex = -1;
+      newCalcModePosition = null;
+      document.getElementById('new-calc-mode-banner').classList.add('hidden');
+      
+      editModeIndex = index;
+      document.getElementById('calc-input').value = entry.expression;
+      
+      const banner = document.getElementById('edit-mode-banner');
+      banner.classList.remove('hidden');
+      document.getElementById('edit-index').textContent = index + 1;
+      
+      highlightedEntryIndex = index;
+      renderTape();
+      
+      showToast(`Editando cálculo #${index + 1}. Comentário: ${entry.comment || '(nenhum)'}`, 'info');
+    }
+
+    function saveEditedEntry() {
+      if (editModeIndex === -1) return;
+      
+      const expression = document.getElementById('calc-input').value.trim();
+      
+      if (!expression) {
+        showToast('Expressão vazia', 'error');
+        return;
+      }
+      
+      try {
+        let jsExpression = expression
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/−/g, '-')
+          .replace(/,/g, '.');
+        
+        const percentageInfo = handlePercentageInExpression(jsExpression);
+        
+        let result;
+        let displayExpression = expression;
+        
+        if (typeof percentageInfo === 'object' && percentageInfo.isSimplePercentage) {
+          result = percentageInfo.result;
+          displayExpression = `${displayExpression} (${formatCurrency(result, false)})`;
+        } else {
+          if (typeof percentageInfo === 'string') {
+            jsExpression = percentageInfo;
+          }
+          
+          result = Function('"use strict"; return (' + jsExpression + ')')();
+          
+          // Check if this is a percentage calculation with operation
+          const percMatch = parsePercentageExpression(expression);
+          if (percMatch) {
+            displayExpression = `${percMatch.baseValue} ${percMatch.operation} ${percMatch.percentage}% (${formatCurrency(percMatch.percentageValue, false)})`;
+          }
+        }
+        
+        if (typeof result === 'number' && !isNaN(result)) {
+          const oldEntry = tapeEntries[editModeIndex];
+          const oldValue = oldEntry.result;
+          
+          tapeEntries[editModeIndex] = {
+            ...oldEntry,
+            expression: displayExpression,
+            result
+          };
+          
+          runningTotal = runningTotal - oldValue + result;
+          
+          for (let i = editModeIndex + 1; i < tapeEntries.length; i++) {
+            if (tapeEntries[i].isSubtotal) {
+              let subtotalValue = 0;
+              for (let j = i - 1; j >= 0; j--) {
+                if (tapeEntries[j].isSubtotal) break;
+                subtotalValue += tapeEntries[j].result;
+              }
+              tapeEntries[i].result = subtotalValue;
+            }
+          }
+          
+          renderTape();
+          updateRunningTotal();
+          updateChart();
+          saveToLocalStorage();
+          
+          cancelEditMode();
+          showToast('Cálculo alterado com sucesso', 'success');
+        } else {
+          showToast('Resultado inválido', 'error');
+        }
+      } catch (e) {
+        showToast('Expressão inválida', 'error');
+      }
+    }
+
+    function cancelEditMode() {
+      editModeIndex = -1;
+      highlightedEntryIndex = -1;
+      editingCommentIndex = -1;
+      document.getElementById('calc-input').value = '';
+      document.getElementById('comment-input').value = '';
+      document.getElementById('edit-mode-banner').classList.add('hidden');
+      renderTape();
+    }
+
+    function editSelectedComment() {
+      if (editModeIndex !== -1) {
+        const entry = tapeEntries[editModeIndex];
+        editingCommentIndex = editModeIndex;
+        document.getElementById('comment-input').value = entry.comment || '';
+        document.getElementById('comment-modal').classList.remove('hidden');
+      } else {
+        showToast('Selecione um cálculo para editar o comentário', 'warning');
+      }
+    }
+
+    function openCommentForEntry(index) {
+      editingCommentIndex = index;
+      const entry = tapeEntries[index];
+      document.getElementById('comment-input').value = entry.comment || '';
+      document.getElementById('comment-modal').classList.remove('hidden');
+    }
+
+    function closeCommentModal() {
+      document.getElementById('comment-modal').classList.add('hidden');
+      editingCommentIndex = -1;
+    }
+
+    function confirmComment() {
+      const comment = document.getElementById('comment-input').value.trim();
+      
+      if (editingCommentIndex !== -1 && editingCommentIndex < tapeEntries.length) {
+        tapeEntries[editingCommentIndex].comment = comment || null;
+        renderTape();
+        updateChart();
+        saveToLocalStorage();
+        showToast('Comentário ' + (comment ? 'atualizado' : 'removido'), 'success');
+      }
+      
+      closeCommentModal();
+    }
+
+    function handleCommentKeypress(event) {
+      if (event.key === 'Enter' && event.ctrlKey) {
+        const comment = document.getElementById('inline-comment-input').value.trim();
+        const input = document.getElementById('calc-input');
+        const expression = input.value.trim();
+        
+        if (!expression) {
+          showToast('Expressão vazia', 'error');
+          return;
+        }
+        
+        try {
+          let jsExpression = expression
+            .replace(/÷/g, '/')
+            .replace(/×/g, '*')
+            .replace(/−/g, '-')
+            .replace(/,/g, '.');
+          
+          const percentageInfo = handlePercentageInExpression(jsExpression);
+          
+          let result;
+          let displayExpression = expression;
+          
+          if (typeof percentageInfo === 'object' && percentageInfo.isSimplePercentage) {
+            result = percentageInfo.result;
+            displayExpression = `${percentageInfo.displayExpr} = ${formatCurrency(result, false)}`;
+          } else {
+            if (typeof percentageInfo === 'string') {
+              jsExpression = percentageInfo;
+            }
+            
+            result = Function('"use strict"; return (' + jsExpression + ')')();
+            
+            const percMatch = parsePercentageExpression(expression);
+            if (percMatch) {
+              displayExpression = `${percMatch.baseValue} ${percMatch.operation} ${percMatch.percentage}% (${formatCurrency(percMatch.percentageValue, false)})`;
+            }
+          }
+          
+          if (typeof result === 'number' && !isNaN(result)) {
+            if (newCalcModeIndex !== -1) {
+              insertNewCalcAtPosition(displayExpression, result, comment || null);
+            } else {
+              addToTape(displayExpression, result, comment || null);
+            }
+            input.value = '';
+            document.getElementById('inline-comment-input').value = '';
+            showToast('Cálculo adicionado com comentário', 'success');
+          } else {
+            showToast('Resultado inválido', 'error');
+          }
+        } catch (e) {
+          showToast('Expressão inválida', 'error');
+        }
+      }
+    }
+
+    // ============ CALCULATOR ============
+    function appendToCalc(value) {
+      const input = document.getElementById('calc-input');
+      input.value += value;
+      input.focus();
+    }
+
+    function clearCalc() {
+      document.getElementById('calc-input').value = '';
+    }
+
+    function backspace() {
+      const input = document.getElementById('calc-input');
+      input.value = input.value.slice(0, -1);
+    }
+
+    function handleCalcKeypress(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        
+        if (editModeIndex !== -1) {
+          saveEditedEntry();
+        } else if (newCalcModeIndex !== -1) {
+          calculateResultForNewCalc();
+        } else {
+          calculateResult();
+        }
+      }
+    }
+
+    function calculateResult() {
+      const input = document.getElementById('calc-input');
+      const expression = input.value.trim();
+      
+      if (!expression) return;
+      
+      try {
+        let jsExpression = expression
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/−/g, '-')
+          .replace(/,/g, '.');
+        
+        const percentageInfo = handlePercentageInExpression(jsExpression);
+        
+        let result;
+        let displayExpression = expression;
+        
+        if (typeof percentageInfo === 'object' && percentageInfo.isSimplePercentage) {
+          result = percentageInfo.result;
+          displayExpression = `${percentageInfo.displayExpr} = ${formatCurrency(result, false)}`;
+        } else {
+          if (typeof percentageInfo === 'string') {
+            jsExpression = percentageInfo;
+          }
+          
+          result = Function('"use strict"; return (' + jsExpression + ')')();
+          
+          const percMatch = parsePercentageExpression(expression);
+          if (percMatch) {
+            displayExpression = `${percMatch.baseValue} ${percMatch.operation} ${percMatch.percentage}% (${formatCurrency(percMatch.percentageValue, false)})`;
+          }
+        }
+        
+        if (typeof result === 'number' && !isNaN(result)) {
+          let comment = null;
+          if (!keypadVisible) {
+            const inlineCommentInput = document.getElementById('inline-comment-input');
+            if (inlineCommentInput) {
+              comment = inlineCommentInput.value.trim() || null;
+              inlineCommentInput.value = '';
+            }
+          }
+          
+          addToTape(displayExpression, result, comment);
+          input.value = '';
+        } else {
+          showToast('Resultado inválido', 'error');
+        }
+      } catch (e) {
+        showToast('Expressão inválida', 'error');
+      }
+    }
+
+    function calculateResultForNewCalc() {
+      const input = document.getElementById('calc-input');
+      const expression = input.value.trim();
+      
+      if (!expression) return;
+      
+      try {
+        let jsExpression = expression
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/−/g, '-')
+          .replace(/,/g, '.');
+        
+        const percentageInfo = handlePercentageInExpression(jsExpression);
+        
+        let result;
+        let displayExpression = expression;
+        
+        if (typeof percentageInfo === 'object' && percentageInfo.isSimplePercentage) {
+          result = percentageInfo.result;
+          displayExpression = `${percentageInfo.displayExpr} = ${formatCurrency(result, false)}`;
+        } else {
+          if (typeof percentageInfo === 'string') {
+            jsExpression = percentageInfo;
+          }
+          
+          result = Function('"use strict"; return (' + jsExpression + ')')();
+          
+          const percMatch = parsePercentageExpression(expression);
+          if (percMatch) {
+            displayExpression = `${percMatch.baseValue} ${percMatch.operation} ${percMatch.percentage}% (${formatCurrency(percMatch.percentageValue, false)})`;
+          }
+        }
+        
+        if (typeof result === 'number' && !isNaN(result)) {
+          let comment = null;
+          if (!keypadVisible) {
+            const inlineCommentInput = document.getElementById('inline-comment-input');
+            if (inlineCommentInput) {
+              comment = inlineCommentInput.value.trim() || null;
+              inlineCommentInput.value = '';
+            }
+          }
+          
+          insertNewCalcAtPosition(displayExpression, result, comment);
+          input.value = '';
+        } else {
+          showToast('Resultado inválido', 'error');
+        }
+      } catch (e) {
+        showToast('Expressão inválida', 'error');
+      }
+    }
+
+    function insertNewCalcAtPosition(expression, result, comment = null) {
+      const entry = {
+        id: Date.now(),
+        expression,
+        result,
+        comment,
+        isSubtotal: false,
+        timestamp: new Date().toISOString()
+      };
+      
+      if (newCalcModePosition === 'before') {
+        tapeEntries.splice(newCalcModeIndex, 0, entry);
+      } else {
+        tapeEntries.splice(newCalcModeIndex + 1, 0, entry);
+      }
+      
+      runningTotal = tapeEntries.reduce((sum, e) => sum + (e.isSubtotal ? 0 : e.result), 0);
+      
+      for (let i = 0; i < tapeEntries.length; i++) {
+        if (tapeEntries[i].isSubtotal) {
+          let subtotalValue = 0;
+          for (let j = i - 1; j >= 0; j--) {
+            if (tapeEntries[j].isSubtotal) break;
+            subtotalValue += tapeEntries[j].result;
+          }
+          tapeEntries[i].result = subtotalValue;
+        }
+      }
+      
+      renderTape();
+      updateRunningTotal();
+      updateChart();
+      saveToLocalStorage();
+      
+      cancelNewCalcMode();
+      showToast('Cálculo inserido com sucesso', 'success');
+    }
+
+    function addToTape(expression, result, comment = null) {
+      const entry = {
+        id: Date.now(),
+        expression,
+        result,
+        comment,
+        isSubtotal: false,
+        timestamp: new Date().toISOString()
+      };
+      
+      tapeEntries.push(entry);
+      runningTotal += result;
+      
+      renderTape();
+      updateRunningTotal();
+      updateChart();
+      saveToLocalStorage();
+    }
+
+    function addSubtotal() {
+      if (tapeEntries.length > 0) {
+        const subtotalValue = tapeEntries.reduce((sum, e) => sum + (e.isSubtotal ? 0 : e.result), 0);
+        tapeEntries.push({
+          id: Date.now(),
+          expression: 'SUBTOTAL',
+          result: subtotalValue,
+          comment: null,
+          isSubtotal: true,
+          timestamp: new Date().toISOString()
+        });
+        
+        renderTape();
+        updateChart();
+        saveToLocalStorage();
+        showToast('Subtotal adicionado no final', 'success');
+      }
+    }
+
+    function insertSubtotalBefore(event, index) {
+      event.stopPropagation();
+      const subtotalValue = tapeEntries.slice(0, index).reduce((sum, e) => sum + (e.isSubtotal ? 0 : e.result), 0);
+      
+      tapeEntries.splice(index, 0, {
+        id: Date.now(),
+        expression: 'SUBTOTAL',
+        result: subtotalValue,
+        comment: null,
+        isSubtotal: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      renderTape();
+      updateChart();
+      saveToLocalStorage();
+      showToast('Subtotal inserido antes desta linha', 'success');
+    }
+
+    function insertSubtotalAfter(event, index) {
+      event.stopPropagation();
+      const subtotalValue = tapeEntries.slice(0, index + 1).reduce((sum, e) => sum + (e.isSubtotal ? 0 : e.result), 0);
+      
+      tapeEntries.splice(index + 1, 0, {
+        id: Date.now(),
+        expression: 'SUBTOTAL',
+        result: subtotalValue,
+        comment: null,
+        isSubtotal: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      renderTape();
+      updateChart();
+      saveToLocalStorage();
+      showToast('Subtotal inserido depois desta linha', 'success');
+    }
+
+    function renderTape() {
+      const container = document.getElementById('tape-display');
+      
+      let filteredEntries = tapeEntries;
+      if (tapeFilterText) {
+        filteredEntries = tapeEntries.filter(entry => 
+          entry.expression.toLowerCase().includes(tapeFilterText) ||
+          (entry.comment && entry.comment.toLowerCase().includes(tapeFilterText))
+        );
+      }
+      
+      if (filteredEntries.length === 0) {
+        container.innerHTML = `
+          <div class="text-gray-400 text-center py-8">
+            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p>${tapeFilterText ? 'Nenhum resultado encontrado' : 'A fita está vazia'}</p>
+            <p class="text-xs mt-1">${tapeFilterText ? 'Tente outro termo de pesquisa' : 'Comece a calcular para ver os resultados aqui'}</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = filteredEntries.map((entry, displayIndex) => {
+        const realIndex = tapeEntries.indexOf(entry);
+        const baseClass = 'tape-line flex justify-between items-start group';
+        let lineClass = baseClass;
+        
+        if (entry.isSubtotal) {
+          lineClass += ' subtotal';
+        } else {
+          if (highlightedEntryIndex === realIndex) lineClass += ' highlighted';
+          if (editModeIndex === realIndex) lineClass += ' edit-mode';
+        }
+        
+        return `
+          <div class="${lineClass}" ${!entry.isSubtotal ? `onclick="loadEntryForEdit(${realIndex})"` : ''}>
+            <div class="flex-1 min-w-0">
+              <span class="text-gray-500">${entry.expression}</span>
+              ${entry.comment ? `<span class="text-xs text-blue-500 block">💬 ${entry.comment}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+              <span class="font-medium ${entry.isSubtotal ? 'text-orange-600' : (entry.result >= 0 ? 'text-green-600' : 'text-red-600')} text-right whitespace-nowrap">
+                ${entry.result !== 0 ? formatCurrency(entry.result) : ''}
+              </span>
+              <div class="flex opacity-0 group-hover:opacity-100 transition-opacity gap-1 flex-shrink-0">
+                ${!entry.isSubtotal ? `
+                  <button onclick="insertCalcBefore(event, ${realIndex})" class="insert-calc-btn before" title="Inserir antes">↑</button>
+                ` : ''}
+                ${!entry.isSubtotal ? `
+                  <button onclick="insertSubtotalBefore(event, ${realIndex})" class="text-purple-400 hover:text-purple-600" title="Inserir subtotal antes">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                  </button>
+                ` : ''}
+                <button onclick="openCommentForEntry(${realIndex})" class="text-blue-400 hover:text-blue-600" title="Editar comentário">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                  </svg>
+                </button>
+                ${!entry.isSubtotal ? `
+                  <button onclick="insertCalcAfter(event, ${realIndex})" class="insert-calc-btn after" title="Inserir depois">↓</button>
+                ` : ''}
+                <button onclick="removeTapeEntry(event, ${realIndex})" class="text-red-400 hover:text-red-600" title="Remover">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="insert-subtotal-line" onclick="insertSubtotalAfter(event, ${realIndex})">
+              <div class="insert-subtotal-btn">
+                + Subtotal
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTapeEntry(event, index) {
+      event.stopPropagation();
+      const entry = tapeEntries[index];
+      
+      if (entry.isSubtotal) {
+        tapeEntries.splice(index, 1);
+      } else {
+        runningTotal -= entry.result;
+        tapeEntries.splice(index, 1);
+        
+        for (let i = index; i < tapeEntries.length; i++) {
+          if (tapeEntries[i].isSubtotal) {
+            let subtotalValue = 0;
+            for (let j = i - 1; j >= 0; j--) {
+              if (tapeEntries[j].isSubtotal) break;
+              subtotalValue += tapeEntries[j].result;
+            }
+            tapeEntries[i].result = subtotalValue;
+          }
+        }
+      }
+      
+      highlightedEntryIndex = -1;
+      editModeIndex = -1;
+      document.getElementById('edit-mode-banner').classList.add('hidden');
+      renderTape();
+      updateRunningTotal();
+      updateChart();
+      saveToLocalStorage();
+      showToast('Item removido', 'info');
+    }
+
+    function clearTape() {
+      tapeEntries = [];
+      runningTotal = 0;
+      highlightedEntryIndex = -1;
+      editModeIndex = -1;
+      newCalcModeIndex = -1;
+      renderTape();
+      updateRunningTotal();
+      updateChart();
+      saveToLocalStorage();
+      showToast('Fita limpa', 'info');
+    }
+
+    function updateRunningTotal() {
+      document.getElementById('running-total').textContent = formatCurrency(runningTotal);
+    }
+
+    // ============ CHARTS ============
+    function initChart() {
+      const ctx = document.getElementById('calc-chart').getContext('2d');
+      
+      calcChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Valores',
+            data: [],
+            backgroundColor: [],
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  const dataIndex = context[0].dataIndex;
+                  const entry = tapeEntries.slice().filter(e => !e.isSubtotal)[dataIndex];
+                  return entry ? (entry.comment || `Cálculo #${dataIndex + 1}`) : '';
+                },
+                label: function(context) {
+                  return formatCurrency(context.parsed.y, false);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => formatCurrency(value, false)
+              }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const dataIndex = elements[0].index;
+              const validEntries = tapeEntries.filter(e => !e.isSubtotal);
+              if (dataIndex < validEntries.length) {
+                const entryIndex = tapeEntries.indexOf(validEntries[dataIndex]);
+                loadEntryForEdit(entryIndex);
+                
+                setTimeout(() => {
+                  const tapeDisplay = document.getElementById('tape-display');
+                  const tapeLines = tapeDisplay.querySelectorAll('.tape-line');
+                  if (tapeLines[entryIndex]) {
+                    tapeLines[entryIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 100);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChart() {
+      if (!calcChart) return;
+      
+      const validEntries = tapeEntries.filter(e => !e.isSubtotal);
+      
+      calcChart.data.labels = validEntries.map((e, i) => 
+        e.comment ? e.comment.substring(0, 20) : `#${i + 1}`
+      );
+      calcChart.data.datasets[0].data = validEntries.map(e => e.result);
+      calcChart.data.datasets[0].backgroundColor = validEntries.map(e => 
+        e.result >= 0 ? '#4CAF50' : '#F44336'
+      );
+      
+      calcChart.update();
+    }
+
+    // ============ EXPORT/IMPORT TAPE ============
+    function exportTapePDF() {
+      if (tapeEntries.length === 0) {
+        showToast('A fita está vazia', 'warning');
+        return;
+      }
+
+      const element = document.createElement('div');
+      element.style.padding = '20px';
+      element.style.fontFamily = 'Arial, sans-serif';
+      element.style.fontSize = '12px';
+      
+      element.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1>IS CalcFin - Fita de Cálculo</h1>
+          <p>${new Date().toLocaleDateString('pt-PT')} • ${currentCurrency}</p>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #66CFF5; color: white;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Nº</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Expressão</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Comentário</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tapeEntries.map((entry, index) => `
+              <tr style="${entry.isSubtotal ? 'background: #FFF8E1;' : ''}">
+                <td style="border: 1px solid #ddd; padding: 8px;">${index + 1}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; ${entry.isSubtotal ? 'font-style: italic; color: #FF9800;' : ''}">${entry.expression}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${entry.comment || '—'}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold; color: ${entry.isSubtotal ? '#FF9800' : (entry.result >= 0 ? '#4CAF50' : '#F44336')};">
+                  ${entry.result !== 0 ? formatCurrency(entry.result) : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; text-align: right; font-weight: bold; font-size: 14px;">
+          <p>Total Acumulado: ${formatCurrency(runningTotal)}</p>
+        </div>
+        
+        <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; text-align: center; font-size: 10px; color: #999;">
+          <p>Gerado por IS CalcFin 🇵🇹 Página 1 de 1</p>
+        </div>
+      `;
+
+      const opt = {
+        margin: 10,
+        filename: `simulafin_fita_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+      showToast('PDF gerado com sucesso', 'success');
+    }
+
+    function exportTapeJSON() {
+      if (tapeEntries.length === 0) {
+        showToast('A fita está vazia', 'warning');
+        return;
+      }
+
+      const data = {
+        version: '2.8',
+        exportDate: new Date().toISOString(),
+        currency: currentCurrency,
+        tape: {
+          entries: tapeEntries,
+          total: runningTotal,
+          count: tapeEntries.length
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `simulafin_tape_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast('Fita exportada como JSON', 'success');
+    }
+
+    function importTapeJSON() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+
+          if (data.tape && data.tape.entries) {
+            if (tapeEntries.length > 0) {
+              if (!confirm('Deseja adicionar à fita existente ou substituir?')) {
+                return;
+              }
+            }
+
+            tapeEntries = [...tapeEntries, ...data.tape.entries];
+            runningTotal = tapeEntries.reduce((sum, e) => sum + (e.isSubtotal ? 0 : e.result), 0);
+
+            if (data.currency) currentCurrency = data.currency;
+
+            renderTape();
+            updateRunningTotal();
+            updateChart();
+            saveToLocalStorage();
+
+            showToast('Fita importada com sucesso', 'success');
+          }
+        } catch (e) {
+          console.error('Import error:', e);
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      input.click();
+    }
+
+    // ============ SCENARIOS ============
+    function saveCurrentAsScenario() {
+      if (tapeEntries.length === 0) {
+        showToast('A fita está vazia', 'warning');
+        return;
+      }
+      
+      pendingScenarioData = {
+        type: 'calculator',
+        entries: [...tapeEntries],
+        total: runningTotal,
+        currency: currentCurrency
+      };
+      
+      const scenarioCount = scenarios.length + 1;
+      document.getElementById('scenario-name-input').value = `Cenário ${scenarioCount}`;
+      document.getElementById('scenario-name-modal').classList.remove('hidden');
+      document.getElementById('scenario-name-input').focus();
+    }
+
+    function closeScenarioNameModal() {
+      document.getElementById('scenario-name-modal').classList.add('hidden');
+      pendingScenarioData = null;
+    }
+
+    function confirmSaveScenario() {
+      let name = document.getElementById('scenario-name-input').value.trim() || `Cenário ${scenarios.length + 1}`;
+      
+      // Check for duplicate names
+      let count = 0;
+      const baseName = name;
+      while (scenarios.some(s => s.name === name)) {
+        count++;
+        name = `${baseName} (${count})`;
+      }
+      
+      if (scenarios.length >= 999) {
+        showToast('Limite de cenários atingido (999)', 'error');
+        closeScenarioNameModal();
+        return;
+      }
+      
+      const scenario = {
+        id: Date.now().toString(),
+        name,
+        type: 'scenario',
+        data: JSON.stringify(pendingScenarioData),
+        currency: currentCurrency,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      scenarios.push(scenario);
+      renderScenarios();
+      showToast(`"${name}" guardado com sucesso!`, 'success');
+      
+      closeScenarioNameModal();
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenarios-list');
+      
+      let filteredScenarios = scenarios;
+      if (scenariosFilterText) {
+        filteredScenarios = scenarios.filter(s => s.name.toLowerCase().includes(scenariosFilterText));
+      }
+      
+      if (filteredScenarios.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-400 col-span-full">
+            <svg class="w-16 h-16 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <p class="font-medium">${scenariosFilterText ? 'Nenhum cenário encontrado' : 'Nenhum cenário guardado'}</p>
+            <p class="text-sm mt-1">${scenariosFilterText ? 'Tente outro termo de pesquisa' : 'Guarde os seus cálculos na aba Calculadora'}</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = filteredScenarios.map((scenario, displayIndex) => {
+        const realIndex = scenarios.indexOf(scenario);
+        const data = JSON.parse(scenario.data || '{}');
+        const date = new Date(scenario.createdAt).toLocaleDateString('pt-PT');
+        
+        return `
+          <div class="card p-4 scenario-card">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1">
+                <h3 class="font-semibold text-gray-800 cursor-pointer hover:text-blue-600" ondblclick="startEditScenarioName(${realIndex})">
+                  ${scenario.name}
+                </h3>
+                <p class="text-xs text-gray-500">${date} • ${scenario.currency || 'AOA'}</p>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="loadScenario(${realIndex})" class="p-2 hover:bg-blue-50 rounded-lg text-blue-500" title="Carregar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                </button>
+                <button onclick="deleteScenario(${realIndex})" class="p-2 hover:bg-red-50 rounded-lg text-red-500" title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            ${data.type === 'calculator' ? `
+              <p class="text-sm text-gray-600">${data.entries?.length || 0} entradas</p>
+              <p class="text-lg font-bold text-blue-600">${formatCurrency(data.total || 0)}</p>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+      
+      saveToLocalStorage();
+    }
+
+    function startEditScenarioName(index) {
+      const scenario = scenarios[index];
+      if (!scenario) return;
+      
+      currentEditingScenarioIndex = index;
+      const container = event.target.parentElement;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = scenario.name;
+      input.className = 'scenario-edit-input';
+      input.onblur = () => saveScenarioNameEdit(index, input.value);
+      input.onkeypress = (e) => {
+        if (e.key === 'Enter') saveScenarioNameEdit(index, input.value);
+        if (e.key === 'Escape') renderScenarios();
+      };
+      
+      container.innerHTML = '';
+      container.appendChild(input);
+      input.focus();
+      input.select();
+    }
+
+    function saveScenarioNameEdit(index, newName) {
+      if (!newName.trim()) {
+        renderScenarios();
+        return;
+      }
+      
+      newName = newName.trim();
+      
+      // Check for duplicates (excluding current scenario)
+      if (scenarios.some((s, i) => i !== index && s.name === newName)) {
+        showToast('Esse nome de cenário já existe', 'warning');
+        renderScenarios();
+        return;
+      }
+      
+      scenarios[index].name = newName;
+      scenarios[index].updatedAt = new Date().toISOString();
+      renderScenarios();
+      showToast(`Cenário renomeado para "${newName}"`, 'success');
+    }
+
+    function loadScenario(index) {
+      const scenario = scenarios[index];
+      if (!scenario) return;
+      
+      const data = JSON.parse(scenario.data || '{}');
+      
+      if (data.type === 'calculator') {
+        tapeEntries = data.entries || [];
+        runningTotal = data.total || 0;
+        currentCurrency = data.currency || currentCurrency;
+        highlightedEntryIndex = -1;
+        editModeIndex = -1;
+        newCalcModeIndex = -1;
+        document.getElementById('edit-mode-banner').classList.add('hidden');
+        document.getElementById('new-calc-mode-banner').classList.add('hidden');
+        
+        renderTape();
+        updateRunningTotal();
+        updateChart();
+        updateCurrencyDisplay();
+        saveToLocalStorage();
+        
+        switchTab('calculator');
+        showToast(`"${scenario.name}" carregado`, 'success');
+      }
+    }
+
+    function deleteScenario(index) {
+      const scenario = scenarios[index];
+      if (!scenario) return;
+      
+      if (!confirm(`Eliminar "${scenario.name}"?`)) return;
+      
+      scenarios.splice(index, 1);
+      renderScenarios();
+      showToast('Cenário eliminado', 'success');
+    }
+
+    // ============ EXAMPLES ============
+    function renderExamples() {
+      const container = document.getElementById('examples-grid');
+      container.innerHTML = examples.map(ex => `
+        <div class="card p-4 cursor-pointer hover:border-blue-300" onclick="openExample('${ex.id}')">
+          <h3 class="font-semibold text-gray-800 mb-1">${ex.emoji} ${ex.title}</h3>
+          <p class="text-sm text-gray-500">${ex.description}</p>
+        </div>
+      `).join('');
+    }
+
+    function openExample(id) {
+      currentExample = examples.find(e => e.id === id);
+      if (!currentExample) return;
+      
+      document.getElementById('ex-title').textContent = currentExample.title;
+      document.getElementById('ex-description').textContent = currentExample.description;
+      
+      const content = document.getElementById('ex-content');
+      content.innerHTML = currentExample.steps.map((step, i) => {
+        if (step.isSubtotal) {
+          return `<div class="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400 font-medium text-orange-700">📊 ${step.label}</div>`;
+        }
+        return `<div class="p-3 bg-gray-50 rounded-lg"><span class="text-gray-600">${step.label}:</span> <span class="font-semibold text-blue-600">${formatCurrency(step.value)}</span></div>`;
+      }).join('');
+      
+      document.getElementById('example-area').classList.remove('hidden');
+      
+      // Scroll to the example area
+      setTimeout(() => {
+        document.getElementById('example-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    function closeExample() {
+      document.getElementById('example-area').classList.add('hidden');
+      currentExample = null;
+    }
+
+    function loadExampleToCalculator() {
+      if (!currentExample) return;
+      
+      tapeEntries = [];
+      runningTotal = 0;
+      
+      currentExample.steps.forEach(step => {
+        if (step.isSubtotal) {
+          addSubtotal();
+        } else {
+          addToTape(step.label, step.value, step.label);
+        }
+      });
+      
+      closeExample();
+      switchTab('calculator');
+      showToast(`Exemplo "${currentExample.title}" carregado`, 'success');
+    }
+
+    // ============ EDUCATION ============
+    function renderEducationalContent() {
+      const howtoContainer = document.getElementById('howto-container');
+      howtoContainer.innerHTML = educationalContent.howto.map(item => `
+        <div class="edu-tip p-4 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">${item.title}</h4>
+          <p class="text-sm text-gray-600">${item.content}</p>
+        </div>
+      `).join('');
+      
+      const conceptsContainer = document.getElementById('concepts-container');
+      conceptsContainer.innerHTML = educationalContent.concepts.map(concept => `
+        <div class="card p-4">
+          <h4 class="font-semibold text-blue-600 mb-2">${concept.term}</h4>
+          <p class="text-sm text-gray-600">${concept.definition}</p>
+        </div>
+      `).join('');
+      
+      const formulasContainer = document.getElementById('formulas-container');
+      formulasContainer.innerHTML = educationalContent.formulas.map(formula => `
+        <div class="card p-4">
+          <h4 class="font-semibold text-gray-800 mb-2">${formula.name}</h4>
+          <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+            <div style="font-size: 20px; text-align: center; font-weight: bold; color: #66CFF5;">${formula.operation}</div>
+            <div style="text-align: center; font-size: 13px; margin-top: 8px; color: #666;">${formula.example}</div>
+          </div>
+          <p class="text-xs text-gray-500">${formula.description}</p>
+        </div>
+      `).join('');
+      
+      const tipsContainer = document.getElementById('tips-container');
+      tipsContainer.innerHTML = educationalContent.tips.map(tip => `
+        <div class="edu-tip p-4 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">${tip.title}</h4>
+          <p class="text-sm text-gray-600">${tip.content}</p>
+        </div>
+      `).join('');
+    }
+
+    // ============ EXPORT/IMPORT ============
+    function exportAllData() {
+      const data = {
+        version: '2.8',
+        exportDate: new Date().toISOString(),
+        currency: currentCurrency,
+        exchangeRates,
+        numberFormat,
+        scenarios: scenarios.map(s => ({
+          name: s.name,
+          data: s.data,
+          currency: s.currency,
+          createdAt: s.createdAt
+        })),
+        currentTape: {
+          entries: tapeEntries,
+          total: runningTotal
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `simulafin_export_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Dados exportados com sucesso', 'success');
+    }
+
+    function triggerImport() {
+      document.getElementById('import-file').click();
+    }
+
+    async function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        if (data.currency) currentCurrency = data.currency;
+        if (data.exchangeRates) exchangeRates = { ...exchangeRates, ...data.exchangeRates };
+        if (data.numberFormat) numberFormat = { ...numberFormat, ...data.numberFormat };
+        
+        if (data.currentTape) {
+          tapeEntries = data.currentTape.entries || [];
+          runningTotal = data.currentTape.total || 0;
+        }
+        
+        if (data.scenarios) {
+          scenarios = data.scenarios;
+          renderScenarios();
+        }
+        
+        updateCurrencyDisplay();
+        renderTape();
+        updateChart();
+        saveToLocalStorage();
+        
+        showToast('Dados importados com sucesso', 'success');
+      } catch (e) {
+        console.error('Import error:', e);
+        showToast('Erro ao importar ficheiro', 'error');
+      }
+      
+      event.target.value = '';
+    }
+
+    // ============ UI HELPERS ============
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+      saveToLocalStorage();
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: '#4CAF50',
+        error: '#F44336',
+        warning: '#FF9800',
+        info: '#66CFF5'
+      };
+      
+      toast.className = 'toast';
+      toast.style.background = colors[type] || colors.info;
+      toast.textContent = message;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cec7bc9a1bc41e2',t:'MTc3MTIzOTAyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
