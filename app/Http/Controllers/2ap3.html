@@ -1,0 +1,1839 @@
+
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Xcel Gerador de Gráficos-I (5G)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; background: rgba(30, 136, 229, 0.05); }
+    .btn-primary { background: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-secondary { background: #F8F9FA; border: 1px solid #E0E0E0; transition: all 0.2s ease; }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .input-field { border: 1px solid #E0E0E0; border-radius: 8px; padding: 8px 12px; transition: all 0.2s ease; }
+    .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .chart-card { border-left: 4px solid; border-radius: 8px; background: white; }
+    .funnel-segment { transition: all 0.3s ease; }
+    .funnel-segment:hover { filter: brightness(1.1); transform: scale(1.02); }
+    .treemap-cell { transition: all 0.2s ease; }
+    .treemap-cell:hover { filter: brightness(1.1); }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .modal-overlay { background: rgba(0,0,0,0.5); animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #F8F9FA; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+    .color-palette { display: flex; gap: 4px; flex-wrap: wrap; }
+    .color-swatch { width: 24px; height: 24px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch.selected { border-color: #66CFF5; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 overflow-auto">
+  <div id="app" class="h-full flex flex-col">
+   <!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Excel - Gerador de Gráficos</h1>
+       <p class="text-xs text-gray-500" style="display: none;">Funil, Treemap e Hierarquia</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 flex-wrap">
+      <button onclick="openCurrencyPanel()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+       </svg><span class="hidden sm:inline">Moedas</span> </button> <button onclick="exportAllJSON()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+       </svg><span class="hidden sm:inline">Exportar JSON</span> </button> <button onclick="importJSON()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+       </svg><span class="hidden sm:inline">Importar JSON</span> </button> <button onclick="exportAppImage()" class="btn-primary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+       </svg><span class="hidden sm:inline">Exportar Imagem</span> </button> <button onclick="exportPDF()" class="btn-primary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+       </svg><span class="hidden sm:inline">Exportar PDF</span> </button>
+     </div>
+    </div>
+   </header><!-- Tabs Navigation -->
+   <nav class="bg-white border-b border-gray-200 sticky top-0 z-40 flex-shrink-0">
+    <div class="max-w-7xl mx-auto">
+     <div class="flex overflow-x-auto" id="tabs-container">
+      <button onclick="switchTab('cenarios')" class="tab-btn tab-active px-4 py-3 text-sm font-medium whitespace-nowrap flex items-center gap-2" data-tab="cenarios">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+       </svg> Cenários </button> <button onclick="switchTab('funnel')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="funnel">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+       </svg> Funil </button> <button onclick="switchTab('funnel-inverted')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="funnel-inverted">
+       <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+       </svg> Funil Invertido </button> <button onclick="switchTab('treemap')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="treemap">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+       </svg> Treemap </button> <button onclick="switchTab('hierarchy')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="hierarchy">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+       </svg> Hierarquia </button> <button onclick="switchTab('pie')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="pie">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+       </svg> Pizza </button> <button onclick="switchTab('help')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap flex items-center gap-2 hover:bg-gray-50" data-tab="help">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+       </svg> Ajuda </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-4">
+    <div class="max-w-7xl mx-auto">
+     <!-- Tab Contents -->
+     <div id="tab-content">
+      <!-- Cenários Tab -->
+      <div id="cenarios-tab" class="tab-content">
+       <div class="mb-6">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+         <h2 class="text-lg font-semibold text-gray-800">Cenários Salvos e Templates</h2>
+         <div class="flex gap-2 flex-wrap">
+          <input type="text" id="cenarios-filter" placeholder="Filtrar cenários..." class="input-field text-sm w-48" oninput="filterCenarios()"> <button onclick="createNewScenario()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+           </svg> Novo Cenário </button>
+         </div>
+        </div><!-- Templates Section -->
+        <div class="mb-8">
+         <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewbox="0 0 24 24">
+           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+          </svg> Templates de Aprendizagem</h3>
+         <div id="templates-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+         </div>
+        </div><!-- Saved Scenarios -->
+        <div>
+         <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          </svg> Cenários Salvos</h3>
+         <div id="saved-scenarios-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p class="text-gray-500 text-sm col-span-full text-center py-8">Nenhum cenário salvo ainda. Crie um novo ou use um template.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Funnel Tab -->
+      <div id="funnel-tab" class="tab-content hidden">
+       <div class="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">Gráficos de Funil</h2>
+        <div class="flex gap-2 flex-wrap">
+         <input type="text" id="funnel-filter" placeholder="Filtrar gráficos..." class="input-field text-sm w-48" oninput="filterCharts('funnel')"> <button onclick="openTemplateSelector('funnel')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg> Templates </button> <button onclick="createNewChart('funnel')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg> Novo Funil </button>
+        </div>
+       </div>
+       <div id="funnel-charts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="text-center py-12 col-span-full">
+         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+         </svg>
+         <p class="text-gray-500">Nenhum gráfico de funil criado.</p>
+         <p class="text-gray-400 text-sm">Clique em "Novo Funil" ou importe de templates.</p>
+        </div>
+       </div>
+      </div><!-- Funnel Inverted Tab -->
+      <div id="funnel-inverted-tab" class="tab-content hidden">
+       <div class="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">Gráficos de Funil Invertido</h2>
+        <div class="flex gap-2 flex-wrap">
+         <input type="text" id="funnel-inverted-filter" placeholder="Filtrar gráficos..." class="input-field text-sm w-48" oninput="filterCharts('funnel-inverted')"> <button onclick="openTemplateSelector('funnel-inverted')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg> Templates </button> <button onclick="createNewChart('funnel-inverted')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg> Novo Funil Invertido </button>
+        </div>
+       </div>
+       <div id="funnel-inverted-charts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="text-center py-12 col-span-full">
+         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4 rotate-180" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+         </svg>
+         <p class="text-gray-500">Nenhum gráfico de funil invertido criado.</p>
+         <p class="text-gray-400 text-sm">Clique em "Novo Funil Invertido" ou importe de templates.</p>
+        </div>
+       </div>
+      </div><!-- Treemap Tab -->
+      <div id="treemap-tab" class="tab-content hidden">
+       <div class="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">Gráficos Treemap</h2>
+        <div class="flex gap-2 flex-wrap">
+         <input type="text" id="treemap-filter" placeholder="Filtrar gráficos..." class="input-field text-sm w-48" oninput="filterCharts('treemap')"> <button onclick="saveTabAsScenario()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg> Guardar Cenário </button> <button onclick="openTemplateSelector('treemap')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg> Templates </button> <button onclick="createNewChart('treemap')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg> Novo Treemap </button>
+        </div>
+       </div>
+       <div id="treemap-charts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="text-center py-12 col-span-full">
+         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+         </svg>
+         <p class="text-gray-500">Nenhum gráfico Treemap criado.</p>
+         <p class="text-gray-400 text-sm">Clique em "Novo Treemap" ou importe de templates.</p>
+        </div>
+       </div>
+      </div><!-- Hierarchy Tab -->
+      <div id="hierarchy-tab" class="tab-content hidden">
+       <div class="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">Gráficos de Hierarquia</h2>
+        <div class="flex gap-2 flex-wrap">
+         <input type="text" id="hierarchy-filter" placeholder="Filtrar gráficos..." class="input-field text-sm w-48" oninput="filterCharts('hierarchy')"> <button onclick="saveTabAsScenario()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg> Guardar Cenário </button> <button onclick="openTemplateSelector('hierarchy')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg> Templates </button> <button onclick="createNewChart('hierarchy')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg> Nova Hierarquia </button>
+        </div>
+       </div>
+       <div id="hierarchy-charts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="text-center py-12 col-span-full">
+         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+         </svg>
+         <p class="text-gray-500">Nenhum gráfico de hierarquia criado.</p>
+         <p class="text-gray-400 text-sm">Clique em "Nova Hierarquia" ou importe de templates.</p>
+        </div>
+       </div>
+      </div><!-- Pie Chart Tab -->
+      <div id="pie-tab" class="tab-content hidden">
+       <div class="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">Gráficos de Pizza</h2>
+        <div class="flex gap-2 flex-wrap">
+         <input type="text" id="pie-filter" placeholder="Filtrar gráficos..." class="input-field text-sm w-48" oninput="filterCharts('pie')"> <button onclick="saveTabAsScenario()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg> Guardar Cenário </button> <button onclick="openTemplateSelector('pie')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg> Templates </button> <button onclick="createNewChart('pie')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg> Novo Pizza </button>
+        </div>
+       </div>
+       <div id="pie-charts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="text-center py-12 col-span-full">
+         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+         </svg>
+         <p class="text-gray-500">Nenhum gráfico de pizza criado.</p>
+         <p class="text-gray-400 text-sm">Clique em "Novo Pizza" ou importe de templates.</p>
+        </div>
+       </div>
+      </div><!-- Help Tab -->
+      <div id="help-tab" class="tab-content hidden">
+       <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+          <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg> Guia de Utilização</h2>
+         <p class="text-gray-600 mb-6">Este gerador de gráficos permite criar visualizações profissionais de funil, treemap, hierarquia e pizza para análise de dados e apresentações.</p>
+         <div class="space-y-6">
+          <div class="border-l-4 border-blue-500 pl-4">
+           <h3 class="font-semibold text-gray-800 mb-2">🎯 Como Começar</h3>
+           <ol class="list-decimal list-inside text-gray-600 space-y-1 text-sm">
+            <li>Selecione a aba do tipo de gráfico desejado</li>
+            <li>Clique em "Novo" para criar um gráfico ou use um template</li>
+            <li>Preencha os dados no formulário</li>
+            <li>O gráfico é atualizado em tempo real</li>
+            <li>Exporte como imagem, Excel ou PDF</li>
+           </ol>
+          </div>
+          <div class="border-l-4 border-green-500 pl-4">
+           <h3 class="font-semibold text-gray-800 mb-2">📊 Tipos de Gráficos</h3>
+           <ul class="text-gray-600 space-y-2 text-sm">
+            <li><strong>Funil:</strong> Ideal para visualizar processos de conversão (vendas, marketing)</li>
+            <li><strong>Funil Invertido:</strong> Para mostrar crescimento ou expansão progressiva</li>
+            <li><strong>Treemap:</strong> Excelente para comparar proporções em hierarquias</li>
+            <li><strong>Hierarquia:</strong> Perfeito para organogramas e estruturas</li>
+            <li><strong>Pizza:</strong> Para distribuição percentual com valores reais</li>
+           </ul>
+          </div>
+          <div class="border-l-4 border-amber-500 pl-4">
+           <h3 class="font-semibold text-gray-800 mb-2">💡 Melhores Práticas</h3>
+           <ul class="text-gray-600 space-y-1 text-sm">
+            <li>• Use títulos descritivos e claros</li>
+            <li>• Limite o número de segmentos para melhor legibilidade</li>
+            <li>• Escolha cores contrastantes</li>
+            <li>• Salve cenários para comparações futuras</li>
+            <li>• Use tags para organizar seus gráficos</li>
+           </ul>
+          </div>
+          <div class="border-l-4 border-purple-500 pl-4">
+           <h3 class="font-semibold text-gray-800 mb-2">💰 Moedas CPLP</h3>
+           <p class="text-gray-600 text-sm mb-2">O sistema usa Kwanza (AOA) como moeda padrão. No painel de moedas pode:</p>
+           <ul class="text-gray-600 space-y-1 text-sm">
+            <li>• Configurar taxas de câmbio para BRL, EUR, CVE, MZN, STN, USD</li>
+            <li>• Os valores são convertidos automaticamente</li>
+           </ul>
+          </div>
+          <div class="border-l-4 border-red-500 pl-4">
+           <h3 class="font-semibold text-gray-800 mb-2">📁 Exportação e Importação</h3>
+           <ul class="text-gray-600 space-y-1 text-sm">
+            <li>• <strong>JSON:</strong> Backup completo de todos os dados</li>
+            <li>• <strong>Imagem HD:</strong> Cada gráfico individualmente</li>
+            <li>• <strong>Excel:</strong> Dados em formato de tabela</li>
+            <li>• <strong>PDF:</strong> Documento profissional com todos os gráficos</li>
+           </ul>
+          </div>
+         </div>
+        </div>
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+         <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg> Dica Pro</h3>
+         <p class="text-gray-600 text-sm">Use a funcionalidade de cenários para guardar diferentes versões dos seus dados. Isso permite comparar simulações e voltar a configurações anteriores facilmente!</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Modal Container -->
+  <div id="modal-container" class="fixed inset-0 z-50 hidden"></div><!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div><!-- Hidden File Input --> <input type="file" id="file-input" accept=".json" class="hidden" onchange="handleFileImport(event)">
+  <script>
+    // Global State
+    let appState = {
+      charts: {
+        funnel: [],
+        'funnel-inverted': [],
+        treemap: [],
+        hierarchy: [],
+        pie: []
+      },
+      scenarios: [],
+      tags: [],
+      currencies: {
+        AOA: 1,
+        BRL: 0.0062,
+        EUR: 0.0011,
+        USD: 0.0012,
+        CVE: 0.12,
+        MZN: 0.077,
+        STN: 0.027
+      },
+      currentTab: 'cenarios',
+      config: {
+        app_title: 'IS Excel - Gerador de Gráficos'
+      }
+    };
+
+    // Color Palettes
+    const colorPalettes = [
+      ['#66CFF5', '#43A047', '#FB8C00', '#E53935', '#8E24AA', '#00ACC1'],
+      ['#5C6BC0', '#26A69A', '#FFCA28', '#EF5350', '#AB47BC', '#26C6DA'],
+      ['#42A5F5', '#66BB6A', '#FFA726', '#EC407A', '#7E57C2', '#29B6F6'],
+      ['#7986CB', '#81C784', '#FFD54F', '#F06292', '#9575CD', '#4DD0E1'],
+      ['#3949AB', '#2E7D32', '#F57C00', '#C62828', '#6A1B9A', '#00838F']
+    ];
+
+    // Templates
+    const templates = [
+      {
+        id: 'template-funnel-vendas',
+        type: 'funnel',
+        title: 'Funil de Vendas',
+        description: 'Processo típico de conversão de vendas',
+        color: '#66CFF5',
+        data: [
+          { label: 'Visitantes', value: 10000 },
+          { label: 'Leads', value: 3000 },
+          { label: 'Qualificados', value: 1200 },
+          { label: 'Propostas', value: 400 },
+          { label: 'Clientes', value: 100 }
+        ]
+      },
+      {
+        id: 'template-funnel-marketing',
+        type: 'funnel',
+        title: 'Funil de Marketing Digital',
+        description: 'Jornada do cliente no marketing digital',
+        color: '#43A047',
+        data: [
+          { label: 'Impressões', value: 50000 },
+          { label: 'Cliques', value: 5000 },
+          { label: 'Visitas', value: 3500 },
+          { label: 'Cadastros', value: 500 },
+          { label: 'Conversões', value: 75 }
+        ]
+      },
+      {
+        id: 'template-funnel-rh',
+        type: 'funnel',
+        title: 'Funil de Recrutamento',
+        description: 'Processo de seleção de candidatos',
+        color: '#FB8C00',
+        data: [
+          { label: 'Candidaturas', value: 500 },
+          { label: 'Triagem CV', value: 200 },
+          { label: 'Entrevista RH', value: 80 },
+          { label: 'Teste Técnico', value: 30 },
+          { label: 'Contratados', value: 5 }
+        ]
+      },
+      {
+        id: 'template-treemap-orcamento',
+        type: 'treemap',
+        title: 'Orçamento Empresarial',
+        description: 'Distribuição de custos por departamento',
+        color: '#E53935',
+        data: [
+          { label: 'RH', value: 450000 },
+          { label: 'TI', value: 320000 },
+          { label: 'Marketing', value: 180000 },
+          { label: 'Operações', value: 280000 },
+          { label: 'Administração', value: 150000 }
+        ]
+      },
+      {
+        id: 'template-treemap-vendas',
+        type: 'treemap',
+        title: 'Vendas por Região',
+        description: 'Distribuição de vendas regionais',
+        color: '#8E24AA',
+        data: [
+          { label: 'Luanda', value: 850000 },
+          { label: 'Benguela', value: 320000 },
+          { label: 'Huambo', value: 180000 },
+          { label: 'Cabinda', value: 420000 },
+          { label: 'Outras', value: 230000 }
+        ]
+      },
+      {
+        id: 'template-hierarchy-empresa',
+        type: 'hierarchy',
+        title: 'Organograma Empresarial',
+        description: 'Estrutura organizacional típica',
+        color: '#00ACC1',
+        data: [
+          { label: 'CEO', value: 1, level: 0 },
+          { label: 'Diretor Financeiro', value: 1, level: 1 },
+          { label: 'Diretor Comercial', value: 1, level: 1 },
+          { label: 'Diretor TI', value: 1, level: 1 },
+          { label: 'Gerente Contabilidade', value: 1, level: 2 },
+          { label: 'Gerente Vendas', value: 1, level: 2 }
+        ]
+      },
+      {
+        id: 'template-pie-despesas',
+        type: 'pie',
+        title: 'Despesas Mensais',
+        description: 'Distribuição de despesas domésticas',
+        color: '#5C6BC0',
+        data: [
+          { label: 'Alimentação', value: 85000 },
+          { label: 'Transporte', value: 45000 },
+          { label: 'Moradia', value: 120000 },
+          { label: 'Lazer', value: 25000 },
+          { label: 'Outros', value: 35000 }
+        ]
+      },
+      {
+        id: 'template-pie-portfolio',
+        type: 'pie',
+        title: 'Portfolio de Investimentos',
+        description: 'Alocação de ativos',
+        color: '#26A69A',
+        data: [
+          { label: 'Ações', value: 400000 },
+          { label: 'Obrigações', value: 250000 },
+          { label: 'Imobiliário', value: 200000 },
+          { label: 'Depósitos', value: 100000 },
+          { label: 'Criptomoedas', value: 50000 }
+        ]
+      },
+      {
+        id: 'template-funnel-inverted-crescimento',
+        type: 'funnel-inverted',
+        title: 'Crescimento de Utilizadores',
+        description: 'Expansão da base de utilizadores',
+        color: '#FFCA28',
+        data: [
+          { label: 'Mês 1', value: 100 },
+          { label: 'Mês 2', value: 350 },
+          { label: 'Mês 3', value: 800 },
+          { label: 'Mês 4', value: 1500 },
+          { label: 'Mês 5', value: 3000 }
+        ]
+      },
+      {
+        id: 'template-treemap-projetos',
+        type: 'treemap',
+        title: 'Horas por Projeto',
+        description: 'Alocação de tempo em projetos',
+        color: '#EF5350',
+        data: [
+          { label: 'Projeto Alpha', value: 450 },
+          { label: 'Projeto Beta', value: 320 },
+          { label: 'Projeto Gamma', value: 180 },
+          { label: 'Manutenção', value: 280 },
+          { label: 'Reuniões', value: 120 }
+        ]
+      }
+    ];
+
+    // Initialize App
+    function initApp() {
+      loadFromStorage();
+      renderTemplates();
+      renderSavedScenarios();
+      setupEventListeners();
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig: appState.config,
+          onConfigChange: async (config) => {
+            appState.config = { ...appState.config, ...config };
+            document.getElementById('app-title').textContent = config.app_title || appState.config.app_title;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || appState.config.app_title]
+          ])
+        });
+      }
+    }
+
+    // Storage Functions
+    function saveToStorage() {
+      localStorage.setItem('isexcel_charts', JSON.stringify(appState));
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('isexcel_charts');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+        } catch (e) {
+          console.error('Error loading from storage:', e);
+        }
+      }
+    }
+
+    // Tab Management
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-gray-600');
+      });
+      document.querySelector(`[data-tab="${tabId}"]`).classList.add('tab-active');
+      document.querySelector(`[data-tab="${tabId}"]`).classList.remove('text-gray-600');
+
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+
+      appState.currentTab = tabId;
+    }
+
+    // Render Templates
+    function renderTemplates() {
+      const grid = document.getElementById('templates-grid');
+      grid.innerHTML = templates.map(template => `
+        <div class="chart-card p-4 card-hover cursor-pointer" style="border-left-color: ${template.color};" onclick="useTemplate('${template.id}')">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${template.color}20;">
+                ${getTypeIcon(template.type, template.color)}
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800 text-sm">${template.title}</h4>
+                <span class="text-xs px-2 py-0.5 rounded-full" style="background: ${template.color}20; color: ${template.color};">${getTypeName(template.type)}</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mb-3">${template.description}</p>
+          <div class="flex gap-1 flex-wrap">
+            ${template.data.slice(0, 3).map(d => `<span class="text-xs bg-gray-100 px-2 py-1 rounded">${d.label}</span>`).join('')}
+            ${template.data.length > 3 ? `<span class="text-xs text-gray-400">+${template.data.length - 3}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getTypeIcon(type, color = '#66CFF5') {
+      const icons = {
+        'funnel': `<svg class="w-5 h-5" fill="none" stroke="${color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>`,
+        'funnel-inverted': `<svg class="w-5 h-5 rotate-180" fill="none" stroke="${color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>`,
+        'treemap': `<svg class="w-5 h-5" fill="none" stroke="${color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>`,
+        'hierarchy': `<svg class="w-5 h-5" fill="none" stroke="${color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>`,
+        'pie': `<svg class="w-5 h-5" fill="none" stroke="${color}" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>`
+      };
+      return icons[type] || icons['funnel'];
+    }
+
+    function getTypeName(type) {
+      const names = {
+        'funnel': 'Funil',
+        'funnel-inverted': 'Funil Invertido',
+        'treemap': 'Treemap',
+        'hierarchy': 'Hierarquia',
+        'pie': 'Pizza'
+      };
+      return names[type] || type;
+    }
+
+    // Render Saved Scenarios
+    function renderSavedScenarios() {
+      const grid = document.getElementById('saved-scenarios-grid');
+      const filter = document.getElementById('cenarios-filter')?.value?.toLowerCase() || '';
+      
+      const filtered = appState.scenarios.filter(s => 
+        s.title.toLowerCase().includes(filter) ||
+        s.type.toLowerCase().includes(filter) ||
+        (s.description && s.description.toLowerCase().includes(filter))
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p class="text-gray-500 text-sm col-span-full text-center py-8">Nenhum cenário encontrado.</p>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(scenario => {
+        const chartCount = scenario.chartCount || (scenario.charts ? scenario.charts.length : 1);
+        return `
+        <div class="chart-card p-4 card-hover" style="border-left-color: ${scenario.color || '#66CFF5'};">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${scenario.color || '#66CFF5'}20;">
+                ${getTypeIcon(scenario.type, scenario.color || '#66CFF5')}
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800 text-sm">${scenario.title}</h4>
+                <span class="text-xs text-gray-400">${new Date(scenario.createdAt).toLocaleDateString('pt-PT')}</span>
+                ${chartCount > 1 ? `<span class="text-xs text-blue-600 font-medium ml-2">📊 ${chartCount} gráficos</span>` : ''}
+              </div>
+            </div>
+            <div class="flex gap-1">
+              ${scenario.description ? `<button onclick="showScenarioDetails('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Detalhes">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </button>` : ''}
+              <button onclick="cloneScenario('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Clonar">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              </button>
+              <button onclick="deleteScenario('${scenario.id}')" class="p-1.5 hover:bg-red-50 rounded" title="Eliminar">
+                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full" style="background: ${scenario.color || '#66CFF5'}20; color: ${scenario.color || '#66CFF5'};">${getTypeName(scenario.type)}</span>
+          <div class="mt-3 flex gap-1 flex-wrap">
+            ${(scenario.tags || []).map(tag => `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">${tag}</span>`).join('')}
+          </div>
+          <button onclick="loadScenarioToTab('${scenario.id}')" class="mt-3 w-full btn-primary py-2 rounded-lg text-sm">
+            Carregar Cenário
+          </button>
+        </div>
+      `}).join('');
+    }
+
+    function showScenarioDetails(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[80%] overflow-auto">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Detalhes do Cenário</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Título</p>
+                <p class="text-gray-800 font-medium">${scenario.title}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Descrição</p>
+                <p class="text-gray-600 text-sm">${scenario.description || 'Sem descrição'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Tipo</p>
+                <p class="text-gray-800">${getTypeName(scenario.type)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Gráficos</p>
+                <p class="text-gray-800 font-medium">${scenario.chartCount || (scenario.charts ? scenario.charts.length : 1)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Data</p>
+                <p class="text-gray-600 text-sm">${new Date(scenario.createdAt).toLocaleString('pt-PT')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    // Filter Functions
+    function filterCenarios() {
+      renderSavedScenarios();
+    }
+
+    function filterCharts(type) {
+      renderCharts(type);
+    }
+
+    // Chart Management
+    function createNewChart(type) {
+      openChartEditor(type, null);
+    }
+
+    function openChartEditor(type, chartId) {
+      const chart = chartId ? appState.charts[type].find(c => c.id === chartId) : null;
+      const colors = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+      
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4 overflow-auto">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90%] overflow-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">${chart ? 'Editar' : 'Novo'} ${getTypeName(type)}</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <form id="chart-form" onsubmit="saveChart(event, '${type}', ${chartId ? `'${chartId}'` : 'null'})">
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Título do Gráfico</label>
+                  <input type="text" id="chart-title" class="input-field w-full" placeholder="Ex: Funil de Vendas 2024" value="${chart?.title || ''}" required>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+                  <input type="text" id="chart-tags" class="input-field w-full" placeholder="vendas, q1, angola" value="${(chart?.tags || []).join(', ')}">
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Dados</label>
+                  <div id="data-rows" class="space-y-2">
+                    ${(chart?.data || [{ label: '', value: '' }]).map((d, i) => `
+                      <div class="flex gap-2 items-center data-row">
+                        <input type="text" class="input-field flex-1" placeholder="Rótulo" value="${d.label}" data-field="label">
+                        <input type="number" class="input-field w-32" placeholder="Valor" value="${d.value}" data-field="value">
+                        ${type === 'hierarchy' ? `<input type="number" class="input-field w-20" placeholder="Nível" value="${d.level || 0}" data-field="level" min="0" max="5">` : ''}
+                        <button type="button" onclick="removeDataRow(this)" class="p-2 hover:bg-red-50 rounded">
+                          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button type="button" onclick="addDataRow('${type}')" class="mt-2 btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Adicionar Linha
+                  </button>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                  <button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                  <button type="submit" class="btn-primary px-4 py-2 rounded-lg">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function addDataRow(type) {
+      const container = document.getElementById('data-rows');
+      const row = document.createElement('div');
+      row.className = 'flex gap-2 items-center data-row';
+      row.innerHTML = `
+        <input type="text" class="input-field flex-1" placeholder="Rótulo" data-field="label">
+        <input type="number" class="input-field w-32" placeholder="Valor" data-field="value">
+        ${type === 'hierarchy' ? `<input type="number" class="input-field w-20" placeholder="Nível" data-field="level" min="0" max="5" value="0">` : ''}
+        <button type="button" onclick="removeDataRow(this)" class="p-2 hover:bg-red-50 rounded">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeDataRow(btn) {
+      const rows = document.querySelectorAll('.data-row');
+      if (rows.length > 1) {
+        btn.parentElement.remove();
+      }
+    }
+
+    function saveChart(event, type, chartId) {
+      event.preventDefault();
+      
+      const title = document.getElementById('chart-title').value;
+      const tags = document.getElementById('chart-tags').value.split(',').map(t => t.trim()).filter(t => t);
+      const rows = document.querySelectorAll('.data-row');
+      const data = [];
+      
+      rows.forEach(row => {
+        const label = row.querySelector('[data-field="label"]').value;
+        const value = parseFloat(row.querySelector('[data-field="value"]').value) || 0;
+        const levelInput = row.querySelector('[data-field="level"]');
+        const level = levelInput ? parseInt(levelInput.value) || 0 : 0;
+        
+        if (label) {
+          data.push({ label, value, level });
+        }
+      });
+
+      if (data.length === 0) {
+        showToast('Adicione pelo menos um item de dados', 'error');
+        return;
+      }
+
+      const colors = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+      
+      const chartData = {
+        id: chartId || 'chart-' + Date.now(),
+        type,
+        title,
+        tags,
+        data,
+        colors,
+        color: colors[0],
+        createdAt: chartId ? appState.charts[type].find(c => c.id === chartId)?.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (chartId) {
+        const index = appState.charts[type].findIndex(c => c.id === chartId);
+        if (index !== -1) {
+          appState.charts[type][index] = chartData;
+        }
+      } else {
+        appState.charts[type].push(chartData);
+      }
+
+      // Update tags
+      tags.forEach(tag => {
+        if (!appState.tags.includes(tag)) {
+          appState.tags.push(tag);
+        }
+      });
+
+      saveToStorage();
+      closeModal();
+      renderCharts(type);
+      showToast('Gráfico guardado com sucesso!', 'success');
+    }
+
+    function renderCharts(type) {
+      const container = document.getElementById(`${type}-charts`);
+      const filter = document.getElementById(`${type}-filter`)?.value?.toLowerCase() || '';
+      
+      const filtered = appState.charts[type].filter(c => 
+        c.title.toLowerCase().includes(filter) ||
+        (c.tags || []).some(t => t.toLowerCase().includes(filter)) ||
+        c.data.some(d => d.label.toLowerCase().includes(filter))
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 col-span-full">
+            ${getTypeIcon(type, '#CBD5E1')}
+            <p class="text-gray-500 mt-4">Nenhum gráfico ${getTypeName(type).toLowerCase()} encontrado.</p>
+            <p class="text-gray-400 text-sm">Clique em "Novo" ou importe de templates.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(chart => `
+        <div class="chart-card p-4 card-hover" style="border-left-color: ${chart.color};" id="chart-${chart.id}">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h4 class="font-semibold text-gray-800">${chart.title}</h4>
+              <div class="flex gap-1 mt-1 flex-wrap">
+                ${(chart.tags || []).map(tag => `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">${tag}</span>`).join('')}
+              </div>
+            </div>
+            <div class="flex gap-1 chart-actions">
+              <button onclick="editChart('${type}', '${chart.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Editar">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              </button>
+              <button onclick="cloneChart('${type}', '${chart.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Clonar">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              </button>
+              <button onclick="exportChartImage('${chart.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Exportar Imagem">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              </button>
+              <button onclick="exportChartExcel('${type}', '${chart.id}')" class="p-1.5 hover:bg-gray-100 rounded" title="Exportar Excel">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              </button>
+              <button onclick="saveAsScenario('${type}', '${chart.id}')" class="p-1.5 hover:bg-amber-50 rounded" title="Guardar como Cenário">
+                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+              </button>
+              <button onclick="deleteChart('${type}', '${chart.id}')" class="p-1.5 hover:bg-red-50 rounded" title="Eliminar">
+                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-visualization" id="viz-${chart.id}">
+            ${renderChartVisualization(chart)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderChartVisualization(chart) {
+      switch (chart.type) {
+        case 'funnel':
+          return renderFunnelChart(chart, false);
+        case 'funnel-inverted':
+          return renderFunnelChart(chart, true);
+        case 'treemap':
+          return renderTreemapChart(chart);
+        case 'hierarchy':
+          return renderHierarchyChart(chart);
+        case 'pie':
+          return renderPieChart(chart);
+        default:
+          return '<p class="text-gray-400 text-center">Tipo de gráfico não suportado</p>';
+      }
+    }
+
+    function renderFunnelChart(chart, inverted) {
+      const maxValue = Math.max(...chart.data.map(d => d.value));
+      const colors = chart.colors || colorPalettes[0];
+      
+      return `
+        <div class="py-4">
+          ${chart.data.map((item, i) => {
+            let width;
+            if (inverted) {
+              // Funil invertido: começa pequeno e alarga
+              width = 30 + (i / (chart.data.length - 1 || 1)) * 70;
+            } else {
+              // Funil normal: começa largo e estreita
+              width = 100 - (i / chart.data.length) * 60;
+            }
+            const color = colors[i % colors.length];
+            return `
+              <div class="funnel-segment mb-1 mx-auto rounded" style="width: ${width}%; background: ${color}; padding: 12px;">
+                <div class="flex justify-between items-center text-white text-sm">
+                  <span class="font-medium">${item.label}</span>
+                  <span>${formatCurrency(item.value)}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div class="text-xs text-gray-400 text-center mt-2">
+          Total: ${formatCurrency(chart.data.reduce((a, b) => a + b.value, 0))}
+        </div>
+      `;
+    }
+
+    function renderTreemapChart(chart) {
+      const total = chart.data.reduce((a, b) => a + b.value, 0);
+      const colors = chart.colors || colorPalettes[0];
+      
+      return `
+        <div class="grid grid-cols-3 gap-1 h-48">
+          ${chart.data.map((item, i) => {
+            const percentage = (item.value / total * 100).toFixed(1);
+            const color = colors[i % colors.length];
+            const size = Math.max(1, Math.round(item.value / total * 3));
+            return `
+              <div class="treemap-cell rounded flex flex-col items-center justify-center p-2 text-white text-center" 
+                   style="background: ${color}; grid-column: span ${size};">
+                <span class="font-semibold text-sm truncate w-full">${item.label}</span>
+                <span class="text-xs opacity-90">${formatCurrency(item.value)}</span>
+                <span class="text-xs opacity-75">${percentage}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderHierarchyChart(chart) {
+      const colors = chart.colors || colorPalettes[0];
+      const levels = {};
+      
+      chart.data.forEach(item => {
+        const level = item.level || 0;
+        if (!levels[level]) levels[level] = [];
+        levels[level].push(item);
+      });
+
+      return `
+        <div class="py-4 space-y-4">
+          ${Object.entries(levels).sort((a, b) => a[0] - b[0]).map(([level, items]) => `
+            <div class="flex flex-wrap justify-center gap-2">
+              ${items.map((item, i) => {
+                const color = colors[parseInt(level) % colors.length];
+                return `
+                  <div class="px-4 py-2 rounded-lg text-white text-sm font-medium" style="background: ${color};">
+                    ${item.label}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            ${parseInt(level) < Object.keys(levels).length - 1 ? `
+              <div class="flex justify-center">
+                <svg class="w-4 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+              </div>
+            ` : ''}
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderPieChart(chart) {
+      const total = chart.data.reduce((a, b) => a + b.value, 0);
+      const colors = chart.colors || colorPalettes[0];
+      let cumulativePercent = 0;
+
+      const segments = chart.data.map((item, i) => {
+        const percent = item.value / total;
+        const startPercent = cumulativePercent;
+        cumulativePercent += percent;
+        return { ...item, startPercent, percent, color: colors[i % colors.length] };
+      });
+
+      const getCoordinatesForPercent = (percent) => {
+        const x = Math.cos(2 * Math.PI * percent);
+        const y = Math.sin(2 * Math.PI * percent);
+        return [x, y];
+      };
+
+      return `
+        <div class="flex items-center gap-4 py-4">
+          <svg viewBox="-1 -1 2 2" class="w-32 h-32 flex-shrink-0" style="transform: rotate(-90deg);">
+            ${segments.map(seg => {
+              const [startX, startY] = getCoordinatesForPercent(seg.startPercent);
+              const [endX, endY] = getCoordinatesForPercent(seg.startPercent + seg.percent);
+              const largeArcFlag = seg.percent > 0.5 ? 1 : 0;
+              const pathData = [
+                `M ${startX} ${startY}`,
+                `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                `L 0 0`,
+              ].join(' ');
+              return `<path d="${pathData}" fill="${seg.color}" class="transition-all hover:opacity-80" />`;
+            }).join('')}
+          </svg>
+          <div class="flex-1 space-y-1 text-sm">
+            ${chart.data.map((item, i) => {
+              const percent = (item.value / total * 100).toFixed(1);
+              return `
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-sm" style="background: ${colors[i % colors.length]};"></div>
+                  <span class="flex-1 truncate">${item.label}</span>
+                  <span class="text-gray-500">${formatCurrency(item.value)}</span>
+                  <span class="font-medium" style="color: ${colors[i % colors.length]};">${percent}%</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+        <div class="text-xs text-gray-400 text-center">
+          Total: ${formatCurrency(total)}
+        </div>
+      `;
+    }
+
+    // Chart Actions
+    function editChart(type, chartId) {
+      openChartEditor(type, chartId);
+    }
+
+    function cloneChart(type, chartId) {
+      const chart = appState.charts[type].find(c => c.id === chartId);
+      if (chart) {
+        const newChart = {
+          ...JSON.parse(JSON.stringify(chart)),
+          id: 'chart-' + Date.now(),
+          title: chart.title + ' (Cópia)',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        appState.charts[type].push(newChart);
+        saveToStorage();
+        renderCharts(type);
+        showToast('Gráfico clonado com sucesso!', 'success');
+      }
+    }
+
+    function deleteChart(type, chartId) {
+      showConfirmModal(
+        'Eliminar Gráfico',
+        'Tem certeza que deseja eliminar este gráfico? Esta ação não pode ser desfeita.',
+        () => {
+          appState.charts[type] = appState.charts[type].filter(c => c.id !== chartId);
+          saveToStorage();
+          renderCharts(type);
+          showToast('Gráfico eliminado', 'success');
+        }
+      );
+    }
+
+    function saveAsScenario(type, chartId) {
+      const chart = appState.charts[type].find(c => c.id === chartId);
+      if (chart) {
+        showToast('Clique em "Guardar Cenário" no painel de cenários para salvar múltiplos gráficos de uma vez', 'info');
+      }
+    }
+
+    // New function to save entire tab as scenario
+    function saveTabAsScenario() {
+      const currentTab = appState.currentTab;
+      const chartsInTab = [];
+
+      // Collect all charts from current tab or all chart types
+      if (currentTab !== 'cenarios') {
+        const type = currentTab;
+        chartsInTab.push(...appState.charts[type]);
+      } else {
+        // If in cenarios tab, ask user to select a tab
+        showToast('Seleccione uma aba de gráficos primeiro', 'warning');
+        return;
+      }
+
+      if (chartsInTab.length === 0) {
+        showToast('Nenhum gráfico para guardar', 'warning');
+        return;
+      }
+
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Guardar Cenário</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Cenário</label>
+                <input type="text" id="scenario-name" class="input-field w-full" placeholder="Ex: Simulação Q1 2024" value="">
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descrição (opcional)</label>
+                <textarea id="scenario-desc" class="input-field w-full" placeholder="Adicione notas sobre este cenário" rows="3"></textarea>
+              </div>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p class="text-sm text-blue-800">
+                  <strong>${chartsInTab.length}</strong> gráfico(s) será(ão) incluído(s) neste cenário.
+                </p>
+              </div>
+              <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                <button onclick="confirmSaveTabAsScenario('${currentTab}', ${chartsInTab.length})" class="btn-primary px-4 py-2 rounded-lg">Guardar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function confirmSaveTabAsScenario(type, chartCount) {
+      const chartsInTab = appState.charts[type];
+      const name = document.getElementById('scenario-name').value || `Cenário ${appState.scenarios.length + 1}`;
+      const desc = document.getElementById('scenario-desc').value;
+
+      const scenario = {
+        id: 'scenario-' + Date.now(),
+        type,
+        title: name,
+        description: desc,
+        tags: [],
+        charts: JSON.parse(JSON.stringify(chartsInTab)),
+        chartCount: chartsInTab.length,
+        createdAt: new Date().toISOString()
+      };
+
+      appState.scenarios.push(scenario);
+      saveToStorage();
+      closeModal();
+      renderSavedScenarios();
+      showToast(`Cenário com ${chartCount} gráfico(s) guardado com sucesso!`, 'success');
+    }
+
+    // Template Functions
+    function useTemplate(templateId) {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        const newChart = {
+          ...JSON.parse(JSON.stringify(template)),
+          id: 'chart-' + Date.now(),
+          colors: colorPalettes[Math.floor(Math.random() * colorPalettes.length)],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        newChart.color = newChart.colors[0];
+        appState.charts[template.type].push(newChart);
+        saveToStorage();
+        switchTab(template.type);
+        renderCharts(template.type);
+        showToast('Template importado com sucesso!', 'success');
+      }
+    }
+
+    function openTemplateSelector(type) {
+      const typeTemplates = templates.filter(t => t.type === type);
+      
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80%] overflow-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Templates de ${getTypeName(type)}</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-4 space-y-3">
+              ${typeTemplates.length > 0 ? typeTemplates.map(template => `
+                <div class="chart-card p-4 card-hover cursor-pointer" style="border-left-color: ${template.color};" onclick="useTemplate('${template.id}'); closeModal();">
+                  <h4 class="font-semibold text-gray-800">${template.title}</h4>
+                  <p class="text-sm text-gray-500">${template.description}</p>
+                </div>
+              `).join('') : '<p class="text-gray-500 text-center py-4">Nenhum template disponível para este tipo.</p>'}
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    // Scenario Functions
+    function createNewScenario() {
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Novo Cenário</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <p class="text-gray-600 mb-4">Selecione o tipo de gráfico para o novo cenário:</p>
+              <div class="grid grid-cols-2 gap-3">
+                ${['funnel', 'funnel-inverted', 'treemap', 'hierarchy', 'pie'].map(type => `
+                  <button onclick="createScenarioFromType('${type}')" class="chart-card p-4 card-hover text-left" style="border-left-color: ${colorPalettes[0][0]};">
+                    <div class="flex items-center gap-2">
+                      ${getTypeIcon(type, '#66CFF5')}
+                      <span class="font-medium text-gray-800">${getTypeName(type)}</span>
+                    </div>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function createScenarioFromType(type) {
+      closeModal();
+      const scenarioNum = appState.scenarios.length + 1;
+      const colors = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+      
+      const scenario = {
+        id: 'scenario-' + Date.now(),
+        type,
+        title: `Cenário ${scenarioNum}`,
+        tags: [],
+        data: [{ label: 'Item 1', value: 100, level: 0 }],
+        colors,
+        color: colors[0],
+        createdAt: new Date().toISOString()
+      };
+      
+      appState.scenarios.push(scenario);
+      saveToStorage();
+      renderSavedScenarios();
+      editScenario(scenario.id);
+    }
+
+    function editScenario(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4 overflow-auto">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90%] overflow-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Editar Cenário</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <form id="scenario-form" onsubmit="saveScenario(event, '${scenarioId}')">
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                  <input type="text" id="scenario-title" class="input-field w-full" value="${scenario.title}" required>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                  <input type="text" id="scenario-tags" class="input-field w-full" placeholder="vendas, q1" value="${(scenario.tags || []).join(', ')}">
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Dados</label>
+                  <div id="scenario-data-rows" class="space-y-2">
+                    ${scenario.data.map((d, i) => `
+                      <div class="flex gap-2 items-center scenario-data-row">
+                        <input type="text" class="input-field flex-1" placeholder="Rótulo" value="${d.label}" data-field="label">
+                        <input type="number" class="input-field w-32" placeholder="Valor" value="${d.value}" data-field="value">
+                        ${scenario.type === 'hierarchy' ? `<input type="number" class="input-field w-20" placeholder="Nível" value="${d.level || 0}" data-field="level" min="0" max="5">` : ''}
+                        <button type="button" onclick="removeScenarioDataRow(this)" class="p-2 hover:bg-red-50 rounded">
+                          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button type="button" onclick="addScenarioDataRow('${scenario.type}')" class="mt-2 btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Adicionar Linha
+                  </button>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                  <button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                  <button type="submit" class="btn-primary px-4 py-2 rounded-lg">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function addScenarioDataRow(type) {
+      const container = document.getElementById('scenario-data-rows');
+      const row = document.createElement('div');
+      row.className = 'flex gap-2 items-center scenario-data-row';
+      row.innerHTML = `
+        <input type="text" class="input-field flex-1" placeholder="Rótulo" data-field="label">
+        <input type="number" class="input-field w-32" placeholder="Valor" data-field="value">
+        ${type === 'hierarchy' ? `<input type="number" class="input-field w-20" placeholder="Nível" data-field="level" min="0" max="5" value="0">` : ''}
+        <button type="button" onclick="removeScenarioDataRow(this)" class="p-2 hover:bg-red-50 rounded">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeScenarioDataRow(btn) {
+      const rows = document.querySelectorAll('.scenario-data-row');
+      if (rows.length > 1) {
+        btn.parentElement.remove();
+      }
+    }
+
+    function saveScenario(event, scenarioId) {
+      event.preventDefault();
+      
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      scenario.title = document.getElementById('scenario-title').value;
+      scenario.tags = document.getElementById('scenario-tags').value.split(',').map(t => t.trim()).filter(t => t);
+      
+      const rows = document.querySelectorAll('.scenario-data-row');
+      scenario.data = [];
+      
+      rows.forEach(row => {
+        const label = row.querySelector('[data-field="label"]').value;
+        const value = parseFloat(row.querySelector('[data-field="value"]').value) || 0;
+        const levelInput = row.querySelector('[data-field="level"]');
+        const level = levelInput ? parseInt(levelInput.value) || 0 : 0;
+        
+        if (label) {
+          scenario.data.push({ label, value, level });
+        }
+      });
+
+      saveToStorage();
+      closeModal();
+      renderSavedScenarios();
+      showToast('Cenário atualizado!', 'success');
+    }
+
+    function cloneScenario(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        const scenarioNum = appState.scenarios.length + 1;
+        const newScenario = {
+          ...JSON.parse(JSON.stringify(scenario)),
+          id: 'scenario-' + Date.now(),
+          title: `Cenário ${scenarioNum}: ${scenario.title} (Cópia)`,
+          createdAt: new Date().toISOString()
+        };
+        appState.scenarios.push(newScenario);
+        saveToStorage();
+        renderSavedScenarios();
+        showToast('Cenário clonado!', 'success');
+      }
+    }
+
+    function deleteScenario(scenarioId) {
+      showConfirmModal(
+        'Eliminar Cenário',
+        'Tem certeza que deseja eliminar este cenário?',
+        () => {
+          appState.scenarios = appState.scenarios.filter(s => s.id !== scenarioId);
+          saveToStorage();
+          renderSavedScenarios();
+          showToast('Cenário eliminado', 'success');
+        }
+      );
+    }
+
+    function loadScenarioToTab(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        // If scenario has multiple charts, load all of them
+        if (scenario.charts && scenario.charts.length > 0) {
+          scenario.charts.forEach(chart => {
+            const newChart = {
+              ...JSON.parse(JSON.stringify(chart)),
+              id: 'chart-' + Date.now() + Math.random(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            appState.charts[scenario.type].push(newChart);
+          });
+          saveToStorage();
+          switchTab(scenario.type);
+          renderCharts(scenario.type);
+          showToast(`Cenário carregado com ${scenario.chartCount || scenario.charts.length} gráfico(s)!`, 'success');
+        } else if (scenario.type) {
+          // Legacy: single chart scenario
+          const newChart = {
+            ...JSON.parse(JSON.stringify(scenario)),
+            id: 'chart-' + Date.now(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          delete newChart.charts;
+          delete newChart.chartCount;
+          appState.charts[scenario.type].push(newChart);
+          saveToStorage();
+          switchTab(scenario.type);
+          renderCharts(scenario.type);
+          showToast('Cenário carregado!', 'success');
+        }
+      }
+    }
+
+    // Currency Panel
+    function openCurrencyPanel() {
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-800">Taxas de Câmbio (CPLP + USD)</h3>
+              <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <p class="text-sm text-gray-500 mb-4">Base: 1 AOA (Kwanza Angolano)</p>
+              <div class="space-y-3">
+                ${Object.entries(appState.currencies).filter(([code]) => code !== 'AOA').map(([code, rate]) => `
+                  <div class="flex items-center gap-3">
+                    <span class="w-12 font-medium text-gray-700">${code}</span>
+                    <input type="number" step="0.0001" class="input-field flex-1" value="${rate}" 
+                           onchange="updateCurrency('${code}', this.value)">
+                    <span class="text-xs text-gray-400">${getCurrencyName(code)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="mt-6 pt-4 border-t text-sm text-gray-500">
+                <p>💡 Estas taxas são usadas para converter valores nos gráficos quando necessário.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function getCurrencyName(code) {
+      const names = {
+        BRL: 'Real Brasileiro',
+        EUR: 'Euro',
+        USD: 'Dólar Americano',
+        CVE: 'Escudo Cabo-verdiano',
+        MZN: 'Metical Moçambicano',
+        STN: 'Dobra São-tomense'
+      };
+      return names[code] || code;
+    }
+
+    function updateCurrency(code, value) {
+      appState.currencies[code] = parseFloat(value) || 0;
+      saveToStorage();
+    }
+
+    // Format Currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value) + ' Kz';
+    }
+
+    // Export Functions
+    async function exportChartImage(chartId) {
+      const element = document.getElementById(`chart-${chartId}`);
+      if (!element) return;
+
+      // Hide action buttons temporarily
+      const actions = element.querySelector('.chart-actions');
+      if (actions) actions.style.display = 'none';
+
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `grafico-${chartId}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada!', 'success');
+      } catch (e) {
+        showToast('Erro ao exportar imagem', 'error');
+      } finally {
+        if (actions) actions.style.display = '';
+      }
+    }
+
+    function exportChartExcel(type, chartId) {
+      const chart = appState.charts[type].find(c => c.id === chartId);
+      if (!chart) return;
+
+      const data = [
+        ['Rótulo', 'Valor', ...(type === 'hierarchy' ? ['Nível'] : [])],
+        ...chart.data.map(d => [d.label, d.value, ...(type === 'hierarchy' ? [d.level || 0] : [])])
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, chart.title.substring(0, 31));
+      XLSX.writeFile(wb, `${chart.title}.xlsx`);
+      
+      showToast('Excel exportado!', 'success');
+    }
+
+    function exportAllJSON() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = 'isexcel-graficos-backup.json';
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup JSON exportado!', 'success');
+    }
+
+    function importJSON() {
+      document.getElementById('file-input').click();
+    }
+
+    function handleFileImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.charts && imported.scenarios) {
+            appState = { ...appState, ...imported };
+            saveToStorage();
+            renderSavedScenarios();
+            ['funnel', 'funnel-inverted', 'treemap', 'hierarchy', 'pie'].forEach(type => {
+              renderCharts(type);
+            });
+            showToast('Dados importados com sucesso!', 'success');
+          } else {
+            showToast('Formato de arquivo inválido', 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao importar arquivo', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportAppImage() {
+      const appElement = document.getElementById('app');
+      
+      // Hide all editable elements and buttons
+      const editables = document.querySelectorAll('input, button, .chart-actions');
+      editables.forEach(el => el.style.visibility = 'hidden');
+
+      try {
+        const canvas = await html2canvas(appElement, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false,
+          windowWidth: 1920,
+          windowHeight: 1080
+        });
+        
+        const link = document.createElement('a');
+        link.download = 'isexcel-graficos.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada!', 'success');
+      } catch (e) {
+        showToast('Erro ao exportar imagem', 'error');
+      } finally {
+        editables.forEach(el => el.style.visibility = '');
+      }
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = margin;
+      let pageNum = 1;
+
+      // Header
+      const addHeader = () => {
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('IS Excel - Gerador de Gráficos', margin, 10);
+        doc.text(`Página ${pageNum}`, pageWidth - margin - 15, 10);
+      };
+
+      // Footer
+      const addFooter = () => {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Gerado em ${new Date().toLocaleDateString('pt-PT')}`, margin, pageHeight - 5);
+      };
+
+      addHeader();
+
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(30, 136, 229);
+      doc.text('Relatório de Gráficos', margin, yPos + 10);
+      yPos += 20;
+
+      // Process all charts
+      const allCharts = [
+        ...appState.charts['funnel'],
+        ...appState.charts['funnel-inverted'],
+        ...appState.charts['treemap'],
+        ...appState.charts['hierarchy'],
+        ...appState.charts['pie']
+      ];
+
+      for (const chart of allCharts) {
+        const chartElement = document.getElementById(`chart-${chart.id}`);
+        if (!chartElement) continue;
+
+        // Hide actions
+        const actions = chartElement.querySelector('.chart-actions');
+        if (actions) actions.style.display = 'none';
+
+        try {
+          const canvas = await html2canvas(chartElement, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false
+          });
+
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pageWidth - (margin * 2);
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          // Check if we need a new page
+          if (yPos + imgHeight > pageHeight - 20) {
+            addFooter();
+            doc.addPage();
+            pageNum++;
+            yPos = margin;
+            addHeader();
+          }
+
+          // Chart title
+          doc.setFontSize(12);
+          doc.setTextColor(60);
+          doc.text(chart.title, margin, yPos + 5);
+          yPos += 10;
+
+          // Add image (scaled down for better fit)
+          const scaledHeight = Math.min(imgHeight * 0.5, 80);
+          doc.addImage(imgData, 'PNG', margin, yPos, imgWidth * 0.7, scaledHeight);
+          yPos += scaledHeight + 15;
+
+        } catch (e) {
+          console.error('Error capturing chart:', e);
+        } finally {
+          if (actions) actions.style.display = '';
+        }
+      }
+
+      addFooter();
+      doc.save('isexcel-graficos-relatorio.pdf');
+      showToast('PDF exportado!', 'success');
+    }
+
+    // Modal Functions
+    function closeModal() {
+      document.getElementById('modal-container').classList.add('hidden');
+      document.getElementById('modal-container').innerHTML = '';
+    }
+
+    function showConfirmModal(title, message, onConfirm) {
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div class="p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-2">${title}</h3>
+              <p class="text-gray-600 mb-6">${message}</p>
+              <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                <button onclick="confirmAction()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">Confirmar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      
+      window.confirmAction = () => {
+        closeModal();
+        onConfirm();
+      };
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-amber-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      `;
+      
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Event Listeners
+    function setupEventListeners() {
+      // Close modal on overlay click
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          closeModal();
+        }
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+    }
+
+    // Initialize
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d69b58b868a77d9',t:'MTc3MjU1MjEwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
