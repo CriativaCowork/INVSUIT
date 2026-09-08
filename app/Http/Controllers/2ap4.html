@@ -1,0 +1,1940 @@
+
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Xcell Gerador de Gráficos-II (13G)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#66CFF5',
+            secondary: '#F8F9FA',
+            border: '#E0E0E0',
+            accent: '#43A047',
+            warning: '#FB8C00',
+            danger: '#E53935'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .tab-active {
+      border-bottom: 3px solid #66CFF5;
+      color: #66CFF5;
+      background: rgba(30, 136, 229, 0.05);
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .transition-all {
+      transition: all 0.3s ease;
+    }
+    
+    .chart-container {
+      position: relative;
+      min-height: 300px;
+    }
+    
+    .mini-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .mini-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .template-card {
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+    }
+    
+    .template-card:hover {
+      transform: translateX(5px);
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #F8F9FA;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #E0E0E0;
+      border-radius: 3px;
+    }
+    
+    .modal-overlay {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .gradient-border {
+      background: linear-gradient(135deg, #66CFF5, #43A047);
+      padding: 2px;
+      border-radius: 10px;
+    }
+    
+    .hide-for-export {
+      transition: opacity 0.3s;
+    }
+    
+    .exporting .hide-for-export {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-secondary overflow-auto">
+  <div id="app" class="h-full flex flex-col">
+   <!-- Header -->
+   <header class="bg-white shadow-sm border-b border-border sticky top-0 z-50">
+    <div class="px-4 py-3">
+     <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+       <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center" style="display: none;">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Excel - Gerador de Gráficos</h1>
+        <p class="text-xs text-gray-500" style="display: none;">Crie visualizações profissionais</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap hide-for-export">
+       <button onclick="App.newScenario()" class="px-3 py-2 bg-accent text-white rounded-lg text-sm hover:bg-green-600 transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Novo </button> <button onclick="App.saveScenario()" class="px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-blue-600 transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar </button> <button onclick="App.exportAll()" class="px-3 py-2 bg-warning text-white rounded-lg text-sm hover:bg-orange-600 transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg> JSON </button> <button onclick="App.importAll()" class="px-3 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-primary hover:text-white transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg> Importar </button> <button onclick="App.exportPDF()" class="px-3 py-2 bg-danger text-white rounded-lg text-sm hover:bg-red-600 transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> PDF </button> <button onclick="App.exportImage()" class="px-3 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 transition-all flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg> Imagem </button>
+      </div>
+     </div>
+    </div><!-- Tabs Navigation -->
+    <div class="border-t border-border">
+     <nav id="tabsNav" class="flex overflow-x-auto scrollbar-thin">
+      <!-- Tabs will be rendered here -->
+     </nav>
+    </div>
+   </header><!-- Main Content -->
+   <main id="mainContent" class="flex-1 p-4 overflow-auto">
+    <!-- Tab content will be rendered here -->
+   </main><!-- Currency Panel (floating) -->
+   <div id="currencyPanel" class="fixed bottom-4 right-4 z-40 hide-for-export">
+    <button onclick="App.toggleCurrencyPanel()" class="w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:bg-blue-600 transition-all flex items-center justify-center">
+     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+     </svg></button>
+    <div id="currencyPanelContent" class="hidden absolute bottom-14 right-0 w-80 bg-white rounded-lg shadow-xl border border-border p-4">
+     <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+      <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Taxas de Câmbio (Base: AOA)</h3>
+     <div id="currencyRates" class="space-y-2 max-h-60 overflow-y-auto">
+      <!-- Currency rates will be rendered here -->
+     </div><button onclick="App.addCurrency()" class="mt-3 w-full py-2 border-2 border-dashed border-border rounded-lg text-gray-500 hover:border-primary hover:text-primary transition-all text-sm"> + Adicionar Moeda </button>
+    </div>
+   </div><!-- Modal Container -->
+   <div id="modalContainer" class="hidden fixed inset-0 z-50">
+    <!-- Modals will be rendered here -->
+   </div><!-- Toast Container -->
+   <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2">
+    <!-- Toasts will appear here -->
+   </div><!-- Hidden file input for import --> <input type="file" id="fileInput" class="hidden" accept=".json" onchange="App.handleFileImport(event)">
+  </div>
+  <script>
+    // Chart.js DataLabels plugin registration
+    Chart.register(ChartDataLabels);
+    
+    // ============== APP STATE ==============
+    const AppState = {
+      currentTab: 'cenarios',
+      scenarios: {
+        default: {
+          name: 'Cenário Principal',
+          charts: {}
+        }
+      },
+      currentScenario: 'default',
+      templates: [],
+      savedTags: [],
+      currencies: {
+        AOA: { name: 'Kwanza', symbol: 'Kz', rate: 1 },
+        USD: { name: 'Dólar', symbol: '$', rate: 0.0012 },
+        EUR: { name: 'Euro', symbol: '€', rate: 0.0011 },
+        BRL: { name: 'Real', symbol: 'R$', rate: 0.0060 },
+        CVE: { name: 'Escudo CV', symbol: '$', rate: 0.12 },
+        MZN: { name: 'Metical', symbol: 'MT', rate: 0.077 },
+        STN: { name: 'Dobra', symbol: 'Db', rate: 0.028 },
+        XOF: { name: 'Franco CFA', symbol: 'CFA', rate: 0.72 }
+      },
+      filters: {},
+      chartInstances: {}
+    };
+    
+    // ============== CHART TYPES ==============
+    const ChartTypes = {
+      column: { name: 'Coluna', icon: '📊', category: 'basic', chartType: 'bar', indexAxis: 'x' },
+      bar: { name: 'Barra', icon: '📊', category: 'basic', chartType: 'bar', indexAxis: 'y' },
+      line: { name: 'Linha', icon: '📈', category: 'basic', chartType: 'line' },
+      area: { name: 'Área', icon: '📉', category: 'basic', chartType: 'line', fill: true },
+      pie: { name: 'Pizza', icon: '🥧', category: 'circular', chartType: 'pie' },
+      donut: { name: 'Donut', icon: '🍩', category: 'circular', chartType: 'doughnut' },
+      stackedColumn: { name: 'Coluna Empilhada', icon: '📊', category: 'stacked', chartType: 'bar', stacked: true },
+      stackedBar: { name: 'Barra Empilhada', icon: '📊', category: 'stacked', chartType: 'bar', indexAxis: 'y', stacked: true },
+      stackedArea: { name: 'Área Empilhada', icon: '📉', category: 'stacked', chartType: 'line', fill: true, stacked: true },
+      spline: { name: 'Spline', icon: '〰️', category: 'line', chartType: 'line', tension: 0.4 },
+      stepLine: { name: 'Linha Escalonada', icon: '📶', category: 'line', chartType: 'line', stepped: true },
+      bubble: { name: 'Bolha', icon: '🔵', category: 'scatter', chartType: 'bubble' },
+      scatter: { name: 'Dispersão', icon: '⚬', category: 'scatter', chartType: 'scatter' },
+      radar: { name: 'Radar', icon: '📡', category: 'circular', chartType: 'radar' },
+      polarArea: { name: 'Área Polar', icon: '🎯', category: 'circular', chartType: 'polarArea' },
+      histogram: { name: 'Histograma', icon: '📊', category: 'distribution', chartType: 'bar' },
+      waterfall: { name: 'Cascata', icon: '🌊', category: 'financial', chartType: 'bar' },
+      funnel: { name: 'Funil', icon: '🔻', category: 'funnel', chartType: 'bar', indexAxis: 'y' },
+      funnelInverted: { name: 'Funil Invertido', icon: '🔺', category: 'funnel', chartType: 'bar', indexAxis: 'y' },
+      pyramid: { name: 'Pirâmide', icon: '🔺', category: 'funnel', chartType: 'bar', indexAxis: 'y' },
+      gauge: { name: 'Medidor', icon: '⏲️', category: 'gauge', chartType: 'doughnut' },
+      treemap: { name: 'Treemap', icon: '🗺️', category: 'hierarchical', chartType: 'treemap' },
+      heatmap: { name: 'Mapa de Calor', icon: '🔥', category: 'matrix', chartType: 'matrix' },
+      candlestick: { name: 'Candlestick', icon: '📊', category: 'financial', chartType: 'candlestick' },
+      ohlc: { name: 'OHLC', icon: '📊', category: 'financial', chartType: 'ohlc' },
+      pareto: { name: 'Pareto', icon: '📊', category: 'combination', chartType: 'bar' },
+      combination: { name: 'Combinado', icon: '📊', category: 'combination', chartType: 'bar' },
+      boxPlot: { name: 'Box Plot', icon: '📦', category: 'distribution', chartType: 'boxplot' },
+      bubblePie: { name: 'Bolha Pizza', icon: '🫧', category: 'circular', chartType: 'bubble' }
+    };
+    
+    // ============== TAB DEFINITIONS ==============
+    const TabDefinitions = [
+      { id: 'cenarios', name: 'Cenários', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', isTemplates: true },
+      { id: 'column', name: 'Coluna', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', chartType: 'column' },
+      { id: 'bar', name: 'Barra', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16', chartType: 'bar' },
+      { id: 'line', name: 'Linha', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16', chartType: 'line' },
+      { id: 'area', name: 'Área', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064', chartType: 'area' },
+      { id: 'pie', name: 'Pizza', icon: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z', chartType: 'pie' },
+      { id: 'donut', name: 'Donut', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', chartType: 'donut' },
+      { id: 'stacked', name: 'Empilhados', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', chartType: 'stackedColumn' },
+      { id: 'scatter', name: 'Dispersão', icon: 'M12 4v1m6 11h1m-15 0h1m11.364-8.364l-.707.707m-9.9 0l-.707-.707M12 20v1m6-6a6 6 0 11-12 0 6 6 0 0112 0z', chartType: 'scatter' },
+      { id: 'radar', name: 'Radar', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7', chartType: 'radar' },
+      { id: 'financial', name: 'Financeiros', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', chartType: 'waterfall' },
+      { id: 'gauge', name: 'Medidores', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', chartType: 'gauge' },
+      { id: 'funnel', name: 'Funil', icon: 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z', chartType: 'funnel' },
+      { id: 'special', name: 'Especiais', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', chartType: 'bubble' },
+      { id: 'help', name: 'Ajuda', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', isHelp: true }
+    ];
+    
+    // ============== LEARNING TEMPLATES ==============
+    const LearningTemplates = [
+      {
+        id: 'vendas-mensais',
+        name: 'Vendas Mensais',
+        description: 'Análise de vendas por mês com gráfico de colunas',
+        color: '#66CFF5',
+        chartType: 'column',
+        data: {
+          labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+          datasets: [{ label: 'Vendas (Kz)', data: [150000, 180000, 220000, 195000, 240000, 280000] }]
+        }
+      },
+      {
+        id: 'market-share',
+        name: 'Quota de Mercado',
+        description: 'Distribuição de mercado entre concorrentes',
+        color: '#43A047',
+        chartType: 'pie',
+        data: {
+          labels: ['Empresa A', 'Empresa B', 'Empresa C', 'Outros'],
+          datasets: [{ data: [35, 28, 22, 15] }]
+        }
+      },
+      {
+        id: 'evolucao-receita',
+        name: 'Evolução de Receita',
+        description: 'Tendência de crescimento ao longo do tempo',
+        color: '#FB8C00',
+        chartType: 'line',
+        data: {
+          labels: ['2019', '2020', '2021', '2022', '2023'],
+          datasets: [{ label: 'Receita (Milhões Kz)', data: [12, 15, 18, 24, 32] }]
+        }
+      },
+      {
+        id: 'comparativo-regioes',
+        name: 'Comparativo por Regiões',
+        description: 'Performance por região geográfica',
+        color: '#E53935',
+        chartType: 'bar',
+        data: {
+          labels: ['Luanda', 'Benguela', 'Huambo', 'Cabinda', 'Malanje'],
+          datasets: [{ label: 'Vendas (Kz)', data: [450000, 280000, 190000, 320000, 150000] }]
+        }
+      },
+      {
+        id: 'orcamento-despesas',
+        name: 'Orçamento vs Despesas',
+        description: 'Comparação entre planeado e realizado',
+        color: '#8E24AA',
+        chartType: 'stackedColumn',
+        data: {
+          labels: ['Marketing', 'IT', 'RH', 'Operações', 'Admin'],
+          datasets: [
+            { label: 'Orçamento', data: [80000, 120000, 90000, 150000, 60000] },
+            { label: 'Realizado', data: [75000, 135000, 85000, 145000, 70000] }
+          ]
+        }
+      },
+      {
+        id: 'funil-vendas',
+        name: 'Funil de Vendas',
+        description: 'Conversão do processo comercial',
+        color: '#00ACC1',
+        chartType: 'funnel',
+        data: {
+          labels: ['Leads', 'Contactos', 'Propostas', 'Negociação', 'Fecho'],
+          datasets: [{ data: [1000, 650, 400, 180, 75] }]
+        }
+      },
+      {
+        id: 'desempenho-equipa',
+        name: 'Desempenho da Equipa',
+        description: 'Análise radar de competências',
+        color: '#5E35B1',
+        chartType: 'radar',
+        data: {
+          labels: ['Vendas', 'Atendimento', 'Técnico', 'Inovação', 'Trabalho Equipa'],
+          datasets: [
+            { label: 'Meta', data: [90, 85, 80, 75, 90] },
+            { label: 'Real', data: [85, 90, 75, 80, 85] }
+          ]
+        }
+      },
+      {
+        id: 'distribuicao-produtos',
+        name: 'Distribuição de Produtos',
+        description: 'Participação por categoria de produto',
+        color: '#FF7043',
+        chartType: 'donut',
+        data: {
+          labels: ['Electrónicos', 'Vestuário', 'Alimentação', 'Casa', 'Outros'],
+          datasets: [{ data: [30, 25, 20, 15, 10] }]
+        }
+      },
+      {
+        id: 'tendencia-clientes',
+        name: 'Tendência de Clientes',
+        description: 'Crescimento da base de clientes',
+        color: '#26A69A',
+        chartType: 'area',
+        data: {
+          labels: ['T1', 'T2', 'T3', 'T4'],
+          datasets: [
+            { label: 'Novos', data: [120, 150, 180, 220] },
+            { label: 'Recorrentes', data: [300, 350, 400, 480] }
+          ]
+        }
+      },
+      {
+        id: 'kpi-gauge',
+        name: 'KPI de Performance',
+        description: 'Indicador de meta atingida',
+        color: '#7CB342',
+        chartType: 'gauge',
+        data: {
+          value: 78,
+          max: 100,
+          label: 'Meta Atingida'
+        }
+      }
+    ];
+    
+    // ============== COLOR PALETTES ==============
+    const ColorPalettes = [
+      ['#66CFF5', '#43A047', '#FB8C00', '#E53935', '#8E24AA', '#00ACC1'],
+      ['#5C6BC0', '#26A69A', '#FFCA28', '#EF5350', '#AB47BC', '#29B6F6'],
+      ['#42A5F5', '#66BB6A', '#FFA726', '#EC407A', '#7E57C2', '#26C6DA'],
+      ['#3949AB', '#2E7D32', '#F57C00', '#C62828', '#6A1B9A', '#00838F'],
+      ['#33BEF2', '#388E3C', '#EF6C00', '#D32F2F', '#7B1FA2', '#0097A7'],
+      ['#7986CB', '#81C784', '#FFD54F', '#E57373', '#BA68C8', '#4DD0E1']
+    ];
+    
+    // ============== UTILITY FUNCTIONS ==============
+    const Utils = {
+      generateId: () => 'chart_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      
+      getRandomColor: () => {
+        const palette = ColorPalettes[Math.floor(Math.random() * ColorPalettes.length)];
+        return palette[Math.floor(Math.random() * palette.length)];
+      },
+      
+      getColorPalette: (count) => {
+        const allColors = ColorPalettes.flat();
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+          colors.push(allColors[i % allColors.length]);
+        }
+        return colors;
+      },
+      
+      formatCurrency: (value, currency = 'AOA') => {
+        const curr = AppState.currencies[currency] || AppState.currencies.AOA;
+        return `${curr.symbol} ${Number(value).toLocaleString('pt-PT')}`;
+      },
+      
+      convertCurrency: (value, from, to) => {
+        const fromRate = AppState.currencies[from]?.rate || 1;
+        const toRate = AppState.currencies[to]?.rate || 1;
+        return (value / fromRate) * toRate;
+      },
+      
+      deepClone: (obj) => JSON.parse(JSON.stringify(obj)),
+      
+      debounce: (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      },
+      
+      showToast: (message, type = 'success') => {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-accent' : type === 'error' ? 'bg-danger' : 'bg-primary';
+        toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 transform translate-x-full transition-transform duration-300`;
+        toast.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+          </svg>
+          <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+        setTimeout(() => {
+          toast.classList.add('translate-x-full');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+    };
+    
+    // ============== CHART RENDERER ==============
+    const ChartRenderer = {
+      create: (containerId, chartConfig, chartId) => {
+        const canvas = document.getElementById(containerId);
+        if (!canvas) return null;
+        
+        const ctx = canvas.getContext('2d');
+        const type = ChartTypes[chartConfig.type] || ChartTypes.column;
+        
+        // Destroy existing chart
+        if (AppState.chartInstances[chartId]) {
+          AppState.chartInstances[chartId].destroy();
+        }
+        
+        // Prepare datasets with colors
+        const datasets = chartConfig.data.datasets.map((ds, idx) => {
+          const colors = Utils.getColorPalette(chartConfig.data.labels?.length || ds.data?.length || 6);
+          const isCircular = type.chartType === 'pie' || type.chartType === 'doughnut' || type.chartType === 'polarArea';
+          const isLine = type.chartType === 'line' || type.chartType === 'radar';
+          
+          return {
+            ...ds,
+            backgroundColor: ds.backgroundColor || (isCircular ? colors : (isLine ? 'transparent' : colors[idx % colors.length])),
+            borderColor: ds.borderColor || (isCircular ? 'rgba(255,255,255,0.8)' : colors[idx % colors.length]),
+            borderWidth: ds.borderWidth || (isLine ? 2 : 1),
+            pointBackgroundColor: colors[idx % colors.length],
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            fill: type.fill || false,
+            tension: type.tension || 0,
+            stepped: type.stepped || false
+          };
+        });
+        
+        // Chart configuration
+        const config = {
+          type: type.chartType,
+          data: {
+            labels: chartConfig.data.labels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: type.indexAxis || 'x',
+            plugins: {
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  usePointStyle: true
+                }
+              },
+              title: {
+                display: !!chartConfig.title,
+                text: chartConfig.title || '',
+                font: { size: 16, weight: 'bold' },
+                padding: { bottom: 20 }
+              },
+              datalabels: {
+                display: (context) => {
+                  return type.chartType === 'pie' || type.chartType === 'doughnut' || type.chartType === 'polarArea';
+                },
+                formatter: (value, context) => {
+                  if (type.chartType === 'pie' || type.chartType === 'doughnut' || type.chartType === 'polarArea') {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${value}\n(${percentage}%)`;
+                  }
+                  return value;
+                },
+                color: '#fff',
+                font: { weight: 'bold', size: 11 },
+                textAlign: 'center'
+              }
+            },
+            scales: (type.chartType === 'pie' || type.chartType === 'doughnut' || type.chartType === 'radar' || type.chartType === 'polarArea') ? {} : {
+              x: {
+                stacked: type.stacked || false,
+                grid: { display: false }
+              },
+              y: {
+                stacked: type.stacked || false,
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              }
+            }
+          },
+          plugins: [ChartDataLabels]
+        };
+        
+        // Special handling for gauge
+        if (chartConfig.type === 'gauge') {
+          const gaugeValue = chartConfig.data.value || 0;
+          const gaugeMax = chartConfig.data.max || 100;
+          config.data = {
+            datasets: [{
+              data: [gaugeValue, gaugeMax - gaugeValue],
+              backgroundColor: ['#66CFF5', '#E0E0E0'],
+              borderWidth: 0
+            }]
+          };
+          config.options.circumference = 180;
+          config.options.rotation = -90;
+          config.options.cutout = '70%';
+          config.options.plugins.datalabels = {
+            display: true,
+            formatter: (value, context) => {
+              if (context.dataIndex === 0) return `${gaugeValue}%`;
+              return '';
+            },
+            color: '#66CFF5',
+            font: { weight: 'bold', size: 24 }
+          };
+        }
+        
+        // Special handling for funnel
+        if (chartConfig.type === 'funnel' || chartConfig.type === 'funnelInverted' || chartConfig.type === 'pyramid') {
+          const funnelData = chartConfig.data.datasets[0].data;
+          const maxValue = Math.max(...funnelData);
+          const colors = Utils.getColorPalette(funnelData.length);
+          
+          config.data.datasets[0].backgroundColor = colors;
+          config.data.datasets[0].barPercentage = 1;
+          config.data.datasets[0].categoryPercentage = 0.9;
+        }
+        
+        const chart = new Chart(ctx, config);
+        AppState.chartInstances[chartId] = chart;
+        
+        return chart;
+      },
+      
+      update: (chartId, newData) => {
+        const chart = AppState.chartInstances[chartId];
+        if (chart) {
+          chart.data = newData;
+          chart.update();
+        }
+      },
+      
+      destroy: (chartId) => {
+        if (AppState.chartInstances[chartId]) {
+          AppState.chartInstances[chartId].destroy();
+          delete AppState.chartInstances[chartId];
+        }
+      }
+    };
+    
+    // ============== MAIN APP ==============
+    const App = {
+      init: () => {
+        App.loadFromStorage();
+        App.renderTabs();
+        App.renderTabContent();
+        App.renderCurrencyPanel();
+        App.renderScenarioSelect();
+        App.initElementSDK();
+      },
+      
+      initElementSDK: () => {
+        const defaultConfig = {
+          app_title: 'IS Excel - Gerador de Gráficos'
+        };
+        
+        if (window.elementSdk) {
+          window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (config) => {
+              const title = config.app_title || defaultConfig.app_title;
+              document.getElementById('appTitle').textContent = title;
+              document.title = title;
+            },
+            mapToCapabilities: (config) => ({
+              recolorables: [],
+              borderables: [],
+              fontEditable: undefined,
+              fontSizeable: undefined
+            }),
+            mapToEditPanelValues: (config) => new Map([
+              ['app_title', config.app_title || defaultConfig.app_title]
+            ])
+          });
+        }
+      },
+      
+      loadFromStorage: () => {
+        try {
+          const saved = localStorage.getItem('isexcel_data');
+          if (saved) {
+            const data = JSON.parse(saved);
+            if (data.scenarios) AppState.scenarios = data.scenarios;
+            if (data.templates) AppState.templates = data.templates;
+            if (data.savedTags) AppState.savedTags = data.savedTags;
+            if (data.currencies) AppState.currencies = { ...AppState.currencies, ...data.currencies };
+            if (data.currentScenario) AppState.currentScenario = data.currentScenario;
+          }
+        } catch (e) {
+          console.error('Error loading from storage:', e);
+        }
+      },
+      
+      saveToStorage: () => {
+        try {
+          const data = {
+            scenarios: AppState.scenarios,
+            templates: AppState.templates,
+            savedTags: AppState.savedTags,
+            currencies: AppState.currencies,
+            currentScenario: AppState.currentScenario
+          };
+          localStorage.setItem('isexcel_data', JSON.stringify(data));
+        } catch (e) {
+          console.error('Error saving to storage:', e);
+        }
+      },
+      
+      renderTabs: () => {
+        const nav = document.getElementById('tabsNav');
+        nav.innerHTML = TabDefinitions.map(tab => `
+          <button onclick="App.switchTab('${tab.id}')" 
+                  class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-primary whitespace-nowrap transition-all ${AppState.currentTab === tab.id ? 'tab-active' : ''}"
+                  data-tab="${tab.id}">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${tab.icon}"/>
+            </svg>
+            ${tab.name}
+          </button>
+        `).join('');
+      },
+      
+      switchTab: (tabId) => {
+        AppState.currentTab = tabId;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.toggle('tab-active', btn.dataset.tab === tabId);
+        });
+        App.renderTabContent();
+      },
+      
+      renderTabContent: () => {
+        const main = document.getElementById('mainContent');
+        const tab = TabDefinitions.find(t => t.id === AppState.currentTab);
+        
+        if (tab.isTemplates) {
+          main.innerHTML = App.renderTemplatesTab();
+        } else if (tab.isHelp) {
+          main.innerHTML = App.renderHelpTab();
+        } else {
+          main.innerHTML = App.renderChartTab(tab);
+        }
+        
+        // Initialize charts after render
+        setTimeout(() => App.initializeCharts(), 100);
+      },
+      
+      renderTemplatesTab: () => {
+        return `
+          <div class="max-w-7xl mx-auto">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-gray-800 mb-2">Cenários de Aprendizagem</h2>
+              <p class="text-gray-600">Explore exemplos práticos para aprender a criar gráficos profissionais</p>
+            </div>
+            
+            <!-- Filter -->
+            <div class="mb-6 hide-for-export">
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="filterCenarios" placeholder="Filtrar cenários..." 
+                       class="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                       oninput="App.filterTemplates(this.value)">
+              </div>
+            </div>
+            
+            <!-- Templates Grid -->
+            <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${LearningTemplates.map(template => `
+                <div class="template-card bg-white rounded-lg shadow-sm border border-border p-4 card-hover cursor-pointer transition-all"
+                     style="border-left: 4px solid ${template.color}"
+                     onclick="App.useTemplate('${template.id}')"
+                     data-name="${template.name.toLowerCase()}"
+                     data-desc="${template.description.toLowerCase()}">
+                  <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 pt-1">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: ${template.color}">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${template.chartType === 'pie' || template.chartType === 'donut' ? 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' : template.chartType === 'line' || template.chartType === 'area' ? 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16' : template.chartType === 'radar' ? 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' : template.chartType === 'funnel' ? 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' : 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'}"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-gray-800 truncate">${template.name}</h3>
+                      <p class="text-sm text-gray-500 mt-1 line-clamp-2">${template.description}</p>
+                      <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full text-white" style="background: ${template.color}">
+                        ${ChartTypes[template.chartType]?.name || 'Gráfico'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <!-- Saved Templates -->
+            ${AppState.templates.length > 0 ? `
+              <div class="mt-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Os Meus Templates Guardados</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${AppState.templates.map((template, idx) => {
+                    const color = Utils.getRandomColor();
+                    return `
+                    <div class="template-card bg-white rounded-lg shadow-sm border border-border p-4 card-hover transition-all"
+                         style="border-left: 4px solid ${color}">
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-start gap-2">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: ${color}">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${template.type === 'pie' || template.type === 'donut' ? 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' : template.type === 'line' || template.type === 'area' ? 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16' : 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'}"/>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                              <h4 class="font-semibold text-gray-800 truncate">${template.title || 'Sem título'}</h4>
+                              <p class="text-sm text-gray-500">${ChartTypes[template.type]?.name || 'Gráfico'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0 hide-for-export">
+                          <button onclick="event.stopPropagation(); App.loadSavedTemplate(${idx})" class="mini-btn bg-primary text-white" title="Carregar">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                          </button>
+                          <button onclick="event.stopPropagation(); App.deleteSavedTemplate(${idx})" class="mini-btn bg-danger text-white" title="Eliminar">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            <!-- Cenários Guardados -->
+            ${Object.keys(AppState.scenarios).length > 1 ? `
+              <div class="mt-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Os Meus Cenários</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${Object.entries(AppState.scenarios).map(([scenarioId, scenario]) => {
+                    const chartCount = Object.values(scenario.charts || {}).flat().length;
+                    return `
+                    <div class="template-card bg-white rounded-lg shadow-sm border border-border p-4 card-hover cursor-pointer transition-all"
+                         style="border-left: 4px solid #66CFF5"
+                         onclick="App.switchToScenario('${scenarioId}')">
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-start gap-2">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                              <h4 class="font-semibold text-gray-800 truncate">${scenario.name || 'Cenário'}</h4>
+                              <p class="text-sm text-gray-500">${chartCount} gráfico${chartCount !== 1 ? 's' : ''}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0 hide-for-export">
+                          <button onclick="event.stopPropagation(); App.deleteScenario('${scenarioId}')" class="mini-btn bg-danger text-white" title="Eliminar">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      },
+      
+      renderChartTab: (tab) => {
+        const scenario = AppState.scenarios[AppState.currentScenario];
+        const charts = scenario?.charts?.[tab.id] || [];
+        const chartType = tab.chartType;
+        
+        return `
+          <div class="max-w-full mx-auto">
+            <!-- Tab Header -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-800">${tab.name}</h2>
+                <p class="text-gray-600">Gráficos tipo ${ChartTypes[chartType]?.name || tab.name}</p>
+              </div>
+              <div class="flex gap-2 hide-for-export">
+                <button onclick="App.createChart('${tab.id}', '${chartType}')" 
+                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Novo Gráfico
+                </button>
+              </div>
+            </div>
+            
+            <!-- Filter -->
+            <div class="mb-6 hide-for-export">
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" placeholder="Filtrar gráficos por título ou dados..." 
+                       class="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                       oninput="App.filterCharts('${tab.id}', this.value)">
+              </div>
+            </div>
+            
+            <!-- Charts Grid -->
+            <div id="chartsGrid_${tab.id}" class="grid grid-cols-1 ${charts.length === 1 ? '' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6">
+              ${charts.length === 0 ? `
+                <div class="col-span-full text-center py-16">
+                  <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-gray-700 mb-2">Nenhum gráfico criado</h3>
+                  <p class="text-gray-500 mb-4">Clique em "Novo Gráfico" ou importe um template</p>
+                  <button onclick="App.switchTab('cenarios')" class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all">
+                    Ver Templates
+                  </button>
+                </div>
+              ` : charts.map((chart, idx) => App.renderChartCard(chart, tab.id, idx)).join('')}
+            </div>
+          </div>
+        `;
+      },
+      
+      renderChartCard: (chart, tabId, index) => {
+        const chartId = `chart_${tabId}_${index}`;
+        const isSingleChart = (AppState.scenarios[AppState.currentScenario]?.charts?.[tabId] || []).length === 1;
+        
+        return `
+          <div class="chart-card bg-white rounded-lg shadow-sm border border-border overflow-hidden card-hover transition-all ${isSingleChart ? 'col-span-full' : ''}"
+               data-chart-id="${chartId}"
+               data-title="${(chart.title || '').toLowerCase()}"
+               data-labels="${(chart.data?.labels || []).join(' ').toLowerCase()}"
+               style="border-left: 4px solid ${Utils.getRandomColor()}">
+            <!-- Chart Header -->
+            <div class="px-4 py-3 border-b border-border">
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${chart.type === 'pie' || chart.type === 'donut' ? 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' : chart.type === 'line' ? 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16' : chart.type === 'area' ? 'M3 3h18M3 7c0-1.1.9-2 2-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z' : chart.type === 'radar' ? 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' : 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'}"/>
+                  </svg>
+                  <input type="text" value="${chart.title || 'Sem título'}" 
+                         class="font-semibold text-gray-800 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary rounded px-1 hide-for-export flex-1 min-w-0"
+                         onchange="App.updateChartTitle('${tabId}', ${index}, this.value)">
+                  <span class="font-semibold text-gray-800 hidden">${chart.title || 'Sem título'}</span>
+                </div>
+              </div>
+              <div class="flex gap-1 hide-for-export flex-wrap">
+                <button onclick="App.editChart('${tabId}', ${index})" class="mini-btn bg-primary/10 text-primary hover:bg-primary hover:text-white" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="App.cloneChart('${tabId}', ${index})" class="mini-btn bg-accent/10 text-accent hover:bg-accent hover:text-white" title="Clonar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+                <button onclick="App.exportChartImage('${tabId}', ${index})" class="mini-btn bg-warning/10 text-warning hover:bg-warning hover:text-white" title="Exportar Imagem">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </button>
+                <button onclick="App.exportChartExcel('${tabId}', ${index})" class="mini-btn bg-green-100 text-green-600 hover:bg-green-600 hover:text-white" title="Exportar Excel">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </button>
+                <button onclick="App.deleteChart('${tabId}', ${index})" class="mini-btn bg-danger/10 text-danger hover:bg-danger hover:text-white" title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Chart Canvas -->
+            <div class="chart-container p-4" style="height: ${isSingleChart ? '500px' : '350px'}">
+              <canvas id="${chartId}"></canvas>
+            </div>
+            
+            <!-- Tags -->
+            ${chart.tags?.length > 0 ? `
+              <div class="px-4 pb-3 flex flex-wrap gap-1">
+                ${chart.tags.map(tag => `
+                  <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">${tag}</span>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      },
+      
+      renderHelpTab: () => {
+        return `
+          <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+              <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Guia de Utilização
+              </h2>
+              
+              <div class="space-y-6">
+                <section>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">1</span>
+                    Importância da Visualização de Dados
+                  </h3>
+                  <p class="text-gray-600 ml-10">
+                    A visualização de dados transforma informações complexas em representações visuais claras e compreensíveis. 
+                    Gráficos bem construídos facilitam a tomada de decisões, identificação de padrões e comunicação de resultados.
+                  </p>
+                </section>
+                
+                <section>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center text-sm">2</span>
+                    Como Criar um Gráfico
+                  </h3>
+                  <ul class="text-gray-600 ml-10 space-y-2">
+                    <li>• Navegue até à aba do tipo de gráfico desejado</li>
+                    <li>• Clique em "Novo Gráfico" ou utilize um template</li>
+                    <li>• Insira os dados nos campos apropriados</li>
+                    <li>• Personalize o título e as cores</li>
+                    <li>• Guarde o cenário para uso futuro</li>
+                  </ul>
+                </section>
+                
+                <section>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-warning text-white rounded-full flex items-center justify-center text-sm">3</span>
+                    Tipos de Gráficos e Suas Aplicações
+                  </h3>
+                  <div class="ml-10 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Colunas/Barras:</strong> Comparação de categorias
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Linhas/Áreas:</strong> Tendências ao longo do tempo
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Pizza/Donut:</strong> Proporções de um todo
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Radar:</strong> Comparação multidimensional
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Funil:</strong> Processos sequenciais
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <strong>Dispersão:</strong> Correlação entre variáveis
+                    </div>
+                  </div>
+                </section>
+                
+                <section>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-danger text-white rounded-full flex items-center justify-center text-sm">4</span>
+                    Melhores Práticas
+                  </h3>
+                  <ul class="text-gray-600 ml-10 space-y-2">
+                    <li>✓ Use títulos claros e descritivos</li>
+                    <li>✓ Evite sobrecarregar com muitos dados</li>
+                    <li>✓ Escolha cores com bom contraste</li>
+                    <li>✓ Mantenha consistência visual</li>
+                    <li>✓ Exporte em alta resolução para apresentações</li>
+                    <li>✓ Organize cenários por projeto ou tema</li>
+                  </ul>
+                </section>
+                
+                <section>
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm">5</span>
+                    Funcionalidades Avançadas
+                  </h3>
+                  <ul class="text-gray-600 ml-10 space-y-2">
+                    <li>📁 <strong>Cenários:</strong> Agrupe gráficos relacionados</li>
+                    <li>🏷️ <strong>Tags:</strong> Organize e encontre gráficos rapidamente</li>
+                    <li>💱 <strong>Conversão:</strong> Painel de taxas de câmbio CPLP</li>
+                    <li>📤 <strong>Exportação:</strong> JSON, PDF, Imagem e Excel</li>
+                    <li>📥 <strong>Importação:</strong> Restaure cenários guardados</li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      
+      initializeCharts: () => {
+        const scenario = AppState.scenarios[AppState.currentScenario];
+        const tab = TabDefinitions.find(t => t.id === AppState.currentTab);
+        
+        if (!tab || tab.isTemplates || tab.isHelp) return;
+        
+        const charts = scenario?.charts?.[tab.id] || [];
+        charts.forEach((chart, idx) => {
+          const chartId = `chart_${tab.id}_${idx}`;
+          ChartRenderer.create(chartId, chart, chartId);
+        });
+      },
+      
+      // ============== CHART ACTIONS ==============
+      createChart: (tabId, chartType) => {
+        App.showChartEditor(tabId, chartType);
+      },
+      
+      showChartEditor: (tabId, chartType, existingChart = null, editIndex = null) => {
+        const isEdit = editIndex !== null;
+        const chart = existingChart || {
+          type: chartType,
+          title: '',
+          data: {
+            labels: ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5'],
+            datasets: [{ label: 'Série 1', data: [0, 0, 0, 0, 0] }]
+          },
+          tags: []
+        };
+        
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+        modal.innerHTML = `
+          <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90%] overflow-auto">
+              <div class="sticky top-0 bg-white px-6 py-4 border-b border-border flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800">${isEdit ? 'Editar' : 'Novo'} Gráfico - ${ChartTypes[chartType]?.name || 'Gráfico'}</h3>
+                <button onclick="App.closeModal()" class="p-2 hover:bg-gray-100 rounded-lg transition-all">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="p-6 space-y-6">
+                <!-- Title -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Título do Gráfico</label>
+                  <input type="text" id="chartTitle" value="${chart.title || ''}" 
+                         class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                         placeholder="Ex: Vendas Mensais 2024">
+                </div>
+                
+                <!-- Tags -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Tags (separar por vírgula)</label>
+                  <input type="text" id="chartTags" value="${(chart.tags || []).join(', ')}"
+                         class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                         placeholder="vendas, 2024, mensal">
+                  ${AppState.savedTags.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mt-2">
+                      ${AppState.savedTags.slice(0, 10).map(tag => `
+                        <button type="button" onclick="App.addTagToInput('${tag}')" 
+                                class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-primary hover:text-white transition-all">
+                          ${tag}
+                        </button>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+                
+                <!-- Labels -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Etiquetas (uma por linha)</label>
+                  <textarea id="chartLabels" rows="5" 
+                            class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                            placeholder="Janeiro&#10;Fevereiro&#10;Março">${(chart.data?.labels || []).join('\n')}</textarea>
+                </div>
+                
+                <!-- Datasets -->
+                <div id="datasetsContainer">
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Séries de Dados</label>
+                    <button type="button" onclick="App.addDataset()" 
+                            class="px-3 py-1 text-sm bg-accent text-white rounded-lg hover:bg-green-600 transition-all">
+                      + Série
+                    </button>
+                  </div>
+                  ${(chart.data?.datasets || []).map((ds, idx) => `
+                    <div class="dataset-item p-4 bg-gray-50 rounded-lg mb-3" data-idx="${idx}">
+                      <div class="flex items-center gap-3 mb-3">
+                        <input type="text" value="${ds.label || 'Série ' + (idx + 1)}" 
+                               class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                               placeholder="Nome da série"
+                               onchange="this.closest('.dataset-item').dataset.label = this.value">
+                        ${idx > 0 ? `
+                          <button type="button" onclick="this.closest('.dataset-item').remove()" 
+                                  class="p-2 text-danger hover:bg-danger hover:text-white rounded-lg transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                          </button>
+                        ` : ''}
+                      </div>
+                      <textarea class="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                                rows="3" placeholder="100&#10;200&#10;150">${(ds.data || []).join('\n')}</textarea>
+                    </div>
+                  `).join('')}
+                </div>
+                
+                ${chartType === 'gauge' ? `
+                  <div class="p-4 bg-blue-50 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Valor do Medidor (0-100)</label>
+                    <input type="number" id="gaugeValue" value="${chart.data?.value || 50}" min="0" max="100"
+                           class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                  </div>
+                ` : ''}
+              </div>
+              
+              <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-border flex justify-between gap-3">
+                <button onclick="App.saveAsTemplate('${tabId}')" 
+                        class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all">
+                  Guardar como Template
+                </button>
+                <div class="flex gap-3">
+                  <button onclick="App.closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    Cancelar
+                  </button>
+                  <button onclick="App.saveChart('${tabId}', '${chartType}', ${editIndex})" 
+                          class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-all">
+                    ${isEdit ? 'Guardar Alterações' : 'Criar Gráfico'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      
+      addDataset: () => {
+        const container = document.getElementById('datasetsContainer');
+        const count = container.querySelectorAll('.dataset-item').length;
+        const newDataset = document.createElement('div');
+        newDataset.className = 'dataset-item p-4 bg-gray-50 rounded-lg mb-3';
+        newDataset.dataset.idx = count;
+        newDataset.innerHTML = `
+          <div class="flex items-center gap-3 mb-3">
+            <input type="text" value="Série ${count + 1}" 
+                   class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                   placeholder="Nome da série">
+            <button type="button" onclick="this.closest('.dataset-item').remove()" 
+                    class="p-2 text-danger hover:bg-danger hover:text-white rounded-lg transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+          <textarea class="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows="3" placeholder="100&#10;200&#10;150"></textarea>
+        `;
+        container.appendChild(newDataset);
+      },
+      
+      addTagToInput: (tag) => {
+        const input = document.getElementById('chartTags');
+        const currentTags = input.value.split(',').map(t => t.trim()).filter(t => t);
+        if (!currentTags.includes(tag)) {
+          currentTags.push(tag);
+          input.value = currentTags.join(', ');
+        }
+      },
+      
+      saveChart: (tabId, chartType, editIndex) => {
+        const title = document.getElementById('chartTitle').value.trim();
+        const tagsInput = document.getElementById('chartTags').value;
+        const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+        const labelsText = document.getElementById('chartLabels').value;
+        const labels = labelsText.split('\n').map(l => l.trim()).filter(l => l);
+        
+        // Collect datasets
+        const datasetItems = document.querySelectorAll('.dataset-item');
+        const datasets = Array.from(datasetItems).map((item, idx) => {
+          const labelInput = item.querySelector('input');
+          const dataTextarea = item.querySelector('textarea');
+          return {
+            label: labelInput.value || `Série ${idx + 1}`,
+            data: dataTextarea.value.split('\n').map(v => parseFloat(v.trim()) || 0)
+          };
+        });
+        
+        // Special handling for gauge
+        let chartData = { labels, datasets };
+        if (chartType === 'gauge') {
+          const gaugeValue = parseFloat(document.getElementById('gaugeValue')?.value) || 50;
+          chartData = { value: gaugeValue, max: 100, label: title };
+        }
+        
+        const chart = {
+          type: chartType,
+          title: title || 'Sem título',
+          data: chartData,
+          tags: tags,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Save tags for reuse
+        tags.forEach(tag => {
+          if (!AppState.savedTags.includes(tag)) {
+            AppState.savedTags.push(tag);
+          }
+        });
+        
+        // Initialize scenario charts if needed
+        if (!AppState.scenarios[AppState.currentScenario]) {
+          AppState.scenarios[AppState.currentScenario] = { name: 'Cenário', charts: {} };
+        }
+        if (!AppState.scenarios[AppState.currentScenario].charts[tabId]) {
+          AppState.scenarios[AppState.currentScenario].charts[tabId] = [];
+        }
+        
+        if (editIndex !== null && editIndex >= 0) {
+          AppState.scenarios[AppState.currentScenario].charts[tabId][editIndex] = chart;
+        } else {
+          AppState.scenarios[AppState.currentScenario].charts[tabId].push(chart);
+        }
+        
+        App.saveToStorage();
+        App.closeModal();
+        App.renderTabContent();
+        Utils.showToast(editIndex !== null ? 'Gráfico atualizado!' : 'Gráfico criado!');
+      },
+      
+      editChart: (tabId, index) => {
+        const chart = AppState.scenarios[AppState.currentScenario]?.charts?.[tabId]?.[index];
+        if (chart) {
+          App.showChartEditor(tabId, chart.type, chart, index);
+        }
+      },
+      
+      cloneChart: (tabId, index) => {
+        const chart = AppState.scenarios[AppState.currentScenario]?.charts?.[tabId]?.[index];
+        if (chart) {
+          const clone = Utils.deepClone(chart);
+          clone.title = (clone.title || 'Gráfico') + ' (Cópia)';
+          clone.createdAt = new Date().toISOString();
+          AppState.scenarios[AppState.currentScenario].charts[tabId].push(clone);
+          App.saveToStorage();
+          App.renderTabContent();
+          Utils.showToast('Gráfico clonado!');
+        }
+      },
+      
+      deleteChart: (tabId, index) => {
+        const chartId = `chart_${tabId}_${index}`;
+        const container = document.querySelector(`[data-chart-id="${chartId}"]`);
+        if (container) {
+          const deleteBtn = container.querySelector('[title="Eliminar"]');
+          if (deleteBtn && deleteBtn.dataset.confirming === 'true') {
+            ChartRenderer.destroy(chartId);
+            AppState.scenarios[AppState.currentScenario].charts[tabId].splice(index, 1);
+            App.saveToStorage();
+            App.renderTabContent();
+            Utils.showToast('Gráfico eliminado!');
+          } else if (deleteBtn) {
+            deleteBtn.dataset.confirming = 'true';
+            const originalHTML = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<span class="text-xs font-semibold">OK?</span>';
+            deleteBtn.classList.add('ring-2', 'ring-danger');
+            
+            const resetTimer = setTimeout(() => {
+              if (deleteBtn.dataset.confirming === 'true') {
+                deleteBtn.dataset.confirming = '';
+                deleteBtn.innerHTML = originalHTML;
+                deleteBtn.classList.remove('ring-2', 'ring-danger');
+              }
+            }, 3000);
+            
+            const tempOnClick = deleteBtn.onclick;
+            deleteBtn.onclick = (e) => {
+              e.stopPropagation();
+              clearTimeout(resetTimer);
+              App.deleteChart(tabId, index);
+            };
+            
+            setTimeout(() => {
+              deleteBtn.onclick = tempOnClick;
+              deleteBtn.dataset.confirming = '';
+              deleteBtn.innerHTML = originalHTML;
+              deleteBtn.classList.remove('ring-2', 'ring-danger');
+            }, 3000);
+          }
+        }
+      },
+      
+      updateChartTitle: (tabId, index, newTitle) => {
+        if (AppState.scenarios[AppState.currentScenario]?.charts?.[tabId]?.[index]) {
+          AppState.scenarios[AppState.currentScenario].charts[tabId][index].title = newTitle;
+          App.saveToStorage();
+        }
+      },
+      
+      // ============== EXPORT FUNCTIONS ==============
+      exportChartImage: async (tabId, index) => {
+        const chartId = `chart_${tabId}_${index}`;
+        const chart = AppState.chartInstances[chartId];
+        if (chart) {
+          const link = document.createElement('a');
+          link.download = `grafico_${tabId}_${index}_${Date.now()}.png`;
+          link.href = chart.toBase64Image('image/png', 1);
+          link.click();
+          Utils.showToast('Imagem exportada!');
+        }
+      },
+      
+      exportChartExcel: (tabId, index) => {
+        const chart = AppState.scenarios[AppState.currentScenario]?.charts?.[tabId]?.[index];
+        if (!chart) return;
+        
+        let csv = 'Etiqueta,' + (chart.data.datasets?.map(ds => ds.label) || ['Valor']).join(',') + '\n';
+        
+        if (chart.data.labels) {
+          chart.data.labels.forEach((label, i) => {
+            const values = chart.data.datasets.map(ds => ds.data[i] || 0);
+            csv += `${label},${values.join(',')}\n`;
+          });
+        }
+        
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${chart.title || 'grafico'}_${Date.now()}.csv`;
+        link.click();
+        Utils.showToast('Excel exportado!');
+      },
+      
+      exportAll: () => {
+        // First, ensure all data is saved to storage
+        App.saveToStorage();
+        
+        // Get fresh data
+        const data = {
+          scenarios: Utils.deepClone(AppState.scenarios),
+          templates: Utils.deepClone(AppState.templates),
+          savedTags: [...AppState.savedTags],
+          currencies: Utils.deepClone(AppState.currencies),
+          exportedAt: new Date().toISOString(),
+          version: '1.0'
+        };
+        
+        // Verify data is not empty
+        console.log('Exportando dados:', {
+          scenarioCount: Object.keys(data.scenarios).length,
+          templateCount: data.templates.length,
+          tagCount: data.savedTags.length,
+          currencyCount: Object.keys(data.currencies).length
+        });
+        
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `isexcel_backup_${Date.now()}.json`;
+        link.click();
+        Utils.showToast('Dados exportados com sucesso!');
+      },
+      
+      importAll: () => {
+        document.getElementById('fileInput').click();
+      },
+      
+      handleFileImport: (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            
+            // Validate data structure
+            if (!data.scenarios || typeof data.scenarios !== 'object') {
+              Utils.showToast('Formato de ficheiro inválido: faltam cenários', 'error');
+              return;
+            }
+            
+            // Merge scenarios with existing ones
+            Object.entries(data.scenarios).forEach(([id, scenario]) => {
+              if (!AppState.scenarios[id]) {
+                AppState.scenarios[id] = scenario;
+              } else {
+                // Merge charts from imported scenario
+                if (scenario.charts) {
+                  AppState.scenarios[id].charts = {
+                    ...AppState.scenarios[id].charts,
+                    ...scenario.charts
+                  };
+                }
+              }
+            });
+            
+            // Merge templates
+            if (data.templates && Array.isArray(data.templates)) {
+              AppState.templates = [...AppState.templates, ...data.templates];
+            }
+            
+            // Merge tags
+            if (data.savedTags && Array.isArray(data.savedTags)) {
+              AppState.savedTags = [...new Set([...AppState.savedTags, ...data.savedTags])];
+            }
+            
+            // Merge currencies
+            if (data.currencies && typeof data.currencies === 'object') {
+              AppState.currencies = { ...AppState.currencies, ...data.currencies };
+            }
+            
+            App.saveToStorage();
+            App.renderTabContent();
+            Utils.showToast('Dados importados com sucesso!');
+            
+            console.log('Dados importados:', {
+              scenarios: Object.keys(AppState.scenarios).length,
+              templates: AppState.templates.length,
+              tags: AppState.savedTags.length,
+              currencies: Object.keys(AppState.currencies).length
+            });
+          } catch (err) {
+            Utils.showToast('Erro ao importar ficheiro: ' + err.message, 'error');
+            console.error('Import error:', err);
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      },
+      
+      exportImage: async () => {
+        document.getElementById('app').classList.add('exporting');
+        
+        setTimeout(async () => {
+          try {
+            const canvas = await html2canvas(document.getElementById('app'), {
+              scale: 2,
+              backgroundColor: '#F8F9FA',
+              logging: false
+            });
+            
+            const link = document.createElement('a');
+            link.download = `isexcel_screenshot_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            Utils.showToast('Imagem exportada!');
+          } catch (err) {
+            Utils.showToast('Erro ao exportar imagem', 'error');
+          }
+          
+          document.getElementById('app').classList.remove('exporting');
+        }, 100);
+      },
+      
+      exportPDF: async () => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        let currentY = margin;
+        let pageNum = 1;
+        
+        const addHeader = () => {
+          pdf.setFontSize(10);
+          pdf.setTextColor(100);
+          pdf.text('IS Excel - Gerador de Gráficos', margin, 10);
+          pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin - 20, 10);
+        };
+        
+        const addFooter = () => {
+          pdf.setFontSize(8);
+          pdf.setTextColor(150);
+          pdf.text(`Página ${pageNum}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+        };
+        
+        const newPage = () => {
+          addFooter();
+          pdf.addPage();
+          pageNum++;
+          currentY = margin + 10;
+          addHeader();
+        };
+        
+        addHeader();
+        currentY = 20;
+        
+        // Title
+        pdf.setFontSize(18);
+        pdf.setTextColor(30, 136, 229);
+        pdf.text('Relatório de Gráficos', pageWidth / 2, currentY, { align: 'center' });
+        currentY += 15;
+        
+        // Scenario info
+        pdf.setFontSize(12);
+        pdf.setTextColor(0);
+        const scenario = AppState.scenarios[AppState.currentScenario];
+        pdf.text(`Cenário: ${scenario?.name || 'Principal'}`, margin, currentY);
+        currentY += 10;
+        
+        // Add charts
+        for (const [tabId, charts] of Object.entries(scenario?.charts || {})) {
+          if (!charts || charts.length === 0) continue;
+          
+          const tab = TabDefinitions.find(t => t.id === tabId);
+          if (!tab) continue;
+          
+          if (currentY > pageHeight - 60) newPage();
+          
+          pdf.setFontSize(14);
+          pdf.setTextColor(30, 136, 229);
+          pdf.text(`${tab.name}`, margin, currentY);
+          currentY += 8;
+          
+          for (const chart of charts) {
+            if (currentY > pageHeight - 80) newPage();
+            
+            const chartId = `chart_${tabId}_${charts.indexOf(chart)}`;
+            const chartInstance = AppState.chartInstances[chartId];
+            
+            if (chartInstance) {
+              const imgData = chartInstance.toBase64Image('image/png', 1);
+              const imgWidth = 80;
+              const imgHeight = 60;
+              
+              pdf.setFontSize(10);
+              pdf.setTextColor(0);
+              pdf.text(chart.title || 'Sem título', margin, currentY);
+              currentY += 5;
+              
+              pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight);
+              currentY += imgHeight + 10;
+            }
+          }
+        }
+        
+        addFooter();
+        pdf.save(`isexcel_relatorio_${Date.now()}.pdf`);
+        Utils.showToast('PDF exportado!');
+      },
+      
+      // ============== SCENARIO MANAGEMENT ==============
+      switchToScenario: (scenarioId) => {
+        AppState.currentScenario = scenarioId;
+        App.saveToStorage();
+        App.switchTab('cenarios');
+        App.renderTabContent();
+        Utils.showToast(`Cenário: ${AppState.scenarios[scenarioId].name}`);
+      },
+      
+      deleteScenario: (scenarioId) => {
+        if (scenarioId === 'default') {
+          Utils.showToast('Não é possível eliminar o cenário principal', 'error');
+          return;
+        }
+        
+        // Clear all chart instances in this scenario
+        Object.keys(AppState.scenarios[scenarioId].charts || {}).forEach(tabId => {
+          (AppState.scenarios[scenarioId].charts[tabId] || []).forEach((_, idx) => {
+            const chartId = `chart_${tabId}_${idx}`;
+            ChartRenderer.destroy(chartId);
+          });
+        });
+        
+        delete AppState.scenarios[scenarioId];
+        if (AppState.currentScenario === scenarioId) {
+          AppState.currentScenario = 'default';
+        }
+        App.saveToStorage();
+        App.renderTabContent();
+        Utils.showToast('Cenário eliminado!');
+      },
+      
+      renderScenarioSelect: () => {
+        // Function no longer needed - dropdown removed
+      },
+      
+      newScenario: () => {
+        const id = 'scenario_' + Date.now();
+        const count = Object.keys(AppState.scenarios).length + 1;
+        AppState.scenarios[id] = {
+          name: `Cenário ${count}`,
+          charts: {}
+        };
+        AppState.currentScenario = id;
+        App.saveToStorage();
+        App.switchTab('cenarios');
+        App.renderTabContent();
+        Utils.showToast('Novo cenário criado!');
+      },
+      
+      saveScenario: () => {
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+        modal.innerHTML = `
+          <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+              <div class="px-6 py-4 border-b border-border">
+                <h3 class="text-lg font-bold text-gray-800">Guardar Cenário</h3>
+              </div>
+              <div class="p-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Cenário</label>
+                <input type="text" id="scenarioName" 
+                       value="${AppState.scenarios[AppState.currentScenario]?.name || ''}"
+                       class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                       placeholder="Ex: Relatório Q1 2024">
+              </div>
+              <div class="px-6 py-4 border-t border-border flex justify-end gap-3">
+                <button onclick="App.closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                  Cancelar
+                </button>
+                <button onclick="App.confirmSaveScenario()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-all">
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      
+      confirmSaveScenario: () => {
+        const name = document.getElementById('scenarioName').value.trim();
+        if (name) {
+          const currentScenarioId = AppState.currentScenario;
+          // Ensure scenario exists and update its name
+          if (!AppState.scenarios[currentScenarioId]) {
+            AppState.scenarios[currentScenarioId] = { name: name, charts: {} };
+          } else {
+            AppState.scenarios[currentScenarioId].name = name;
+          }
+          App.saveToStorage();
+          App.renderScenarioSelect();
+          Utils.showToast('Cenário guardado com sucesso!');
+        }
+        App.closeModal();
+      },
+      
+      // ============== TEMPLATE MANAGEMENT ==============
+      useTemplate: (templateId) => {
+        const template = LearningTemplates.find(t => t.id === templateId);
+        if (!template) return;
+        
+        const tab = TabDefinitions.find(t => t.chartType === template.chartType);
+        if (tab) {
+          AppState.currentTab = tab.id;
+          
+          if (!AppState.scenarios[AppState.currentScenario]) {
+            AppState.scenarios[AppState.currentScenario] = { name: 'Cenário', charts: {} };
+          }
+          if (!AppState.scenarios[AppState.currentScenario].charts[tab.id]) {
+            AppState.scenarios[AppState.currentScenario].charts[tab.id] = [];
+          }
+          
+          const newChart = {
+            type: template.chartType,
+            title: template.name,
+            data: Utils.deepClone(template.data),
+            tags: [template.name.toLowerCase()],
+            createdAt: new Date().toISOString()
+          };
+          
+          AppState.scenarios[AppState.currentScenario].charts[tab.id].push(newChart);
+          App.saveToStorage();
+          App.renderTabs();
+          App.renderTabContent();
+          Utils.showToast(`Template "${template.name}" aplicado!`);
+        }
+      },
+      
+      saveAsTemplate: (tabId) => {
+        const title = document.getElementById('chartTitle').value.trim();
+        const tagsInput = document.getElementById('chartTags').value;
+        const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+        const labelsText = document.getElementById('chartLabels').value;
+        const labels = labelsText.split('\n').map(l => l.trim()).filter(l => l);
+        
+        const datasetItems = document.querySelectorAll('.dataset-item');
+        const datasets = Array.from(datasetItems).map((item, idx) => {
+          const labelInput = item.querySelector('input');
+          const dataTextarea = item.querySelector('textarea');
+          return {
+            label: labelInput.value || `Série ${idx + 1}`,
+            data: dataTextarea.value.split('\n').map(v => parseFloat(v.trim()) || 0)
+          };
+        });
+        
+        const tab = TabDefinitions.find(t => t.id === tabId);
+        
+        AppState.templates.push({
+          type: tab?.chartType || 'column',
+          title: title || 'Meu Template',
+          data: { labels, datasets },
+          tags: tags,
+          createdAt: new Date().toISOString()
+        });
+        
+        App.saveToStorage();
+        Utils.showToast('Template guardado!');
+      },
+      
+      loadSavedTemplate: (index) => {
+        const template = AppState.templates[index];
+        if (!template) return;
+        
+        const tab = TabDefinitions.find(t => t.chartType === template.type);
+        if (tab) {
+          AppState.currentTab = tab.id;
+          
+          if (!AppState.scenarios[AppState.currentScenario].charts[tab.id]) {
+            AppState.scenarios[AppState.currentScenario].charts[tab.id] = [];
+          }
+          
+          AppState.scenarios[AppState.currentScenario].charts[tab.id].push(Utils.deepClone(template));
+          App.saveToStorage();
+          App.renderTabs();
+          App.renderTabContent();
+          Utils.showToast('Template carregado!');
+        }
+      },
+      
+      deleteSavedTemplate: (index) => {
+        AppState.templates.splice(index, 1);
+        App.saveToStorage();
+        App.renderTabContent();
+        Utils.showToast('Template eliminado!');
+      },
+      
+      // ============== FILTER FUNCTIONS ==============
+      filterTemplates: (query) => {
+        const cards = document.querySelectorAll('#templatesGrid .template-card');
+        const q = query.toLowerCase();
+        cards.forEach(card => {
+          const name = card.dataset.name || '';
+          const desc = card.dataset.desc || '';
+          const match = name.includes(q) || desc.includes(q);
+          card.style.display = match ? '' : 'none';
+        });
+      },
+      
+      filterCharts: (tabId, query) => {
+        const cards = document.querySelectorAll(`#chartsGrid_${tabId} .chart-card`);
+        const q = query.toLowerCase();
+        cards.forEach(card => {
+          const title = card.dataset.title || '';
+          const labels = card.dataset.labels || '';
+          const match = title.includes(q) || labels.includes(q);
+          card.style.display = match ? '' : 'none';
+        });
+      },
+      
+      // ============== CURRENCY PANEL ==============
+      toggleCurrencyPanel: () => {
+        const panel = document.getElementById('currencyPanelContent');
+        panel.classList.toggle('hidden');
+      },
+      
+      renderCurrencyPanel: () => {
+        const container = document.getElementById('currencyRates');
+        container.innerHTML = Object.entries(AppState.currencies).map(([code, curr]) => `
+          <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+            <span class="font-semibold text-gray-700 w-12">${code}</span>
+            <input type="number" value="${curr.rate}" step="0.0001"
+                   class="flex-1 px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                   onchange="App.updateCurrencyRate('${code}', this.value)"
+                   ${code === 'AOA' ? 'disabled' : ''}>
+            <span class="text-xs text-gray-500">${curr.symbol}</span>
+            ${code !== 'AOA' ? `
+              <button onclick="App.removeCurrency('${code}')" class="p-1 text-danger hover:bg-danger hover:text-white rounded transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            ` : ''}
+          </div>
+        `).join('');
+      },
+      
+      updateCurrencyRate: (code, rate) => {
+        if (AppState.currencies[code]) {
+          AppState.currencies[code].rate = parseFloat(rate) || 0;
+          App.saveToStorage();
+        }
+      },
+      
+      addCurrency: () => {
+        const modal = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+        modal.innerHTML = `
+          <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+              <div class="px-6 py-4 border-b border-border">
+                <h3 class="text-lg font-bold text-gray-800">Adicionar Moeda</h3>
+              </div>
+              <div class="p-6 space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Código (ex: EUR)</label>
+                  <input type="text" id="currCode" maxlength="3" 
+                         class="w-full px-3 py-2 border border-border rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                  <input type="text" id="currName" 
+                         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Símbolo</label>
+                  <input type="text" id="currSymbol" maxlength="5"
+                         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Taxa (relativa ao AOA)</label>
+                  <input type="number" id="currRate" step="0.0001" value="1"
+                         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+              </div>
+              <div class="px-6 py-4 border-t border-border flex justify-end gap-3">
+                <button onclick="App.closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                  Cancelar
+                </button>
+                <button onclick="App.confirmAddCurrency()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-all">
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      
+      confirmAddCurrency: () => {
+        const code = document.getElementById('currCode').value.toUpperCase().trim();
+        const name = document.getElementById('currName').value.trim();
+        const symbol = document.getElementById('currSymbol').value.trim();
+        const rate = parseFloat(document.getElementById('currRate').value) || 1;
+        
+        if (code && name && symbol) {
+          AppState.currencies[code] = { name, symbol, rate };
+          App.saveToStorage();
+          App.renderCurrencyPanel();
+          App.closeModal();
+          Utils.showToast('Moeda adicionada!');
+        }
+      },
+      
+      removeCurrency: (code) => {
+        if (code !== 'AOA') {
+          delete AppState.currencies[code];
+          App.saveToStorage();
+          App.renderCurrencyPanel();
+        }
+      },
+      
+      // ============== MODAL MANAGEMENT ==============
+      closeModal: () => {
+        const modal = document.getElementById('modalContainer');
+        modal.classList.add('hidden');
+        modal.innerHTML = '';
+      }
+    };
+    
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', App.init);
+    
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') App.closeModal();
+    });
+    
+    // Close currency panel on outside click
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('currencyPanel');
+      if (panel && !panel.contains(e.target)) {
+        document.getElementById('currencyPanelContent')?.classList.add('hidden');
+      }
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d709faaa67d77d9',t:'MTc3MjYyNDYxMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
