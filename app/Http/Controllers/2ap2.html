@@ -1,0 +1,3821 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IS TITAN - Gestão de Negócios & Empresa</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231E88E5' rx='20'/><text x='50' y='70' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>IS</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #F8F9FA;
+            min-height: 100vh;
+        }
+
+        /* Tooltip custom style */
+        .titan-tooltip {
+            position: relative;
+        }
+
+        .titan-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            z-index: 60;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #FFFFFF;
+            padding: 6px 10px;
+            border-radius: 9999px; /* 50% rounded corners (pill) */
+            white-space: nowrap;
+            font-size: 11px;
+            pointer-events: none;
+        }
+
+        .titan-tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.5) transparent transparent transparent;
+            z-index: 59;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            bottom: 60px;
+            width: 70px;
+            background: #FFFFFF;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 40;
+            transition: all 0.3s;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            color: #9CA3AF; /* light gray for inactive icons */
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(30,136,229,0.08);
+            color: #66CFF5;
+            border-left-color: #66CFF5;
+        }
+
+        .main-content {
+            margin-left: 70px;
+            margin-top: 70px;
+            margin-bottom: 60px;
+            padding: 20px;
+            min-height: calc(100vh - 130px);
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: #FFFFFF;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            color: #66CFF5;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #FFFFFF;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #66CFF5;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .popup.show {
+            display: flex;
+        }
+
+        .popup-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 90%;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .btn-primary {
+            background: #66CFF5;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
+            background: #33BEF2;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .summary-card.income {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .summary-card.expense {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .summary-card.balance {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .summary-card.balance.negative {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            border-radius: 8px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s, background 0.3s;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .progress-fill.over {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .transaction-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s;
+            animation: slideIn 0.3s;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #60a5fa, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(96, 165, 250, 0.5);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table tr:hover {
+            background: #f9fafb;
+        }
+
+        select.input-field {
+            cursor: pointer;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .notification-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification {
+            min-width: 260px;
+            max-width: 360px;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 12px 14px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border-left: 4px solid #66CFF5;
+            animation: slideInRight 0.35s ease-out;
+        }
+
+        .notification-success { border-left-color: #10b981; }
+        .notification-error { border-left-color: #ef4444; }
+        .notification-warning { border-left-color: #f59e0b; }
+        .notification-info { border-left-color: #66CFF5; }
+
+        .notification-icon {
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+            color: #111827;
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .notification-close {
+            border: none;
+            background: transparent;
+            color: #9CA3AF;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px;
+        }
+
+        .notification-hide {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(30px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- Floating Quick Action Buttons -->
+    <button onclick="openTransactionPopup('income')" class="fixed bottom-32 right-6 z-40 w-8 h-8 rounded-full shadow-lg flex items-center justify-center bg-blue-500/50 hover:bg-blue-500 text-white text-lg font-bold transition-transform transform hover:-translate-y-1" title="Nova Receita Rápida">
+        +
+    </button>
+    <button onclick="openTransactionPopup('expense')" class="fixed bottom-24 right-6 z-40 w-8 h-8 rounded-full shadow-lg flex items-center justify-center bg-blue-500/50 hover:bg-blue-500 text-white text-lg font-bold transition-transform transform hover:-translate-y-1" title="Nova Despesa Rápida">
+        -
+    </button>
+
+    <!-- Floating Assistant Button -->
+    <button id="assistantToggle" class="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white transition-transform transform hover:-translate-y-1 hidden" title="Assistente TITAN">
+        <i class="fas fa-comment-dots text-2xl"></i>
+    </button>
+
+    <!-- Assistant Panel -->
+    <div id="assistantPanel" class="fixed bottom-24 right-24 z-50 w-80 max-h-[60vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div>
+                <p class="font-bold text-sm text-gray-800">Assistente TITAN</p>
+                <p class="text-xs text-gray-500">Notificações e dicas importantes do dia</p>
+            </div>
+            <button id="assistantClose" class="text-gray-400 hover:text-gray-600 text-sm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="assistantMessages" class="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50">
+            <!-- Mensagens serão inseridas via JS -->
+        </div>
+        <div class="px-4 py-2 border-t bg-white text-[11px] text-gray-400 flex items-center justify-between">
+            <span>Clique em uma mensagem para mais detalhes.</span>
+            <button id="assistantClearToday" class="text-blue-500 hover:text-blue-700 font-semibold">Limpar de hoje</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+
+    <div class="header">
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-4">
+                <span class="logo-text">T I T A N</span>
+                <span class="text-sm opacity-80 text-gray-700">| Investe Suite, Gestão de Negócios & Empresas </span>
+            </div>
+            
+        </div>
+    </div>
+
+
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-item active" onclick="showSection('dashboard')" title="Dashboard">
+            <i class="fas fa-home text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('companies')" title="Empresas">
+            <i class="fas fa-building text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('accounts')" title="Contas">
+            <i class="fas fa-wallet text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('transactions')" title="Transações">
+            <i class="fas fa-exchange-alt text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('invoices')" title="Orçamentos">
+            <i class="fas fa-file-invoice text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('categories')" title="Categorias">
+            <i class="fas fa-tags text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('clients')" title="Clientes">
+            <i class="fas fa-users text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('reports')" title="Relatórios">
+            <i class="fas fa-chart-bar text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('currencies')" title="Moedas">
+            <i class="fas fa-dollar-sign text-2xl"></i>
+        </div>
+        <div class="sidebar-item" onclick="showSection('settings')" title="Configurações">
+            <i class="fas fa-cog text-2xl"></i>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+
+            <div class="flex items-center gap-4">
+                <select id="currentCompany" class="input-field" style="width: auto; padding: 8px 12px;">
+                    <option value="">Selecionar Empresa/Negócio</option>
+                </select>
+            </div>
+
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
+
+
+            
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="summary-card income">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-80">Total Receitas</p>
+                            <p class="text-3xl font-bold mt-2" id="totalIncome">0,00 Kz</p>
+                        </div>
+                        <i class="fas fa-arrow-up text-4xl opacity-50"></i>
+                    </div>
+                </div>
+                <div class="summary-card expense">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-80">Total Despesas</p>
+                            <p class="text-3xl font-bold mt-2" id="totalExpense">0,00 Kz</p>
+                        </div>
+                        <i class="fas fa-arrow-down text-4xl opacity-50"></i>
+                    </div>
+                </div>
+                <div class="summary-card balance" id="balanceCard">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-80">Saldo</p>
+                            <p class="text-3xl font-bold mt-2" id="totalBalance">0,00 Kz</p>
+                        </div>
+                        <i class="fas fa-balance-scale text-4xl opacity-50"></i>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-80">Fluxo de Caixa</p>
+                            <p class="text-3xl font-bold mt-2" id="cashFlow">0,00 Kz</p>
+                        </div>
+                        <i class="fas fa-chart-line text-4xl opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Despesas por Categoria</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Tendências Mensais</h3>
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-6">
+                <h3 class="text-xl font-bold mb-4">Ações Rápidas</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="openTransactionPopup('income')" class="btn-success">
+                        <i class="fas fa-plus-circle mr-2"></i>Nova Receita
+                    </button>
+                    <button onclick="openTransactionPopup('expense')" class="btn-danger">
+                        <i class="fas fa-minus-circle mr-2"></i>Nova Despesa
+                    </button>
+                    <button onclick="openInvoicePopup()" class="btn-primary">
+                        <i class="fas fa-file-invoice mr-2"></i>Novo Orçamento
+                    </button>
+                    <button onclick="openJournalEntryPopup()" class="btn-primary">
+                        <i class="fas fa-book mr-2"></i>Lançamento Manual
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Transações Recentes</h3>
+                    <button onclick="showSection('transactions')" class="btn-primary" style="padding: 6px 12px;">
+                        Ver Todas
+                    </button>
+                </div>
+                <div id="recentTransactions"></div>
+            </div>
+        </div>
+
+        <!-- Companies Section -->
+        <div id="companies" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Empresas</h2>
+                    <button onclick="openCompanyPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nova Empresa
+                    </button>
+                </div>
+                <div id="companiesList"></div>
+            </div>
+        </div>
+
+        <!-- Accounts Section -->
+        <div id="accounts" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Contas Financeiras</h2>
+                    <button onclick="openAccountPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nova Conta
+                    </button>
+                </div>
+                <div id="accountsList"></div>
+            </div>
+        </div>
+
+        <!-- Transactions Section -->
+        <div id="transactions" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Transações</h2>
+                    <button onclick="openTransactionPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nova Transação
+                    </button>
+                </div>
+                
+                <!-- Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <select id="filterType" class="input-field" onchange="filterTransactions()">
+                        <option value="">Todos os Tipos</option>
+                        <option value="income">Receitas</option>
+                        <option value="expense">Despesas</option>
+                        <option value="transfer">Transferências</option>
+                    </select>
+                    <select id="filterCategory" class="input-field" onchange="filterTransactions()">
+                        <option value="">Todas Categorias</option>
+                    </select>
+                    <select id="filterPeriod" class="input-field" onchange="filterTransactions()">
+                        <option value="">Todo Período</option>
+                        <option value="month">Este Mês</option>
+                        <option value="quarter">Este Trimestre</option>
+                        <option value="year">Este Ano</option>
+                    </select>
+                    <button onclick="clearFilters()" class="btn-primary">
+                        <i class="fas fa-times mr-2"></i>Limpar Filtros
+                    </button>
+                </div>
+                
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+
+        <!-- Invoices Section -->
+        <div id="invoices" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Orçamentos</h2>
+                    <button onclick="openInvoicePopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Novo Documento
+                    </button>
+                </div>
+                <div id="invoicesList"></div>
+            </div>
+        </div>
+
+        <!-- Categories & Items/Services Section -->
+        <div id="categories" class="section space-y-6">
+            <!-- Categories Panel -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Categorias</h2>
+                    <button onclick="openCategoryPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nova Categoria
+                    </button>
+                </div>
+                <div id="categoriesList"></div>
+            </div>
+
+            <!-- Products / Services Panel -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Produtos e Serviços</h2>
+                    <button onclick="openItemPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Novo Item
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Registe aqui os produtos e serviços recorrentes que serão usados nos orçamentos. Ao adicionar itens no documento, poderá buscá-los desta lista ou criar itens pontuais.</p>
+                <div id="itemsList"></div>
+            </div>
+        </div>
+
+        <!-- Clients Section -->
+        <div id="clients" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Clientes</h2>
+                    <button onclick="openClientPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Novo Cliente
+                    </button>
+                </div>
+                <div id="clientsList"></div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <div class="card">
+                <h2 class="text-3xl font-bold mb-6">Relatórios Financeiros</h2>
+                
+                <!-- Report Tabs -->
+                <div class="flex gap-2 mb-6 flex-wrap">
+                    <button class="tab-button active" onclick="showReportTab('profitLoss')">Lucros e Perdas</button>
+                    <button class="tab-button" onclick="showReportTab('balanceSheet')">Balanço</button>
+                    <button class="tab-button" onclick="showReportTab('generalLedger')">Razão Geral</button>
+                    <button class="tab-button" onclick="showReportTab('trialBalance')">Balancete</button>
+                    <button class="tab-button" onclick="showReportTab('chartOfAccounts')">Plano de Contas</button>
+                    <button class="tab-button" onclick="showReportTab('cashFlow')">Fluxo de Caixa</button>
+                </div>
+
+                <div id="reportContent"></div>
+            </div>
+        </div>
+
+        <!-- Currencies Section -->
+        <div id="currencies" class="section">
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Moedas e Conversão</h2>
+                    <button onclick="openCurrencyPopup()" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Nova Moeda
+                    </button>
+                </div>
+                
+                <!-- Currency Converter -->
+                <div class="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                    <h3 class="text-xl font-bold mb-4">Conversor de Moedas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">De:</label>
+                            <select id="convertFrom" class="input-field">
+                                <option value="AOA">AOA - Kwanza</option>
+                            </select>
+                            <input type="number" id="convertAmountFrom" class="input-field mt-2" placeholder="Valor" step="0.01">
+                        </div>
+                        <div class="flex items-end justify-center">
+                            <button onclick="convertCurrency()" class="btn-primary">
+                                <i class="fas fa-exchange-alt text-2xl"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Para:</label>
+                            <select id="convertTo" class="input-field">
+                                <option value="USD">USD - Dólar</option>
+                            </select>
+                            <input type="number" id="convertAmountTo" class="input-field mt-2" placeholder="Resultado" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="currenciesList"></div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <div class="card">
+                <h2 class="text-3xl font-bold mb-6">Configurações</h2>
+                
+                <div class="space-y-6">
+                    <!-- Language Selector -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Idioma</h3>
+                        <select id="currentLanguage" class="input-field" style="max-width: 220px;" onchange="changeLanguage(this.value)">
+                            <option value="pt">Português (Padrão)</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+
+                    <!-- Accounting Mode -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Modo de Contabilidade</h3>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="accountingMode" value="simple" checked onchange="changeAccountingMode('simple')">
+                                <span>Simples (Rastreamento de Despesas)</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="accountingMode" value="double" onchange="changeAccountingMode('double')">
+                                <span>Partidas Dobradas (Contabilidade Completa)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Accounting Basis -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Base Contábil</h3>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="accountingBasis" value="cash" checked>
+                                <span>Caixa</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="accountingBasis" value="accrual">
+                                <span>Competência (Accrual)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Export/Import -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Exportar / Importar Dados</h3>
+                        <div class="flex gap-4 flex-wrap">
+                            <button onclick="exportData('json')" class="btn-primary">
+                                <i class="fas fa-download mr-2"></i>Exportar JSON
+                            </button>
+                            <button onclick="exportData('pdf')" class="btn-primary">
+                                <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
+                            </button>
+                            <button onclick="document.getElementById('importFile').click()" class="btn-success">
+                                <i class="fas fa-upload mr-2"></i>Importar Dados
+                            </button>
+                            <input type="file" id="importFile" accept=".json" onchange="importData()" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Email Backup -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Backup Automático por Email</h3>
+                        <div class="space-y-4">
+                            <input type="email" id="backupEmail" class="input-field" placeholder="Email para backup">
+                            <div class="flex items-center gap-2">
+                                <label class="switch">
+                                    <input type="checkbox" id="autoBackup">
+                                    <span class="slider"></span>
+                                </label>
+                                <span>Ativar backup automático semanal</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="p-4 border rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Gestão de Dados</h3>
+                        <button onclick="clearAllData()" class="btn-danger">
+                            <i class="fas fa-trash mr-2"></i>Limpar Todos os Dados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="w-full flex items-center justify-between px-6">
+            <div class="text-left">
+                <p class="text-sm text-gray-800">© 2024 TITAN | Desenvolvido para Iniciantes e Profissionais</p>
+            </div>
+            <div class="text-right">
+                <button onclick="showAccountingModePopup()" class="btn-primary" style="padding: 6px 12px;">
+                    <i class="fas fa-cog mr-2"></i>
+                    <span id="currentMode">Contabilidade Simples</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popups -->
+    
+    <!-- Company Popup -->
+    <div id="companyPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Empresa</h3>
+                <button onclick="closePopup('companyPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveCompany(event)">
+                <input type="hidden" id="companyId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome da Empresa/Negócio *</label>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" id="companyName" class="input-field" required>
+                            <div id="companyIconPreview" class="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <button type="button" onclick="openIconPicker('company')" class="btn-primary titan-tooltip" data-tooltip="Escolher ícone para o negócio">
+                                <i class="fas fa-icons mr-1"></i>Ícone
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">NIF / Registro</label>
+                        <input type="text" id="companyTaxId" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Endereço</label>
+                        <input type="text" id="companyAddress" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Telefone</label>
+                        <input type="tel" id="companyPhone" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Email</label>
+                        <input type="email" id="companyEmail" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Moeda Padrão</label>
+                        <select id="companyCurrency" class="input-field">
+                            <option value="AOA">AOA - Kwanza</option>
+                            <option value="USD">USD - Dólar</option>
+                            <option value="EUR">EUR - Euro</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('companyPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Popup -->
+    <div id="accountPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Conta Financeira</h3>
+                <button onclick="closePopup('accountPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveAccount(event)">
+                <input type="hidden" id="accountId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome da Conta *</label>
+                        <input type="text" id="accountName" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Tipo de Conta *</label>
+                        <select id="accountType" class="input-field" required>
+                            <option value="">Selecione...</option>
+                            <option value="bank">Banco</option>
+                            <option value="cash">Dinheiro</option>
+                            <option value="card">Cartão de Débito/Crédito</option>
+                            <option value="wallet">Carteira Digital</option>
+                        </select>
+                    </div>
+                    <div id="accountTypeFields">
+                        <div>
+                            <label class="block mb-2 font-semibold">Tipo de Conta Contábil *</label>
+                            <select id="accountingType" class="input-field" required>
+                                <option value="asset">Ativo</option>
+                                <option value="liability">Passivo</option>
+                                <option value="equity">Patrimônio Líquido</option>
+                                <option value="revenue">Receita</option>
+                                <option value="expense">Despesa</option>
+                            </select>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block mb-2 font-semibold">Conta Pai (Opcional)</label>
+                            <select id="accountParent" class="input-field">
+                                <option value="">Conta Principal</option>
+                            </select>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block mb-2 font-semibold">Código da Conta</label>
+                            <input type="text" id="accountCode" class="input-field" placeholder="Ex: 1000">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Banco / Instituição</label>
+                        <input type="text" id="accountBank" class="input-field" placeholder="Ex: BAI, BFA, BIC, etc.">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Número da Conta / IBAN</label>
+                        <input type="text" id="accountNumber" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Saldo Inicial</label>
+                        <input type="number" id="accountBalance" class="input-field" step="0.01" value="0">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Moeda</label>
+                        <select id="accountCurrency" class="input-field">
+                            <option value="AOA">AOA - Kwanza</option>
+                            <option value="USD">USD - Dólar</option>
+                            <option value="EUR">EUR - Euro</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('accountPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction Popup -->
+    <div id="transactionPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Transação</h3>
+                <button onclick="closePopup('transactionPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveTransaction(event)">
+                <input type="hidden" id="transactionId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Tipo *</label>
+                        <select id="transactionType" class="input-field" required onchange="updateTransactionFields()">
+                            <option value="income">Receita</option>
+                            <option value="expense">Despesa</option>
+                            <option value="transfer">Transferência</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Data *</label>
+                        <input type="date" id="transactionDate" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Descrição *</label>
+                        <input type="text" id="transactionDescription" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Valor *</label>
+                        <input type="number" id="transactionAmount" class="input-field" step="0.01" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Conta *</label>
+                        <select id="transactionAccount" class="input-field" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div id="transferAccountField" style="display: none;">
+                        <label class="block mb-2 font-semibold">Conta Destino *</label>
+                        <select id="transactionToAccount" class="input-field">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Categoria *</label>
+                        <select id="transactionCategory" class="input-field" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Notas</label>
+                        <textarea id="transactionNotes" class="input-field" rows="3"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('transactionPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invoice Popup -->
+    <div id="invoicePopup" class="popup">
+        <div class="popup-content" style="max-width: 800px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Orçamento</h3>
+                <button onclick="closePopup('invoicePopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveInvoice(event)">
+                <input type="hidden" id="invoiceId">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-4 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Tipo de Documento *</label>
+                            <select id="invoiceType" class="input-field" required onchange="handleInvoiceTypeChange()">
+                                <option value="invoice">Faturação em breve</option>
+                                <option value="quote">Orçamento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Nº Documento *</label>
+                            <input type="text" id="invoiceNumber" class="input-field" required>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Data de Emissão *</label>
+                            <input type="date" id="invoiceDate" class="input-field" required>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Validade</label>
+                            <div class="flex flex-col gap-1">
+                                <select id="invoiceValidityPreset" class="input-field" onchange="handleInvoiceValidityChange()">
+                                    <option value="today">Hoje</option>
+                                    <option value="tomorrow">Amanhã</option>
+                                    <option value="3days">3 dias</option>
+                                    <option value="7days">7 dias</option>
+                                    <option value="1month">1 mês</option>
+                                    <option value="1quarter">1 Trimestre</option>
+                                    <option value="manual">Definir manualmente</option>
+                                </select>
+                                <input type="date" id="invoiceDueDate" class="input-field" required disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Tipo de Cliente *</label>
+                            <select id="invoiceClientMode" class="input-field" onchange="updateInvoiceClientMode()">
+                                <option value="registered">Cliente registado</option>
+                                <option value="oneoff">Cliente avulso (não registado)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Status</label>
+                            <select id="invoiceStatus" class="input-field">
+                                <option value="draft">Rascunho</option>
+                                <option value="sent">Enviada</option>
+                                <option value="paid">Paga</option>
+                                <option value="overdue">Vencida</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="invoiceClientRegisteredWrapper">
+                        <label class="block mb-2 font-semibold">Cliente *</label>
+                        <select id="invoiceClient" class="input-field">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+
+                    <div id="invoiceClientOneOffWrapper" style="display:none;" class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Nome do Cliente *</label>
+                            <input type="text" id="invoiceClientName" class="input-field">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Contacto / Email</label>
+                            <input type="text" id="invoiceClientContact" class="input-field">
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold mb-2">Itens do Documento</h4>
+                        <div class="grid grid-cols-6 gap-2 text-xs font-semibold text-gray-500 mb-1">
+                            
+                            <span>Item / Serviço</span>
+
+                            <span class="text-center">Qtd</span>
+
+                            <span class="text-center"></span>
+
+                            <span class="text-center">Preço Unitário</span>
+                            
+                            <span class="text-center"></span>
+                           
+                        </div>
+                        <div id="invoiceItems"></div>
+                        <button type="button" onclick="addInvoiceItem()" class="btn-primary mt-2">
+                            <i class="fas fa-plus mr-2"></i>Adicionar Item
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Subtotal</label>
+                            <input type="number" id="invoiceSubtotal" class="input-field" step="0.01" readonly>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">IVA (%)</label>
+                            <input type="number" id="invoiceTax" class="input-field" step="0.01" value="0" onchange="calculateInvoiceTotal()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label class="block mb-2 font-semibold">Retenção (%)</label>
+                            <input type="number" id="invoiceWithholding" class="input-field" step="0.01" value="0" onchange="calculateInvoiceTotal()">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Desconto Global (%)</label>
+                            <input type="number" id="invoiceGlobalDiscount" class="input-field" step="0.01" value="0" onchange="calculateInvoiceTotal()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label class="block mb-2 font-semibold">Total Impostos</label>
+                            <input type="number" id="invoiceTotalTaxes" class="input-field" step="0.01" readonly>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Total</label>
+                            <input type="number" id="invoiceTotal" class="input-field" step="0.01" readonly>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block mb-2 font-semibold">Observações / Notas do Documento</label>
+                        <textarea id="invoiceNotes" class="input-field" rows="3" placeholder="Observações gerais sobre esta orçamento (condições de pagamento, prazos, referências legais, etc.)"></textarea>
+                    </div>
+                    <div class="flex gap-4 mt-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="generateInvoicePDF()" class="btn-success">
+                            <i class="fas fa-file-pdf mr-2"></i>PDF
+                        </button>
+                        <button type="button" onclick="closePopup('invoicePopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Popup -->
+    <div id="categoryPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Categoria</h3>
+                <button onclick="closePopup('categoryPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveCategory(event)">
+                <input type="hidden" id="categoryId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome *</label>
+                        <input type="text" id="categoryName" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Tipo *</label>
+                        <select id="categoryType" class="input-field" required>
+                            <option value="income">Receita</option>
+                            <option value="expense">Despesa</option>
+                            <option value="both">Ambos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Cor</label>
+                        <input type="color" id="categoryColor" class="input-field" value="#3b82f6">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Ícone (FontAwesome)</label>
+                        <div class="flex gap-2 items-center">
+                            <input type="hidden" id="categoryIcon">
+                            <div id="categoryIconPreview" class="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500">
+                                <i class="fas fa-question"></i>
+                            </div>
+                            <button type="button" onclick="openIconPicker('category')" class="btn-primary titan-tooltip" data-tooltip="Escolher ícone">
+                                <i class="fas fa-icons mr-1"></i>Escolher
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Orçamento Mensal</label>
+                        <input type="number" id="categoryBudget" class="input-field" step="0.01" value="0">
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('categoryPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Popup -->
+    <div id="clientPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Cliente</h3>
+                <button onclick="closePopup('clientPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveClient(event)">
+                <input type="hidden" id="clientId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome *</label>
+                        <input type="text" id="clientName" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Email</label>
+                        <input type="email" id="clientEmail" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Telefone</label>
+                        <input type="tel" id="clientPhone" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">NIF / Documento</label>
+                        <input type="text" id="clientTaxId" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Endereço</label>
+                        <textarea id="clientAddress" class="input-field" rows="3"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('clientPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Currency Popup -->
+    <div id="currencyPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Moeda</h3>
+                <button onclick="closePopup('currencyPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveCurrency(event)">
+                <input type="hidden" id="currencyId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Código *</label>
+                        <input type="text" id="currencyCode" class="input-field" required maxlength="3" placeholder="Ex: AOA">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome *</label>
+                        <input type="text" id="currencyName" class="input-field" required placeholder="Ex: Kwanza Angolano">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Símbolo *</label>
+                        <input type="text" id="currencySymbol" class="input-field" required placeholder="Ex: Kz">
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Taxa de Câmbio (para AOA) *</label>
+                        <input type="number" id="currencyRate" class="input-field" step="0.0001" required value="1">
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('currencyPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Item Popup (Produtos e Serviços) -->
+    <div id="itemPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Produto / Serviço</h3>
+                <button onclick="closePopup('itemPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveItem(event)">
+                <input type="hidden" id="itemId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Nome do Item *</label>
+                        <input type="text" id="itemName" class="input-field" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Tipo *</label>
+                            <select id="itemType" class="input-field" required>
+                                <option value="service">Serviço</option>
+                                <option value="product">Produto</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Categoria</label>
+                            <select id="itemCategory" class="input-field">
+                                <option value="">Opcional</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block mb-2 font-semibold">Preço Padrão</label>
+                            <input type="number" id="itemPrice" class="input-field" step="0.01" value="0">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-semibold">Código / Referência</label>
+                            <input type="text" id="itemCode" class="input-field" placeholder="Ex: SERV-001">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Descrição Detalhada</label>
+                        <textarea id="itemDescription" class="input-field" rows="3" placeholder="Detalhes do produto ou serviço"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('itemPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Journal Entry Popup -->
+    <div id="journalEntryPopup" class="popup">
+        <div class="popup-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Lançamento Manual</h3>
+                <button onclick="closePopup('journalEntryPopup')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="saveJournalEntry(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Data *</label>
+                        <input type="date" id="journalDate" class="input-field" required>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-semibold">Descrição *</label>
+                        <input type="text" id="journalDescription" class="input-field" required>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-2">Lançamentos (Débito e Crédito devem ser iguais)</h4>
+                        <div id="journalEntries"></div>
+                        <button type="button" onclick="addJournalEntryLine()" class="btn-primary mt-2">
+                            <i class="fas fa-plus mr-2"></i>Adicionar Linha
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 p-4 bg-gray-100 rounded">
+                        <div>
+                            <p class="font-semibold">Total Débito: <span id="totalDebit">0.00</span></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Total Crédito: <span id="totalCredit">0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary flex-1">Salvar</button>
+                        <button type="button" onclick="closePopup('journalEntryPopup')" class="btn-danger">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global Data Storage
+        let appData = {
+            companies: [],
+            accounts: [],
+            transactions: [],
+            invoices: [],
+            categories: [],
+            clients: [],
+            currencies: [],
+            items: [], // Produtos e serviços recorrentes
+            settings: {
+                accountingMode: 'simple',
+                accountingBasis: 'cash',
+                currentCompany: null,
+                language: 'pt'
+            }
+        };
+
+        // Helper para obter próxima ID simples
+        function nextId() {
+            return Date.now() + Math.floor(Math.random() * 1000);
+        }
+
+        // Initialize App
+        function initApp() {
+            loadData();
+            initializeDefaultData();
+            updateDashboard();
+            renderAllLists();
+            setCurrentDate();
+            populateDropdowns();
+            showWelcomeNotification();
+        }
+
+        // Notification System
+        function showNotification(type = 'info', message = '', title = '') {
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+
+            const id = 'ntf-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.id = id;
+            wrapper.className = `notification notification-${type}`;
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            const titles = {
+                success: 'Sucesso',
+                error: 'Erro',
+                warning: 'Aviso',
+                info: 'Informação'
+            };
+
+            const iconClass = icons[type] || icons.info;
+            const finalTitle = title || titles[type] || titles.info;
+
+            wrapper.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${finalTitle}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+                <button class="notification-close" onclick="hideNotification('${id}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(wrapper);
+
+            // Auto hide after ~5 segundos (5000 ms)
+            setTimeout(() => hideNotification(id), 5000);
+        }
+
+        function hideNotification(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('notification-hide');
+            setTimeout(() => {
+                if (el && el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+                // Se for a primeira notificação de boas-vindas do dia sendo fechada,
+                // guardar no localStorage e mostrar o botão flutuante do assistente
+                try {
+                    const todayKey = new Date().toISOString().split('T')[0];
+                    const welcomeClosedKey = 'titanWelcomeClosed_' + todayKey;
+                    if (!localStorage.getItem(welcomeClosedKey)) {
+                        localStorage.setItem(welcomeClosedKey, '1');
+                        const assistantToggle = document.getElementById('assistantToggle');
+                        if (assistantToggle) {
+                            assistantToggle.classList.remove('hidden');
+                        }
+                    }
+                } catch (e) {
+                    // silencioso
+                }
+            }, 280);
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('titanAppData');
+            if (saved) {
+                appData = JSON.parse(saved);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('titanAppData', JSON.stringify(appData));
+        }
+
+        // Initialize default data
+        function initializeDefaultData() {
+            if (appData.currencies.length === 0) {
+                appData.currencies = [
+                    { id: Date.now() + 1, code: 'AOA', name: 'Kwanza Angolano', symbol: 'Kz', rate: 1 },
+                    { id: Date.now() + 2, code: 'USD', name: 'Dólar Americano', symbol: '$', rate: 0.0012 },
+                    { id: Date.now() + 3, code: 'EUR', name: 'Euro', symbol: '€', rate: 0.0011 }
+                ];
+            }
+
+            if (appData.categories.length === 0) {
+                appData.categories = [
+                    { id: Date.now() + 1, name: 'Vendas', type: 'income', color: '#10b981', icon: 'fa-shopping-cart', budget: 0 },
+                    { id: Date.now() + 2, name: 'Serviços', type: 'income', color: '#3b82f6', icon: 'fa-briefcase', budget: 0 },
+                    { id: Date.now() + 3, name: 'Salários', type: 'expense', color: '#ef4444', icon: 'fa-users', budget: 0 },
+                    { id: Date.now() + 4, name: 'Fornecedores', type: 'expense', color: '#f59e0b', icon: 'fa-truck', budget: 0 },
+                    { id: Date.now() + 5, name: 'Utilidades', type: 'expense', color: '#8b5cf6', icon: 'fa-lightbulb', budget: 0 },
+                    { id: Date.now() + 6, name: 'Marketing', type: 'expense', color: '#ec4899', icon: 'fa-bullhorn', budget: 0 }
+                ];
+            }
+
+            saveData();
+        }
+
+        // Show/Hide Sections
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if (sectionId === 'dashboard') {
+                updateDashboard();
+            }
+        }
+
+        // Popup Functions
+        function closePopup(popupId) {
+            document.getElementById(popupId).classList.remove('show');
+        }
+
+        function openCompanyPopup(company = null) {
+            if (company) {
+                document.getElementById('companyId').value = company.id;
+                document.getElementById('companyName').value = company.name;
+                document.getElementById('companyTaxId').value = company.taxId || '';
+                document.getElementById('companyAddress').value = company.address || '';
+                document.getElementById('companyPhone').value = company.phone || '';
+                document.getElementById('companyEmail').value = company.email || '';
+                document.getElementById('companyCurrency').value = company.currency || 'AOA';
+                // Atualiza pré-visualização do ícone da empresa, se existir
+                const companyIconPreview = document.getElementById('companyIconPreview');
+                if (companyIconPreview) {
+                    if (company.icon) {
+                        companyIconPreview.innerHTML = `<i class="fas ${company.icon}"></i>`;
+                    } else {
+                        companyIconPreview.innerHTML = '<i class="fas fa-briefcase"></i>';
+                    }
+                }
+            } else {
+                document.getElementById('companyId').value = '';
+                document.getElementById('companyName').value = '';
+                document.getElementById('companyTaxId').value = '';
+                document.getElementById('companyAddress').value = '';
+                document.getElementById('companyPhone').value = '';
+                document.getElementById('companyEmail').value = '';
+                document.getElementById('companyCurrency').value = 'AOA';
+                const companyIconPreview = document.getElementById('companyIconPreview');
+                if (companyIconPreview) {
+                    companyIconPreview.innerHTML = '<i class="fas fa-briefcase"></i>';
+                }
+            }
+            document.getElementById('companyPopup').classList.add('show');
+        }
+
+        function openAccountPopup(account = null) {
+            // Regra: não permitir contas sem pelo menos uma Empresa/Negócio cadastrada
+            if (!appData.companies || appData.companies.length === 0) {
+                alert('Antes de adicionar uma conta, cadastre pelo menos uma Empresa/Negócio.');
+                return;
+            }
+            if (!appData.settings.currentCompany) {
+                alert('Selecione primeiro a Empresa/Negócio no topo antes de adicionar contas.');
+                return;
+            }
+
+            populateAccountParentDropdown();
+            if (account) {
+                document.getElementById('accountId').value = account.id;
+                document.getElementById('accountName').value = account.name;
+                document.getElementById('accountType').value = account.type;
+                document.getElementById('accountingType').value = account.accountingType || 'asset';
+                document.getElementById('accountParent').value = account.parentId || '';
+                document.getElementById('accountCode').value = account.code || '';
+                document.getElementById('accountBank').value = account.bank || '';
+                document.getElementById('accountNumber').value = account.number || '';
+                document.getElementById('accountBalance').value = account.balance;
+                document.getElementById('accountCurrency').value = account.currency || 'AOA';
+            } else {
+                document.getElementById('accountId').value = '';
+                document.getElementById('accountName').value = '';
+                document.getElementById('accountType').value = '';
+                document.getElementById('accountingType').value = 'asset';
+                document.getElementById('accountParent').value = '';
+                document.getElementById('accountCode').value = '';
+                document.getElementById('accountBank').value = '';
+                document.getElementById('accountNumber').value = '';
+                document.getElementById('accountBalance').value = '0';
+                document.getElementById('accountCurrency').value = 'AOA';
+            }
+            
+            const doubleEntry = appData.settings.accountingMode === 'double';
+            document.getElementById('accountTypeFields').style.display = doubleEntry ? 'block' : 'none';
+            
+            document.getElementById('accountPopup').classList.add('show');
+        }
+
+        function openTransactionPopup(type = 'income', transaction = null) {
+            populateAccountsDropdown();
+            populateCategoriesDropdown();
+            
+            if (transaction) {
+                document.getElementById('transactionId').value = transaction.id;
+                document.getElementById('transactionType').value = transaction.type;
+                document.getElementById('transactionDate').value = transaction.date;
+                document.getElementById('transactionDescription').value = transaction.description;
+                document.getElementById('transactionAmount').value = transaction.amount;
+                document.getElementById('transactionAccount').value = transaction.accountId;
+                document.getElementById('transactionToAccount').value = transaction.toAccountId || '';
+                document.getElementById('transactionCategory').value = transaction.categoryId;
+                document.getElementById('transactionNotes').value = transaction.notes || '';
+            } else {
+                document.getElementById('transactionId').value = '';
+                document.getElementById('transactionType').value = type;
+                document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('transactionDescription').value = '';
+                document.getElementById('transactionAmount').value = '';
+                document.getElementById('transactionAccount').value = '';
+                document.getElementById('transactionToAccount').value = '';
+                document.getElementById('transactionCategory').value = '';
+                document.getElementById('transactionNotes').value = '';
+            }
+            
+            updateTransactionFields();
+            document.getElementById('transactionPopup').classList.add('show');
+        }
+
+        function openInvoicePopup(invoice = null) {
+            populateClientsDropdown();
+            
+            if (invoice) {
+                document.getElementById('invoiceId').value = invoice.id;
+                document.getElementById('invoiceNumber').value = invoice.number;
+                document.getElementById('invoiceDate').value = invoice.date;
+                document.getElementById('invoiceClient').value = invoice.clientId;
+                document.getElementById('invoiceStatus').value = invoice.status;
+                document.getElementById('invoiceTax').value = invoice.tax || 0;
+                
+                // Render items
+                const itemsContainer = document.getElementById('invoiceItems');
+                itemsContainer.innerHTML = '';
+                invoice.items.forEach((item, index) => {
+                    addInvoiceItem(item);
+                });
+                calculateInvoiceTotal();
+            } else {
+                document.getElementById('invoiceId').value = '';
+                document.getElementById('invoiceNumber').value = 'INV-' + Date.now();
+                document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('invoiceClient').value = '';
+                document.getElementById('invoiceStatus').value = 'draft';
+                document.getElementById('invoiceTax').value = '0';
+                document.getElementById('invoiceItems').innerHTML = '';
+                addInvoiceItem();
+            }
+            
+            document.getElementById('invoicePopup').classList.add('show');
+        }
+
+        function openCategoryPopup(category = null) {
+            if (category) {
+                document.getElementById('categoryId').value = category.id;
+                document.getElementById('categoryName').value = category.name;
+                document.getElementById('categoryType').value = category.type;
+                document.getElementById('categoryColor').value = category.color;
+                document.getElementById('categoryIcon').value = category.icon || '';
+                document.getElementById('categoryBudget').value = category.budget || 0;
+            } else {
+                document.getElementById('categoryId').value = '';
+                document.getElementById('categoryName').value = '';
+                document.getElementById('categoryType').value = 'expense';
+                document.getElementById('categoryColor').value = '#3b82f6';
+                document.getElementById('categoryIcon').value = '';
+                document.getElementById('categoryBudget').value = '0';
+            }
+            document.getElementById('categoryPopup').classList.add('show');
+        }
+
+        function openClientPopup(client = null) {
+            if (client) {
+                document.getElementById('clientId').value = client.id;
+                document.getElementById('clientName').value = client.name;
+                document.getElementById('clientEmail').value = client.email || '';
+                document.getElementById('clientPhone').value = client.phone || '';
+                document.getElementById('clientTaxId').value = client.taxId || '';
+                document.getElementById('clientAddress').value = client.address || '';
+            } else {
+                document.getElementById('clientId').value = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientEmail').value = '';
+                document.getElementById('clientPhone').value = '';
+                document.getElementById('clientTaxId').value = '';
+                document.getElementById('clientAddress').value = '';
+            }
+            document.getElementById('clientPopup').classList.add('show');
+        }
+
+        function openCurrencyPopup(currency = null) {
+            if (currency) {
+                document.getElementById('currencyId').value = currency.id;
+                document.getElementById('currencyCode').value = currency.code;
+                document.getElementById('currencyName').value = currency.name;
+                document.getElementById('currencySymbol').value = currency.symbol;
+                document.getElementById('currencyRate').value = currency.rate;
+            } else {
+                document.getElementById('currencyId').value = '';
+                document.getElementById('currencyCode').value = '';
+                document.getElementById('currencyName').value = '';
+                document.getElementById('currencySymbol').value = '';
+                document.getElementById('currencyRate').value = '1';
+            }
+            document.getElementById('currencyPopup').classList.add('show');
+        }
+
+        function openJournalEntryPopup() {
+            document.getElementById('journalDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('journalDescription').value = '';
+            document.getElementById('journalEntries').innerHTML = '';
+            addJournalEntryLine();
+            addJournalEntryLine();
+            document.getElementById('journalEntryPopup').classList.add('show');
+        }
+
+        // Save Functions
+        function saveCompany(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('companyId').value;
+            const company = {
+                id: id || Date.now(),
+                name: document.getElementById('companyName').value,
+                taxId: document.getElementById('companyTaxId').value,
+                address: document.getElementById('companyAddress').value,
+                phone: document.getElementById('companyPhone').value,
+                email: document.getElementById('companyEmail').value,
+                currency: document.getElementById('companyCurrency').value
+            };
+
+            if (id) {
+                const index = appData.companies.findIndex(c => c.id == id);
+                appData.companies[index] = company;
+            } else {
+                appData.companies.push(company);
+                if (!appData.settings.currentCompany) {
+                    appData.settings.currentCompany = company.id;
+                }
+            }
+
+            saveData();
+            renderCompaniesList();
+            updateCompanyDropdown();
+            closePopup('companyPopup');
+        }
+
+        function saveAccount(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('accountId').value;
+            const account = {
+                id: id || Date.now(),
+                companyId: appData.settings.currentCompany,
+                name: document.getElementById('accountName').value,
+                type: document.getElementById('accountType').value,
+                accountingType: document.getElementById('accountingType').value,
+                parentId: document.getElementById('accountParent').value || null,
+                code: document.getElementById('accountCode').value,
+                bank: document.getElementById('accountBank').value,
+                number: document.getElementById('accountNumber').value,
+                balance: parseFloat(document.getElementById('accountBalance').value),
+                currency: document.getElementById('accountCurrency').value
+            };
+
+            if (id) {
+                const index = appData.accounts.findIndex(a => a.id == id);
+                appData.accounts[index] = account;
+            } else {
+                appData.accounts.push(account);
+            }
+
+            saveData();
+            renderAccountsList();
+            closePopup('accountPopup');
+        }
+
+        function saveTransaction(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('transactionId').value;
+            const type = document.getElementById('transactionType').value;
+            
+            const transaction = {
+                id: id || Date.now(),
+                companyId: appData.settings.currentCompany,
+                type: type,
+                date: document.getElementById('transactionDate').value,
+                description: document.getElementById('transactionDescription').value,
+                amount: parseFloat(document.getElementById('transactionAmount').value),
+                accountId: document.getElementById('transactionAccount').value,
+                toAccountId: type === 'transfer' ? document.getElementById('transactionToAccount').value : null,
+                categoryId: document.getElementById('transactionCategory').value,
+                notes: document.getElementById('transactionNotes').value
+            };
+
+            if (id) {
+                const index = appData.transactions.findIndex(t => t.id == id);
+                appData.transactions[index] = transaction;
+            } else {
+                appData.transactions.push(transaction);
+                
+                // Update account balance
+                const account = appData.accounts.find(a => a.id == transaction.accountId);
+                if (account) {
+                    if (transaction.type === 'income') {
+                        account.balance += transaction.amount;
+                    } else if (transaction.type === 'expense') {
+                        account.balance -= transaction.amount;
+                    } else if (transaction.type === 'transfer') {
+                        account.balance -= transaction.amount;
+                        const toAccount = appData.accounts.find(a => a.id == transaction.toAccountId);
+                        if (toAccount) {
+                            toAccount.balance += transaction.amount;
+                        }
+                    }
+                }
+            }
+
+            saveData();
+            renderTransactionsList();
+            updateDashboard();
+            closePopup('transactionPopup');
+        }
+
+        function saveInvoice(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('invoiceId').value;
+            const docType = document.getElementById('invoiceType').value; // invoice | quote
+            const clientMode = document.getElementById('invoiceClientMode').value; // registered | oneoff
+            
+            // Get all invoice items
+            const items = [];
+            document.querySelectorAll('.invoice-item').forEach(itemDiv => {
+                const desc = itemDiv.querySelector('.item-description').value;
+                const qty = parseFloat(itemDiv.querySelector('.item-quantity').value);
+                const price = parseFloat(itemDiv.querySelector('.item-price').value);
+                if (desc && qty && price) {
+                    items.push({ description: desc, quantity: qty, price: price, total: qty * price });
+                }
+            });
+
+            const invoice = {
+                id: id || Date.now(),
+                companyId: appData.settings.currentCompany,
+                type: docType,
+                clientMode: clientMode,
+                number: document.getElementById('invoiceNumber').value,
+                date: document.getElementById('invoiceDate').value,
+                dueDate: document.getElementById('invoiceDueDate').value || null,
+                clientId: clientMode === 'registered' ? document.getElementById('invoiceClient').value : null,
+                clientName: clientMode === 'oneoff' ? document.getElementById('invoiceClientName').value : null,
+                clientContact: clientMode === 'oneoff' ? document.getElementById('invoiceClientContact').value : null,
+                status: document.getElementById('invoiceStatus').value,
+                items: items,
+                subtotal: parseFloat(document.getElementById('invoiceSubtotal').value) || 0,
+                tax: parseFloat(document.getElementById('invoiceTax').value) || 0,
+                withholding: parseFloat(document.getElementById('invoiceWithholding').value) || 0,
+                globalDiscount: parseFloat(document.getElementById('invoiceGlobalDiscount').value) || 0,
+                totalTaxes: parseFloat(document.getElementById('invoiceTotalTaxes').value) || 0,
+                total: parseFloat(document.getElementById('invoiceTotal').value) || 0,
+                notes: document.getElementById('invoiceNotes').value || ''
+            };
+
+            if (id) {
+                const index = appData.invoices.findIndex(i => i.id == id);
+                appData.invoices[index] = invoice;
+            } else {
+                appData.invoices.push(invoice);
+            }
+
+            saveData();
+            renderInvoicesList();
+            closePopup('invoicePopup');
+        }
+
+        function saveCategory(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('categoryId').value;
+            const category = {
+                id: id || Date.now(),
+                name: document.getElementById('categoryName').value,
+                type: document.getElementById('categoryType').value,
+                color: document.getElementById('categoryColor').value,
+                icon: document.getElementById('categoryIcon').value,
+                budget: parseFloat(document.getElementById('categoryBudget').value)
+            };
+
+            if (id) {
+                const index = appData.categories.findIndex(c => c.id == id);
+                appData.categories[index] = category;
+            } else {
+                appData.categories.push(category);
+            }
+
+            saveData();
+            renderCategoriesList();
+            closePopup('categoryPopup');
+        }
+
+        function saveClient(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('clientId').value;
+            const client = {
+                id: id || Date.now(),
+                companyId: appData.settings.currentCompany,
+                name: document.getElementById('clientName').value,
+                email: document.getElementById('clientEmail').value,
+                phone: document.getElementById('clientPhone').value,
+                taxId: document.getElementById('clientTaxId').value,
+                address: document.getElementById('clientAddress').value
+            };
+
+            if (id) {
+                const index = appData.clients.findIndex(c => c.id == id);
+                appData.clients[index] = client;
+            } else {
+                appData.clients.push(client);
+            }
+
+            saveData();
+            renderClientsList();
+            closePopup('clientPopup');
+        }
+
+        function saveCurrency(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('currencyId').value;
+            const currency = {
+                id: id || Date.now(),
+                code: document.getElementById('currencyCode').value.toUpperCase(),
+                name: document.getElementById('currencyName').value,
+                symbol: document.getElementById('currencySymbol').value,
+                rate: parseFloat(document.getElementById('currencyRate').value)
+            };
+
+            if (id) {
+                const index = appData.currencies.findIndex(c => c.id == id);
+                appData.currencies[index] = currency;
+            } else {
+                appData.currencies.push(currency);
+            }
+
+            saveData();
+            renderCurrenciesList();
+            closePopup('currencyPopup');
+        }
+
+        function saveJournalEntry(event) {
+            event.preventDefault();
+            
+            const entries = [];
+            let totalDebit = 0;
+            let totalCredit = 0;
+            
+            document.querySelectorAll('.journal-entry-line').forEach(line => {
+                const accountId = line.querySelector('.journal-account').value;
+                const debit = parseFloat(line.querySelector('.journal-debit').value) || 0;
+                const credit = parseFloat(line.querySelector('.journal-credit').value) || 0;
+                
+                if (accountId && (debit > 0 || credit > 0)) {
+                    entries.push({ accountId, debit, credit });
+                    totalDebit += debit;
+                    totalCredit += credit;
+                }
+            });
+
+            if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                alert('Débito e Crédito devem ser iguais!');
+                return;
+            }
+
+            const journal = {
+                id: Date.now(),
+                companyId: appData.settings.currentCompany,
+                date: document.getElementById('journalDate').value,
+                description: document.getElementById('journalDescription').value,
+                entries: entries
+            };
+
+            // Update account balances
+            entries.forEach(entry => {
+                const account = appData.accounts.find(a => a.id == entry.accountId);
+                if (account) {
+                    account.balance += entry.debit - entry.credit;
+                }
+            });
+
+            // Store as transaction for reporting
+            appData.transactions.push({
+                id: journal.id,
+                companyId: journal.companyId,
+                type: 'journal',
+                date: journal.date,
+                description: journal.description,
+                amount: totalDebit,
+                journalEntries: entries
+            });
+
+            saveData();
+            updateDashboard();
+            closePopup('journalEntryPopup');
+        }
+
+        // Render Lists
+        function renderCompaniesList() {
+            const container = document.getElementById('companiesList');
+            const companies = appData.companies;
+
+            if (companies.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma empresa cadastrada.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nome</th><th>NIF</th><th>Email</th><th>Moeda</th><th>Ações</th></tr></thead><tbody>';
+            
+            companies.forEach(company => {
+                html += `
+                    <tr>
+                        <td><strong>${company.name}</strong></td>
+                        <td>${company.taxId || '-'}</td>
+                        <td>${company.email || '-'}</td>
+                        <td>${company.currency}</td>
+                        <td>
+                            <button onclick='openCompanyPopup(${JSON.stringify(company)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCompany(${company.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderAccountsList() {
+            const container = document.getElementById('accountsList');
+            const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+
+            if (accounts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma conta cadastrada.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nome</th><th>Tipo</th><th>Banco</th><th>Saldo</th><th>Ações</th></tr></thead><tbody>';
+            
+            accounts.forEach(account => {
+                const currency = appData.currencies.find(c => c.code === account.currency);
+                const symbol = currency ? currency.symbol : account.currency;
+                
+                html += `
+                    <tr>
+                        <td><strong>${account.name}</strong>${account.code ? ` (${account.code})` : ''}</td>
+                        <td><span class="badge badge-info">${getAccountTypeLabel(account.type)}</span></td>
+                        <td>${account.bank || '-'}</td>
+                        <td><strong>${formatCurrency(account.balance, symbol)}</strong></td>
+                        <td>
+                            <button onclick='openAccountPopup(${JSON.stringify(account)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteAccount(${account.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderTransactionsList() {
+            const container = document.getElementById('transactionsList');
+            let transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            // Apply filters
+            const filterType = document.getElementById('filterType')?.value;
+            const filterCategory = document.getElementById('filterCategory')?.value;
+            const filterPeriod = document.getElementById('filterPeriod')?.value;
+
+            if (filterType) {
+                transactions = transactions.filter(t => t.type === filterType);
+            }
+            if (filterCategory) {
+                transactions = transactions.filter(t => t.categoryId == filterCategory);
+            }
+            if (filterPeriod) {
+                const now = new Date();
+                const periodDate = new Date();
+                
+                if (filterPeriod === 'month') {
+                    periodDate.setMonth(now.getMonth());
+                    periodDate.setDate(1);
+                } else if (filterPeriod === 'quarter') {
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    periodDate.setMonth(quarter * 3);
+                    periodDate.setDate(1);
+                } else if (filterPeriod === 'year') {
+                    periodDate.setMonth(0);
+                    periodDate.setDate(1);
+                }
+                
+                transactions = transactions.filter(t => new Date(t.date) >= periodDate);
+            }
+
+            // Sort by date
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (transactions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma transação encontrada.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Valor</th><th>Ações</th></tr></thead><tbody>';
+            
+            transactions.forEach(transaction => {
+                const category = appData.categories.find(c => c.id == transaction.categoryId);
+                const typeClass = transaction.type === 'income' ? 'badge-success' : (transaction.type === 'expense' ? 'badge-danger' : 'badge-info');
+                
+                html += `
+                    <tr>
+                        <td>${formatDate(transaction.date)}</td>
+                        <td><strong>${transaction.description}</strong></td>
+                        <td><span class="badge ${typeClass}">${getTypeLabel(transaction.type)}</span></td>
+                        <td>${category ? category.name : '-'}</td>
+                        <td class="${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                            <strong>${formatCurrency(transaction.amount, 'Kz')}</strong>
+                        </td>
+                        <td>
+                            <button onclick='openTransactionPopup("${transaction.type}", ${JSON.stringify(transaction)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteTransaction(${transaction.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderInvoicesList() {
+            const container = document.getElementById('invoicesList');
+            const invoices = appData.invoices.filter(i => !appData.settings.currentCompany || i.companyId == appData.settings.currentCompany);
+
+            if (invoices.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhum orçamento cadastrado.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+            
+            invoices.forEach(invoice => {
+                const client = appData.clients.find(c => c.id == invoice.clientId);
+                const statusClass = invoice.status === 'paid' ? 'badge-success' : (invoice.status === 'overdue' ? 'badge-danger' : 'badge-warning');
+                
+                html += `
+                    <tr>
+                        <td><strong>${invoice.number}</strong></td>
+                        <td>${formatDate(invoice.date)}</td>
+                        <td>${client ? client.name : '-'}</td>
+                        <td><strong>${formatCurrency(invoice.total, 'Kz')}</strong></td>
+                        <td><span class="badge ${statusClass}">${getStatusLabel(invoice.status)}</span></td>
+                        <td>
+                            <button onclick='openInvoicePopup(${JSON.stringify(invoice)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="viewInvoicePDF(${invoice.id})" class="btn-success" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                            <button onclick="deleteInvoice(${invoice.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderCategoriesList() {
+            const container = document.getElementById('categoriesList');
+            const categories = appData.categories;
+
+            if (categories.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma categoria cadastrada.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nome</th><th>Tipo</th><th>Cor</th><th>Orçamento</th><th>Ações</th></tr></thead><tbody>';
+            
+            categories.forEach(category => {
+                html += `
+                    <tr>
+                        <td>
+                            ${category.icon ? `<i class="fas ${category.icon} mr-2" style="color: ${category.color}"></i>` : ''}
+                            <strong>${category.name}</strong>
+                        </td>
+                        <td><span class="badge badge-info">${getTypeLabel(category.type)}</span></td>
+                        <td><div style="width: 30px; height: 30px; background: ${category.color}; border-radius: 4px;"></div></td>
+                        <td>${formatCurrency(category.budget, 'Kz')}</td>
+                        <td>
+                            <button onclick='openCategoryPopup(${JSON.stringify(category)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCategory(${category.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderClientsList() {
+            const container = document.getElementById('clientsList');
+            const clients = appData.clients.filter(c => !appData.settings.currentCompany || c.companyId == appData.settings.currentCompany);
+
+            if (clients.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhum cliente cadastrado.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>NIF</th><th>Ações</th></tr></thead><tbody>';
+            
+            clients.forEach(client => {
+                html += `
+                    <tr>
+                        <td><strong>${client.name}</strong></td>
+                        <td>${client.email || '-'}</td>
+                        <td>${client.phone || '-'}</td>
+                        <td>${client.taxId || '-'}</td>
+                        <td>
+                            <button onclick='openClientPopup(${JSON.stringify(client)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteClient(${client.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderCurrenciesList() {
+            const container = document.getElementById('currenciesList');
+            const currencies = appData.currencies;
+
+            if (currencies.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma moeda cadastrada.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Código</th><th>Nome</th><th>Símbolo</th><th>Taxa (para AOA)</th><th>Ações</th></tr></thead><tbody>';
+            
+            currencies.forEach(currency => {
+                html += `
+                    <tr>
+                        <td><strong>${currency.code}</strong></td>
+                        <td>${currency.name}</td>
+                        <td><strong>${currency.symbol}</strong></td>
+                        <td>${currency.rate.toFixed(4)}</td>
+                        <td>
+                            <button onclick='openCurrencyPopup(${JSON.stringify(currency)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCurrency(${currency.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderItemsList() {
+            const container = document.getElementById('itemsList');
+            if (!container) return;
+
+            const items = appData.items || [];
+
+            if (items.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhum produto ou serviço cadastrado.</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr><th>Nome</th><th>Tipo</th><th>Categoria</th><th>Preço Padrão</th><th>Código</th><th>Ações</th></tr></thead><tbody>';
+
+            items.forEach(item => {
+                const category = appData.categories.find(c => c.id == item.categoryId);
+                html += `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td>${item.type === 'service' ? 'Serviço' : 'Produto'}</td>
+                        <td>${category ? category.name : '-'}</td>
+                        <td>${item.price != null ? formatCurrency(item.price, 'Kz') : '-'}</td>
+                        <td>${item.code || '-'}</td>
+                        <td>
+                            <button onclick='openItemPopup(${JSON.stringify(item)})' class="btn-primary" style="padding: 4px 8px; margin-right: 4px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteItem(${item.id})" class="btn-danger" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function openItemPopup(item = null) {
+            // Preencher dropdown de categorias
+            const categorySelect = document.getElementById('itemCategory');
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">Opcional</option>';
+                appData.categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.name;
+                    categorySelect.appendChild(opt);
+                });
+            }
+
+            if (item) {
+                document.getElementById('itemId').value = item.id;
+                document.getElementById('itemName').value = item.name || '';
+                document.getElementById('itemType').value = item.type || 'service';
+                document.getElementById('itemCategory').value = item.categoryId || '';
+                document.getElementById('itemPrice').value = item.price != null ? item.price : 0;
+                document.getElementById('itemCode').value = item.code || '';
+                document.getElementById('itemDescription').value = item.description || '';
+            } else {
+                document.getElementById('itemId').value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemType').value = 'service';
+                document.getElementById('itemCategory').value = '';
+                document.getElementById('itemPrice').value = 0;
+                document.getElementById('itemCode').value = '';
+                document.getElementById('itemDescription').value = '';
+            }
+
+            document.getElementById('itemPopup').classList.add('show');
+        }
+
+        function saveItem(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('itemId').value;
+            const item = {
+                id: id || nextId(),
+                companyId: appData.settings.currentCompany || null,
+                name: document.getElementById('itemName').value.trim(),
+                type: document.getElementById('itemType').value,
+                categoryId: document.getElementById('itemCategory').value || null,
+                price: parseFloat(document.getElementById('itemPrice').value) || 0,
+                code: document.getElementById('itemCode').value.trim(),
+                description: document.getElementById('itemDescription').value.trim()
+            };
+
+            if (!item.name) {
+                showNotification('warning', 'Defina o nome do produto ou serviço.', 'Nome obrigatório');
+                return;
+            }
+
+            if (id) {
+                const index = (appData.items || []).findIndex(i => i.id == id);
+                if (index !== -1) {
+                    appData.items[index] = item;
+                }
+            } else {
+                if (!appData.items) appData.items = [];
+                appData.items.push(item);
+            }
+
+            saveData();
+            renderItemsList();
+            closePopup('itemPopup');
+            showNotification('success', 'Item salvo com sucesso.', 'Produtos e Serviços');
+        }
+
+        function deleteItem(id) {
+            if (!confirm('Tem certeza que deseja excluir este item?')) return;
+
+            appData.items = (appData.items || []).filter(i => i.id !== id);
+            saveData();
+            renderItemsList();
+            showNotification('success', 'Item removido com sucesso.', 'Produtos e Serviços');
+        }
+
+        function renderAllLists() {
+            renderCompaniesList();
+            renderAccountsList();
+            renderTransactionsList();
+            renderInvoicesList();
+            renderCategoriesList();
+            renderClientsList();
+            renderCurrenciesList();
+            renderItemsList();
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            const transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const balance = totalIncome - totalExpense;
+            const cashFlow = balance;
+
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome, 'Kz');
+            document.getElementById('totalExpense').textContent = formatCurrency(totalExpense, 'Kz');
+            document.getElementById('totalBalance').textContent = formatCurrency(balance, 'Kz');
+            document.getElementById('cashFlow').textContent = formatCurrency(cashFlow, 'Kz');
+
+            const balanceCard = document.getElementById('balanceCard');
+            if (balance < 0) {
+                balanceCard.classList.add('negative');
+            } else {
+                balanceCard.classList.remove('negative');
+            }
+
+            updateCategoryChart();
+            updateTrendsChart();
+            renderRecentTransactions();
+        }
+
+        function renderRecentTransactions() {
+            const container = document.getElementById('recentTransactions');
+            const transactions = appData.transactions
+                .filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+
+            if (transactions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhuma transação recente.</p>';
+                return;
+            }
+
+            let html = '';
+            transactions.forEach(transaction => {
+                const category = appData.categories.find(c => c.id == transaction.categoryId);
+                const typeColor = transaction.type === 'income' ? '#10b981' : '#ef4444';
+                
+                html += `
+                    <div class="transaction-item" style="border-left-color: ${typeColor}">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold">${transaction.description}</p>
+                                <p class="text-sm text-gray-500">${formatDate(transaction.date)} • ${category ? category.name : '-'}</p>
+                            </div>
+                            <p class="font-bold text-lg" style="color: ${typeColor}">
+                                ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount, 'Kz')}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Charts
+        let categoryChart, trendsChart;
+
+        function updateCategoryChart() {
+            const transactions = appData.transactions.filter(t => t.type === 'expense' && (!appData.settings.currentCompany || t.companyId == appData.settings.currentCompany));
+            
+            const categoryData = {};
+            transactions.forEach(t => {
+                const category = appData.categories.find(c => c.id == t.categoryId);
+                if (category) {
+                    categoryData[category.name] = (categoryData[category.name] || 0) + t.amount;
+                }
+            });
+
+            const labels = Object.keys(categoryData);
+            const data = Object.values(categoryData);
+            const colors = labels.map(label => {
+                const cat = appData.categories.find(c => c.name === label);
+                return cat ? cat.color : '#3b82f6';
+            });
+
+            const ctx = document.getElementById('categoryChart');
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTrendsChart() {
+            const transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            // Get last 6 months
+            const months = [];
+            const incomeData = [];
+            const expenseData = [];
+            
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.push(getMonthName(date.getMonth()));
+                
+                const monthIncome = transactions
+                    .filter(t => t.type === 'income' && t.date.startsWith(monthKey))
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const monthExpense = transactions
+                    .filter(t => t.type === 'expense' && t.date.startsWith(monthKey))
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                incomeData.push(monthIncome);
+                expenseData.push(monthExpense);
+            }
+
+            const ctx = document.getElementById('trendsChart');
+            if (trendsChart) {
+                trendsChart.destroy();
+            }
+
+            trendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Receitas',
+                            data: incomeData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Despesas',
+                            data: expenseData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper Functions
+        function formatCurrency(amount, symbol = 'Kz') {
+            return `${amount.toLocaleString('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
+        }
+
+        function showWelcomeNotification() {
+            const now = new Date();
+            const hour = now.getHours();
+            const todayKey = new Date().toISOString().split('T')[0];
+
+            // Estrutura no localStorage para controlar dicas diárias
+            const tipsStateKey = 'titanDailyTipsState';
+            let tipsState = {};
+            try {
+                const stored = localStorage.getItem(tipsStateKey);
+                if (stored) tipsState = JSON.parse(stored) || {};
+            } catch (e) {
+                tipsState = {};
+            }
+
+            // Catálogo simples de dicas por período
+            const tipsCatalog = {
+                morning: [
+                    'Use a manhã para rever o fluxo de caixa e planear o dia financeiro do seu negócio.',
+                    'Revise as contas a receber logo cedo e planeie as cobranças do dia.',
+                    'Defina hoje 3 tarefas financeiras rápidas: registar receitas, actualizar despesas e rever o saldo bancário.'
+                ],
+                afternoon: [
+                    'Reserve alguns minutos para registar receitas e despesas de hoje e manter tudo em dia.',
+                    'Acompanhe se o orçamento de despesas deste mês ainda está dentro do planeado.',
+                    'Analise o relatório de Lucros e Perdas para ver como o dia/semana está a evoluir.'
+                ],
+                night: [
+                    'Antes de encerrar o dia, actualize as transações e verifique o saldo e os relatórios-chave.',
+                    'Revise os orçamentos em aberto e planeie os recebimentos de amanhã.',
+                    'Faça um pequeno resumo mental: quanto entrou, quanto saiu e qual o saldo de hoje?'
+                ]
+            };
+
+            let period = 'night';
+            let saudacao = 'Bem-vindo(a) ao TITAN!';
+
+            if (hour >= 5 && hour < 12) {
+                period = 'morning';
+                saudacao = 'Bom dia! Bem-vindo(a) ao TITAN.';
+            } else if (hour >= 12 && hour < 18) {
+                period = 'afternoon';
+                saudacao = 'Boa tarde! Bem-vindo(a) ao TITAN.';
+            } else {
+                period = 'night';
+                saudacao = 'Boa noite! Bem-vindo(a) ao TITAN.';
+            }
+
+            const periodTips = tipsCatalog[period] || [];
+            if (periodTips.length === 0) return;
+
+            const stateForToday = tipsState[todayKey] || {};
+            const usedTips = stateForToday[period] && Array.isArray(stateForToday[period].used)
+                ? stateForToday[period].used
+                : [];
+
+            // Escolhe dicas que ainda não foram usadas hoje para este período
+            const availableTips = periodTips.filter(t => !usedTips.includes(t));
+            let selectedTip;
+
+            if (availableTips.length === 0) {
+                // Se todas já foram usadas hoje, volta a permitir todas, mas evita repetir exatamente a última
+                const lastTip = stateForToday[period] ? stateForToday[period].last : null;
+                const nonLastTips = periodTips.filter(t => t !== lastTip);
+                selectedTip = nonLastTips.length > 0 ? nonLastTips[Math.floor(Math.random() * nonLastTips.length)] : periodTips[0];
+                stateForToday[period] = { used: periodTips.slice(), last: selectedTip };
+            } else {
+                selectedTip = availableTips[Math.floor(Math.random() * availableTips.length)];
+                const newUsed = usedTips.concat(selectedTip);
+                stateForToday[period] = { used: newUsed, last: selectedTip };
+            }
+
+            tipsState[todayKey] = stateForToday;
+            localStorage.setItem(tipsStateKey, JSON.stringify(tipsState));
+
+            // Guardar como notificação importante do dia
+            saveDailyImportantNotification({
+                id: 'welcome-' + todayKey + '-' + period,
+                date: todayKey,
+                period,
+                type: 'info',
+                title: saudacao,
+                message: selectedTip
+            });
+
+            const isFirstWelcomeToday = !stateForToday.shownOnce;
+            stateForToday.shownOnce = true;
+            tipsState[todayKey] = stateForToday;
+            localStorage.setItem(tipsStateKey, JSON.stringify(tipsState));
+
+            showNotification(
+                isFirstWelcomeToday ? 'success' : 'info',
+                `${selectedTip}`,
+                saudacao
+            );
+        }
+
+        // Guarda notificações importantes do dia no localStorage para consulta posterior
+        function saveDailyImportantNotification(notification) {
+            try {
+                const key = 'titanDailyImportantNotifications';
+                let list = [];
+                const stored = localStorage.getItem(key);
+                if (stored) list = JSON.parse(stored) || [];
+
+                // Evitar duplicados com o mesmo id no mesmo dia
+                const exists = list.some(n => n.id === notification.id);
+                if (!exists) {
+                    list.push(notification);
+                    localStorage.setItem(key, JSON.stringify(list));
+                }
+            } catch (e) {
+                console.error('Erro ao guardar notificações importantes:', e);
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-AO');
+        }
+
+        function getMonthName(month) {
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return months[month];
+        }
+
+        function getTypeLabel(type) {
+            const types = {
+                'income': 'Receita',
+                'expense': 'Despesa',
+                'transfer': 'Transferência',
+                'both': 'Ambos'
+            };
+            return types[type] || type;
+        }
+
+        function getStatusLabel(status) {
+            const statuses = {
+                'draft': 'Rascunho',
+                'sent': 'Enviada',
+                'paid': 'Paga',
+                'overdue': 'Vencida'
+            };
+            return statuses[status] || status;
+        }
+
+        function getAccountTypeLabel(type) {
+            const types = {
+                'bank': 'Banco',
+                'cash': 'Dinheiro',
+                'card': 'Cartão',
+                'wallet': 'Carteira Digital'
+            };
+            return types[type] || type;
+        }
+
+        function setCurrentDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                if (!input.value) {
+                    input.value = today;
+                }
+            });
+        }
+
+        // Populate Dropdowns
+        function populateDropdowns() {
+            updateCompanyDropdown();
+            populateAccountsDropdown();
+            populateCategoriesDropdown();
+            populateClientsDropdown();
+            populateCurrencyDropdowns();
+        }
+
+        function updateCompanyDropdown() {
+            const select = document.getElementById('currentCompany');
+            select.innerHTML = '<option value="">Selecionar Empresa</option>';
+            
+            appData.companies.forEach(company => {
+                const option = document.createElement('option');
+                option.value = company.id;
+                option.textContent = company.name;
+                if (appData.settings.currentCompany == company.id) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            select.onchange = function() {
+                appData.settings.currentCompany = this.value;
+                saveData();
+                renderAllLists();
+                updateDashboard();
+            };
+        }
+
+        function populateAccountsDropdown() {
+            const selects = ['transactionAccount', 'transactionToAccount'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                select.innerHTML = '<option value="">Selecione...</option>';
+                
+                const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+                accounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = account.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function populateAccountParentDropdown() {
+            const select = document.getElementById('accountParent');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Conta Principal</option>';
+            
+            const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = account.name;
+                select.appendChild(option);
+            });
+        }
+
+        function populateCategoriesDropdown() {
+            const selects = ['transactionCategory', 'filterCategory'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                const isFilter = selectId === 'filterCategory';
+                select.innerHTML = isFilter ? '<option value="">Todas Categorias</option>' : '<option value="">Selecione...</option>';
+                
+                appData.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function populateClientsDropdown() {
+            const select = document.getElementById('invoiceClient');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Selecione...</option>';
+            
+            const clients = appData.clients.filter(c => !appData.settings.currentCompany || c.companyId == appData.settings.currentCompany);
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.id;
+                option.textContent = client.name;
+                select.appendChild(option);
+            });
+        }
+
+        function populateCurrencyDropdowns() {
+            const selects = ['convertFrom', 'convertTo'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                select.innerHTML = '';
+                
+                appData.currencies.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency.code;
+                    option.textContent = `${currency.code} - ${currency.name}`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Transaction Fields Update
+        function updateTransactionFields() {
+            const type = document.getElementById('transactionType').value;
+            const transferField = document.getElementById('transferAccountField');
+            
+            if (type === 'transfer') {
+                transferField.style.display = 'block';
+                document.getElementById('transactionToAccount').required = true;
+            } else {
+                transferField.style.display = 'none';
+                document.getElementById('transactionToAccount').required = false;
+            }
+        }
+
+        // Invoice Items
+        function addInvoiceItem(item = null) {
+            const container = document.getElementById('invoiceItems');
+            const index = container.children.length;
+            
+            const div = document.createElement('div');
+            div.className = 'invoice-item grid grid-cols-5 gap-2 mb-2';
+            div.innerHTML = `
+                <input type="text" class="input-field item-description" placeholder="Descrição" value="${item ? item.description : ''}" required>
+                <input type="number" class="input-field item-quantity" placeholder="Qtd" step="0.01" value="${item ? item.quantity : 1}" onchange="calculateInvoiceTotal()" required>
+                <input type="number" class="input-field item-price" placeholder="Preço" step="0.01" value="${item ? item.price : 0}" onchange="calculateInvoiceTotal()" required>
+                <input type="number" class="input-field" placeholder="Total" value="${item ? item.total : 0}" readonly>
+                <button type="button" onclick="this.parentElement.remove(); calculateInvoiceTotal();" class="btn-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            container.appendChild(div);
+            calculateInvoiceTotal();
+        }
+
+        function calculateInvoiceTotal() {
+            let subtotal = 0;
+            
+            document.querySelectorAll('.invoice-item').forEach(itemDiv => {
+                const qty = parseFloat(itemDiv.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(itemDiv.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                
+                itemDiv.querySelector('input[placeholder="Total"]').value = total.toFixed(2);
+                subtotal += total;
+            });
+
+            const taxPercent = parseFloat(document.getElementById('invoiceTax').value) || 0;
+            const withholdingPercent = parseFloat(document.getElementById('invoiceWithholding').value) || 0;
+            const globalDiscountPercent = parseFloat(document.getElementById('invoiceGlobalDiscount').value) || 0;
+
+            // Desconto global aplicado sobre o subtotal
+            const discountAmount = subtotal * (globalDiscountPercent / 100);
+            const baseAfterDiscount = subtotal - discountAmount;
+
+            // IVA calculado sobre a base após desconto global
+            const ivaAmount = baseAfterDiscount * (taxPercent / 100);
+
+            // Retenção calculada sobre a mesma base após desconto global
+            const withholdingAmount = baseAfterDiscount * (withholdingPercent / 100);
+
+            // Total de impostos = IVA - Retenção (retenção reduz o valor a receber)
+            const totalTaxes = ivaAmount - withholdingAmount;
+
+            // Total final do documento
+            const total = baseAfterDiscount + ivaAmount - withholdingAmount;
+
+            document.getElementById('invoiceSubtotal').value = subtotal.toFixed(2);
+            document.getElementById('invoiceTotalTaxes').value = totalTaxes.toFixed(2);
+            document.getElementById('invoiceTotal').value = total.toFixed(2);
+        }
+
+        // Invoice validity handling
+        function handleInvoiceValidityChange() {
+            const preset = document.getElementById('invoiceValidityPreset');
+            const dueDateInput = document.getElementById('invoiceDueDate');
+            const issueDateInput = document.getElementById('invoiceDate');
+            if (!preset || !dueDateInput || !issueDateInput) return;
+
+            const presetValue = preset.value;
+            const issueDateStr = issueDateInput.value;
+            if (!issueDateStr) {
+                // se não houver data de emissão ainda, não faz nada
+                return;
+            }
+
+            const baseDate = new Date(issueDateStr + 'T00:00:00');
+
+            if (presetValue === 'manual') {
+                dueDateInput.disabled = false;
+                return;
+            }
+
+            // Para presets rápidos, calcula automaticamente e mantém o campo desativado
+            let daysToAdd = 0;
+            let monthsToAdd = 0;
+
+            switch (presetValue) {
+                case 'today':
+                    daysToAdd = 0;
+                    break;
+                case 'tomorrow':
+                    daysToAdd = 1;
+                    break;
+                case '3days':
+                    daysToAdd = 3;
+                    break;
+                case '7days':
+                    daysToAdd = 7;
+                    break;
+                case '1month':
+                    monthsToAdd = 1;
+                    break;
+                case '1quarter':
+                    monthsToAdd = 3;
+                    break;
+                default:
+                    break;
+            }
+
+            if (monthsToAdd !== 0) {
+                baseDate.setMonth(baseDate.getMonth() + monthsToAdd);
+            }
+            if (daysToAdd !== 0) {
+                baseDate.setDate(baseDate.getDate() + daysToAdd);
+            }
+
+            const year = baseDate.getFullYear();
+            const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+            const day = String(baseDate.getDate()).padStart(2, '0');
+            const resultStr = `${year}-${month}-${day}`;
+
+            dueDateInput.value = resultStr;
+            dueDateInput.disabled = true;
+        }
+
+        // Journal Entry Lines
+        function addJournalEntryLine() {
+            const container = document.getElementById('journalEntries');
+            
+            const div = document.createElement('div');
+            div.className = 'journal-entry-line grid grid-cols-4 gap-2 mb-2';
+            div.innerHTML = `
+                <select class="input-field journal-account" required>
+                    <option value="">Selecionar Conta</option>
+                    ${appData.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+                </select>
+                <input type="number" class="input-field journal-debit" placeholder="Débito" step="0.01" value="0" onchange="updateJournalTotals()">
+                <input type="number" class="input-field journal-credit" placeholder="Crédito" step="0.01" value="0" onchange="updateJournalTotals()">
+                <button type="button" onclick="this.parentElement.remove(); updateJournalTotals();" class="btn-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            container.appendChild(div);
+        }
+
+        function updateJournalTotals() {
+            let totalDebit = 0;
+            let totalCredit = 0;
+            
+            document.querySelectorAll('.journal-entry-line').forEach(line => {
+                totalDebit += parseFloat(line.querySelector('.journal-debit').value) || 0;
+                totalCredit += parseFloat(line.querySelector('.journal-credit').value) || 0;
+            });
+
+            document.getElementById('totalDebit').textContent = totalDebit.toFixed(2);
+            document.getElementById('totalCredit').textContent = totalCredit.toFixed(2);
+        }
+
+        // Filters
+        function filterTransactions() {
+            renderTransactionsList();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterPeriod').value = '';
+            filterTransactions();
+        }
+
+        // Delete Functions
+        function deleteCompany(id) {
+            if (confirm('Tem certeza que deseja excluir esta empresa?')) {
+                appData.companies = appData.companies.filter(c => c.id !== id);
+                if (appData.settings.currentCompany == id) {
+                    appData.settings.currentCompany = null;
+                }
+                saveData();
+                renderCompaniesList();
+                updateCompanyDropdown();
+            }
+        }
+
+        function deleteAccount(id) {
+            if (confirm('Tem certeza que deseja excluir esta conta?')) {
+                appData.accounts = appData.accounts.filter(a => a.id !== id);
+                saveData();
+                renderAccountsList();
+            }
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Tem certeza que deseja excluir esta transação?')) {
+                appData.transactions = appData.transactions.filter(t => t.id !== id);
+                saveData();
+                renderTransactionsList();
+                updateDashboard();
+            }
+        }
+
+        function deleteInvoice(id) {
+            if (confirm('Tem certeza que deseja excluir este orçamento?')) {
+                appData.invoices = appData.invoices.filter(i => i.id !== id);
+                saveData();
+                renderInvoicesList();
+            }
+        }
+
+        function deleteCategory(id) {
+            if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+                appData.categories = appData.categories.filter(c => c.id !== id);
+                saveData();
+                renderCategoriesList();
+            }
+        }
+
+        function deleteClient(id) {
+            if (confirm('Tem certeza que deseja excluir este cliente?')) {
+                appData.clients = appData.clients.filter(c => c.id !== id);
+                saveData();
+                renderClientsList();
+            }
+        }
+
+        function deleteCurrency(id) {
+            if (confirm('Tem certeza que deseja excluir esta moeda?')) {
+                appData.currencies = appData.currencies.filter(c => c.id !== id);
+                saveData();
+                renderCurrenciesList();
+            }
+        }
+
+        // Currency Converter
+        function convertCurrency() {
+            const fromCode = document.getElementById('convertFrom').value;
+            const toCode = document.getElementById('convertTo').value;
+            const amount = parseFloat(document.getElementById('convertAmountFrom').value) || 0;
+
+            const fromCurrency = appData.currencies.find(c => c.code === fromCode);
+            const toCurrency = appData.currencies.find(c => c.code === toCode);
+
+            if (fromCurrency && toCurrency) {
+                // Convert to AOA first, then to target currency
+                const amountInAOA = amount / fromCurrency.rate;
+                const result = amountInAOA * toCurrency.rate;
+                
+                document.getElementById('convertAmountTo').value = result.toFixed(2);
+            }
+        }
+
+        // Settings
+        function changeAccountingMode(mode) {
+            appData.settings.accountingMode = mode;
+            document.getElementById('currentMode').textContent = mode === 'simple' ? 'Simples' : 'Partidas Dobradas';
+            saveData();
+        }
+
+        function showAccountingModePopup() {
+            alert('Modo: ' + (appData.settings.accountingMode === 'simple' ? 'Simples' : 'Partidas Dobradas') + '\n\nAltere nas Configurações.');
+        }
+
+        // Export/Import
+        function exportData(format) {
+            if (format === 'json') {
+                const dataStr = JSON.stringify(appData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `titan-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            } else if (format === 'pdf') {
+                generateFullReportPDF();
+            }
+        }
+
+        function importData() {
+            const file = document.getElementById('importFile').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('Isto irá substituir todos os dados atuais. Continuar?')) {
+                        appData = imported;
+                        saveData();
+                        renderAllLists();
+                        updateDashboard();
+                        alert('Dados importados com sucesso!');
+                    }
+                } catch (err) {
+                    alert('Erro ao importar dados: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (confirm('ATENÇÃO: Isto irá apagar todos os dados permanentemente. Continuar?')) {
+                if (confirm('Tem certeza absoluta? Esta ação não pode ser desfeita!')) {
+                    localStorage.removeItem('titanAppData');
+                    location.reload();
+                }
+            }
+        }
+
+        // Reports
+        function showReportTab(reportType) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            const container = document.getElementById('reportContent');
+            
+            switch(reportType) {
+                case 'profitLoss':
+                    generateProfitLossReport(container);
+                    break;
+                case 'balanceSheet':
+                    generateBalanceSheetReport(container);
+                    break;
+                case 'generalLedger':
+                    generateGeneralLedgerReport(container);
+                    break;
+                case 'trialBalance':
+                    generateTrialBalanceReport(container);
+                    break;
+                case 'chartOfAccounts':
+                    generateChartOfAccountsReport(container);
+                    break;
+                case 'cashFlow':
+                    generateCashFlowReport(container);
+                    break;
+            }
+        }
+
+        function generateProfitLossReport(container) {
+            const transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const profit = income - expenses;
+
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Demonstração de Resultados</h3>
+                    <table class="table">
+                        <tr><td class="font-bold">Receitas Totais</td><td class="text-right text-green-600 font-bold">${formatCurrency(income, 'Kz')}</td></tr>
+                        <tr><td class="font-bold">Despesas Totais</td><td class="text-right text-red-600 font-bold">${formatCurrency(expenses, 'Kz')}</td></tr>
+                        <tr class="border-t-2"><td class="font-bold text-lg">Lucro Líquido</td><td class="text-right font-bold text-lg ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(profit, 'Kz')}</td></tr>
+                    </table>
+                    <button onclick="exportReportPDF('profitLoss')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function generateBalanceSheetReport(container) {
+            const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+            
+            const assets = accounts.filter(a => a.accountingType === 'asset').reduce((sum, a) => sum + a.balance, 0);
+            const liabilities = accounts.filter(a => a.accountingType === 'liability').reduce((sum, a) => sum + a.balance, 0);
+            const equity = accounts.filter(a => a.accountingType === 'equity').reduce((sum, a) => sum + a.balance, 0);
+
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Balanço Patrimonial</h3>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">ATIVO</h4>
+                            <table class="table">
+                                ${accounts.filter(a => a.accountingType === 'asset').map(a => `
+                                    <tr><td>${a.name}</td><td class="text-right">${formatCurrency(a.balance, 'Kz')}</td></tr>
+                                `).join('')}
+                                <tr class="border-t-2"><td class="font-bold">Total Ativo</td><td class="text-right font-bold">${formatCurrency(assets, 'Kz')}</td></tr>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-2">PASSIVO E PATRIMÔNIO</h4>
+                            <table class="table">
+                                ${accounts.filter(a => a.accountingType === 'liability').map(a => `
+                                    <tr><td>${a.name}</td><td class="text-right">${formatCurrency(a.balance, 'Kz')}</td></tr>
+                                `).join('')}
+                                <tr class="border-t"><td class="font-bold">Total Passivo</td><td class="text-right font-bold">${formatCurrency(liabilities, 'Kz')}</td></tr>
+                                ${accounts.filter(a => a.accountingType === 'equity').map(a => `
+                                    <tr><td>${a.name}</td><td class="text-right">${formatCurrency(a.balance, 'Kz')}</td></tr>
+                                `).join('')}
+                                <tr class="border-t"><td class="font-bold">Total Patrimônio</td><td class="text-right font-bold">${formatCurrency(equity, 'Kz')}</td></tr>
+                                <tr class="border-t-2"><td class="font-bold">Total Passivo + Patrimônio</td><td class="text-right font-bold">${formatCurrency(liabilities + equity, 'Kz')}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <button onclick="exportReportPDF('balanceSheet')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function generateGeneralLedgerReport(container) {
+            const transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Razão Geral</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Conta</th>
+                                <th>Débito</th>
+                                <th>Crédito</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            let runningBalance = 0;
+            transactions.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+                const account = appData.accounts.find(a => a.id == t.accountId);
+                const debit = t.type === 'income' ? t.amount : 0;
+                const credit = t.type === 'expense' ? t.amount : 0;
+                runningBalance += debit - credit;
+
+                html += `
+                    <tr>
+                        <td>${formatDate(t.date)}</td>
+                        <td>${t.description}</td>
+                        <td>${account ? account.name : '-'}</td>
+                        <td class="text-right">${debit > 0 ? formatCurrency(debit, 'Kz') : '-'}</td>
+                        <td class="text-right">${credit > 0 ? formatCurrency(credit, 'Kz') : '-'}</td>
+                        <td class="text-right font-bold">${formatCurrency(runningBalance, 'Kz')}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                    <button onclick="exportReportPDF('generalLedger')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function generateTrialBalanceReport(container) {
+            const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+            
+            let totalDebit = 0;
+            let totalCredit = 0;
+
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Balancete de Verificação</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Conta</th>
+                                <th>Débito</th>
+                                <th>Crédito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            accounts.forEach(account => {
+                const debit = account.balance >= 0 ? account.balance : 0;
+                const credit = account.balance < 0 ? Math.abs(account.balance) : 0;
+                
+                totalDebit += debit;
+                totalCredit += credit;
+
+                html += `
+                    <tr>
+                        <td>${account.code || '-'}</td>
+                        <td>${account.name}</td>
+                        <td class="text-right">${debit > 0 ? formatCurrency(debit, 'Kz') : '-'}</td>
+                        <td class="text-right">${credit > 0 ? formatCurrency(credit, 'Kz') : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            <tr class="border-t-2 font-bold">
+                                <td colspan="2">TOTAL</td>
+                                <td class="text-right">${formatCurrency(totalDebit, 'Kz')}</td>
+                                <td class="text-right">${formatCurrency(totalCredit, 'Kz')}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button onclick="exportReportPDF('trialBalance')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function generateChartOfAccountsReport(container) {
+            const accounts = appData.accounts.filter(a => !appData.settings.currentCompany || a.companyId == appData.settings.currentCompany);
+            
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Plano de Contas</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Tipo Contábil</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            accounts.forEach(account => {
+                html += `
+                    <tr>
+                        <td>${account.code || '-'}</td>
+                        <td>${account.name}</td>
+                        <td>${getAccountTypeLabel(account.type)}</td>
+                        <td><span class="badge badge-info">${account.accountingType || '-'}</span></td>
+                        <td class="text-right font-bold">${formatCurrency(account.balance, 'Kz')}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                    <button onclick="exportReportPDF('chartOfAccounts')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function generateCashFlowReport(container) {
+            const transactions = appData.transactions.filter(t => !appData.settings.currentCompany || t.companyId == appData.settings.currentCompany);
+            
+            const operating = transactions.filter(t => t.type === 'income' || t.type === 'expense')
+                .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+
+            let html = `
+                <div class="p-6 bg-white rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">Demonstração de Fluxo de Caixa</h3>
+                    <table class="table">
+                        <tr><td class="font-bold">Atividades Operacionais</td><td class="text-right font-bold">${formatCurrency(operating, 'Kz')}</td></tr>
+                        <tr><td class="font-bold">Atividades de Investimento</td><td class="text-right">0,00 Kz</td></tr>
+                        <tr><td class="font-bold">Atividades de Financiamento</td><td class="text-right">0,00 Kz</td></tr>
+                        <tr class="border-t-2"><td class="font-bold text-lg">Fluxo de Caixa Líquido</td><td class="text-right font-bold text-lg ${operating >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(operating, 'Kz')}</td></tr>
+                    </table>
+                    <button onclick="exportReportPDF('cashFlow')" class="btn-primary mt-4">
+                        <i class="fas fa-download mr-2"></i>Exportar PDF
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // PDF Generation
+        function exportReportPDF(reportType) {
+            showNotification('info', 'Funcionalidade de exportação PDF será implementada em breve.', 'Exportar PDF');
+        }
+
+        function generateInvoicePDF() {
+            showNotification('info', 'Geração de PDF do orçamento falhou, consulte a IS.', 'Orçamento PDF');
+        }
+
+        function viewInvoicePDF(invoiceId) {
+            showNotification('info', 'Geração de visualização de PDF falhou, consulte a IS.', 'Visualizar PDF');
+        }
+
+        function generateFullReportPDF() {
+            showNotification('info', 'Geração de relatório completo em PDF falhou, consulte a IS.', 'Relatório Completo');
+        }
+
+        // Simple icon picker for categories and companies
+        function openIconPicker(target) {
+            const icons = [
+                'fa-briefcase',
+                'fa-building',
+                'fa-store',
+                'fa-shopping-cart',
+                'fa-coins',
+                'fa-wallet',
+                'fa-credit-card',
+                'fa-lightbulb',
+                'fa-truck',
+                'fa-users',
+                'fa-bullhorn',
+                'fa-chart-line'
+            ];
+
+            const popup = document.createElement('div');
+            popup.className = 'popup show';
+            popup.innerHTML = `
+                <div class="popup-content" style="max-width:500px;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Selecionar Ícone</h3>
+                        <button class="text-2xl" onclick="this.closest('.popup').remove()">&times;</button>
+                    </div>
+                    <div class="grid grid-cols-6 gap-3">
+                        ${icons.map(icon => `
+                            <button type="button" class="w-12 h-12 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-500 hover:text-blue-500 transition" onclick="selectIcon('${target}','${icon}'); this.closest('.popup').remove();">
+                                <i class="fas ${icon} text-lg"></i>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+        }
+
+        function selectIcon(target, iconClass) {
+            if (target === 'category') {
+                const input = document.getElementById('categoryIcon');
+                const preview = document.getElementById('categoryIconPreview');
+                if (input && preview) {
+                    input.value = iconClass;
+                    preview.innerHTML = `<i class="fas ${iconClass}"></i>`;
+                }
+            } else if (target === 'company') {
+                const preview = document.getElementById('companyIconPreview');
+                if (preview) {
+                    preview.innerHTML = `<i class="fas ${iconClass}"></i>`;
+                }
+            }
+        }
+
+        // Assistant / Bot Panel
+        function loadTodayImportantNotifications() {
+            const key = 'titanDailyImportantNotifications';
+            let list = [];
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) list = JSON.parse(stored) || [];
+            } catch (e) {
+                list = [];
+            }
+
+            const todayKey = new Date().toISOString().split('T')[0];
+            return list.filter(n => n.date === todayKey);
+        }
+
+        function renderAssistantMessages() {
+            const container = document.getElementById('assistantMessages');
+            if (!container) return;
+
+            const messages = loadTodayImportantNotifications();
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 text-center">Nenhuma notificação importante registada para hoje.</p>';
+                return;
+            }
+
+            messages.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bg-white rounded-xl shadow-sm px-3 py-2 text-xs border border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors';
+                bubble.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-semibold text-gray-800">${msg.title || 'TITAN'}</span>
+                        <span class="text-[10px] text-gray-400">${msg.period ? msg.period : ''}</span>
+                    </div>
+                    <p class="text-gray-600 leading-snug">${msg.message}</p>
+                `;
+                container.appendChild(bubble);
+            });
+        }
+
+        function clearTodayImportantNotifications() {
+            const key = 'titanDailyImportantNotifications';
+            const todayKey = new Date().toISOString().split('T')[0];
+            let list = [];
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) list = JSON.parse(stored) || [];
+            } catch (e) {
+                list = [];
+            }
+
+            const filtered = list.filter(n => n.date !== todayKey);
+            localStorage.setItem(key, JSON.stringify(filtered));
+            renderAssistantMessages();
+        }
+
+        function initAssistantPanel() {
+            const toggle = document.getElementById('assistantToggle');
+            const panel = document.getElementById('assistantPanel');
+            const closeBtn = document.getElementById('assistantClose');
+            const clearTodayBtn = document.getElementById('assistantClearToday');
+
+            if (!toggle || !panel) return;
+
+            toggle.addEventListener('click', () => {
+                const isHidden = panel.classList.contains('hidden');
+                if (isHidden) {
+                    renderAssistantMessages();
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    panel.classList.add('hidden');
+                });
+            }
+
+            if (clearTodayBtn) {
+                clearTodayBtn.addEventListener('click', () => {
+                    clearTodayImportantNotifications();
+                });
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            initAssistantPanel();
+        });
+    </script>
+</body>
+</html>
