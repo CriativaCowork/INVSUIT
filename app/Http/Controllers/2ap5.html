@@ -1,0 +1,2549 @@
+
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Fluxo de Caixa-I</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    :root {
+      --primary: #66CFF5;
+      --primary-dark: #33BEF2;
+      --bg-light: #F8F9FA;
+      --border-light: #E0E0E0;
+      --success: #4CAF50;
+      --warning: #FF9800;
+      --error: #F44336;
+      --favorite: #FFC107;
+      --text-dark: #212121;
+      --text-medium: #616161;
+      --text-light: #9E9E9E;
+    }
+    
+    .dark {
+      --bg-light: #1a1a2e;
+      --border-light: #2d2d44;
+      --text-dark: #f5f5f5;
+      --text-medium: #b0b0b0;
+      --text-light: #808080;
+    }
+    
+    .dark body, .dark .bg-card {
+      background-color: #0f0f1a;
+    }
+    
+    .dark .card-bg {
+      background-color: #1a1a2e;
+    }
+    
+    .card-shadow {
+      box-shadow: 0 2px 8px rgba(30, 136, 229, 0.08);
+      transition: all 0.2s ease;
+    }
+    
+    .card-shadow:hover {
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    .input-field {
+      transition: all 0.2s ease;
+      border: 1px solid var(--border-light);
+    }
+    
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    
+    .toast {
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    
+    .tab-active {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    
+    .collapse-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .collapse-content.open {
+      max-height: 2000px;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+    
+    @media (min-width: 768px) {
+      .chart-container {
+        height: 300px;
+      }
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: var(--bg-light);
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 3px;
+    }
+    
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div id="app" class="h-full overflow-auto scrollbar-thin"><!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div><!-- Header -->
+   <header class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 card-shadow">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+       <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center" style="display: none;">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="app-title" class="text-lg font-semibold text-gray-900 dark:text-white" style="display: none; display: none;">Simulador de Fluxo de Caixa</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400" style="display: none;">Comunidade CPLP</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-2"><!-- Currency Selector --> <select id="currency-selector" onchange="changeCurrency(this.value)" class="px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"> <option value="AOA">🇦🇴 Kz</option> <option value="BRL">🇧🇷 R$</option> <option value="CVE">🇨������ $</option> <option value="XOF">🇬🇼 CFA</option> <option value="MZN">🇲🇿 MT</option> <option value="EUR">🇵🇹 €</option> <option value="STN">🇸🇹 Db</option> <option value="CHF">🇨🇭 CHF</option> <option value="MOP">🇲🇴 MOP$</option> <option value="USD">🇹�� $</option> </select> <!-- Dark Mode Toggle --> <button id="dark-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Alternar modo escuro">
+        <svg id="sun-icon" class="w-5 h-5 text-gray-600 dark:text-gray-300 hidden dark:block" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg id="moon-icon" class="w-5 h-5 text-gray-600 dark:text-gray-300 block dark:hidden" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg></button> <!-- Help Button --> <button id="help-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Ajuda e Educação Financeira">
+        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg></button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-4"><!-- Mode Tabs -->
+    <div class="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 mb-4"><button id="tab-advanced" class="px-4 py-2 text-sm font-medium whitespace-nowrap tab-active flex items-center gap-2" onclick="switchMode('advanced')">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg> Modo Avançado </button> <button id="tab-daily" class="px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-500 hover:text-gray-700 dark:text-gray-400 flex items-center gap-2" onclick="switchMode('daily')">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg> Registro Diário </button> <button id="tab-simple" class="px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-500 hover:text-gray-700 dark:text-gray-400 flex items-center gap-2" onclick="switchMode('simple')">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg> Modo Simples </button> <button id="tab-education" class="px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-500 hover:text-gray-700 dark:text-gray-400 flex items-center gap-2" onclick="switchMode('education')">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg> Educação Financeira </button>
+    </div><!-- Simple Mode -->
+    <div id="simple-mode" class="hidden space-y-4"><!-- Quick Input Card -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h2 class="text-base font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Entrada Rápida</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><!-- Receitas -->
+       <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receitas</label> <input type="number" id="simple-receitas" class="w-full px-3 py-2 rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="0.00 (Kz)" min="0" step="0.01">
+       </div><!-- Despesas -->
+       <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Despesas</label> <input type="number" id="simple-despesas" class="w-full px-3 py-2 rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="0.00 (Kz)" min="0" step="0.01">
+       </div>
+      </div><!-- Result Display -->
+      <div id="simple-result" class="mt-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+       <div class="flex justify-between items-center"><span class="text-sm text-gray-600 dark:text-gray-300">Saldo do Mês:</span> <span id="simple-saldo" class="text-xl font-bold text-green-500">Kz 0,00</span>
+       </div>
+       <p id="simple-status" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Insira os valores para calcular</p>
+      </div>
+     </div><!-- Simple Chart -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-sm font-semibold mb-3">Visualização</h3>
+      <div class="chart-container">
+       <canvas id="simple-chart"></canvas>
+      </div>
+     </div>
+    </div><!-- Advanced Mode -->
+    <div id="advanced-mode" class="space-y-4"><!-- Scenario Management -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+       <h2 class="text-base font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg> Gestão de Cenários</h2>
+       <div class="flex gap-2"><button onclick="saveCurrentScenario()" class="px-3 py-1.5 text-xs font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar </button> <button onclick="createNewScenario()" class="px-3 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo </button> <button onclick="openExamplesModal()" class="px-3 py-1.5 text-xs font-medium bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+         </svg> Exemplos </button>
+       </div>
+      </div><!-- Scenario List -->
+      <div id="scenario-list" class="flex flex-wrap gap-2 mb-3"><!-- Scenarios will be rendered here -->
+      </div><!-- Current Scenario Name -->
+      <div class="flex items-center gap-2"><input type="text" id="current-scenario-name" class="flex-1 px-3 py-1.5 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Nome do cenário"> <button onclick="renameCurrentScenario()" class="p-1.5 text-gray-500 hover:text-blue-500 transition-colors" title="Renomear">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg></button>
+      </div>
+     </div><!-- Project Info -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow"><button onclick="toggleCollapse('project-info')" class="w-full flex items-center justify-between text-left"> <h3 class="text-sm font-semibold flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Informações do Projeto</h3>
+       <svg id="project-info-icon" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+       </svg></button>
+      <div id="project-info" class="collapse-content open">
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+        <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Investimento Inicial</label> <input type="number" id="investimento-inicial" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Taxa de Desconto (%)</label> <input type="number" id="taxa-desconto" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="10" min="0" max="100" step="0.1" value="10">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Períodos (meses)</label> <input type="number" id="num-periodos" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="12" min="1" max="60" value="12">
+        </div>
+       </div>
+      </div>
+     </div><!-- Cash Flow Entries -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <div class="flex items-center justify-between mb-3">
+       <h3 class="text-sm font-semibold flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Fluxos de Caixa por Período</h3><button onclick="generatePeriods()" class="px-3 py-1.5 text-xs font-medium btn-primary text-white rounded-lg flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg> Gerar </button>
+      </div>
+      <div id="periods-container" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin"><!-- Period entries will be rendered here -->
+       <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Clique em "Gerar" para criar os períodos</p>
+      </div>
+     </div><!-- Indicators -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg> Indicadores Financeiros</h3>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+       <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-center">
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">VPL</p>
+        <p id="indicator-vpl" class="text-lg font-bold text-blue-600 dark:text-blue-400">€ 0,00</p>
+       </div>
+       <div class="p-3 rounded-lg bg-green-50 dark:bg-green-900/30 text-center">
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">TIR</p>
+        <p id="indicator-tir" class="text-lg font-bold text-green-600 dark:text-green-400">0,00%</p>
+       </div>
+       <div class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 text-center">
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Payback</p>
+        <p id="indicator-payback" class="text-lg font-bold text-yellow-600 dark:text-yellow-400">- meses</p>
+       </div>
+       <div class="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-center">
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">IL</p>
+        <p id="indicator-il" class="text-lg font-bold text-purple-600 dark:text-purple-400">0,00</p>
+       </div>
+       <div class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-center">
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">ROI</p>
+        <p id="indicator-roi" class="text-lg font-bold text-orange-600 dark:text-orange-400">0,00%</p>
+       </div>
+      </div>
+     </div><!-- Charts -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+       <h3 class="text-sm font-semibold mb-3">Fluxo de Caixa Projetado</h3>
+       <div class="chart-container">
+        <canvas id="cashflow-chart"></canvas>
+       </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+       <h3 class="text-sm font-semibold mb-3">Saldo Acumulado</h3>
+       <div class="chart-container">
+        <canvas id="cumulative-chart"></canvas>
+       </div><!-- Cumulative Balance Display -->
+       <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Saldo Final Acumulado</p>
+          <p id="final-cumulative-balance" class="text-2xl font-bold text-blue-600 dark:text-blue-400">Kz 0,00</p>
+         </div>
+         <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+          <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Project Viability Analysis -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Análise de Viabilidade do Projeto</h3>
+      <div id="viability-analysis" class="space-y-3"><!-- Will be populated by calculateViability() -->
+      </div>
+     </div><!-- Export/Import -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+       </svg> Exportar / Importar</h3>
+      <div class="flex flex-wrap gap-2"><button onclick="exportJSON()" class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg> Exportar JSON </button> <label class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg> Importar JSON <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSON(event)"> </label> <button onclick="exportPDF()" class="px-3 py-2 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Exportar PDF </button> <button onclick="exportImage()" class="px-3 py-2 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg> Exportar Imagem </button>
+      </div>
+     </div>
+    </div><!-- Daily Entries Mode -->
+    <div id="daily-mode" class="hidden space-y-4"><!-- Add Entry Card -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h2 class="text-base font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+       </svg> Nova Entrada/Despesa</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data</label> <input type="date" id="daily-date" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+       </div>
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo</label> <select id="daily-type" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white"> <option value="receita">Receita</option> <option value="despesa">Despesa</option> </select>
+       </div>
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Valor</label> <input type="number" id="daily-value" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="0.00" step="0.01">
+       </div>
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descrição</label> <input type="text" id="daily-description" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Descrição">
+       </div>
+      </div><button onclick="addDailyEntry()" class="mt-3 px-4 py-2 text-sm font-medium btn-primary text-white rounded-lg flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+       </svg> Adicionar Entrada </button>
+     </div><!-- Calculator Card -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-base font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Calculadora de Período</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data Inicial</label> <input type="date" id="calc-date-start" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+       </div>
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data Final</label> <input type="date" id="calc-date-end" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+       </div>
+       <div><label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo</label> <select id="calc-filter-type" class="w-full px-3 py-2 text-sm rounded-lg input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white"> <option value="all">Todos</option> <option value="receita">Apenas Receitas</option> <option value="despesa">Apenas Despesas</option> </select>
+       </div>
+      </div><button onclick="calculatePeriod()" class="mb-3 px-4 py-2 text-sm font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Calcular </button>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+       <div class="text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Total Receitas</p>
+        <p id="calc-receitas" class="text-lg font-bold text-green-600 dark:text-green-400">Kz 0,00</p>
+       </div>
+       <div class="text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Total Despesas</p>
+        <p id="calc-despesas" class="text-lg font-bold text-red-600 dark:text-red-400">Kz 0,00</p>
+       </div>
+       <div class="text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
+        <p id="calc-saldo" class="text-lg font-bold text-blue-600 dark:text-blue-400">Kz 0,00</p>
+       </div>
+      </div>
+      <div class="flex gap-2 mt-3"><button onclick="copyToClipboard('calc-saldo')" class="flex-1 px-3 py-2 text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+        </svg> Copiar Saldo </button> <button onclick="storeInMemory()" class="flex-1 px-3 py-2 text-sm font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg> Guardar na Memória </button>
+      </div>
+      <div id="memory-display" class="hidden mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 rounded text-sm text-center">
+       Memória: <span id="memory-value" class="font-bold">Kz 0,00</span>
+      </div>
+     </div><!-- Entries List -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <div class="flex items-center justify-between mb-3">
+       <h3 class="text-base font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg> Entradas Registradas</h3><button onclick="clearAllEntries()" class="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"> Limpar Tudo </button>
+      </div>
+      <div id="entries-list" class="space-y-2 max-h-96 overflow-y-auto scrollbar-thin">
+       <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Nenhuma entrada registrada</p>
+      </div>
+     </div><!-- Export/Import for Daily Mode -->
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 card-shadow">
+      <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+       </svg> Exportar / Importar Dados</h3>
+      <div class="flex flex-wrap gap-2"><button onclick="exportDailyJSON()" class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg> Exportar JSON </button> <label class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg> Importar JSON <input type="file" id="import-daily-file" accept=".json" class="hidden" onchange="importDailyJSON(event)"> </label> <button onclick="exportDailyPDF()" class="px-3 py-2 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Exportar PDF </button> <button onclick="exportDailyImage()" class="px-3 py-2 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg> Exportar Imagem </button>
+      </div>
+     </div>
+    </div><!-- Education Mode -->
+    <div id="education-mode" class="hidden space-y-4">
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 card-shadow"><!-- About Section -->
+      <div class="mb-6">
+       <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400 flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> 💡 Sobre o Simulador</h3>
+       <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Este simulador foi desenvolvido para ajudar você a entender e gerir melhor o seu dinheiro. Seja para uso pessoal ou empresarial, o controlo do fluxo de caixa é essencial para a saúde financeira.</p>
+      </div><!-- What is Cash Flow -->
+      <div class="mb-6">
+       <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">💰 O que é Fluxo de Caixa?</h3>
+       <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3">O fluxo de caixa é o movimento de dinheiro que entra e sai das suas contas. Existem três tipos principais:</p>
+       <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-4">
+        <li class="flex items-start gap-2"><span class="text-blue-500 font-bold">•</span> <span><strong>Operacional:</strong> Relacionado às atividades principais (salário, vendas, contas fixas)</span></li>
+        <li class="flex items-start gap-2"><span class="text-blue-500 font-bold">•</span> <span><strong>Projetado:</strong> Estimativa futura (planeamento)</span></li>
+        <li class="flex items-start gap-2"><span class="text-blue-500 font-bold">•</span> <span><strong>Real:</strong> Registo do que realmente aconteceu</span></li>
+       </ul>
+      </div><!-- Key Concepts -->
+      <div class="mb-6">
+       <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">📊 Conceitos-Chave</h3>
+       <div class="space-y-4">
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-semibold text-base mb-2">VPL (Valor Presente Líquido)</h4>
+         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Traz todos os fluxos de caixa futuros para o valor atual, considerando o "custo" do tempo (taxa de desconto).</p>
+         <div class="bg-white dark:bg-gray-800 p-3 rounded text-sm font-mono">
+          VPL = Σ [FC<sub>t</sub> / (1 + i)<sup>t</sup>] - Investimento Inicial
+         </div>
+         <p class="text-sm text-green-600 dark:text-green-400 mt-2">✅ VPL &gt; 0 = Projeto viável</p>
+        </div>
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-semibold text-base mb-2">TIR (Taxa Interna de Retorno)</h4>
+         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">É a taxa que faz o VPL ser igual a zero. Representa o retorno percentual do investimento.</p>
+         <p class="text-sm text-green-600 dark:text-green-400">✅ TIR &gt; Taxa de desconto = Projeto atrativo</p>
+        </div>
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-semibold text-base mb-2">Payback</h4>
+         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Tempo necessário para recuperar o investimento inicial através dos fluxos de caixa.</p>
+         <p class="text-sm text-green-600 dark:text-green-400">✅ Quanto menor, mais rápido o retorno</p>
+        </div>
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-semibold text-base mb-2">IL (Índice de Lucratividade)</h4>
+         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Relação entre o valor presente dos fluxos e o investimento. Mostra quanto se ganha por cada unidade monetária investida.</p>
+         <div class="bg-white dark:bg-gray-800 p-3 rounded text-sm font-mono">
+          IL = VP dos Fluxos / Investimento Inicial
+         </div>
+         <p class="text-sm text-green-600 dark:text-green-400 mt-2">✅ IL &gt; 1 = Lucro para cada unidade investida</p>
+        </div>
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-semibold text-base mb-2">ROI (Retorno sobre Investimento)</h4>
+         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Percentual de retorno em relação ao investimento inicial.</p>
+         <div class="bg-white dark:bg-gray-800 p-3 rounded text-sm font-mono">
+          ROI = [(Ganho - Investimento) / Investimento] × 100
+         </div>
+        </div>
+       </div>
+      </div><!-- Why Important -->
+      <div class="mb-6">
+       <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">���� Por que é Importante?</h3>
+       <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-3">
+        <li class="flex items-start gap-3"><span class="text-green-500 text-xl">✓</span> <span><strong>Evita surpresas:</strong> Saber se vai faltar dinheiro no fim do mês</span></li>
+        <li class="flex items-start gap-3"><span class="text-green-500 text-xl">���</span> <span><strong>Ajuda a planear:</strong> Identifica quando é possível poupar, investir ou quitar d��vidas</span></li>
+        <li class="flex items-start gap-3"><span class="text-green-500 text-xl">✓</span> <span><strong>Revela padrões:</strong> Mostra onde você gasta demais</span></li>
+        <li class="flex items-start gap-3"><span class="text-green-500 text-xl">✓</span> <span><strong>Essencial para empresas:</strong> Sem fluxo de caixa positivo, mesmo lucrativas, podem quebrar por falta de liquidez</span></li>
+       </ul>
+      </div><!-- Simple Formula -->
+      <div class="p-6 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+       <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">📝 Fórmula Simples</h3>
+       <div class="text-center py-4">
+        <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">Saldo = Receitas − Despesas</p>
+       </div>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="p-4 bg-green-100 dark:bg-green-900/30 rounded-lg text-center">
+         <p class="text-green-700 dark:text-green-400 font-semibold text-base mb-1">Positivo = Sobra 💚</p>
+         <p class="text-sm text-gray-600 dark:text-gray-400">Você ganhou mais do que gastou</p>
+        </div>
+        <div class="p-4 bg-red-100 dark:bg-red-900/30 rounded-lg text-center">
+         <p class="text-red-700 dark:text-red-400 font-semibold text-base mb-1">Negativo = Déficit ❤️</p>
+         <p class="text-sm text-gray-600 dark:text-gray-400">Você gastou mais do que recebeu</p>
+        </div>
+       </div>
+      </div><!-- Empathetic Message -->
+      <div class="mt-6 p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+       <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">💛 <strong>Lembre-se:</strong> Gerir dinheiro é uma habilidade que se aprende. Não se culpe por erros passados. O importante é começar agora a ter controlo das suas finanças. Cada pequeno passo conta!</p>
+      </div>
+     </div>
+    </div><!-- Footer -->
+    <footer class="mt-6 pb-4 text-center">
+     <p id="footer-text" class="text-xs text-gray-500 dark:text-gray-400">© 2024 - Simulador de Fluxo de Caixa | Comunidade CPLP</p>
+    </footer>
+   </main><!-- Help Modal -->
+   <div id="help-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeHelpModal()"></div>
+    <div class="absolute inset-4 md:inset-10 bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col">
+     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold">📚 Educação Financeira</h2><button onclick="closeHelpModal()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="flex-1 overflow-y-auto p-4 scrollbar-thin"><!-- About Section -->
+      <div class="mb-6">
+       <h3 class="text-base font-semibold mb-2 text-blue-600 dark:text-blue-400">💡 Sobre o Simulador</h3>
+       <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Este simulador foi desenvolvido para ajudar você a entender e gerir melhor o seu dinheiro. Seja para uso pessoal ou empresarial, o controlo do fluxo de caixa é essencial para a saúde financeira.</p>
+      </div><!-- What is Cash Flow -->
+      <div class="mb-6">
+       <h3 class="text-base font-semibold mb-2 text-blue-600 dark:text-blue-400">💰 O que é Fluxo de Caixa?</h3>
+       <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2">O fluxo de caixa é o movimento de dinheiro que entra e sai das suas contas. Existem três tipos principais:</p>
+       <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+        <li>• <strong>Operacional:</strong> Relacionado às atividades principais (salário, vendas, contas fixas)</li>
+        <li>• <strong>Projetado:</strong> Estimativa futura (planeamento)</li>
+        <li>• <strong>Real:</strong> Registo do que realmente aconteceu</li>
+       </ul>
+      </div><!-- Key Concepts -->
+      <div class="mb-6">
+       <h3 class="text-base font-semibold mb-2 text-blue-600 dark:text-blue-400">📊 Conceitos-Chave</h3>
+       <div class="space-y-4">
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-medium text-sm mb-1">VPL (Valor Presente Líquido)</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Traz todos os fluxos de caixa futuros para o valor atual, considerando o "custo" do tempo (taxa de desconto).</p>
+         <div class="bg-white dark:bg-gray-800 p-2 rounded text-xs font-mono">
+          VPL = Σ [FC<sub>t</sub> / (1 + i)<sup>t</sup>] - Investimento Inicial
+         </div>
+         <p class="text-xs text-gray-500 mt-1">✅ VPL &gt; 0 = Projeto viável</p>
+        </div>
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-medium text-sm mb-1">TIR (Taxa Interna de Retorno)</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">É a taxa que faz o VPL ser igual a zero. Representa o retorno percentual do investimento.</p>
+         <p class="text-xs text-gray-500">✅ TIR &gt; Taxa de desconto = Projeto atrativo</p>
+        </div>
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-medium text-sm mb-1">Payback</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Tempo necessário para recuperar o investimento inicial atrav��s dos fluxos de caixa.</p>
+         <p class="text-xs text-gray-500">✅ Quanto menor, mais rápido o retorno</p>
+        </div>
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-medium text-sm mb-1">IL (Índice de Lucratividade)</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Relação entre o valor presente dos fluxos e o investimento. Mostra quanto se ganha por cada euro investido.</p>
+         <div class="bg-white dark:bg-gray-800 p-2 rounded text-xs font-mono">
+          IL = VP dos Fluxos / Investimento Inicial
+         </div>
+         <p class="text-xs text-gray-500 mt-1">✅ IL &gt; 1 = Lucro para cada euro investido</p>
+        </div>
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+         <h4 class="font-medium text-sm mb-1">ROI (Retorno sobre Investimento)</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Percentual de retorno em relação ao investimento inicial.</p>
+         <div class="bg-white dark:bg-gray-800 p-2 rounded text-xs font-mono">
+          ROI = [(Ganho - Investimento) / Investimento] × 100
+         </div>
+        </div>
+       </div>
+      </div><!-- Why Important -->
+      <div class="mb-6">
+       <h3 class="text-base font-semibold mb-2 text-blue-600 dark:text-blue-400">🎯 Por que é Importante?</h3>
+       <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+        <li class="flex items-start gap-2"><span class="text-green-500">✓</span> <span><strong>Evita surpresas:</strong> Saber se vai faltar dinheiro no fim do mês</span></li>
+        <li class="flex items-start gap-2"><span class="text-green-500">✓</span> <span><strong>Ajuda a planear:</strong> Identifica quando é possível poupar, investir ou quitar dívidas</span></li>
+        <li class="flex items-start gap-2"><span class="text-green-500">✓</span> <span><strong>Revela padrões:</strong> Mostra onde você gasta demais</span></li>
+        <li class="flex items-start gap-2"><span class="text-green-500">✓</span> <span><strong>Essencial para empresas:</strong> Sem fluxo de caixa positivo, mesmo lucrativas, podem quebrar por falta de liquidez</span></li>
+       </ul>
+      </div><!-- Simple Formula -->
+      <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+       <h3 class="text-base font-semibold mb-2 text-blue-600 dark:text-blue-400">📝 Fórmula Simples</h3>
+       <div class="text-center py-3">
+        <p class="text-lg font-bold text-gray-800 dark:text-gray-200">Saldo = Receitas ��� Despesas</p>
+       </div>
+       <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
+        <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded text-center">
+         <p class="text-green-700 dark:text-green-400 font-medium">Positivo = Sobra 💚</p>
+         <p class="text-xs text-gray-600 dark:text-gray-400">Você ganhou mais do que gastou</p>
+        </div>
+        <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded text-center">
+         <p class="text-red-700 dark:text-red-400 font-medium">Negativo = Déficit ❤️</p>
+         <p class="text-xs text-gray-600 dark:text-gray-400">Você gastou mais do que recebeu</p>
+        </div>
+       </div>
+      </div><!-- Empathetic Message -->
+      <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+       <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">💛 <strong>Lembre-se:</strong> Gerir dinheiro é uma habilidade que se aprende. Não se culpe por erros passados. O importante é começar agora a ter controlo das suas finanças. Cada pequeno passo conta!</p>
+      </div>
+     </div>
+    </div>
+   </div><!-- Examples Modal -->
+   <div id="examples-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeExamplesModal()"></div>
+    <div class="absolute inset-4 md:inset-10 lg:inset-20 bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col">
+     <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-500 to-blue-500">
+      <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Cenários de Exemplo para Aprendizagem</h2><button onclick="closeExamplesModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+       <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">📚 Explore cenários reais de diferentes tipos de negócios. Estes exemplos ajudarão você a entender como o fluxo de caixa funciona em diferentes contextos e prazos de investimento.</p><!-- Short Term Examples -->
+      <div class="mb-8">
+       <h3 class="text-base font-semibold text-green-600 dark:text-green-400 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg> Curto Prazo (6 meses)</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-green-500" onclick="loadExampleScenario(0)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🍎 Banca de Frutas</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Pequeno negócio de venda de frutas frescas</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-green-600 dark:text-green-400">Kz 50.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">6 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-green-500" onclick="loadExampleScenario(1)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">💇 Salão de Cabeleireiro</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Salão de beleza local</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-green-600 dark:text-green-400">Kz 120.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">6 meses</span>
+         </div>
+        </div>
+       </div>
+      </div><!-- Medium Term Examples -->
+      <div class="mb-8">
+       <h3 class="text-base font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Médio Prazo (12-18 meses)</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="loadExampleScenario(2)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">👗 Loja de Roupa Online</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">E-commerce de moda</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-blue-600 dark:text-blue-400">Kz 250.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">12 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="loadExampleScenario(3)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🍽️ Restaurante Familiar</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Restaurante de comida típica</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-blue-600 dark:text-blue-400">Kz 500.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">12 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="loadExampleScenario(4)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">�� Academia de Ginásio</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Centro de fitness e musculação</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-blue-600 dark:text-blue-400">Kz 800.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">18 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="loadExampleScenario(5)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🥖 Padaria Artesanal</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Padaria com produção própria</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-blue-600 dark:text-blue-400">Kz 350.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">12 meses</span>
+         </div>
+        </div>
+       </div>
+      </div><!-- Long Term Examples -->
+      <div class="mb-6">
+       <h3 class="text-base font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg> Longo Prazo (24-48 meses)</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="loadExampleScenario(6)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📱 Aplicação Mobile</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">App com modelo de subscrição</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-purple-600 dark:text-purple-400">Kz 1.500.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">24 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="loadExampleScenario(7)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🏥 Clínica Médica</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Clínica de especialidades médicas</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-purple-600 dark:text-purple-400">Kz 2.500.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">36 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="loadExampleScenario(8)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🏨 Hotel Boutique</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Hotel de charme com 20 quartos</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-purple-600 dark:text-purple-400">Kz 5.000.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">36 meses</span>
+         </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="loadExampleScenario(9)">
+         <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🏭 Fábrica de Conservas</h4>
+         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Indústria alimentar de conservas</p>
+         <div class="flex items-center justify-between text-xs"><span class="text-gray-500 dark:text-gray-400">Investimento:</span> <span class="font-bold text-purple-600 dark:text-purple-400">Kz 10.000.000</span>
+         </div>
+         <div class="flex items-center justify-between text-xs mt-1"><span class="text-gray-500 dark:text-gray-400">Períodos:</span> <span class="font-medium">48 meses</span>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+       <p class="text-sm text-gray-700 dark:text-gray-300">💡 <strong>Dica:</strong> Clique em qualquer cenário para carregá-lo no modo avançado. Você poderá visualizar os indicadores financeiros, gráficos e modificar os valores para experimentar diferentes situações.</p>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // =====================
+    // Configuration
+    // =====================
+    const defaultConfig = {
+      app_title: 'Simulador de Fluxo de Caixa',
+      footer_text: '© 2024 - Simulador de Fluxo de Caixa | Comunidade CPLP',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#212121',
+      success_color: '#4CAF50',
+      accent_color: '#FFC107'
+    };
+
+    let config = { ...defaultConfig };
+
+    // =====================
+    // CPLP Currencies
+    // =====================
+    const cplpCurrencies = {
+      'AOA': { name: 'Kwanza Angolano', symbol: 'Kz', locale: 'pt-AO' },
+      'BRL': { name: 'Real Brasileiro', symbol: 'R$', locale: 'pt-BR' },
+      'CVE': { name: 'Escudo Cabo-verdiano', symbol: '$', locale: 'pt-CV' },
+      'XOF': { name: 'Franco CFA (Guiné-Bissau)', symbol: 'CFA', locale: 'pt-GW' },
+      'MZN': { name: 'Metical Moçambicano', symbol: 'MT', locale: 'pt-MZ' },
+      'EUR': { name: 'Euro (Portugal)', symbol: '€', locale: 'pt-PT' },
+      'STN': { name: 'Dobra São-tomense', symbol: 'Db', locale: 'pt-ST' },
+      'CHF': { name: 'Franco Suíço (Suíça)', symbol: 'CHF', locale: 'pt-CH' },
+      'MOP': { name: 'Pataca (Macau)', symbol: 'MOP$', locale: 'pt-MO' },
+      'USD': { name: 'D��lar (Timor-Leste)', symbol: '$', locale: 'en-TL' }
+    };
+
+    // =====================
+    // State Management
+    // =====================
+    let currentMode = 'advanced';
+    let scenarios = [];
+    let currentScenarioIndex = 0;
+    let simpleChart = null;
+    let cashflowChart = null;
+    let cumulativeChart = null;
+    let isDarkMode = false;
+    let selectedCurrency = 'AOA';
+    let dailyEntries = [];
+    let calculatorMemory = 0;
+
+    // =====================
+    // Toast Notification
+    // =====================
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+      
+      const icons = {
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+      };
+      
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // =====================
+    // Dark Mode
+    // =====================
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      localStorage.setItem('cashflow-darkmode', isDarkMode);
+      updateCharts();
+    }
+
+    function initDarkMode() {
+      const saved = localStorage.getItem('cashflow-darkmode');
+      isDarkMode = saved === 'true';
+      document.documentElement.classList.toggle('dark', isDarkMode);
+    }
+
+    // =====================
+    // Mode Switching
+    // =====================
+    function switchMode(mode) {
+      currentMode = mode;
+      const tabs = ['simple', 'advanced', 'daily', 'education'];
+      const modes = {
+        'simple': document.getElementById('simple-mode'),
+        'advanced': document.getElementById('advanced-mode'),
+        'daily': document.getElementById('daily-mode'),
+        'education': document.getElementById('education-mode')
+      };
+      
+      tabs.forEach(tab => {
+        const tabEl = document.getElementById(`tab-${tab}`);
+        const modeEl = modes[tab];
+        
+        if (tab === mode) {
+          tabEl.classList.add('tab-active');
+          tabEl.classList.remove('text-gray-500');
+          modeEl.classList.remove('hidden');
+        } else {
+          tabEl.classList.remove('tab-active');
+          tabEl.classList.add('text-gray-500');
+          modeEl.classList.add('hidden');
+        }
+      });
+      
+      if (mode === 'advanced') {
+        updateAdvancedCharts();
+      } else if (mode === 'daily') {
+        renderEntriesList();
+      }
+    }
+
+    // =====================
+    // Simple Mode
+    // =====================
+    function updateSimpleCalculation() {
+      const receitas = parseFloat(document.getElementById('simple-receitas').value) || 0;
+      const despesas = parseFloat(document.getElementById('simple-despesas').value) || 0;
+      const saldo = receitas - despesas;
+      
+      const saldoEl = document.getElementById('simple-saldo');
+      const statusEl = document.getElementById('simple-status');
+      
+      saldoEl.textContent = formatCurrency(saldo);
+      
+      if (saldo > 0) {
+        saldoEl.className = 'text-xl font-bold text-green-500';
+        statusEl.textContent = '✅ Saldo positivo! Você tem sobra este mês.';
+      } else if (saldo < 0) {
+        saldoEl.className = 'text-xl font-bold text-red-500';
+        statusEl.textContent = '⚠️ Saldo negativo! Você gastou mais do que recebeu.';
+      } else {
+        saldoEl.className = 'text-xl font-bold text-gray-500';
+        statusEl.textContent = 'Insira os valores para calcular';
+      }
+      
+      updateSimpleChart(receitas, despesas);
+      updateInputPlaceholders();
+      saveToLocalStorage();
+    }
+
+    function updateSimpleChart(receitas, despesas) {
+      const ctx = document.getElementById('simple-chart').getContext('2d');
+      
+      if (simpleChart) {
+        simpleChart.destroy();
+      }
+      
+      const textColor = isDarkMode ? '#e5e5e5' : '#374151';
+      
+      simpleChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Receitas', 'Despesas'],
+          datasets: [{
+            data: [receitas || 0, despesas || 0],
+            backgroundColor: ['#4CAF50', '#F44336'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: textColor,
+                padding: 15,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // =====================
+    // Advanced Mode - Periods
+    // =====================
+    function generatePeriods() {
+      const numPeriodos = parseInt(document.getElementById('num-periodos').value) || 12;
+      const container = document.getElementById('periods-container');
+      
+      if (!scenarios[currentScenarioIndex]) {
+        createNewScenario();
+      }
+      
+      scenarios[currentScenarioIndex].periods = [];
+      
+      for (let i = 0; i < numPeriodos; i++) {
+        scenarios[currentScenarioIndex].periods.push({
+          period: i + 1,
+          receitas: 0,
+          despesas: 0
+        });
+      }
+      
+      renderPeriods();
+      calculateIndicators();
+      showToast(`${numPeriodos} períodos gerados com sucesso!`);
+    }
+
+    function renderPeriods() {
+      const container = document.getElementById('periods-container');
+      const periods = scenarios[currentScenarioIndex]?.periods || [];
+      
+      if (periods.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Clique em "Gerar" para criar os períodos</p>';
+        return;
+      }
+      
+      container.innerHTML = periods.map((p, idx) => `
+        <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <span class="text-xs font-medium text-gray-500 w-16">Mês ${p.period}</span>
+          <div class="flex-1 flex gap-2">
+            <input type="number" 
+              class="flex-1 px-2 py-1 text-sm rounded input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+              placeholder="Receitas"
+              value="${p.receitas || ''}"
+              onchange="updatePeriod(${idx}, 'receitas', this.value)">
+            <input type="number" 
+              class="flex-1 px-2 py-1 text-sm rounded input-field bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+              placeholder="Despesas"
+              value="${p.despesas || ''}"
+              onchange="updatePeriod(${idx}, 'despesas', this.value)">
+          </div>
+          <span class="text-xs font-medium w-20 text-right ${(p.receitas - p.despesas) >= 0 ? 'text-green-500' : 'text-red-500'}">
+            ${formatCurrency(p.receitas - p.despesas)}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function updatePeriod(index, field, value) {
+      if (scenarios[currentScenarioIndex]?.periods[index]) {
+        scenarios[currentScenarioIndex].periods[index][field] = parseFloat(value) || 0;
+        renderPeriods();
+        calculateIndicators();
+        updateAdvancedCharts();
+        saveToLocalStorage();
+      }
+    }
+
+    // =====================
+    // Financial Calculations
+    // =====================
+    function calculateIndicators() {
+      const investimento = parseFloat(document.getElementById('investimento-inicial').value) || 0;
+      const taxaDesconto = (parseFloat(document.getElementById('taxa-desconto').value) || 10) / 100 / 12;
+      const periods = scenarios[currentScenarioIndex]?.periods || [];
+      
+      // Calculate cash flows
+      const cashFlows = periods.map(p => p.receitas - p.despesas);
+      
+      // VPL (NPV)
+      let vpl = -investimento;
+      cashFlows.forEach((cf, t) => {
+        vpl += cf / Math.pow(1 + taxaDesconto, t + 1);
+      });
+      
+      // TIR (IRR) - Newton-Raphson approximation
+      let tir = calculateTIR(cashFlows, investimento);
+      
+      // Payback
+      let payback = calculatePayback(cashFlows, investimento);
+      
+      // IL (Profitability Index)
+      let vpFluxos = 0;
+      cashFlows.forEach((cf, t) => {
+        vpFluxos += cf / Math.pow(1 + taxaDesconto, t + 1);
+      });
+      const il = investimento > 0 ? vpFluxos / investimento : 0;
+      
+      // ROI
+      const totalGanho = cashFlows.reduce((a, b) => a + b, 0);
+      const roi = investimento > 0 ? ((totalGanho - investimento) / investimento) * 100 : 0;
+      
+      // Final Cumulative Balance
+      let finalCumulative = -investimento;
+      cashFlows.forEach(cf => {
+        finalCumulative += cf;
+      });
+      
+      // Update UI
+      document.getElementById('indicator-vpl').textContent = formatCurrency(vpl);
+      document.getElementById('indicator-vpl').className = `text-lg font-bold ${vpl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+      
+      document.getElementById('indicator-tir').textContent = isFinite(tir) ? `${(tir * 100).toFixed(2)}%` : 'N/A';
+      
+      document.getElementById('indicator-payback').textContent = payback !== null ? `${payback} meses` : 'N/A';
+      
+      document.getElementById('indicator-il').textContent = il.toFixed(2);
+      document.getElementById('indicator-il').className = `text-lg font-bold ${il >= 1 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+      
+      document.getElementById('indicator-roi').textContent = `${roi.toFixed(2)}%`;
+      document.getElementById('indicator-roi').className = `text-lg font-bold ${roi >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+      
+      // Update Final Cumulative Balance
+      const finalCumulativeEl = document.getElementById('final-cumulative-balance');
+      if (finalCumulativeEl) {
+        finalCumulativeEl.textContent = formatCurrency(finalCumulative);
+        finalCumulativeEl.className = `text-2xl font-bold ${finalCumulative >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+      }
+      
+      // Calculate Viability
+      calculateViability(vpl, roi, il, payback, investimento, finalCumulative);
+    }
+    
+    function calculateViability(vpl, roi, il, payback, investimento, finalCumulative) {
+      const container = document.getElementById('viability-analysis');
+      if (!container) return;
+      
+      let viabilityScore = 0;
+      let maxScore = 5;
+      const metrics = [];
+      
+      // VPL Analysis
+      if (vpl > 0) {
+        viabilityScore++;
+        const vplPercentage = investimento > 0 ? (vpl / investimento * 100) : 0;
+        metrics.push({
+          name: 'VPL Positivo',
+          status: 'positive',
+          percentage: vplPercentage,
+          note: vplPercentage > 50 ? 'Excelente retorno!' : vplPercentage > 20 ? 'Bom retorno' : 'Retorno moderado'
+        });
+      } else if (vpl < 0) {
+        metrics.push({
+          name: 'VPL Negativo',
+          status: 'negative',
+          percentage: investimento > 0 ? (vpl / investimento * 100) : 0,
+          note: 'Projeto não recupera investimento'
+        });
+      } else {
+        metrics.push({
+          name: 'VPL Neutro',
+          status: 'neutral',
+          percentage: 0,
+          note: 'Projeto equilibrado'
+        });
+      }
+      
+      // ROI Analysis
+      if (roi > 0) {
+        viabilityScore++;
+        metrics.push({
+          name: 'ROI',
+          status: 'positive',
+          percentage: roi,
+          note: roi > 100 ? 'Retorno extraordinário!' : roi > 50 ? 'Retorno muito bom' : roi > 20 ? 'Retorno satisfatório' : 'Retorno modesto'
+        });
+      } else if (roi < 0) {
+        metrics.push({
+          name: 'ROI',
+          status: 'negative',
+          percentage: roi,
+          note: 'Retorno negativo'
+        });
+      } else {
+        metrics.push({
+          name: 'ROI',
+          status: 'neutral',
+          percentage: 0,
+          note: 'Sem retorno'
+        });
+      }
+      
+      // IL Analysis
+      if (il > 1) {
+        viabilityScore++;
+        const ilPercentage = (il - 1) * 100;
+        metrics.push({
+          name: 'Índice de Lucratividade',
+          status: 'positive',
+          percentage: ilPercentage,
+          note: il > 2 ? 'Cada unidade gera mais que o dobro!' : il > 1.5 ? 'Excelente efici��ncia' : 'Lucratividade positiva'
+        });
+      } else if (il < 1) {
+        metrics.push({
+          name: 'Índice de Lucratividade',
+          status: 'negative',
+          percentage: (il - 1) * 100,
+          note: 'Cada unidade investida gera menos que o investido'
+        });
+      } else {
+        metrics.push({
+          name: 'Índice de Lucratividade',
+          status: 'neutral',
+          percentage: 0,
+          note: 'Equilibrado'
+        });
+      }
+      
+      // Payback Analysis
+      if (payback !== null) {
+        const periods = scenarios[currentScenarioIndex]?.periods || [];
+        const totalPeriods = periods.length;
+        if (payback <= totalPeriods * 0.5) {
+          viabilityScore++;
+          metrics.push({
+            name: 'Período de Retorno',
+            status: 'positive',
+            percentage: ((totalPeriods - payback) / totalPeriods * 100),
+            note: `Recupera investimento rapidamente (${payback} meses)`
+          });
+        } else if (payback <= totalPeriods * 0.75) {
+          viabilityScore += 0.5;
+          metrics.push({
+            name: 'Período de Retorno',
+            status: 'neutral',
+            percentage: ((totalPeriods - payback) / totalPeriods * 100),
+            note: `Retorno moderado (${payback} meses)`
+          });
+        } else {
+          metrics.push({
+            name: 'Período de Retorno',
+            status: 'negative',
+            percentage: ((totalPeriods - payback) / totalPeriods * 100),
+            note: `Retorno demorado (${payback} meses)`
+          });
+        }
+      }
+      
+      // Cumulative Balance Analysis
+      if (finalCumulative > investimento) {
+        viabilityScore++;
+        const cumulativePercentage = investimento > 0 ? ((finalCumulative - investimento) / investimento * 100) : 0;
+        metrics.push({
+          name: 'Saldo Final vs Investimento',
+          status: 'positive',
+          percentage: cumulativePercentage,
+          note: cumulativePercentage > 100 ? 'Saldo muito superior ao investido!' : 'Saldo supera investimento'
+        });
+      } else if (finalCumulative > 0 && finalCumulative <= investimento) {
+        viabilityScore += 0.5;
+        const cumulativePercentage = investimento > 0 ? ((finalCumulative - investimento) / investimento * 100) : 0;
+        metrics.push({
+          name: 'Saldo Final vs Investimento',
+          status: 'neutral',
+          percentage: cumulativePercentage,
+          note: 'Saldo positivo mas abaixo do investimento'
+        });
+      } else {
+        const cumulativePercentage = investimento > 0 ? (finalCumulative / investimento * 100) : 0;
+        metrics.push({
+          name: 'Saldo Final vs Investimento',
+          status: 'negative',
+          percentage: cumulativePercentage,
+          note: 'Saldo negativo'
+        });
+      }
+      
+      // Overall Assessment
+      const viabilityPercentage = (viabilityScore / maxScore) * 100;
+      let overallStatus, overallMessage, overallColor, overallIcon;
+      
+      if (viabilityPercentage >= 70) {
+        overallStatus = 'VIÁVEL';
+        overallMessage = 'O projeto apresenta forte viabilidade econômica. Os indicadores mostram que o investimento tem grande potencial de retorno.';
+        overallColor = 'green';
+        overallIcon = '✅';
+      } else if (viabilityPercentage >= 40) {
+        overallStatus = 'EQUILIBRADO';
+        overallMessage = 'O projeto está em equilíbrio. Alguns indicadores são positivos, mas há áreas que requerem atenção para melhorar a rentabilidade.';
+        overallColor = 'yellow';
+        overallIcon = '⚖️';
+      } else {
+        overallStatus = 'INVIÁVEL';
+        overallMessage = 'O projeto apresenta baixa viabilidade econômica. A maioria dos indicadores sugere que o investimento pode não gerar retorno adequado.';
+        overallColor = 'red';
+        overallIcon = '⚠️';
+      }
+      
+      // Render Analysis
+      container.innerHTML = `
+        <!-- Overall Status -->
+        <div class="p-4 rounded-lg ${overallColor === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-500' : overallColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-500' : 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500'}">
+          <div class="flex items-start gap-3">
+            <div class="text-3xl">${overallIcon}</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <h4 class="text-lg font-bold ${overallColor === 'green' ? 'text-green-700 dark:text-green-400' : overallColor === 'yellow' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'}">
+                  PROJETO ${overallStatus}
+                </h4>
+                <span class="px-2 py-1 text-xs font-semibold rounded-full ${overallColor === 'green' ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200' : overallColor === 'yellow' ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200' : 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200'}">
+                  ${viabilityPercentage.toFixed(0)}% viável
+                </span>
+              </div>
+              <p class="text-sm ${overallColor === 'green' ? 'text-green-600 dark:text-green-300' : overallColor === 'yellow' ? 'text-yellow-600 dark:text-yellow-300' : 'text-red-600 dark:text-red-300'}">
+                ${overallMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Metrics Breakdown -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${metrics.map(metric => `
+            <div class="p-3 rounded-lg ${metric.status === 'positive' ? 'bg-green-50 dark:bg-green-900/10' : metric.status === 'negative' ? 'bg-red-50 dark:bg-red-900/10' : 'bg-gray-50 dark:bg-gray-700/30'} border ${metric.status === 'positive' ? 'border-green-200 dark:border-green-800' : metric.status === 'negative' ? 'border-red-200 dark:border-red-800' : 'border-gray-200 dark:border-gray-700'}">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold ${metric.status === 'positive' ? 'text-green-700 dark:text-green-400' : metric.status === 'negative' ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-400'}">
+                  ${metric.name}
+                </span>
+                <span class="text-xs font-bold ${metric.status === 'positive' ? 'text-green-600 dark:text-green-400' : metric.status === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}">
+                  ${metric.percentage > 0 ? '+' : ''}${metric.percentage.toFixed(1)}%
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                <div class="h-2 rounded-full ${metric.status === 'positive' ? 'bg-green-500' : metric.status === 'negative' ? 'bg-red-500' : 'bg-gray-500'}" style="width: ${Math.min(Math.abs(metric.percentage), 100)}%"></div>
+              </div>
+              <p class="text-xs ${metric.status === 'positive' ? 'text-green-600 dark:text-green-300' : metric.status === 'negative' ? 'text-red-600 dark:text-red-300' : 'text-gray-600 dark:text-gray-300'}">
+                ${metric.note}
+              </p>
+            </div>
+          `).join('')}
+        </div>
+        
+        <!-- Recommendation -->
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p class="text-xs text-blue-700 dark:text-blue-300">
+            <strong>💡 Recomendação:</strong> 
+            ${viabilityPercentage >= 70 ? 'Este projeto demonstra forte potencial. Considere avançar com confiança, mantendo o monitoramento dos indicadores.' : 
+              viabilityPercentage >= 40 ? 'Analise os pontos fracos identificados. Considere ajustar custos operacionais ou aumentar receitas para melhorar a viabilidade.' : 
+              'Reveja cuidadosamente o modelo de negócio. Considere reduzir o investimento inicial, aumentar receitas projetadas ou reduzir despesas operacionais.'}
+          </p>
+        </div>
+      `;
+    }
+
+    function calculateTIR(cashFlows, investimento) {
+      if (cashFlows.length === 0 || investimento === 0) return 0;
+      
+      let rate = 0.1;
+      for (let i = 0; i < 100; i++) {
+        let npv = -investimento;
+        let dnpv = 0;
+        
+        cashFlows.forEach((cf, t) => {
+          const factor = Math.pow(1 + rate, t + 1);
+          npv += cf / factor;
+          dnpv -= (t + 1) * cf / (factor * (1 + rate));
+        });
+        
+        if (Math.abs(npv) < 0.0001) break;
+        if (dnpv === 0) break;
+        
+        rate = rate - npv / dnpv;
+      }
+      
+      return rate;
+    }
+
+    function calculatePayback(cashFlows, investimento) {
+      if (investimento === 0) return 0;
+      
+      let accumulated = 0;
+      for (let i = 0; i < cashFlows.length; i++) {
+        accumulated += cashFlows[i];
+        if (accumulated >= investimento) {
+          return i + 1;
+        }
+      }
+      return null;
+    }
+
+    // =====================
+    // Charts
+    // =====================
+    function updateAdvancedCharts() {
+      const periods = scenarios[currentScenarioIndex]?.periods || [];
+      const textColor = isDarkMode ? '#e5e5e5' : '#374151';
+      const gridColor = isDarkMode ? '#374151' : '#e5e5e5';
+      
+      // Cash Flow Chart
+      const ctx1 = document.getElementById('cashflow-chart').getContext('2d');
+      if (cashflowChart) cashflowChart.destroy();
+      
+      cashflowChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: periods.map(p => `Mês ${p.period}`),
+          datasets: [
+            {
+              label: 'Receitas',
+              data: periods.map(p => p.receitas),
+              backgroundColor: '#4CAF50'
+            },
+            {
+              label: 'Despesas',
+              data: periods.map(p => p.despesas),
+              backgroundColor: '#F44336'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: textColor }
+            }
+          }
+        }
+      });
+      
+      // Cumulative Chart
+      const ctx2 = document.getElementById('cumulative-chart').getContext('2d');
+      if (cumulativeChart) cumulativeChart.destroy();
+      
+      const investimento = parseFloat(document.getElementById('investimento-inicial').value) || 0;
+      let cumulative = -investimento;
+      const cumulativeData = periods.map(p => {
+        cumulative += (p.receitas - p.despesas);
+        return cumulative;
+      });
+      
+      cumulativeChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: periods.map(p => `Mês ${p.period}`),
+          datasets: [{
+            label: 'Saldo Acumulado',
+            data: cumulativeData,
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: { color: textColor },
+              grid: { color: gridColor }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: textColor }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (currentMode === 'simple') {
+        const receitas = parseFloat(document.getElementById('simple-receitas').value) || 0;
+        const despesas = parseFloat(document.getElementById('simple-despesas').value) || 0;
+        updateSimpleChart(receitas, despesas);
+      } else {
+        updateAdvancedCharts();
+      }
+    }
+
+    // =====================
+    // Example Scenarios
+    // =====================
+    const exampleScenarios = [
+      // SHORT TERM (6 months)
+      {
+        name: "🍎 Banca de Frutas",
+        investimento: 50000,
+        taxaDesconto: 15,
+        periods: [
+          { period: 1, receitas: 15000, despesas: 12000 },
+          { period: 2, receitas: 18000, despesas: 13000 },
+          { period: 3, receitas: 22000, despesas: 14000 },
+          { period: 4, receitas: 25000, despesas: 15000 },
+          { period: 5, receitas: 28000, despesas: 15500 },
+          { period: 6, receitas: 30000, despesas: 16000 }
+        ]
+      },
+      {
+        name: "💇 Salão de Cabeleireiro",
+        investimento: 120000,
+        taxaDesconto: 12,
+        periods: [
+          { period: 1, receitas: 25000, despesas: 20000 },
+          { period: 2, receitas: 32000, despesas: 22000 },
+          { period: 3, receitas: 38000, despesas: 23000 },
+          { period: 4, receitas: 45000, despesas: 25000 },
+          { period: 5, receitas: 50000, despesas: 26000 },
+          { period: 6, receitas: 55000, despesas: 27000 }
+        ]
+      },
+      // MEDIUM TERM (12-18 months)
+      {
+        name: "👗 Loja de Roupa Online",
+        investimento: 250000,
+        taxaDesconto: 10,
+        periods: [
+          { period: 1, receitas: 15000, despesas: 25000 },
+          { period: 2, receitas: 25000, despesas: 28000 },
+          { period: 3, receitas: 35000, despesas: 30000 },
+          { period: 4, receitas: 50000, despesas: 32000 },
+          { period: 5, receitas: 65000, despesas: 35000 },
+          { period: 6, receitas: 80000, despesas: 38000 },
+          { period: 7, receitas: 95000, despesas: 40000 },
+          { period: 8, receitas: 110000, despesas: 42000 },
+          { period: 9, receitas: 125000, despesas: 45000 },
+          { period: 10, receitas: 140000, despesas: 47000 },
+          { period: 11, receitas: 155000, despesas: 50000 },
+          { period: 12, receitas: 170000, despesas: 52000 }
+        ]
+      },
+      {
+        name: "🍽️ Restaurante Familiar",
+        investimento: 500000,
+        taxaDesconto: 12,
+        periods: [
+          { period: 1, receitas: 80000, despesas: 95000 },
+          { period: 2, receitas: 95000, despesas: 98000 },
+          { period: 3, receitas: 110000, despesas: 100000 },
+          { period: 4, receitas: 125000, despesas: 102000 },
+          { period: 5, receitas: 140000, despesas: 105000 },
+          { period: 6, receitas: 155000, despesas: 108000 },
+          { period: 7, receitas: 170000, despesas: 110000 },
+          { period: 8, receitas: 185000, despesas: 112000 },
+          { period: 9, receitas: 200000, despesas: 115000 },
+          { period: 10, receitas: 215000, despesas: 118000 },
+          { period: 11, receitas: 230000, despesas: 120000 },
+          { period: 12, receitas: 245000, despesas: 122000 }
+        ]
+      },
+      {
+        name: "💪 Academia de Ginásio",
+        investimento: 800000,
+        taxaDesconto: 10,
+        periods: [
+          { period: 1, receitas: 50000, despesas: 80000 },
+          { period: 2, receitas: 65000, despesas: 82000 },
+          { period: 3, receitas: 80000, despesas: 84000 },
+          { period: 4, receitas: 95000, despesas: 86000 },
+          { period: 5, receitas: 110000, despesas: 88000 },
+          { period: 6, receitas: 125000, despesas: 90000 },
+          { period: 7, receitas: 140000, despesas: 92000 },
+          { period: 8, receitas: 155000, despesas: 94000 },
+          { period: 9, receitas: 170000, despesas: 96000 },
+          { period: 10, receitas: 185000, despesas: 98000 },
+          { period: 11, receitas: 200000, despesas: 100000 },
+          { period: 12, receitas: 215000, despesas: 102000 },
+          { period: 13, receitas: 230000, despesas: 104000 },
+          { period: 14, receitas: 245000, despesas: 106000 },
+          { period: 15, receitas: 260000, despesas: 108000 },
+          { period: 16, receitas: 275000, despesas: 110000 },
+          { period: 17, receitas: 290000, despesas: 112000 },
+          { period: 18, receitas: 305000, despesas: 114000 }
+        ]
+      },
+      {
+        name: "🥖 Padaria Artesanal",
+        investimento: 350000,
+        taxaDesconto: 12,
+        periods: [
+          { period: 1, receitas: 60000, despesas: 70000 },
+          { period: 2, receitas: 70000, despesas: 72000 },
+          { period: 3, receitas: 80000, despesas: 74000 },
+          { period: 4, receitas: 90000, despesas: 76000 },
+          { period: 5, receitas: 100000, despesas: 78000 },
+          { period: 6, receitas: 110000, despesas: 80000 },
+          { period: 7, receitas: 120000, despesas: 82000 },
+          { period: 8, receitas: 130000, despesas: 84000 },
+          { period: 9, receitas: 140000, despesas: 86000 },
+          { period: 10, receitas: 150000, despesas: 88000 },
+          { period: 11, receitas: 160000, despesas: 90000 },
+          { period: 12, receitas: 170000, despesas: 92000 }
+        ]
+      },
+      // LONG TERM (24-48 months)
+      {
+        name: "📱 Aplicação Mobile",
+        investimento: 1500000,
+        taxaDesconto: 15,
+        periods: Array.from({ length: 24 }, (_, i) => ({
+          period: i + 1,
+          receitas: Math.min(10000 + (i * 15000), 350000),
+          despesas: Math.max(120000 - (i * 2000), 80000)
+        }))
+      },
+      {
+        name: "��� Clínica Médica",
+        investimento: 2500000,
+        taxaDesconto: 10,
+        periods: Array.from({ length: 36 }, (_, i) => ({
+          period: i + 1,
+          receitas: Math.min(100000 + (i * 12000), 500000),
+          despesas: Math.max(180000 - (i * 1500), 130000)
+        }))
+      },
+      {
+        name: "🏨 Hotel Boutique",
+        investimento: 5000000,
+        taxaDesconto: 8,
+        periods: Array.from({ length: 36 }, (_, i) => {
+          const month = (i % 12) + 1;
+          const year = Math.floor(i / 12);
+          const seasonMultiplier = [6, 7, 8].includes(month) ? 1.5 : ([12, 1].includes(month) ? 1.3 : 1.0);
+          const growthFactor = 1 + (year * 0.15);
+          return {
+            period: i + 1,
+            receitas: Math.round(200000 * seasonMultiplier * growthFactor),
+            despesas: Math.round(150000 + (year * 10000))
+          };
+        })
+      },
+      {
+        name: "🏭 Fábrica de Conservas",
+        investimento: 10000000,
+        taxaDesconto: 12,
+        periods: Array.from({ length: 48 }, (_, i) => ({
+          period: i + 1,
+          receitas: Math.min(200000 + (i * 25000), 1400000),
+          despesas: Math.max(600000 - (i * 5000), 450000)
+        }))
+      }
+    ];
+
+    function loadExampleScenario(index) {
+      if (!exampleScenarios[index]) return;
+      
+      const example = exampleScenarios[index];
+      
+      // Create new scenario with example data
+      const newIndex = scenarios.length;
+      scenarios.push({
+        name: example.name,
+        investimento: example.investimento,
+        taxaDesconto: example.taxaDesconto,
+        periods: JSON.parse(JSON.stringify(example.periods)) // Deep clone
+      });
+      
+      currentScenarioIndex = newIndex;
+      
+      // Update UI
+      document.getElementById('num-periodos').value = example.periods.length;
+      renderScenarioList();
+      loadCurrentScenario();
+      
+      // Close modal
+      closeExamplesModal();
+      
+      saveToLocalStorage();
+      showToast(`Cenário "${example.name}" carregado com sucesso!`);
+    }
+
+    // =====================
+    // Scenario Management
+    // =====================
+    function createNewScenario() {
+      const newIndex = scenarios.length;
+      scenarios.push({
+        name: `Cenário ${newIndex + 1}`,
+        investimento: 0,
+        taxaDesconto: 10,
+        periods: []
+      });
+      currentScenarioIndex = newIndex;
+      renderScenarioList();
+      loadCurrentScenario();
+      showToast(`Cenário ${newIndex + 1} criado!`);
+      saveToLocalStorage();
+    }
+
+    function saveCurrentScenario() {
+      if (!scenarios[currentScenarioIndex]) {
+        createNewScenario();
+      }
+      
+      scenarios[currentScenarioIndex].investimento = parseFloat(document.getElementById('investimento-inicial').value) || 0;
+      scenarios[currentScenarioIndex].taxaDesconto = parseFloat(document.getElementById('taxa-desconto').value) || 10;
+      
+      saveToLocalStorage();
+      showToast('Cenário guardado com sucesso!');
+    }
+
+    function loadScenario(index) {
+      if (scenarios[index]) {
+        currentScenarioIndex = index;
+        loadCurrentScenario();
+        renderScenarioList();
+        showToast(`Cenário "${scenarios[index].name}" carregado`);
+      }
+    }
+
+    function loadCurrentScenario() {
+      const scenario = scenarios[currentScenarioIndex];
+      if (!scenario) return;
+      
+      document.getElementById('current-scenario-name').value = scenario.name;
+      document.getElementById('investimento-inicial').value = scenario.investimento || '';
+      document.getElementById('taxa-desconto').value = scenario.taxaDesconto || 10;
+      
+      renderPeriods();
+      calculateIndicators();
+      updateAdvancedCharts();
+    }
+
+    function renameCurrentScenario() {
+      const newName = document.getElementById('current-scenario-name').value.trim();
+      if (newName && scenarios[currentScenarioIndex]) {
+        scenarios[currentScenarioIndex].name = newName;
+        renderScenarioList();
+        saveToLocalStorage();
+        showToast('Nome do cenário atualizado!');
+      }
+    }
+
+    function deleteScenario(index) {
+      if (scenarios.length <= 1) {
+        showToast('Não é possível apagar o último cenário', 'warning');
+        return;
+      }
+      
+      scenarios.splice(index, 1);
+      if (currentScenarioIndex >= scenarios.length) {
+        currentScenarioIndex = scenarios.length - 1;
+      }
+      
+      renderScenarioList();
+      loadCurrentScenario();
+      saveToLocalStorage();
+      showToast('Cenário removido');
+    }
+
+    function renderScenarioList() {
+      const container = document.getElementById('scenario-list');
+      
+      container.innerHTML = scenarios.map((s, idx) => `
+        <div class="flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${idx === currentScenarioIndex ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'} cursor-pointer transition-colors">
+          <span onclick="loadScenario(${idx})" class="flex-1">${s.name}</span>
+          ${scenarios.length > 1 ? `
+            <button onclick="event.stopPropagation(); deleteScenario(${idx})" class="p-1 hover:text-red-500 transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    // =====================
+    // Export/Import
+    // =====================
+    function exportJSON() {
+      const data = {
+        version: '1.1',
+        exportDate: new Date().toISOString(),
+        currency: selectedCurrency,
+        scenarios: scenarios,
+        simpleMode: {
+          receitas: parseFloat(document.getElementById('simple-receitas').value) || 0,
+          despesas: parseFloat(document.getElementById('simple-despesas').value) || 0
+        },
+        dailyEntries: dailyEntries
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fluxo-caixa-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Dados exportados com sucesso!');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (data.currency) {
+            selectedCurrency = data.currency;
+            document.getElementById('currency-selector').value = selectedCurrency;
+          }
+          
+          if (data.scenarios) {
+            scenarios = data.scenarios;
+            currentScenarioIndex = 0;
+            renderScenarioList();
+            loadCurrentScenario();
+          }
+          
+          if (data.simpleMode) {
+            document.getElementById('simple-receitas').value = data.simpleMode.receitas || '';
+            document.getElementById('simple-despesas').value = data.simpleMode.despesas || '';
+            updateSimpleCalculation();
+          }
+          
+          if (data.dailyEntries) {
+            dailyEntries = data.dailyEntries;
+            renderEntriesList();
+          }
+          
+          saveToLocalStorage();
+          showToast('Dados importados com sucesso!');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Export/Import for Daily Mode
+    function exportDailyJSON() {
+      const data = {
+        version: '1.1',
+        exportDate: new Date().toISOString(),
+        currency: selectedCurrency,
+        dailyEntries: dailyEntries
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `registro-diario-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Registros exportados com sucesso!');
+    }
+
+    function importDailyJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (data.currency) {
+            selectedCurrency = data.currency;
+            document.getElementById('currency-selector').value = selectedCurrency;
+          }
+          
+          if (data.dailyEntries) {
+            dailyEntries = data.dailyEntries;
+            renderEntriesList();
+          }
+          
+          saveToLocalStorage();
+          showToast('Registros importados com sucesso!');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportDailyPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 30;
+      
+      // Header
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageWidth, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.text('Registro Diário - Fluxo de Caixa', margin, 13);
+      pdf.setFontSize(8);
+      pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin - 20, 13);
+      
+      // Title
+      pdf.setTextColor(30, 136, 229);
+      pdf.setFontSize(18);
+      pdf.text('Relatório de Entradas e Despesas', margin, yPos);
+      yPos += 10;
+      
+      // Currency info
+      pdf.setTextColor(50, 50, 50);
+      pdf.setFontSize(10);
+      pdf.text(`Moeda: ${cplpCurrencies[selectedCurrency].name}`, margin, yPos);
+      yPos += 15;
+      
+      // Summary
+      const totalReceitas = dailyEntries.filter(e => e.type === 'receita').reduce((sum, e) => sum + e.value, 0);
+      const totalDespesas = dailyEntries.filter(e => e.type === 'despesa').reduce((sum, e) => sum + e.value, 0);
+      const saldo = totalReceitas - totalDespesas;
+      
+      pdf.setFontSize(12);
+      pdf.text('Resumo Geral', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(10);
+      pdf.text(`Total Receitas: ${formatCurrency(totalReceitas)}`, margin, yPos);
+      yPos += 6;
+      pdf.text(`Total Despesas: ${formatCurrency(totalDespesas)}`, margin, yPos);
+      yPos += 6;
+      pdf.setTextColor(saldo >= 0 ? 76 : 244, saldo >= 0 ? 175 : 67, saldo >= 0 ? 80 : 54);
+      pdf.text(`Saldo: ${formatCurrency(saldo)}`, margin, yPos);
+      pdf.setTextColor(50, 50, 50);
+      yPos += 15;
+      
+      // Entries table
+      if (dailyEntries.length > 0) {
+        pdf.setFontSize(12);
+        pdf.text('Entradas Registradas', margin, yPos);
+        yPos += 8;
+        
+        pdf.setFontSize(9);
+        
+        // Table header
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(margin, yPos - 4, pageWidth - 2 * margin, 8, 'F');
+        pdf.text('Data', margin + 2, yPos);
+        pdf.text('Tipo', margin + 30, yPos);
+        pdf.text('Descrição', margin + 55, yPos);
+        pdf.text('Valor', margin + 120, yPos);
+        yPos += 8;
+        
+        dailyEntries.forEach((entry, idx) => {
+          if (yPos > pageHeight - 30) {
+            pdf.addPage();
+            yPos = 30;
+          }
+          
+          pdf.text(new Date(entry.date).toLocaleDateString('pt-PT'), margin + 2, yPos);
+          pdf.text(entry.type === 'receita' ? 'Receita' : 'Despesa', margin + 30, yPos);
+          const description = entry.description.length > 30 ? entry.description.substring(0, 27) + '...' : entry.description;
+          pdf.text(description, margin + 55, yPos);
+          pdf.setTextColor(entry.type === 'receita' ? 76 : 244, entry.type === 'receita' ? 175 : 67, entry.type === 'receita' ? 80 : 54);
+          pdf.text(formatCurrency(entry.value), margin + 120, yPos);
+          pdf.setTextColor(50, 50, 50);
+          yPos += 6;
+        });
+      }
+      
+      // Footer
+      pdf.setFillColor(248, 249, 250);
+      pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(8);
+      pdf.text('Simulador de Fluxo de Caixa | Comunidade CPLP', margin, pageHeight - 6);
+      
+      pdf.save(`registro-diario-${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado com sucesso!');
+    }
+
+    async function exportDailyImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      const dailyMode = document.getElementById('daily-mode');
+      const wasHidden = dailyMode.classList.contains('hidden');
+      
+      if (wasHidden) {
+        dailyMode.classList.remove('hidden');
+      }
+      
+      try {
+        const canvas = await html2canvas(dailyMode, {
+          backgroundColor: isDarkMode ? '#0f0f1a' : '#ffffff',
+          scale: 2
+        });
+        
+        const link = document.createElement('a');
+        link.download = `registro-diario-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada com sucesso!');
+      } catch (err) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      if (wasHidden) {
+        dailyMode.classList.add('hidden');
+      }
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 30;
+      
+      // Header function
+      const addHeader = (pageNum, totalPages) => {
+        pdf.setFillColor(30, 136, 229);
+        pdf.rect(0, 0, pageWidth, 20, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(12);
+        pdf.text('Simulador de Fluxo de Caixa', margin, 13);
+        pdf.setFontSize(8);
+        pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin - 20, 13);
+      };
+      
+      // Footer function
+      const addFooter = (pageNum, totalPages) => {
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFontSize(8);
+        pdf.text('Simulador de Fluxo de Caixa | Comunidade CPLP', margin, pageHeight - 6);
+        pdf.text(`Página ${pageNum} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 6);
+      };
+      
+      addHeader(1, 1);
+      
+      // Title
+      pdf.setTextColor(30, 136, 229);
+      pdf.setFontSize(18);
+      pdf.text('Relatório de Fluxo de Caixa', margin, yPos);
+      yPos += 10;
+      
+      // Scenario info
+      const scenario = scenarios[currentScenarioIndex];
+      pdf.setTextColor(50, 50, 50);
+      pdf.setFontSize(12);
+      pdf.text(`Cenário: ${scenario?.name || 'Sem nome'}`, margin, yPos);
+      yPos += 15;
+      
+      // Indicators
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 136, 229);
+      pdf.text('Indicadores Financeiros', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setTextColor(50, 50, 50);
+      
+      const indicators = [
+        ['VPL:', document.getElementById('indicator-vpl').textContent],
+        ['TIR:', document.getElementById('indicator-tir').textContent],
+        ['Payback:', document.getElementById('indicator-payback').textContent],
+        ['IL:', document.getElementById('indicator-il').textContent],
+        ['ROI:', document.getElementById('indicator-roi').textContent]
+      ];
+      
+      indicators.forEach(([label, value]) => {
+        pdf.text(`${label} ${value}`, margin, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 10;
+      
+      // Charts (smaller to avoid distortion)
+      if (cashflowChart) {
+        const chartCanvas = document.getElementById('cashflow-chart');
+        const chartImg = chartCanvas.toDataURL('image/png', 0.8);
+        pdf.addImage(chartImg, 'PNG', margin, yPos, 80, 50);
+      }
+      
+      if (cumulativeChart) {
+        const chartCanvas = document.getElementById('cumulative-chart');
+        const chartImg = chartCanvas.toDataURL('image/png', 0.8);
+        pdf.addImage(chartImg, 'PNG', margin + 90, yPos, 80, 50);
+      }
+      
+      yPos += 60;
+      
+      // Data table
+      if (scenario?.periods?.length > 0) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(30, 136, 229);
+        pdf.text('Fluxos de Caixa por Período', margin, yPos);
+        yPos += 8;
+        
+        pdf.setFontSize(9);
+        pdf.setTextColor(50, 50, 50);
+        
+        // Table header
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(margin, yPos - 4, pageWidth - 2 * margin, 8, 'F');
+        pdf.text('Mês', margin + 2, yPos);
+        pdf.text('Receitas', margin + 30, yPos);
+        pdf.text('Despesas', margin + 65, yPos);
+        pdf.text('Saldo', margin + 100, yPos);
+        yPos += 8;
+        
+        scenario.periods.forEach((p, idx) => {
+          if (yPos > pageHeight - 30) {
+            addFooter(1, 2);
+            pdf.addPage();
+            addHeader(2, 2);
+            yPos = 30;
+          }
+          
+          const saldo = p.receitas - p.despesas;
+          pdf.text(`Mês ${p.period}`, margin + 2, yPos);
+          pdf.text(formatCurrency(p.receitas), margin + 30, yPos);
+          pdf.text(formatCurrency(p.despesas), margin + 65, yPos);
+          pdf.setTextColor(saldo >= 0 ? 76 : 244, saldo >= 0 ? 175 : 67, saldo >= 0 ? 80 : 54);
+          pdf.text(formatCurrency(saldo), margin + 100, yPos);
+          pdf.setTextColor(50, 50, 50);
+          yPos += 6;
+        });
+      }
+      
+      addFooter(1, 1);
+      
+      pdf.save(`fluxo-caixa-${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado com sucesso!');
+    }
+
+    async function exportImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      const advancedMode = document.getElementById('advanced-mode');
+      const wasHidden = advancedMode.classList.contains('hidden');
+      
+      if (wasHidden) {
+        advancedMode.classList.remove('hidden');
+      }
+      
+      try {
+        const canvas = await html2canvas(document.getElementById('app'), {
+          backgroundColor: isDarkMode ? '#0f0f1a' : '#ffffff',
+          scale: 2
+        });
+        
+        const link = document.createElement('a');
+        link.download = `fluxo-caixa-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada com sucesso!');
+      } catch (err) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      if (wasHidden) {
+        advancedMode.classList.add('hidden');
+      }
+    }
+
+    // =====================
+    // Local Storage
+    // =====================
+    function saveToLocalStorage() {
+      const data = {
+        scenarios: scenarios,
+        currentScenarioIndex: currentScenarioIndex,
+        simpleMode: {
+          receitas: parseFloat(document.getElementById('simple-receitas').value) || 0,
+          despesas: parseFloat(document.getElementById('simple-despesas').value) || 0
+        },
+        darkMode: isDarkMode,
+        currency: selectedCurrency,
+        dailyEntries: dailyEntries,
+        calculatorMemory: calculatorMemory
+      };
+      localStorage.setItem('cashflow-simulator', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('cashflow-simulator');
+        if (saved) {
+          const data = JSON.parse(saved);
+          
+          if (data.scenarios?.length > 0) {
+            scenarios = data.scenarios;
+            currentScenarioIndex = data.currentScenarioIndex || 0;
+          }
+          
+          if (data.simpleMode) {
+            document.getElementById('simple-receitas').value = data.simpleMode.receitas || '';
+            document.getElementById('simple-despesas').value = data.simpleMode.despesas || '';
+          }
+          
+          if (data.currency) {
+            selectedCurrency = data.currency;
+            document.getElementById('currency-selector').value = selectedCurrency;
+          }
+          
+          if (data.dailyEntries) {
+            dailyEntries = data.dailyEntries;
+          }
+          
+          if (data.calculatorMemory) {
+            calculatorMemory = data.calculatorMemory;
+            document.getElementById('memory-value').textContent = formatCurrency(calculatorMemory);
+            if (calculatorMemory !== 0) {
+              document.getElementById('memory-display').classList.remove('hidden');
+            }
+          }
+          
+          return true;
+        }
+      } catch (err) {
+        console.error('Error loading from localStorage:', err);
+      }
+      return false;
+    }
+
+    // =====================
+    // Daily Entries Functions
+    // =====================
+    function addDailyEntry() {
+      const date = document.getElementById('daily-date').value;
+      const type = document.getElementById('daily-type').value;
+      const value = parseFloat(document.getElementById('daily-value').value);
+      const description = document.getElementById('daily-description').value.trim();
+      
+      if (!date || !value || value <= 0) {
+        showToast('Preencha data e valor válido', 'warning');
+        return;
+      }
+      
+      const entry = {
+        id: Date.now(),
+        date: date,
+        type: type,
+        value: value,
+        description: description || (type === 'receita' ? 'Receita' : 'Despesa')
+      };
+      
+      dailyEntries.push(entry);
+      dailyEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Clear form
+      document.getElementById('daily-value').value = '';
+      document.getElementById('daily-description').value = '';
+      
+      renderEntriesList();
+      saveToLocalStorage();
+      showToast('Entrada adicionada com sucesso!');
+    }
+    
+    function renderEntriesList() {
+      const container = document.getElementById('entries-list');
+      
+      if (dailyEntries.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Nenhuma entrada registrada</p>';
+        return;
+      }
+      
+      container.innerHTML = dailyEntries.map(entry => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg ${entry.type === 'receita' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'} flex items-center justify-center">
+            <svg class="w-5 h-5 ${entry.type === 'receita' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${entry.type === 'receita' ? 'M12 4v16m8-8H4' : 'M20 12H4'}"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${entry.description}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">${new Date(entry.date).toLocaleDateString('pt-PT')}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold ${entry.type === 'receita' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+              ${entry.type === 'receita' ? '+' : '-'}${formatCurrency(entry.value)}
+            </span>
+            <button onclick="deleteEntry(${entry.id})" class="p-1 text-gray-400 hover:text-red-500 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function deleteEntry(id) {
+      dailyEntries = dailyEntries.filter(e => e.id !== id);
+      renderEntriesList();
+      saveToLocalStorage();
+      showToast('Entrada removida');
+    }
+    
+    function clearAllEntries() {
+      if (dailyEntries.length === 0) return;
+      
+      dailyEntries = [];
+      renderEntriesList();
+      saveToLocalStorage();
+      showToast('Todas as entradas foram removidas');
+    }
+    
+    function calculatePeriod() {
+      const startDate = document.getElementById('calc-date-start').value;
+      const endDate = document.getElementById('calc-date-end').value;
+      const filterType = document.getElementById('calc-filter-type').value;
+      
+      if (!startDate || !endDate) {
+        showToast('Selecione as datas inicial e final', 'warning');
+        return;
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (start > end) {
+        showToast('Data inicial não pode ser maior que a final', 'error');
+        return;
+      }
+      
+      let totalReceitas = 0;
+      let totalDespesas = 0;
+      
+      dailyEntries.forEach(entry => {
+        const entryDate = new Date(entry.date);
+        if (entryDate >= start && entryDate <= end) {
+          if (filterType === 'all' || filterType === entry.type) {
+            if (entry.type === 'receita') {
+              totalReceitas += entry.value;
+            } else {
+              totalDespesas += entry.value;
+            }
+          }
+        }
+      });
+      
+      const saldo = totalReceitas - totalDespesas;
+      
+      document.getElementById('calc-receitas').textContent = formatCurrency(totalReceitas);
+      document.getElementById('calc-despesas').textContent = formatCurrency(totalDespesas);
+      document.getElementById('calc-saldo').textContent = formatCurrency(saldo);
+      
+      const saldoEl = document.getElementById('calc-saldo');
+      saldoEl.className = `text-lg font-bold ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+      
+      showToast('Período calculado!');
+    }
+    
+    function updateCalculatorDisplay() {
+      const receitas = document.getElementById('calc-receitas').textContent;
+      const despesas = document.getElementById('calc-despesas').textContent;
+      const saldo = document.getElementById('calc-saldo').textContent;
+      
+      if (receitas !== formatCurrency(0)) {
+        const receitasVal = parseFloat(receitas.replace(/[^0-9,-]/g, '').replace(',', '.'));
+        const despesasVal = parseFloat(despesas.replace(/[^0-9,-]/g, '').replace(',', '.'));
+        const saldoVal = receitasVal - despesasVal;
+        
+        document.getElementById('calc-receitas').textContent = formatCurrency(receitasVal);
+        document.getElementById('calc-despesas').textContent = formatCurrency(despesasVal);
+        document.getElementById('calc-saldo').textContent = formatCurrency(saldoVal);
+      }
+    }
+    
+    function copyToClipboard(elementId) {
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copiado para a área de transferência!');
+      }).catch(() => {
+        showToast('Erro ao copiar', 'error');
+      });
+    }
+    
+    function storeInMemory() {
+      const saldoText = document.getElementById('calc-saldo').textContent;
+      const saldoValue = parseFloat(saldoText.replace(/[^0-9,-]/g, '').replace(',', '.'));
+      
+      if (!isNaN(saldoValue)) {
+        calculatorMemory = saldoValue;
+        document.getElementById('memory-value').textContent = formatCurrency(calculatorMemory);
+        document.getElementById('memory-display').classList.remove('hidden');
+        showToast('Valor guardado na memória!');
+      }
+    }
+
+    // =====================
+    // UI Helpers
+    // =====================
+    function toggleCollapse(id) {
+      const el = document.getElementById(id);
+      const icon = document.getElementById(`${id}-icon`);
+      el.classList.toggle('open');
+      icon.style.transform = el.classList.contains('open') ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+
+    function openHelpModal() {
+      document.getElementById('help-modal').classList.remove('hidden');
+    }
+
+    function closeHelpModal() {
+      document.getElementById('help-modal').classList.add('hidden');
+    }
+
+    function openExamplesModal() {
+      document.getElementById('examples-modal').classList.remove('hidden');
+    }
+
+    function closeExamplesModal() {
+      document.getElementById('examples-modal').classList.add('hidden');
+    }
+
+    function formatCurrency(value) {
+      const currency = cplpCurrencies[selectedCurrency];
+      
+      // For currencies without proper Intl support, format manually
+      if (['AOA', 'STN', 'XOF', 'MOP'].includes(selectedCurrency)) {
+        const formatted = new Intl.NumberFormat(currency.locale, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(Math.abs(value));
+        
+        return `${value < 0 ? '-' : ''}${currency.symbol} ${formatted}`;
+      }
+      
+      try {
+        return new Intl.NumberFormat(currency.locale, {
+          style: 'currency',
+          currency: selectedCurrency
+        }).format(value);
+      } catch (e) {
+        // Fallback for unsupported currencies
+        const formatted = new Intl.NumberFormat(currency.locale, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(Math.abs(value));
+        
+        return `${value < 0 ? '-' : ''}${currency.symbol} ${formatted}`;
+      }
+    }
+    
+    function changeCurrency(currency) {
+      selectedCurrency = currency;
+      
+      // Update all displayed values
+      updateSimpleCalculation();
+      
+      if (currentMode === 'advanced') {
+        calculateIndicators();
+        renderPeriods();
+      }
+      
+      if (currentMode === 'daily') {
+        renderEntriesList();
+        updateCalculatorDisplay();
+      }
+      
+      updateInputPlaceholders();
+      saveToLocalStorage();
+      showToast(`Moeda alterada para ${cplpCurrencies[currency].name}`);
+    }
+    
+    function updateInputPlaceholders() {
+      const symbol = cplpCurrencies[selectedCurrency].symbol;
+      
+      // Simple mode
+      document.getElementById('simple-receitas').placeholder = `0.00 (${symbol})`;
+      document.getElementById('simple-despesas').placeholder = `0.00 (${symbol})`;
+      
+      // Daily mode
+      document.getElementById('daily-value').placeholder = `0.00 (${symbol})`;
+    }
+
+    // =====================
+    // Element SDK Integration
+    // =====================
+    async function onConfigChange(cfg) {
+      config = { ...defaultConfig, ...cfg };
+      
+      const titleEl = document.getElementById('app-title');
+      if (titleEl) titleEl.textContent = config.app_title || defaultConfig.app_title;
+      
+      const footerEl = document.getElementById('footer-text');
+      if (footerEl) footerEl.textContent = config.footer_text || defaultConfig.footer_text;
+    }
+
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [
+          {
+            get: () => cfg.primary_color || defaultConfig.primary_color,
+            set: (value) => {
+              cfg.primary_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ primary_color: value });
+            }
+          },
+          {
+            get: () => cfg.secondary_color || defaultConfig.secondary_color,
+            set: (value) => {
+              cfg.secondary_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ secondary_color: value });
+            }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (value) => {
+              cfg.text_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ text_color: value });
+            }
+          },
+          {
+            get: () => cfg.success_color || defaultConfig.success_color,
+            set: (value) => {
+              cfg.success_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ success_color: value });
+            }
+          },
+          {
+            get: () => cfg.accent_color || defaultConfig.accent_color,
+            set: (value) => {
+              cfg.accent_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ accent_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => cfg.font_family || 'Inter',
+          set: (value) => {
+            cfg.font_family = value;
+            if (window.elementSdk) window.elementSdk.setConfig({ font_family: value });
+          }
+        },
+        fontSizeable: {
+          get: () => cfg.font_size || 16,
+          set: (value) => {
+            cfg.font_size = value;
+            if (window.elementSdk) window.elementSdk.setConfig({ font_size: value });
+          }
+        }
+      };
+    }
+
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ['app_title', cfg.app_title || defaultConfig.app_title],
+        ['footer_text', cfg.footer_text || defaultConfig.footer_text]
+      ]);
+    }
+
+    // =====================
+    // Initialization
+    // =====================
+    async function init() {
+      // Initialize dark mode
+      initDarkMode();
+      
+      // Load saved data
+      const hasData = loadFromLocalStorage();
+      
+      // Create default scenario if none exists
+      if (scenarios.length === 0) {
+        scenarios.push({
+          name: 'Cenário 1',
+          investimento: 0,
+          taxaDesconto: 10,
+          periods: []
+        });
+      }
+      
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('daily-date').value = today;
+      document.getElementById('calc-date-start').value = today;
+      document.getElementById('calc-date-end').value = today;
+      
+      // Render UI
+      renderScenarioList();
+      loadCurrentScenario();
+      updateSimpleCalculation();
+      renderEntriesList();
+      updateInputPlaceholders();
+      
+      // Event listeners
+      document.getElementById('simple-receitas').addEventListener('input', updateSimpleCalculation);
+      document.getElementById('simple-despesas').addEventListener('input', updateSimpleCalculation);
+      document.getElementById('investimento-inicial').addEventListener('input', () => {
+        calculateIndicators();
+        updateAdvancedCharts();
+        saveToLocalStorage();
+      });
+      document.getElementById('taxa-desconto').addEventListener('input', () => {
+        calculateIndicators();
+        saveToLocalStorage();
+      });
+      document.getElementById('num-periodos').addEventListener('input', saveToLocalStorage);
+      document.getElementById('dark-toggle').addEventListener('click', toggleDarkMode);
+      document.getElementById('help-btn').addEventListener('click', openHelpModal);
+      
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities,
+          mapToEditPanelValues
+        });
+      }
+    }
+
+    // Start app
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bcbe95955691b23',t:'MTc2ODIxMzEyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
