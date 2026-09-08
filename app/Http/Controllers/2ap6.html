@@ -1,0 +1,985 @@
+
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador Orçamental</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;color:#666;padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5;background:rgba(30,136,229,.05)}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600;background:rgba(30,136,229,.05)}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;transition:all .2s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#66CFF5;border-radius:8px 0 0 8px}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-green::before{background:#4CAF50}
+.card-orange::before{background:#FF9800}
+.card-red::before{background:#F44336}
+.card-gold::before{background:#FFC107}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-outline{background:#fff;color:#666;border:1px solid #E0E0E0}
+.btn-outline:hover{border-color:#66CFF5;color:#66CFF5}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;transition:all .2s ease;background:#fff;font-family:'Inter',sans-serif}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;transform:translateX(120%);transition:transform .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(0)}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;transform:scale(.9);transition:transform .2s ease}
+.modal-overlay.show .modal{transform:scale(1)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.badge-blue{background:rgba(30,136,229,.1);color:#66CFF5}
+.badge-green{background:rgba(76,175,80,.1);color:#4CAF50}
+.badge-red{background:rgba(244,67,54,.1);color:#F44336}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#F8F9FA;padding:8px 12px;text-align:left;font-weight:600;color:#666;border-bottom:2px solid #E0E0E0}
+td{padding:8px 12px;border-bottom:1px solid #F0F0F0}
+tr:hover{background:#FAFAFA}
+.chart-container{position:relative;width:100%;height:250px}
+.export-img-btn{position:absolute;top:8px;right:8px;z-index:10;background:#fff;border:1px solid #E0E0E0;border-radius:4px;padding:4px;cursor:pointer;transition:all .2s ease;opacity:.6}
+.export-img-btn:hover{opacity:1;border-color:#66CFF5}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.confirm-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#FFF3E0;border-radius:6px;font-size:12px;margin-top:8px}
+@media(max-width:768px){.tab-btn{padding:8px 10px;font-size:11px}.card{padding:12px}}
+@media print{.no-print{display:none!important}}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full flex flex-col overflow-auto" style="width:100%"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-50" style="min-height:60px">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0" style="display: none;">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-base font-bold text-gray-800" style="display: none; display: none; font-weight:700">IS Simulador Orçamental</h1>
+       <p id="appDesc" class="text-xs text-gray-400" style="display: none; display: none; font-weight:400">Simulador de Orçamento Mensal para cidadãos CPLP</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2"><input type="text" id="simTitle" class="input-field no-print" style="width:180px;font-size:12px" placeholder="Título da simulação..."> <button class="btn btn-outline btn-sm no-print" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn btn-outline btn-sm no-print" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"> <button class="btn btn-outline btn-sm no-print" onclick="exportImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn btn-primary btn-sm no-print" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button>
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-gray-200 sticky z-40 no-print" style="top:60px;overflow-x:auto">
+    <div class="max-w-7xl mx-auto flex" style="min-width:max-content"><button class="tab-btn active" data-tab="orcamento" onclick="switchTab('orcamento',this)"><i data-lucide="wallet" style="width:15px;height:15px"></i> Orçamento</button> <button class="tab-btn" data-tab="resumo" onclick="switchTab('resumo',this)"><i data-lucide="bar-chart-3" style="width:15px;height:15px"></i> Resumo</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios',this)"><i data-lucide="layers" style="width:15px;height:15px"></i> Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas',this)"><i data-lucide="coins" style="width:15px;height:15px"></i> Moedas</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda',this)"><i data-lucide="help-circle" style="width:15px;height:15px"></i> Guia</button>
+    </div>
+   </nav><!-- Content -->
+   <main class="flex-1 overflow-auto" style="padding:16px">
+    <div class="max-w-7xl mx-auto"><!-- TAB: Orçamento -->
+     <div id="tab-orcamento" class="tab-content fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><!-- Receitas -->
+       <div class="card card-green">
+        <div class="flex items-center justify-between mb-3 pl-3">
+         <div class="flex items-center gap-2"><i data-lucide="trending-up" style="width:18px;height:18px;color:#4CAF50"></i>
+          <h2 class="text-sm font-semibold text-gray-700">Receitas</h2><span id="totalReceitasBadge" class="badge badge-green">0 Kz</span>
+         </div><button class="btn btn-success btn-xs no-print" onclick="addItem('receitas')"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar</button>
+        </div>
+        <div class="mb-2 no-print">
+         <input type="text" class="input-field" style="font-size:11px" placeholder="Filtrar receitas..." oninput="filterItems('receitas',this.value)">
+        </div>
+        <div id="receitasList" class="space-y-2" style="max-height:300px;overflow-y:auto"></div>
+       </div><!-- Despesas Fixas -->
+       <div class="card card-red">
+        <div class="flex items-center justify-between mb-3 pl-3">
+         <div class="flex items-center gap-2"><i data-lucide="trending-down" style="width:18px;height:18px;color:#F44336"></i>
+          <h2 class="text-sm font-semibold text-gray-700">Despesas Fixas</h2><span id="totalFixasBadge" class="badge badge-red">0 Kz</span>
+         </div><button class="btn btn-danger btn-xs no-print" onclick="addItem('fixas')"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar</button>
+        </div>
+        <div class="mb-2 no-print">
+         <input type="text" class="input-field" style="font-size:11px" placeholder="Filtrar despesas fixas..." oninput="filterItems('fixas',this.value)">
+        </div>
+        <div id="fixasList" class="space-y-2" style="max-height:300px;overflow-y:auto"></div>
+       </div><!-- Despesas Variáveis -->
+       <div class="card card-orange">
+        <div class="flex items-center justify-between mb-3 pl-3">
+         <div class="flex items-center gap-2"><i data-lucide="shuffle" style="width:18px;height:18px;color:#FF9800"></i>
+          <h2 class="text-sm font-semibold text-gray-700">Despesas Variáveis</h2><span id="totalVariaveisBadge" class="badge" style="background:rgba(255,152,0,.1);color:#FF9800">0 Kz</span>
+         </div><button class="btn btn-warning btn-xs no-print" onclick="addItem('variaveis')"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar</button>
+        </div>
+        <div class="mb-2 no-print">
+         <input type="text" class="input-field" style="font-size:11px" placeholder="Filtrar despesas variáveis..." oninput="filterItems('variaveis',this.value)">
+        </div>
+        <div id="variaveisList" class="space-y-2" style="max-height:300px;overflow-y:auto"></div>
+       </div><!-- Poupança/Investimentos -->
+       <div class="card card-gold">
+        <div class="flex items-center justify-between mb-3 pl-3">
+         <div class="flex items-center gap-2"><i data-lucide="piggy-bank" style="width:18px;height:18px;color:#FFC107"></i>
+          <h2 class="text-sm font-semibold text-gray-700">Poupança</h2><span id="totalPoupancaBadge" class="badge" style="background:rgba(255,193,7,.1);color:#F57C00">0 Kz</span>
+         </div><button class="btn btn-sm btn-xs no-print" style="background:#FFC107;color:#333" onclick="addItem('poupanca')"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar</button>
+        </div>
+        <div class="mb-2 no-print">
+         <input type="text" class="input-field" style="font-size:11px" placeholder="Filtrar poupança..." oninput="filterItems('poupanca',this.value)">
+        </div>
+        <div id="poupancaList" class="space-y-2" style="max-height:300px;overflow-y:auto"></div>
+       </div>
+      </div><!-- Save scenario bar -->
+      <div class="mt-4 flex items-center gap-3 no-print"><button class="btn btn-primary" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i> Guardar Cenário</button> <button class="btn btn-outline" onclick="clearAll()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Limpar Tudo</button>
+      </div>
+     </div><!-- TAB: Resumo -->
+     <div id="tab-resumo" class="tab-content fade-in" style="display:none">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+       <div class="card card-green">
+        <div class="pl-3">
+         <p class="text-xs text-gray-400 font-medium">Total Receitas</p>
+         <p id="sumReceitas" class="text-lg font-bold text-green-600">0 Kz</p>
+        </div>
+       </div>
+       <div class="card card-red">
+        <div class="pl-3">
+         <p class="text-xs text-gray-400 font-medium">Total Despesas</p>
+         <p id="sumDespesas" class="text-lg font-bold text-red-500">0 Kz</p>
+        </div>
+       </div>
+       <div class="card" id="saldoCard">
+        <div class="pl-3">
+         <p class="text-xs text-gray-400 font-medium">Saldo</p>
+         <p id="sumSaldo" class="text-lg font-bold">0 Kz</p>
+        </div>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+       <div class="card" style="padding:12px">
+        <div class="flex items-center justify-between mb-2 pl-3">
+         <h3 class="text-xs font-semibold text-gray-600">Distribuição de Despesas</h3>
+        </div>
+        <div class="chart-container" style="height:220px"><button class="export-img-btn no-print" onclick="exportChartImg('chartDespesas')" title="Exportar gráfico HD"><i data-lucide="download" style="width:12px;height:12px;color:#666"></i></button>
+         <canvas id="chartDespesas"></canvas>
+        </div>
+       </div>
+       <div class="card" style="padding:12px">
+        <div class="flex items-center justify-between mb-2 pl-3">
+         <h3 class="text-xs font-semibold text-gray-600">Receitas vs Despesas</h3>
+        </div>
+        <div class="chart-container" style="height:220px"><button class="export-img-btn no-print" onclick="exportChartImg('chartBalance')" title="Exportar gráfico HD"><i data-lucide="download" style="width:12px;height:12px;color:#666"></i></button>
+         <canvas id="chartBalance"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+       <div class="card" style="padding:12px">
+        <div class="flex items-center justify-between mb-2 pl-3">
+         <h3 class="text-xs font-semibold text-gray-600">Alocação Orçamental</h3>
+        </div>
+        <div class="chart-container" style="height:220px"><button class="export-img-btn no-print" onclick="exportChartImg('chartAlocacao')" title="Exportar gráfico HD"><i data-lucide="download" style="width:12px;height:12px;color:#666"></i></button>
+         <canvas id="chartAlocacao"></canvas>
+        </div>
+       </div>
+       <div class="card" style="padding:12px">
+        <div class="flex items-center justify-between mb-2 pl-3">
+         <h3 class="text-xs font-semibold text-gray-600">Conversão CPLP</h3>
+        </div>
+        <div id="conversionTable" style="max-height:220px;overflow-y:auto"></div>
+       </div>
+      </div><!-- Detailed table -->
+      <div class="card" style="padding:12px">
+       <div class="flex items-center justify-between mb-2 pl-3">
+        <h3 class="text-xs font-semibold text-gray-600">Detalhe Completo</h3><input type="text" class="input-field no-print" style="width:200px;font-size:11px" placeholder="Filtrar tudo..." oninput="filterSummaryTable(this.value)">
+       </div>
+       <div style="overflow-x:auto">
+        <table id="summaryTable">
+         <thead>
+          <tr>
+           <th>Categoria</th>
+           <th>Descrição</th>
+           <th>Valor (Kz)</th>
+          </tr>
+         </thead>
+         <tbody></tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- TAB: Cenários -->
+     <div id="tab-cenarios" class="tab-content fade-in" style="display:none">
+      <div class="flex items-center justify-between mb-4">
+       <div class="flex items-center gap-2"><input type="text" id="filterCenarios" class="input-field no-print" style="width:220px;font-size:12px" placeholder="Filtrar cenários..." oninput="renderScenarios()">
+       </div><button class="btn btn-primary btn-sm no-print" onclick="newFromScratch()"><i data-lucide="plus" style="width:14px;height:14px"></i> Novo do Zero</button>
+      </div>
+      <div id="scenariosList" class="space-y-3"></div>
+      <div id="noScenarios" class="text-center py-10 text-gray-400 text-sm" style="display:none"><i data-lucide="inbox" style="width:40px;height:40px;margin:0 auto 8px;display:block;color:#ccc"></i> Nenhum cenário guardado. Crie o seu primeiro na aba Orçamento.
+      </div><!-- Templates -->
+      <div class="mt-6">
+       <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2"><i data-lucide="book-open" style="width:16px;height:16px;color:#66CFF5"></i> Templates de Aprendizagem</h3>
+       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="templatesList"></div>
+      </div>
+     </div><!-- TAB: Moedas -->
+     <div id="tab-moedas" class="tab-content fade-in" style="display:none">
+      <div class="card mb-4">
+       <div class="pl-3">
+        <h3 class="text-sm font-semibold text-gray-700 mb-1">Taxas de Câmbio</h3>
+        <p class="text-xs text-gray-400 mb-3">Base: 1 Kwanza (AOA). Edite as taxas conforme necessário.</p>
+       </div>
+       <div class="space-y-2" id="currencyList"></div><button class="btn btn-outline btn-sm mt-3 no-print" onclick="addCurrency()"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar Moeda</button>
+      </div>
+      <div class="card">
+       <div class="pl-3">
+        <h3 class="text-sm font-semibold text-gray-700 mb-1">Conversor Rápido</h3>
+        <p class="text-xs text-gray-400 mb-3">Converta valores entre moedas CPLP.</p>
+       </div>
+       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Valor (Kz)</label><input type="number" id="convertAmount" class="input-field" value="1000" oninput="doConversion()">
+        </div>
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Para</label><select id="convertTo" class="input-field" onchange="doConversion()"></select>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">Resultado</p>
+         <p id="convertResult" class="text-lg font-bold text-blue-600">—</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- TAB: Ajuda -->
+     <div id="tab-ajuda" class="tab-content fade-in" style="display:none">
+      <div class="space-y-4">
+       <div class="card card-green">
+        <div class="pl-3">
+         <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="info" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#4CAF50"></i> O que é este simulador</h3>
+         <p class="text-xs text-gray-500 leading-relaxed">O IS Simulador Orçamental é uma ferramenta gratuita para planear o seu orçamento mensal. Permite registar receitas e despesas, visualizar a distribuição dos gastos em gráficos dinâmicos e guardar diferentes cenários de simulação para comparar alternativas financeiras.</p>
+        </div>
+       </div>
+       <div class="card">
+        <div class="pl-3">
+         <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="target" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Importância</h3>
+         <p class="text-xs text-gray-500 leading-relaxed">Ter controlo sobre as finanças pessoais é essencial para evitar endividamento e construir uma reserva de emergência. Este simulador ajuda a visualizar para onde vai o seu dinheiro e a tomar decisões informadas, seguindo práticas recomendadas na Europa e adaptadas ao contexto CPLP.</p>
+        </div>
+       </div>
+       <div class="card card-gold">
+        <div class="pl-3">
+         <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="star" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FFC107"></i> Melhores Práticas</h3>
+         <ul class="text-xs text-gray-500 space-y-2 leading-relaxed list-disc pl-4">
+          <li><strong>Regra 50/30/20</strong> — 50% para necessidades, 30% para desejos, 20% para poupança e investimentos.</li>
+          <li><strong>Fundo de Emergência</strong> — Reserve pelo menos 3 a 6 meses de despesas fixas.</li>
+          <li><strong>Registe tudo</strong> — Inclua até os pequenos gastos. São eles que fazem a diferença.</li>
+          <li><strong>Reveja mensalmente</strong> — Compare cenários e ajuste o orçamento conforme as mudanças de vida.</li>
+          <li><strong>Priorize dívidas</strong> — Pague primeiro as dívidas com juros mais altos.</li>
+          <li><strong>Automatize poupança</strong> — Defina uma transferência automática no dia do salário.</li>
+         </ul>
+        </div>
+       </div>
+       <div class="card">
+        <div class="pl-3">
+         <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="book-open" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Como Usar</h3>
+         <ol class="text-xs text-gray-500 space-y-2 leading-relaxed list-decimal pl-4">
+          <li>Na aba <strong>Orçamento</strong>, adicione as suas receitas, despesas fixas, variáveis e poupanças.</li>
+          <li>Consulte a aba <strong>Resumo</strong> para visualizar gráficos e o saldo total.</li>
+          <li>Guarde cenários diferentes (ex: com aumento, com cortes) na aba <strong>Cenários</strong>.</li>
+          <li>Use a aba <strong>Moedas</strong> para ajustar taxas e ver conversões entre países CPLP.</li>
+          <li>Exporte o seu orçamento em PDF, imagem ou JSON para partilhar ou guardar.</li>
+         </ol>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast -->
+   <div id="toast" class="toast"></div><!-- Confirm Modal -->
+   <div id="confirmModal" class="modal-overlay">
+    <div class="modal" style="max-width:360px">
+     <h3 id="confirmTitle" class="text-sm font-semibold text-gray-700 mb-2"></h3>
+     <p id="confirmMsg" class="text-xs text-gray-500 mb-4"></p>
+     <div class="flex gap-2 justify-end"><button class="btn btn-outline btn-sm" onclick="closeConfirm()">Cancelar</button> <button class="btn btn-danger btn-sm" id="confirmOkBtn" onclick="confirmAction()">Confirmar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ============ STATE ============
+let data = { receitas:[], fixas:[], variaveis:[], poupanca:[] };
+let scenarios = [];
+let currencies = [
+  {code:'BRL',name:'Real Brasileiro',rate:0.0064},
+  {code:'CVE',name:'Escudo Cabo-verdiano',rate:0.1196},
+  {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:0.7117},
+  {code:'MZN',name:'Metical Moçambicano',rate:0.0764},
+  {code:'STN',name:'Dobra (S. Tomé)',rate:0.0265},
+  {code:'EUR',name:'Euro (Portugal)',rate:0.0011},
+  {code:'TPL',name:'Dólar Timorense (USD)',rate:0.0012},
+  {code:'USD',name:'Dólar Americano',rate:0.0012}
+];
+let charts = {};
+let pendingConfirm = null;
+let simTitleEl, filterCenariosEl;
+
+// ============ INIT ============
+(function(){
+  loadFromLS();
+  simTitleEl = document.getElementById('simTitle');
+  filterCenariosEl = document.getElementById('filterCenarios');
+  simTitleEl.value = localStorage.getItem('is_sim_title') || '';
+  simTitleEl.addEventListener('input', () => localStorage.setItem('is_sim_title', simTitleEl.value));
+  renderAll();
+  initCharts();
+  updateCharts();
+  renderCurrencies();
+  renderScenarios();
+  renderTemplates();
+  renderConversionTable();
+  lucide.createIcons();
+})();
+
+// Elements SDK
+const defaultConfig = {
+  app_title: 'IS Simulador Orçamental',
+  app_description: 'Simulador de Orçamento Mensal para cidadãos CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action: '#66CFF5',
+  secondary_action: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+    document.getElementById('appDesc').textContent = config.app_description || defaultConfig.app_description;
+    document.body.style.background = config.background_color || defaultConfig.background_color;
+    const ff = (config.font_family || defaultConfig.font_family) + ', Inter, sans-serif';
+    document.body.style.fontFamily = ff;
+    const bs = config.font_size || defaultConfig.font_size;
+    document.querySelectorAll('h1').forEach(e => e.style.fontSize = (bs*1.15)+'px');
+    document.querySelectorAll('h2,h3').forEach(e => e.style.fontSize = (bs*0.92)+'px');
+    document.querySelectorAll('p,td,th,li,label,span,button,input,select').forEach(e => {
+      if(!e.closest('style')&&!e.closest('script')) e.style.fontFamily = ff;
+    });
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+      {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+      {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+      {get:()=>config.primary_action||defaultConfig.primary_action,set:v=>{config.primary_action=v;window.elementSdk.setConfig({primary_action:v})}},
+      {get:()=>config.secondary_action||defaultConfig.secondary_action,set:v=>{config.secondary_action=v;window.elementSdk.setConfig({secondary_action:v})}}
+    ],
+    borderables:[],
+    fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+    fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['app_title', config.app_title || defaultConfig.app_title],
+    ['app_description', config.app_description || defaultConfig.app_description]
+  ])
+});
+
+// ============ LOCAL STORAGE ============
+function saveToLS(){
+  localStorage.setItem('is_budget_data', JSON.stringify(data));
+  localStorage.setItem('is_budget_scenarios', JSON.stringify(scenarios));
+  localStorage.setItem('is_budget_currencies', JSON.stringify(currencies));
+}
+function loadFromLS(){
+  try{
+    const d=localStorage.getItem('is_budget_data'); if(d) data=JSON.parse(d);
+    const s=localStorage.getItem('is_budget_scenarios'); if(s) scenarios=JSON.parse(s);
+    const c=localStorage.getItem('is_budget_currencies'); if(c) currencies=JSON.parse(c);
+  }catch(e){}
+}
+
+// ============ TABS ============
+function switchTab(tab, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).style.display='block';
+  btn.classList.add('active');
+  if(tab==='resumo'){updateCharts();renderSummaryTable();renderConversionTable();}
+  if(tab==='cenarios'){renderScenarios();}
+  if(tab==='moedas'){renderCurrencies();}
+  lucide.createIcons();
+}
+
+// ============ FORMAT ============
+function fmtKz(v){return Number(v||0).toLocaleString('pt-AO',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kz';}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+
+// ============ ITEMS CRUD ============
+function addItem(cat){
+  data[cat].push({id:uid(),desc:'',valor:0});
+  saveToLS(); renderList(cat); updateBadges(); updateCharts();
+}
+function removeItem(cat,id){
+  data[cat]=data[cat].filter(i=>i.id!==id);
+  saveToLS(); renderList(cat); updateBadges(); updateCharts();
+}
+function updateItem(cat,id,field,value){
+  const item=data[cat].find(i=>i.id===id);
+  if(item){item[field]=field==='valor'?parseFloat(value)||0:value;}
+  saveToLS(); updateBadges(); updateCharts();
+}
+
+function renderList(cat){
+  const el=document.getElementById(cat+'List');
+  el.innerHTML='';
+  data[cat].forEach(item=>{
+    const row=document.createElement('div');
+    row.className='flex items-center gap-2 fade-in';
+    row.dataset.id=item.id;
+    row.innerHTML=`
+      <input type="text" class="input-field no-print" style="flex:1;font-size:11px" value="${escH(item.desc)}" placeholder="Descrição..." oninput="updateItem('${cat}','${item.id}','desc',this.value)">
+      <input type="number" class="input-field no-print" style="width:110px;font-size:11px;text-align:right" value="${item.valor||''}" placeholder="0.00" oninput="updateItem('${cat}','${item.id}','valor',this.value)">
+      <span class="text-xs text-gray-400 print-only" style="display:none">${escH(item.desc)}: ${fmtKz(item.valor)}</span>
+      <button class="btn-xs no-print" style="background:none;color:#F44336;border:none;cursor:pointer;padding:2px" onclick="removeItem('${cat}','${item.id}')" title="Remover"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    `;
+    el.appendChild(row);
+  });
+  lucide.createIcons();
+}
+function escH(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function filterItems(cat,q){
+  const el=document.getElementById(cat+'List');
+  const lq=q.toLowerCase();
+  [...el.children].forEach(row=>{
+    const inp=row.querySelector('input[type=text]');
+    row.style.display=(!q||inp.value.toLowerCase().includes(lq))?'flex':'none';
+  });
+}
+
+function renderAll(){
+  ['receitas','fixas','variaveis','poupanca'].forEach(renderList);
+  updateBadges();
+}
+
+function sumCat(cat){return data[cat].reduce((s,i)=>s+(parseFloat(i.valor)||0),0);}
+
+function updateBadges(){
+  document.getElementById('totalReceitasBadge').textContent=fmtKz(sumCat('receitas'));
+  document.getElementById('totalFixasBadge').textContent=fmtKz(sumCat('fixas'));
+  document.getElementById('totalVariaveisBadge').textContent=fmtKz(sumCat('variaveis'));
+  document.getElementById('totalPoupancaBadge').textContent=fmtKz(sumCat('poupanca'));
+  const rec=sumCat('receitas'), desp=sumCat('fixas')+sumCat('variaveis')+sumCat('poupanca'), saldo=rec-desp;
+  document.getElementById('sumReceitas').textContent=fmtKz(rec);
+  document.getElementById('sumDespesas').textContent=fmtKz(desp);
+  document.getElementById('sumSaldo').textContent=fmtKz(saldo);
+  const sc=document.getElementById('saldoCard');
+  sc.className='card '+(saldo>=0?'card-green':'card-red');
+  document.getElementById('sumSaldo').className='text-lg font-bold '+(saldo>=0?'text-green-600':'text-red-500');
+}
+
+// ============ CHARTS ============
+function initCharts(){
+  const doughnutTooltip = {
+    callbacks:{
+      label:function(ctx){
+        const ds=ctx.dataset;
+        const total=ds.data.reduce((a,b)=>a+b,0);
+        const val=ds.data[ctx.dataIndex];
+        const pct=total>0?((val/total)*100).toFixed(1):0;
+        return ctx.label+': '+fmtKz(val)+' ('+pct+'%)';
+      }
+    }
+  };
+  const doughnutDataLabels = {
+    id:'doughnutLabels',
+    afterDraw(chart){
+      const {ctx}=chart;
+      chart.data.datasets.forEach((ds,dsi)=>{
+        const meta=chart.getDatasetMeta(dsi);
+        const total=ds.data.reduce((a,b)=>a+b,0);
+        if(total===0) return;
+        meta.data.forEach((el,i)=>{
+          const val=ds.data[i];
+          if(val===0) return;
+          const pct=((val/total)*100).toFixed(1);
+          const {x,y}=el.tooltipPosition();
+          ctx.save();
+          ctx.fillStyle='#333';
+          ctx.font='bold 10px Inter';
+          ctx.textAlign='center';
+          ctx.textBaseline='middle';
+          ctx.fillText(pct+'%',x,y);
+          ctx.restore();
+        });
+      });
+    }
+  };
+
+  charts.despesas=new Chart(document.getElementById('chartDespesas'),{
+    type:'doughnut',
+    data:{labels:['Fixas','Variáveis','Poupança'],datasets:[{data:[0,0,0],backgroundColor:['#F44336','#FF9800','#FFC107'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10,family:'Inter'},padding:10}},tooltip:doughnutTooltip}},
+    plugins:[doughnutDataLabels]
+  });
+
+  charts.balance=new Chart(document.getElementById('chartBalance'),{
+    type:'bar',
+    data:{labels:['Receitas','Desp. Fixas','Desp. Variáveis','Poupança','Saldo'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#4CAF50','#F44336','#FF9800','#FFC107','#66CFF5'],borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtKz(ctx.raw)}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v.toLocaleString()+'Kz'}},x:{ticks:{font:{size:10}}}}}
+  });
+
+  charts.alocacao=new Chart(document.getElementById('chartAlocacao'),{
+    type:'doughnut',
+    data:{labels:['Necessidades','Desejos','Poupança','Disponível'],datasets:[{data:[0,0,0,0],backgroundColor:['#66CFF5','#FF9800','#FFC107','#4CAF50'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10,family:'Inter'},padding:10}},tooltip:doughnutTooltip}},
+    plugins:[doughnutDataLabels]
+  });
+}
+
+function updateCharts(){
+  const f=sumCat('fixas'),v=sumCat('variaveis'),p=sumCat('poupanca'),r=sumCat('receitas');
+  const saldo=r-f-v-p;
+
+  charts.despesas.data.datasets[0].data=[f,v,p];
+  charts.despesas.update('none');
+
+  charts.balance.data.datasets[0].data=[r,f,v,p,saldo];
+  charts.balance.data.datasets[0].backgroundColor=['#4CAF50','#F44336','#FF9800','#FFC107',saldo>=0?'#66CFF5':'#F44336'];
+  charts.balance.update('none');
+
+  const disp=Math.max(0,saldo);
+  charts.alocacao.data.datasets[0].data=[f,v,p,disp];
+  charts.alocacao.update('none');
+}
+
+// ============ SUMMARY TABLE ============
+function renderSummaryTable(filter){
+  const tbody=document.querySelector('#summaryTable tbody');
+  tbody.innerHTML='';
+  const cats={receitas:'Receita',fixas:'Desp. Fixa',variaveis:'Desp. Variável',poupanca:'Poupança'};
+  const colors={receitas:'#4CAF50',fixas:'#F44336',variaveis:'#FF9800',poupanca:'#FFC107'};
+  const lq=(filter||'').toLowerCase();
+  Object.keys(cats).forEach(cat=>{
+    data[cat].forEach(item=>{
+      if(lq && !item.desc.toLowerCase().includes(lq) && !cats[cat].toLowerCase().includes(lq)) return;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[cat]};margin-right:6px"></span>${cats[cat]}</td><td>${escH(item.desc)||'—'}</td><td style="text-align:right;font-weight:600">${fmtKz(item.valor)}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+function filterSummaryTable(q){renderSummaryTable(q);}
+
+// ============ CONVERSION TABLE ============
+function renderConversionTable(){
+  const saldo=sumCat('receitas')-sumCat('fixas')-sumCat('variaveis')-sumCat('poupanca');
+  let html='<table><thead><tr><th>Moeda</th><th>Saldo Convertido</th></tr></thead><tbody>';
+  currencies.forEach(c=>{
+    const val=saldo*c.rate;
+    html+=`<tr><td>${c.code} — ${escH(c.name)}</td><td style="text-align:right;font-weight:600">${val.toLocaleString('pt-AO',{minimumFractionDigits:2,maximumFractionDigits:2})} ${c.code}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('conversionTable').innerHTML=html;
+}
+
+// ============ SCENARIOS ============
+function saveScenario(){
+  const name='Cenário '+(scenarios.length+1);
+  scenarios.push({id:uid(),name,date:new Date().toISOString(),data:JSON.parse(JSON.stringify(data)),title:simTitleEl.value||''});
+  saveToLS();
+  showToast('Cenário guardado com sucesso','success');
+  renderScenarios();
+}
+function renderScenarios(){
+  const el=document.getElementById('scenariosList');
+  const noEl=document.getElementById('noScenarios');
+  const q=(filterCenariosEl?filterCenariosEl.value:'').toLowerCase();
+  const filtered=scenarios.filter(s=>!q||s.name.toLowerCase().includes(q)||(s.title||'').toLowerCase().includes(q));
+  el.innerHTML='';
+  if(scenarios.length===0){noEl.style.display='block';el.style.display='none';return;}
+  noEl.style.display='none'; el.style.display='block';
+  filtered.forEach(sc=>{
+    const r=sc.data.receitas.reduce((s,i)=>s+(i.valor||0),0);
+    const d=sc.data.fixas.reduce((s,i)=>s+(i.valor||0),0)+sc.data.variaveis.reduce((s,i)=>s+(i.valor||0),0)+sc.data.poupanca.reduce((s,i)=>s+(i.valor||0),0);
+    const saldo=r-d;
+    const dt=new Date(sc.date);
+    const card=document.createElement('div');
+    card.className='card fade-in';
+    card.innerHTML=`
+      <div class="pl-3">
+        <div class="flex items-center justify-between mb-1">
+          <div>
+            <span class="text-sm font-semibold text-gray-700">${escH(sc.name)}</span>
+            ${sc.title?'<span class="badge badge-blue ml-2">'+escH(sc.title)+'</span>':''}
+          </div>
+          <span class="text-xs text-gray-400">${dt.toLocaleDateString('pt-PT')}</span>
+        </div>
+        <div class="flex gap-4 text-xs mb-2">
+          <span class="text-green-600 font-medium">Receitas: ${fmtKz(r)}</span>
+          <span class="text-red-500 font-medium">Despesas: ${fmtKz(d)}</span>
+          <span class="${saldo>=0?'text-blue-600':'text-red-500'} font-semibold">Saldo: ${fmtKz(saldo)}</span>
+        </div>
+        <div class="flex gap-2 no-print">
+          <button class="btn btn-primary btn-xs" onclick="loadScenario('${sc.id}')"><i data-lucide="upload" style="width:11px;height:11px"></i> Carregar</button>
+          <button class="btn btn-outline btn-xs" onclick="editScenarioName('${sc.id}')"><i data-lucide="edit" style="width:11px;height:11px"></i> Editar</button>
+          <button class="btn btn-outline btn-xs" onclick="cloneScenario('${sc.id}')"><i data-lucide="copy" style="width:11px;height:11px"></i> Clonar</button>
+          <button class="btn btn-xs" style="background:none;color:#F44336;border:1px solid #fcc" onclick="deleteScenario('${sc.id}')"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button>
+        </div>
+      </div>`;
+    el.appendChild(card);
+  });
+  lucide.createIcons();
+}
+function loadScenario(id){
+  const sc=scenarios.find(s=>s.id===id);
+  if(!sc) return;
+  data=JSON.parse(JSON.stringify(sc.data));
+  simTitleEl.value=sc.title||'';
+  localStorage.setItem('is_sim_title',simTitleEl.value);
+  saveToLS(); renderAll(); updateCharts();
+  showToast('Cenário carregado','info');
+  switchTab('orcamento',document.querySelector('[data-tab="orcamento"]'));
+}
+function cloneScenario(id){
+  const sc=scenarios.find(s=>s.id===id);
+  if(!sc) return;
+  scenarios.push({...JSON.parse(JSON.stringify(sc)),id:uid(),name:sc.name+' (cópia)',date:new Date().toISOString()});
+  saveToLS(); renderScenarios();
+  showToast('Cenário clonado','success');
+}
+function editScenarioName(id){
+  const sc=scenarios.find(s=>s.id===id);
+  if(!sc) return;
+  // Inline edit: replace card content with input
+  const card=[...document.getElementById('scenariosList').children].find(c=>c.querySelector(`[onclick*="${id}"]`));
+  if(!card) return;
+  const oldName=sc.name;
+  const wrap=document.createElement('div');
+  wrap.className='flex items-center gap-2 pl-3';
+  wrap.innerHTML=`<input type="text" class="input-field" style="font-size:12px;flex:1" value="${escH(oldName)}" id="editName_${id}"><button class="btn btn-primary btn-xs" onclick="confirmEditName('${id}')">Guardar</button><button class="btn btn-outline btn-xs" onclick="renderScenarios()">Cancelar</button>`;
+  card.innerHTML='';
+  card.appendChild(wrap);
+  document.getElementById('editName_'+id).focus();
+}
+function confirmEditName(id){
+  const inp=document.getElementById('editName_'+id);
+  if(!inp) return;
+  const sc=scenarios.find(s=>s.id===id);
+  if(sc){sc.name=inp.value||sc.name; saveToLS();}
+  renderScenarios();
+  showToast('Nome atualizado','success');
+}
+function deleteScenario(id){
+  showConfirm('Eliminar cenário','Tem a certeza que deseja eliminar este cenário?',()=>{
+    scenarios=scenarios.filter(s=>s.id!==id);
+    saveToLS(); renderScenarios();
+    showToast('Cenário eliminado','success');
+  });
+}
+function newFromScratch(){
+  data={receitas:[],fixas:[],variaveis:[],poupanca:[]};
+  simTitleEl.value='';
+  localStorage.setItem('is_sim_title','');
+  saveToLS(); renderAll(); updateCharts();
+  showToast('Novo orçamento criado','info');
+  switchTab('orcamento',document.querySelector('[data-tab="orcamento"]'));
+}
+function clearAll(){
+  showConfirm('Limpar tudo','Isto irá apagar todos os dados actuais do orçamento. Deseja continuar?',()=>{
+    data={receitas:[],fixas:[],variaveis:[],poupanca:[]};
+    saveToLS(); renderAll(); updateCharts();
+    showToast('Dados limpos','info');
+  });
+}
+
+// ============ TEMPLATES ============
+const templates=[
+  {name:'Salário Básico',desc:'Orçamento para salário mínimo com despesas essenciais.',data:{receitas:[{id:uid(),desc:'Salário',valor:100000}],fixas:[{id:uid(),desc:'Renda',valor:35000},{id:uid(),desc:'Electricidade',valor:5000}],variaveis:[{id:uid(),desc:'Alimentação',valor:25000},{id:uid(),desc:'Transporte',valor:8000}],poupanca:[{id:uid(),desc:'Reserva',valor:10000}]}},
+  {name:'Freelancer',desc:'Modelo para rendimento variável com múltiplas fontes.',data:{receitas:[{id:uid(),desc:'Projecto A',valor:150000},{id:uid(),desc:'Projecto B',valor:80000}],fixas:[{id:uid(),desc:'Internet',valor:12000},{id:uid(),desc:'Escritório',valor:40000}],variaveis:[{id:uid(),desc:'Material',valor:15000}],poupanca:[{id:uid(),desc:'Investimento',valor:30000}]}},
+  {name:'Estudante',desc:'Orçamento controlado para estudantes universitários.',data:{receitas:[{id:uid(),desc:'Mesada',valor:50000}],fixas:[{id:uid(),desc:'Quarto',valor:20000}],variaveis:[{id:uid(),desc:'Alimentação',valor:15000},{id:uid(),desc:'Material escolar',valor:5000}],poupanca:[{id:uid(),desc:'Poupança',valor:5000}]}}
+];
+function renderTemplates(){
+  const el=document.getElementById('templatesList');
+  el.innerHTML='';
+  templates.forEach((t,i)=>{
+    const card=document.createElement('div');
+    card.className='card card-gold cursor-pointer fade-in';
+    card.style.cursor='pointer';
+    card.innerHTML=`<div class="pl-3"><h4 class="text-xs font-semibold text-gray-700 mb-1">${escH(t.name)}</h4><p class="text-xs text-gray-400">${escH(t.desc)}</p><button class="btn btn-xs btn-outline mt-2 no-print" onclick="event.stopPropagation();loadTemplate(${i})"><i data-lucide="download" style="width:11px;height:11px"></i> Usar Template</button></div>`;
+    el.appendChild(card);
+  });
+  lucide.createIcons();
+}
+function loadTemplate(idx){
+  const t=templates[idx];
+  data=JSON.parse(JSON.stringify(t.data));
+  // Ensure unique IDs
+  Object.keys(data).forEach(cat=>data[cat].forEach(item=>item.id=uid()));
+  saveToLS(); renderAll(); updateCharts();
+  showToast('Template "'+t.name+'" carregado','success');
+  switchTab('orcamento',document.querySelector('[data-tab="orcamento"]'));
+}
+
+// ============ CURRENCIES ============
+function renderCurrencies(){
+  const el=document.getElementById('currencyList');
+  el.innerHTML='';
+  currencies.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.className='flex items-center gap-2 fade-in';
+    row.innerHTML=`
+      <input type="text" class="input-field no-print" style="width:70px;font-size:11px" value="${escH(c.code)}" oninput="currencies[${i}].code=this.value;saveToLS()">
+      <input type="text" class="input-field no-print" style="flex:1;font-size:11px" value="${escH(c.name)}" oninput="currencies[${i}].name=this.value;saveToLS()">
+      <input type="number" class="input-field no-print" style="width:110px;font-size:11px" value="${c.rate}" step="0.0001" oninput="currencies[${i}].rate=parseFloat(this.value)||0;saveToLS();doConversion()">
+      <button class="btn-xs no-print" style="background:none;color:#F44336;border:none;cursor:pointer" onclick="currencies.splice(${i},1);saveToLS();renderCurrencies()"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    `;
+    el.appendChild(row);
+  });
+  // Converter select
+  const sel=document.getElementById('convertTo');
+  sel.innerHTML='';
+  currencies.forEach(c=>{
+    sel.innerHTML+=`<option value="${c.code}">${c.code} — ${escH(c.name)}</option>`;
+  });
+  doConversion();
+  lucide.createIcons();
+}
+function addCurrency(){
+  currencies.push({code:'NEW',name:'Nova Moeda',rate:1});
+  saveToLS(); renderCurrencies();
+}
+function doConversion(){
+  const amt=parseFloat(document.getElementById('convertAmount').value)||0;
+  const code=document.getElementById('convertTo').value;
+  const cur=currencies.find(c=>c.code===code);
+  if(cur){
+    const res=amt*cur.rate;
+    document.getElementById('convertResult').textContent=res.toLocaleString('pt-AO',{minimumFractionDigits:4})+' '+code;
+  }
+}
+
+// ============ EXPORT/IMPORT ============
+function exportJSON(){
+  const obj={title:simTitleEl.value,data,scenarios,currencies,exportDate:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  downloadBlob(blob,'IS_Simulador_Orcamental_'+dateStr()+'.json');
+  showToast('JSON exportado','success');
+}
+function importJSON(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const obj=JSON.parse(ev.target.result);
+      if(obj.data) data=obj.data;
+      if(obj.scenarios) scenarios=obj.scenarios;
+      if(obj.currencies) currencies=obj.currencies;
+      if(obj.title) {simTitleEl.value=obj.title;localStorage.setItem('is_sim_title',obj.title);}
+      saveToLS(); renderAll(); updateCharts(); renderScenarios(); renderCurrencies(); renderConversionTable();
+      showToast('Dados importados com sucesso','success');
+    }catch(err){showToast('Ficheiro inválido','error');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function exportImage(){
+  // Hide no-print elements
+  document.querySelectorAll('.no-print').forEach(el=>el.style.display='none');
+  // Show print-only spans
+  document.querySelectorAll('.print-only').forEach(el=>el.style.display='inline');
+  setTimeout(()=>{
+    html2canvas(document.getElementById('app'),{scale:2,backgroundColor:'#F8F9FA',useCORS:true}).then(canvas=>{
+      document.querySelectorAll('.no-print').forEach(el=>el.style.display='');
+      document.querySelectorAll('.print-only').forEach(el=>el.style.display='none');
+      canvas.toBlob(blob=>downloadBlob(blob,'IS_Simulador_'+dateStr()+'.png'));
+      showToast('Imagem exportada','success');
+    }).catch(()=>{
+      document.querySelectorAll('.no-print').forEach(el=>el.style.display='');
+      document.querySelectorAll('.print-only').forEach(el=>el.style.display='none');
+      showToast('Erro ao exportar imagem','error');
+    });
+  },100);
+}
+
+function exportChartImg(chartId){
+  const canvas=document.getElementById(chartId);
+  const tmpCanvas=document.createElement('canvas');
+  tmpCanvas.width=canvas.width*2;
+  tmpCanvas.height=canvas.height*2;
+  const ctx=tmpCanvas.getContext('2d');
+  ctx.scale(2,2);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(canvas,0,0);
+  tmpCanvas.toBlob(blob=>{
+    downloadBlob(blob,'Grafico_'+chartId+'_'+dateStr()+'.png');
+    showToast('Gráfico exportado em HD','success');
+  });
+}
+
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const pw=210,ph=297,m=15;
+  const usable=pw-2*m;
+  let y=m;
+  const title=simTitleEl.value||'Simulação';
+  const fullDate=new Date().toLocaleDateString('pt-PT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const appName='IS Simulador Orçamental';
+
+  // Header
+  function drawHeader(pg){
+    pdf.setFillColor(30,136,229);
+    pdf.rect(0,0,pw,12,'F');
+    pdf.setTextColor(255);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica','bold');
+    pdf.text(appName,m,8);
+    pdf.setFont('helvetica','normal');
+    pdf.text('Página '+pg,pw-m,8,{align:'right'});
+    pdf.setTextColor(51);
+  }
+  function drawFooter(){
+    pdf.setFillColor(30,136,229);
+    pdf.rect(0,ph-10,pw,10,'F');
+    pdf.setTextColor(255);
+    pdf.setFontSize(7);
+    pdf.text('Gerado por '+appName+' — '+fullDate+' — www.investesuite.com',pw/2,ph-4,{align:'center'});
+    pdf.setTextColor(51);
+  }
+  let page=1;
+  drawHeader(page);
+  drawFooter();
+  y=20;
+
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica','bold');
+  pdf.text(title,m,y); y+=7;
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica','normal');
+  pdf.setTextColor(100);
+  pdf.text(fullDate,m,y); y+=10;
+  pdf.setTextColor(51);
+
+  function checkPage(need){
+    if(y+need>ph-18){
+      pdf.addPage(); page++;
+      drawHeader(page); drawFooter();
+      y=20;
+    }
+  }
+
+  // Summary
+  const rec=sumCat('receitas'),desp=sumCat('fixas')+sumCat('variaveis')+sumCat('poupanca'),saldo=rec-desp;
+  pdf.setFontSize(10); pdf.setFont('helvetica','bold');
+  pdf.text('Resumo',m,y); y+=6;
+  pdf.setFontSize(9); pdf.setFont('helvetica','normal');
+  pdf.text('Total Receitas: '+fmtKz(rec),m,y); y+=5;
+  pdf.text('Total Despesas: '+fmtKz(desp),m,y); y+=5;
+  pdf.text('Saldo: '+fmtKz(saldo),m,y); y+=8;
+
+  // Detail tables
+  const cats={receitas:{label:'Receitas',color:[76,175,80]},fixas:{label:'Despesas Fixas',color:[244,67,54]},variaveis:{label:'Despesas Variáveis',color:[255,152,0]},poupanca:{label:'Poupança',color:[255,193,7]}};
+  Object.keys(cats).forEach(cat=>{
+    if(data[cat].length===0) return;
+    checkPage(20);
+    const c=cats[cat];
+    pdf.setFontSize(10); pdf.setFont('helvetica','bold');
+    pdf.setTextColor(c.color[0],c.color[1],c.color[2]);
+    pdf.text(c.label,m,y); y+=5;
+    pdf.setTextColor(51); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
+    data[cat].forEach(item=>{
+      checkPage(6);
+      pdf.text((item.desc||'—'),m+2,y);
+      pdf.text(fmtKz(item.valor),pw-m,y,{align:'right'});
+      y+=5;
+    });
+    y+=4;
+  });
+
+  // Charts (small)
+  checkPage(60);
+  pdf.setFontSize(10); pdf.setFont('helvetica','bold'); pdf.setTextColor(51);
+  pdf.text('Gráficos',m,y); y+=6;
+
+  const chartIds=['chartDespesas','chartBalance','chartAlocacao'];
+  const chartTitles=['Distribuição de Despesas','Receitas vs Despesas','Alocação Orçamental'];
+  chartIds.forEach((cid,idx)=>{
+    checkPage(55);
+    const canvas=document.getElementById(cid);
+    try{
+      const imgData=canvas.toDataURL('image/png');
+      pdf.setFontSize(8); pdf.setFont('helvetica','bold');
+      pdf.text(chartTitles[idx],m,y); y+=3;
+      pdf.addImage(imgData,'PNG',m,y,70,45);
+      y+=50;
+    }catch(e){}
+  });
+
+  // Currencies
+  if(currencies.length>0){
+    checkPage(20);
+    pdf.setFontSize(10); pdf.setFont('helvetica','bold');
+    pdf.text('Taxas de Câmbio',m,y); y+=5;
+    pdf.setFontSize(8); pdf.setFont('helvetica','normal');
+    currencies.forEach(c=>{
+      checkPage(6);
+      pdf.text(c.code+' — '+c.name+': '+c.rate,m+2,y);
+      y+=4;
+    });
+  }
+
+  pdf.save('IS_Simulador_Orcamental_'+dateStr()+'.pdf');
+  showToast('PDF exportado','success');
+}
+
+// ============ HELPERS ============
+function downloadBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function dateStr(){return new Date().toISOString().slice(0,10);}
+
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast toast-'+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showConfirm(title,msg,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmModal').classList.add('show');
+  pendingConfirm=onOk;
+}
+function confirmAction(){
+  if(pendingConfirm) pendingConfirm();
+  closeConfirm();
+}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.remove('show');
+  pendingConfirm=null;
+}
+
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddb1d3af26e1b23',t:'MTc3Mzc0MTI0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
