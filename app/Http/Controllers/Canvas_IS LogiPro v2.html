@@ -1,0 +1,1772 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS LogiPro - Gestão Logística</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-active { background: linear-gradient(135deg, #66CFF5 0%, #33BEF2 100%); color: white; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+    .card-left-accent { border-left: 4px solid #66CFF5; }
+    .card-left-accent-gold { border-left: 4px solid #FFC107; }
+    .card-left-accent-green { border-left: 4px solid #4CAF50; }
+    .card-left-accent-red { border-left: 4px solid #F44336; }
+    .card-left-accent-orange { border-left: 4px solid #FF9800; }
+    .transition-all { transition: all 0.2s ease; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #F8F9FA; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+    .export-hide { }
+    .exporting .export-hide { display: none !important; }
+    @media print { .export-hide { display: none !important; } }
+    .chart-container { position: relative; min-height: 200px; }
+    .mini-export-btn { position: absolute; top: 8px; right: 8px; z-index: 10; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 overflow-auto">
+  <div id="app" class="h-full flex flex-col">
+   <!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center" style="display: none;">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS LogiPro</h1>
+      <p class="text-xs text-gray-500" style="display: none;">Gestão Logística Profissional</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 export-hide">
+     <input type="text" id="title-input" placeholder="Título do relatório..." class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"> <button onclick="exportJSON()" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Exportar JSON">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg></button> <button onclick="importJSON()" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Importar JSON">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg></button> <button onclick="exportImage()" class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Exportar Imagem">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg></button> <button onclick="exportPDF()" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Exportar PDF">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg></button> <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleImport(event)">
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-6 py-2 flex-shrink-0">
+    <div class="flex gap-1 overflow-x-auto scrollbar-thin">
+     <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn tab-active flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+      </svg> Painel </button> <button onclick="switchTab('routes')" id="tab-routes" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg> Rotas </button> <button onclick="switchTab('shipments')" id="tab-shipments" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg> Remessas </button> <button onclick="switchTab('carriers')" id="tab-carriers" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      </svg> Transportadores </button> <button onclick="switchTab('scenarios')" id="tab-scenarios" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg> Cenários </button> <button onclick="switchTab('currency')" id="tab-currency" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('help')" id="tab-help" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-6 scrollbar-thin">
+    <!-- Dashboard Tab -->
+    <div id="content-dashboard" class="tab-content">
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-lg p-4 card-left-accent card-hover transition-all">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-500 font-medium">Rotas Ativas</p>
+         <p id="stat-routes" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent-green card-hover transition-all">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-500 font-medium">Remessas Entregues</p>
+         <p id="stat-delivered" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent-orange card-hover transition-all">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-500 font-medium">Em Trânsito</p>
+         <p id="stat-transit" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent-gold card-hover transition-all">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-500 font-medium">Custo Total (AOA)</p>
+         <p id="stat-cost" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-lg p-4 card-left-accent">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Remessas por Mês</h3><button onclick="exportChartImage('chart-shipments-month')" class="export-hide mini-export-btn p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title="Exportar gráfico HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container" style="height: 250px;">
+        <canvas id="chart-shipments-month"></canvas>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent-green">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Custos por Transportador</h3><button onclick="exportChartImage('chart-costs-carrier')" class="export-hide mini-export-btn p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title="Exportar gráfico HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container" style="height: 250px;">
+        <canvas id="chart-costs-carrier"></canvas>
+       </div>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-lg p-4 card-left-accent-orange">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Eficiência das Rotas</h3><button onclick="exportChartImage('chart-route-efficiency')" class="export-hide mini-export-btn p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title="Exportar gráfico HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container" style="height: 250px;">
+        <canvas id="chart-route-efficiency"></canvas>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent-gold">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Status das Remessas</h3><button onclick="exportChartImage('chart-shipment-status')" class="export-hide mini-export-btn p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all" title="Exportar gráfico HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container" style="height: 250px;">
+        <canvas id="chart-shipment-status"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- Routes Tab -->
+    <div id="content-routes" class="tab-content hidden">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Gestão de Rotas</h2>
+      <div class="flex items-center gap-2 export-hide">
+       <input type="text" id="filter-routes" placeholder="Filtrar rotas..." class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="filterRoutes()"> <button onclick="showRouteForm()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Nova Rota </button>
+      </div>
+     </div>
+     <div id="route-form" class="hidden bg-white rounded-lg p-4 mb-4 card-left-accent export-hide">
+      <h3 class="font-semibold text-gray-800 mb-4">Adicionar/Editar Rota</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+       <input type="hidden" id="route-id">
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Nome da Rota</label> <input type="text" id="route-name" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Luanda - Benguela">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Origem</label> <input type="text" id="route-origin" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Luanda">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Destino</label> <input type="text" id="route-destination" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Benguela">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Distância (km)</label> <input type="number" id="route-distance" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 450">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Tempo Estimado (h)</label> <input type="number" id="route-time" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 6">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Custo Base (AOA)</label> <input type="number" id="route-cost" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 150000">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Status</label> <select id="route-status" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="active">Ativa</option> <option value="inactive">Inativa</option> <option value="maintenance">Em Manutenção</option> </select>
+       </div>
+       <div class="flex items-end gap-2">
+        <button onclick="saveRoute()" class="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">Guardar</button> <button onclick="hideRouteForm()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all">Cancelar</button>
+       </div>
+      </div>
+     </div>
+     <div id="routes-list" class="space-y-3">
+      <p class="text-gray-500 text-sm text-center py-8">Nenhuma rota registada. Clique em "Nova Rota" para começar.</p>
+     </div>
+    </div><!-- Shipments Tab -->
+    <div id="content-shipments" class="tab-content hidden">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Gestão de Remessas</h2>
+      <div class="flex items-center gap-2 export-hide">
+       <input type="text" id="filter-shipments" placeholder="Filtrar remessas..." class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="filterShipments()"> <button onclick="showShipmentForm()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Nova Remessa </button>
+      </div>
+     </div>
+     <div id="shipment-form" class="hidden bg-white rounded-lg p-4 mb-4 card-left-accent export-hide">
+      <h3 class="font-semibold text-gray-800 mb-4">Adicionar/Editar Remessa</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+       <input type="hidden" id="shipment-id">
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Código</label> <input type="text" id="shipment-code" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: REM-001">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Descrição</label> <input type="text" id="shipment-description" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Equipamentos eletrónicos">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Rota</label> <select id="shipment-route" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="">Selecionar rota...</option> </select>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Transportador</label> <select id="shipment-carrier" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="">Selecionar transportador...</option> </select>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Peso (kg)</label> <input type="number" id="shipment-weight" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 500">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Valor (AOA)</label> <input type="number" id="shipment-value" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 2500000">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Status</label> <select id="shipment-status" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="pending">Pendente</option> <option value="transit">Em Trânsito</option> <option value="delivered">Entregue</option> <option value="cancelled">Cancelada</option> </select>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Data de Envio</label> <input type="date" id="shipment-date" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+       </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+       <button onclick="saveShipment()" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">Guardar</button> <button onclick="hideShipmentForm()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all">Cancelar</button>
+      </div>
+     </div>
+     <div id="shipments-list" class="space-y-3">
+      <p class="text-gray-500 text-sm text-center py-8">Nenhuma remessa registada. Clique em "Nova Remessa" para começar.</p>
+     </div>
+    </div><!-- Carriers Tab -->
+    <div id="content-carriers" class="tab-content hidden">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Gestão de Transportadores</h2>
+      <div class="flex items-center gap-2 export-hide">
+       <input type="text" id="filter-carriers" placeholder="Filtrar transportadores..." class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="filterCarriers()"> <button onclick="showCarrierForm()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Novo Transportador </button>
+      </div>
+     </div>
+     <div id="carrier-form" class="hidden bg-white rounded-lg p-4 mb-4 card-left-accent export-hide">
+      <h3 class="font-semibold text-gray-800 mb-4">Adicionar/Editar Transportador</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+       <input type="hidden" id="carrier-id">
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Nome da Empresa</label> <input type="text" id="carrier-name" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: TransAngola">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">NIF</label> <input type="text" id="carrier-nif" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 5417234523">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Contacto</label> <input type="text" id="carrier-contact" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: +244 923 456 789">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Email</label> <input type="email" id="carrier-email" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: info@transangola.ao">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Capacidade (ton)</label> <input type="number" id="carrier-capacity" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 25">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Tarifa/km (AOA)</label> <input type="number" id="carrier-rate" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 500">
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Status</label> <select id="carrier-status" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="active">Ativo</option> <option value="inactive">Inativo</option> <option value="suspended">Suspenso</option> </select>
+       </div>
+       <div class="flex items-end gap-2">
+        <button onclick="saveCarrier()" class="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">Guardar</button> <button onclick="hideCarrierForm()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all">Cancelar</button>
+       </div>
+      </div>
+     </div>
+     <div id="carriers-list" class="space-y-3">
+      <p class="text-gray-500 text-sm text-center py-8">Nenhum transportador registado. Clique em "Novo Transportador" para começar.</p>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="content-scenarios" class="tab-content hidden">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Cenários de Simulação</h2>
+      <div class="flex items-center gap-2 export-hide">
+       <input type="text" id="filter-scenarios" placeholder="Filtrar cenários..." class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="filterScenarios()"> <button onclick="saveCurrentScenario()" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar Cenário Atual </button> <button onclick="createNewScenario()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Novo do Zero </button>
+      </div>
+     </div>
+     <div class="bg-white rounded-lg p-4 mb-4 card-left-accent-gold">
+      <h3 class="font-semibold text-gray-800 mb-3">Templates de Aprendizagem (10 Cenários)</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+       <button onclick="loadTemplate('basic')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+         </svg><span class="font-medium text-gray-800 text-sm">Básico</span>
+        </div><p class="text-xs text-gray-500">Simples</p></button> <button onclick="loadTemplate('regional_ao')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+         </svg><span class="font-medium text-gray-800 text-sm">Regional AO</span>
+        </div><p class="text-xs text-gray-500">Angola</p></button> <button onclick="loadTemplate('cplp_inter')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20H7m6-4h6" />
+         </svg><span class="font-medium text-gray-800 text-sm">CPLP</span>
+        </div><p class="text-xs text-gray-500">Inter-regional</p></button> <button onclick="loadTemplate('ecommerce_nat')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+         </svg><span class="font-medium text-gray-800 text-sm">E-commerce</span>
+        </div><p class="text-xs text-gray-500">Nacional</p></button> <button onclick="loadTemplate('food_dist')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+         </svg><span class="font-medium text-gray-800 text-sm">Alimentos</span>
+        </div><p class="text-xs text-gray-500">Distribuição</p></button> <button onclick="loadTemplate('construction')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4" />
+         </svg><span class="font-medium text-gray-800 text-sm">Construção</span>
+        </div><p class="text-xs text-gray-500">Materiais</p></button> <button onclick="loadTemplate('pharma')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4v-4m0 0H8m4 0h4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg><span class="font-medium text-gray-800 text-sm">Farmacêutica</span>
+        </div><p class="text-xs text-gray-500">Saúde</p></button> <button onclick="loadTemplate('manufacturing')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg><span class="font-medium text-gray-800 text-sm">Indústria</span>
+        </div><p class="text-xs text-gray-500">Manufatura</p></button> <button onclick="loadTemplate('commodities')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg><span class="font-medium text-gray-800 text-sm">Commodities</span>
+        </div><p class="text-xs text-gray-500">Exportação</p></button> <button onclick="loadTemplate('multisector')" class="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all text-left">
+        <div class="flex items-center gap-2 mb-1">
+         <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10h8m0 0l-8-8m8 8l-8 8m0-8H5m0 0l8-8m-8 8l8 8" />
+         </svg><span class="font-medium text-gray-800 text-sm">Multi-setor</span>
+        </div><p class="text-xs text-gray-500">Complexo</p></button>
+      </div>
+     </div>
+     <div id="scenarios-list" class="space-y-3">
+      <p class="text-gray-500 text-sm text-center py-8">Nenhum cenário guardado. Clique em "Guardar Cenário Atual" para começar.</p>
+     </div>
+    </div><!-- Currency Tab -->
+    <div id="content-currency" class="tab-content hidden">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Taxas de Câmbio</h2>
+      <div class="flex items-center gap-2 export-hide">
+       <button onclick="resetCurrencyRates()" class="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg> Repor Padrão </button>
+      </div>
+     </div>
+     <div class="bg-white rounded-lg p-4 mb-4 card-left-accent">
+      <h3 class="font-semibold text-gray-800 mb-3">Moeda Base: Kwanza Angolano (AOA)</h3>
+      <p class="text-sm text-gray-500 mb-4">Edite as taxas de conversão em relação ao Kwanza</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="currency-rates">
+       <!-- Currency rates will be rendered here -->
+      </div>
+     </div>
+     <div class="bg-white rounded-lg p-4 card-left-accent-green">
+      <h3 class="font-semibold text-gray-800 mb-3">Conversor de Moedas</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Valor</label> <input type="number" id="convert-amount" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 export-hide" placeholder="Ex: 100000" oninput="convertCurrency()"> <span id="convert-amount-display" class="hidden text-sm text-gray-800">-</span>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">De</label> <select id="convert-from" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 export-hide" onchange="convertCurrency()"> <option value="AOA">AOA - Kwanza</option> <option value="USD">USD - Dólar</option> <option value="EUR">EUR - Euro</option> <option value="BRL">BRL - Real</option> <option value="CVE">CVE - Escudo CV</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> </select> <span id="convert-from-display" class="hidden text-sm text-gray-800">-</span>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Para</label> <select id="convert-to" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 export-hide" onchange="convertCurrency()"> <option value="USD">USD - Dólar</option> <option value="AOA">AOA - Kwanza</option> <option value="EUR">EUR - Euro</option> <option value="BRL">BRL - Real</option> <option value="CVE">CVE - Escudo CV</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> </select> <span id="convert-to-display" class="hidden text-sm text-gray-800">-</span>
+       </div>
+       <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Resultado</label>
+        <div id="convert-result" class="px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700">
+         0,00
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Help Tab -->
+    <div id="content-help" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-lg p-6 mb-6 card-left-accent">
+       <h2 class="text-xl font-bold text-gray-800 mb-4">Bem-vindo ao IS LogiPro</h2>
+       <p class="text-gray-600 mb-4">O IS LogiPro é uma plataforma profissional de gestão logística desenvolvida para otimizar operações de transporte e carga nos países da CPLP. Esta ferramenta permite-lhe gerir rotas, remessas e transportadores de forma eficiente.</p>
+       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <h3 class="font-semibold text-blue-800 mb-2">🎯 Importância da Gestão Logística</h3>
+        <ul class="text-sm text-blue-700 space-y-1">
+         <li>• Redução de custos operacionais até 30%</li>
+         <li>• Otimização de rotas e tempo de entrega</li>
+         <li>• Melhor controlo sobre transportadores</li>
+         <li>• Tomada de decisões baseada em dados</li>
+        </ul>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+       <div class="bg-white rounded-lg p-4 card-left-accent-green">
+        <h3 class="font-semibold text-gray-800 mb-3">📍 Gestão de Rotas</h3>
+        <ol class="text-sm text-gray-600 space-y-2">
+         <li>1. Aceda à aba "Rotas"</li>
+         <li>2. Clique em "Nova Rota"</li>
+         <li>3. Preencha origem, destino e distância</li>
+         <li>4. Defina custo base e tempo estimado</li>
+         <li>5. Guarde para análise de eficiência</li>
+        </ol>
+       </div>
+       <div class="bg-white rounded-lg p-4 card-left-accent-orange">
+        <h3 class="font-semibold text-gray-800 mb-3">📦 Gestão de Remessas</h3>
+        <ol class="text-sm text-gray-600 space-y-2">
+         <li>1. Aceda à aba "Remessas"</li>
+         <li>2. Clique em "Nova Remessa"</li>
+         <li>3. Selecione rota e transportador</li>
+         <li>4. Insira peso e valor da carga</li>
+         <li>5. Acompanhe o status em tempo real</li>
+        </ol>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 mb-6 card-left-accent-gold">
+       <h3 class="font-semibold text-gray-800 mb-3">💡 Melhores Práticas</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+         <h4 class="font-medium text-gray-700 mb-2">Otimização de Rotas</h4>
+         <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Analise regularmente a eficiência das rotas</li>
+          <li>• Combine cargas para maximizar capacidade</li>
+          <li>• Mantenha rotas alternativas registadas</li>
+         </ul>
+        </div>
+        <div>
+         <h4 class="font-medium text-gray-700 mb-2">Gestão de Custos</h4>
+         <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Compare tarifas entre transportadores</li>
+          <li>• Use o conversor de moedas para negociações</li>
+          <li>• Guarde cenários para simulações futuras</li>
+         </ul>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 card-left-accent">
+       <h3 class="font-semibold text-gray-800 mb-3">🔧 Funcionalidades</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="p-3 bg-gray-50 rounded-lg">
+         <h4 class="font-medium text-gray-700 mb-1">Exportação</h4>
+         <p class="text-gray-500">JSON, PDF e Imagem HD</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+         <h4 class="font-medium text-gray-700 mb-1">Cenários</h4>
+         <p class="text-gray-500">Guarde e reutilize simulações</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+         <h4 class="font-medium text-gray-700 mb-1">Multi-moeda</h4>
+         <p class="text-gray-500">CPLP + USD com taxas editáveis</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-white border-t border-gray-200 px-6 py-3 text-center text-xs text-gray-500 flex-shrink-0">
+    IS LogiPro © 2024 - Sistema de Gestão Logística Profissional para CPLP
+   </footer>
+  </div><!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+   <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+    <span id="toast-message">Mensagem</span>
+   </div>
+  </div>
+  <script>
+    // Default config
+    const defaultConfig = {
+      app_title: 'IS LogiPro'
+    };
+
+    // Application State
+    let appState = {
+      routes: [],
+      shipments: [],
+      carriers: [],
+      scenarios: [],
+      currencyRates: {
+        USD: 830,
+        EUR: 900,
+        BRL: 165,
+        CVE: 8.2,
+        MZN: 13,
+        STN: 37
+      }
+    };
+
+    // Charts
+    let charts = {};
+
+    // Initialize
+    function init() {
+      loadFromLocalStorage();
+      initializeCharts();
+      renderAll();
+      renderCurrencyRates();
+      
+      // Element SDK init
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            const title = config.app_title || defaultConfig.app_title;
+            document.getElementById('app-title').textContent = title;
+            document.title = `${title} - Gestão Logística`;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    }
+
+    // LocalStorage functions
+    function saveToLocalStorage() {
+      localStorage.setItem('islogipro_data', JSON.stringify(appState));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('islogipro_data');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          appState = { ...appState, ...data };
+        } catch (e) {
+          console.error('Error loading data:', e);
+        }
+      }
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('tab-active');
+        el.classList.add('text-gray-600', 'hover:bg-gray-100');
+      });
+      
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      const tabBtn = document.getElementById(`tab-${tabName}`);
+      tabBtn.classList.add('tab-active');
+      tabBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+      
+      if (tabName === 'dashboard') updateCharts();
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.textContent = message;
+      
+      const colors = {
+        success: 'bg-green-600',
+        error: 'bg-red-600',
+        warning: 'bg-orange-600',
+        info: 'bg-gray-800'
+      };
+      
+      toast.querySelector('div').className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // Initialize Charts
+    function initializeCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { font: { family: 'Inter', size: 11 } }
+          }
+        }
+      };
+
+      // Shipments by month chart
+      charts.shipmentsMonth = new Chart(document.getElementById('chart-shipments-month'), {
+        type: 'bar',
+        data: {
+          labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+          datasets: [{
+            label: 'Remessas',
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: 'rgba(30, 136, 229, 0.8)',
+            borderRadius: 4
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Costs by carrier chart
+      charts.costsCarrier = new Chart(document.getElementById('chart-costs-carrier'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Sem dados'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#E0E0E0']
+          }]
+        },
+        options: { ...chartOptions, cutout: '60%' }
+      });
+
+      // Route efficiency chart
+      charts.routeEfficiency = new Chart(document.getElementById('chart-route-efficiency'), {
+        type: 'line',
+        data: {
+          labels: ['Sem dados'],
+          datasets: [{
+            label: 'Eficiência (%)',
+            data: [0],
+            borderColor: '#FF9800',
+            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Shipment status chart
+      charts.shipmentStatus = new Chart(document.getElementById('chart-shipment-status'), {
+        type: 'pie',
+        data: {
+          labels: ['Pendente', 'Em Trânsito', 'Entregue', 'Cancelada'],
+          datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#FFC107', '#FF9800', '#4CAF50', '#F44336']
+          }]
+        },
+        options: chartOptions
+      });
+    }
+
+    // Update Charts
+    function updateCharts() {
+      // Stats
+      document.getElementById('stat-routes').textContent = appState.routes.filter(r => r.status === 'active').length;
+      document.getElementById('stat-delivered').textContent = appState.shipments.filter(s => s.status === 'delivered').length;
+      document.getElementById('stat-transit').textContent = appState.shipments.filter(s => s.status === 'transit').length;
+      
+      const totalCost = appState.shipments.reduce((sum, s) => sum + (parseFloat(s.value) || 0), 0);
+      document.getElementById('stat-cost').textContent = formatCurrency(totalCost);
+
+      // Shipments by month
+      const monthlyData = new Array(6).fill(0);
+      appState.shipments.forEach(s => {
+        if (s.date) {
+          const month = new Date(s.date).getMonth();
+          if (month < 6) monthlyData[month]++;
+        }
+      });
+      charts.shipmentsMonth.data.datasets[0].data = monthlyData;
+      charts.shipmentsMonth.update();
+
+      // Costs by carrier
+      const carrierCosts = {};
+      appState.shipments.forEach(s => {
+        if (s.carrier) {
+          const carrier = appState.carriers.find(c => c.id === s.carrier);
+          const name = carrier ? carrier.name : 'Desconhecido';
+          carrierCosts[name] = (carrierCosts[name] || 0) + (parseFloat(s.value) || 0);
+        }
+      });
+      
+      if (Object.keys(carrierCosts).length > 0) {
+        charts.costsCarrier.data.labels = Object.keys(carrierCosts);
+        charts.costsCarrier.data.datasets[0].data = Object.values(carrierCosts);
+        charts.costsCarrier.data.datasets[0].backgroundColor = ['#66CFF5', '#4CAF50', '#FF9800', '#F44336', '#9C27B0'];
+      }
+      charts.costsCarrier.update();
+
+      // Route efficiency
+      if (appState.routes.length > 0) {
+        charts.routeEfficiency.data.labels = appState.routes.map(r => r.name);
+        charts.routeEfficiency.data.datasets[0].data = appState.routes.map(r => {
+          const routeShipments = appState.shipments.filter(s => s.route === r.id);
+          const delivered = routeShipments.filter(s => s.status === 'delivered').length;
+          return routeShipments.length > 0 ? Math.round((delivered / routeShipments.length) * 100) : 0;
+        });
+      }
+      charts.routeEfficiency.update();
+
+      // Shipment status
+      const statusCounts = { pending: 0, transit: 0, delivered: 0, cancelled: 0 };
+      appState.shipments.forEach(s => {
+        if (statusCounts.hasOwnProperty(s.status)) statusCounts[s.status]++;
+      });
+      charts.shipmentStatus.data.datasets[0].data = Object.values(statusCounts);
+      charts.shipmentStatus.update();
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', { maximumFractionDigits: 0 }).format(value);
+    }
+
+    // ROUTES
+    function showRouteForm() {
+      document.getElementById('route-form').classList.remove('hidden');
+      clearRouteForm();
+    }
+
+    function hideRouteForm() {
+      document.getElementById('route-form').classList.add('hidden');
+      clearRouteForm();
+    }
+
+    function clearRouteForm() {
+      ['route-id', 'route-name', 'route-origin', 'route-destination', 'route-distance', 'route-time', 'route-cost'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('route-status').value = 'active';
+    }
+
+    function saveRoute() {
+      const id = document.getElementById('route-id').value || Date.now().toString();
+      const route = {
+        id,
+        name: document.getElementById('route-name').value,
+        origin: document.getElementById('route-origin').value,
+        destination: document.getElementById('route-destination').value,
+        distance: parseFloat(document.getElementById('route-distance').value) || 0,
+        time: parseFloat(document.getElementById('route-time').value) || 0,
+        cost: parseFloat(document.getElementById('route-cost').value) || 0,
+        status: document.getElementById('route-status').value
+      };
+
+      if (!route.name || !route.origin || !route.destination) {
+        showToast('Preencha os campos obrigatórios', 'error');
+        return;
+      }
+
+      const index = appState.routes.findIndex(r => r.id === id);
+      if (index >= 0) {
+        appState.routes[index] = route;
+      } else {
+        appState.routes.push(route);
+      }
+
+      saveToLocalStorage();
+      renderRoutes();
+      updateSelects();
+      hideRouteForm();
+      showToast('Rota guardada com sucesso', 'success');
+    }
+
+    function editRoute(id) {
+      const route = appState.routes.find(r => r.id === id);
+      if (route) {
+        document.getElementById('route-id').value = route.id;
+        document.getElementById('route-name').value = route.name;
+        document.getElementById('route-origin').value = route.origin;
+        document.getElementById('route-destination').value = route.destination;
+        document.getElementById('route-distance').value = route.distance;
+        document.getElementById('route-time').value = route.time;
+        document.getElementById('route-cost').value = route.cost;
+        document.getElementById('route-status').value = route.status;
+        showRouteForm();
+      }
+    }
+
+    function deleteRoute(id) {
+      appState.routes = appState.routes.filter(r => r.id !== id);
+      saveToLocalStorage();
+      renderRoutes();
+      updateSelects();
+      showToast('Rota eliminada', 'warning');
+    }
+
+    function renderRoutes() {
+      const container = document.getElementById('routes-list');
+      const filter = document.getElementById('filter-routes').value.toLowerCase();
+      const filtered = appState.routes.filter(r => 
+        r.name.toLowerCase().includes(filter) || 
+        r.origin.toLowerCase().includes(filter) || 
+        r.destination.toLowerCase().includes(filter)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Nenhuma rota encontrada.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(route => {
+        const statusColors = {
+          active: 'bg-green-100 text-green-700',
+          inactive: 'bg-gray-100 text-gray-700',
+          maintenance: 'bg-orange-100 text-orange-700'
+        };
+        const statusLabels = { active: 'Ativa', inactive: 'Inativa', maintenance: 'Manutenção' };
+
+        return `
+          <div class="bg-white rounded-lg p-4 card-left-accent card-hover transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 class="font-semibold text-gray-800">${route.name}</h4>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[route.status]}">${statusLabels[route.status]}</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    ${route.origin} → ${route.destination}
+                  </span>
+                  <span>${route.distance} km</span>
+                  <span>${route.time}h</span>
+                  <span class="font-medium text-blue-600">${formatCurrency(route.cost)} AOA</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 export-hide">
+                <button onclick="editRoute('${route.id}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="deleteRoute('${route.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterRoutes() {
+      renderRoutes();
+    }
+
+    // SHIPMENTS
+    function showShipmentForm() {
+      document.getElementById('shipment-form').classList.remove('hidden');
+      clearShipmentForm();
+      updateSelects();
+    }
+
+    function hideShipmentForm() {
+      document.getElementById('shipment-form').classList.add('hidden');
+      clearShipmentForm();
+    }
+
+    function clearShipmentForm() {
+      ['shipment-id', 'shipment-code', 'shipment-description', 'shipment-weight', 'shipment-value', 'shipment-date'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('shipment-route').value = '';
+      document.getElementById('shipment-carrier').value = '';
+      document.getElementById('shipment-status').value = 'pending';
+    }
+
+    function updateSelects() {
+      const routeSelect = document.getElementById('shipment-route');
+      const carrierSelect = document.getElementById('shipment-carrier');
+      
+      routeSelect.innerHTML = '<option value="">Selecionar rota...</option>' + 
+        appState.routes.filter(r => r.status === 'active').map(r => 
+          `<option value="${r.id}">${r.name}</option>`
+        ).join('');
+      
+      carrierSelect.innerHTML = '<option value="">Selecionar transportador...</option>' + 
+        appState.carriers.filter(c => c.status === 'active').map(c => 
+          `<option value="${c.id}">${c.name}</option>`
+        ).join('');
+    }
+
+    function saveShipment() {
+      const id = document.getElementById('shipment-id').value || Date.now().toString();
+      const shipment = {
+        id,
+        code: document.getElementById('shipment-code').value,
+        description: document.getElementById('shipment-description').value,
+        route: document.getElementById('shipment-route').value,
+        carrier: document.getElementById('shipment-carrier').value,
+        weight: parseFloat(document.getElementById('shipment-weight').value) || 0,
+        value: parseFloat(document.getElementById('shipment-value').value) || 0,
+        status: document.getElementById('shipment-status').value,
+        date: document.getElementById('shipment-date').value
+      };
+
+      if (!shipment.code || !shipment.description) {
+        showToast('Preencha os campos obrigatórios', 'error');
+        return;
+      }
+
+      const index = appState.shipments.findIndex(s => s.id === id);
+      if (index >= 0) {
+        appState.shipments[index] = shipment;
+      } else {
+        appState.shipments.push(shipment);
+      }
+
+      saveToLocalStorage();
+      renderShipments();
+      hideShipmentForm();
+      showToast('Remessa guardada com sucesso', 'success');
+    }
+
+    function editShipment(id) {
+      const shipment = appState.shipments.find(s => s.id === id);
+      if (shipment) {
+        updateSelects();
+        document.getElementById('shipment-id').value = shipment.id;
+        document.getElementById('shipment-code').value = shipment.code;
+        document.getElementById('shipment-description').value = shipment.description;
+        document.getElementById('shipment-route').value = shipment.route;
+        document.getElementById('shipment-carrier').value = shipment.carrier;
+        document.getElementById('shipment-weight').value = shipment.weight;
+        document.getElementById('shipment-value').value = shipment.value;
+        document.getElementById('shipment-status').value = shipment.status;
+        document.getElementById('shipment-date').value = shipment.date;
+        document.getElementById('shipment-form').classList.remove('hidden');
+      }
+    }
+
+    function deleteShipment(id) {
+      appState.shipments = appState.shipments.filter(s => s.id !== id);
+      saveToLocalStorage();
+      renderShipments();
+      showToast('Remessa eliminada', 'warning');
+    }
+
+    function renderShipments() {
+      const container = document.getElementById('shipments-list');
+      const filter = document.getElementById('filter-shipments').value.toLowerCase();
+      const filtered = appState.shipments.filter(s => 
+        s.code.toLowerCase().includes(filter) || 
+        s.description.toLowerCase().includes(filter)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Nenhuma remessa encontrada.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(shipment => {
+        const route = appState.routes.find(r => r.id === shipment.route);
+        const carrier = appState.carriers.find(c => c.id === shipment.carrier);
+        const statusColors = {
+          pending: 'bg-yellow-100 text-yellow-700',
+          transit: 'bg-orange-100 text-orange-700',
+          delivered: 'bg-green-100 text-green-700',
+          cancelled: 'bg-red-100 text-red-700'
+        };
+        const statusLabels = { pending: 'Pendente', transit: 'Em Trânsito', delivered: 'Entregue', cancelled: 'Cancelada' };
+        const accentClasses = {
+          pending: 'card-left-accent-gold',
+          transit: 'card-left-accent-orange',
+          delivered: 'card-left-accent-green',
+          cancelled: 'card-left-accent-red'
+        };
+
+        return `
+          <div class="bg-white rounded-lg p-4 ${accentClasses[shipment.status]} card-hover transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 class="font-semibold text-gray-800">${shipment.code}</h4>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[shipment.status]}">${statusLabels[shipment.status]}</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">${shipment.description}</p>
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span>Rota: ${route ? route.name : 'N/A'}</span>
+                  <span>Transportador: ${carrier ? carrier.name : 'N/A'}</span>
+                  <span>${shipment.weight} kg</span>
+                  <span class="font-medium text-blue-600">${formatCurrency(shipment.value)} AOA</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 export-hide">
+                <button onclick="editShipment('${shipment.id}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="deleteShipment('${shipment.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterShipments() {
+      renderShipments();
+    }
+
+    // CARRIERS
+    function showCarrierForm() {
+      document.getElementById('carrier-form').classList.remove('hidden');
+      clearCarrierForm();
+    }
+
+    function hideCarrierForm() {
+      document.getElementById('carrier-form').classList.add('hidden');
+      clearCarrierForm();
+    }
+
+    function clearCarrierForm() {
+      ['carrier-id', 'carrier-name', 'carrier-nif', 'carrier-contact', 'carrier-email', 'carrier-capacity', 'carrier-rate'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('carrier-status').value = 'active';
+    }
+
+    function saveCarrier() {
+      const id = document.getElementById('carrier-id').value || Date.now().toString();
+      const carrier = {
+        id,
+        name: document.getElementById('carrier-name').value,
+        nif: document.getElementById('carrier-nif').value,
+        contact: document.getElementById('carrier-contact').value,
+        email: document.getElementById('carrier-email').value,
+        capacity: parseFloat(document.getElementById('carrier-capacity').value) || 0,
+        rate: parseFloat(document.getElementById('carrier-rate').value) || 0,
+        status: document.getElementById('carrier-status').value
+      };
+
+      if (!carrier.name) {
+        showToast('Preencha o nome do transportador', 'error');
+        return;
+      }
+
+      const index = appState.carriers.findIndex(c => c.id === id);
+      if (index >= 0) {
+        appState.carriers[index] = carrier;
+      } else {
+        appState.carriers.push(carrier);
+      }
+
+      saveToLocalStorage();
+      renderCarriers();
+      updateSelects();
+      hideCarrierForm();
+      showToast('Transportador guardado com sucesso', 'success');
+    }
+
+    function editCarrier(id) {
+      const carrier = appState.carriers.find(c => c.id === id);
+      if (carrier) {
+        document.getElementById('carrier-id').value = carrier.id;
+        document.getElementById('carrier-name').value = carrier.name;
+        document.getElementById('carrier-nif').value = carrier.nif;
+        document.getElementById('carrier-contact').value = carrier.contact;
+        document.getElementById('carrier-email').value = carrier.email;
+        document.getElementById('carrier-capacity').value = carrier.capacity;
+        document.getElementById('carrier-rate').value = carrier.rate;
+        document.getElementById('carrier-status').value = carrier.status;
+        showCarrierForm();
+      }
+    }
+
+    function deleteCarrier(id) {
+      appState.carriers = appState.carriers.filter(c => c.id !== id);
+      saveToLocalStorage();
+      renderCarriers();
+      updateSelects();
+      showToast('Transportador eliminado', 'warning');
+    }
+
+    function renderCarriers() {
+      const container = document.getElementById('carriers-list');
+      const filter = document.getElementById('filter-carriers').value.toLowerCase();
+      const filtered = appState.carriers.filter(c => 
+        c.name.toLowerCase().includes(filter) || 
+        c.nif.toLowerCase().includes(filter)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Nenhum transportador encontrado.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(carrier => {
+        const statusColors = {
+          active: 'bg-green-100 text-green-700',
+          inactive: 'bg-gray-100 text-gray-700',
+          suspended: 'bg-red-100 text-red-700'
+        };
+        const statusLabels = { active: 'Ativo', inactive: 'Inativo', suspended: 'Suspenso' };
+
+        return `
+          <div class="bg-white rounded-lg p-4 card-left-accent card-hover transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 class="font-semibold text-gray-800">${carrier.name}</h4>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[carrier.status]}">${statusLabels[carrier.status]}</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span>NIF: ${carrier.nif || 'N/A'}</span>
+                  <span>${carrier.contact || 'N/A'}</span>
+                  <span>${carrier.capacity} ton</span>
+                  <span class="font-medium text-blue-600">${formatCurrency(carrier.rate)} AOA/km</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 export-hide">
+                <button onclick="editCarrier('${carrier.id}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="deleteCarrier('${carrier.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCarriers() {
+      renderCarriers();
+    }
+
+    // SCENARIOS
+    function saveCurrentScenario() {
+      const scenarioNumber = appState.scenarios.length + 1;
+      const scenario = {
+        id: Date.now().toString(),
+        name: `Cenário ${scenarioNumber}`,
+        createdAt: new Date().toISOString(),
+        data: {
+          routes: [...appState.routes],
+          shipments: [...appState.shipments],
+          carriers: [...appState.carriers],
+          currencyRates: {...appState.currencyRates}
+        }
+      };
+
+      appState.scenarios.push(scenario);
+      saveToLocalStorage();
+      renderScenarios();
+      showToast(`Cenário ${scenarioNumber} guardado`, 'success');
+    }
+
+    function createNewScenario() {
+      appState.routes = [];
+      appState.shipments = [];
+      appState.carriers = [];
+      saveToLocalStorage();
+      renderAll();
+      showToast('Novo cenário iniciado', 'info');
+    }
+
+    function loadScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (scenario) {
+        appState.routes = [...scenario.data.routes];
+        appState.shipments = [...scenario.data.shipments];
+        appState.carriers = [...scenario.data.carriers];
+        appState.currencyRates = {...scenario.data.currencyRates};
+        saveToLocalStorage();
+        renderAll();
+        renderCurrencyRates();
+        showToast(`${scenario.name} carregado`, 'success');
+      }
+    }
+
+    function cloneScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (scenario) {
+        const clone = {
+          ...scenario,
+          id: Date.now().toString(),
+          name: `${scenario.name} (Cópia)`,
+          createdAt: new Date().toISOString()
+        };
+        appState.scenarios.push(clone);
+        saveToLocalStorage();
+        renderScenarios();
+        showToast('Cenário clonado', 'success');
+      }
+    }
+
+    function deleteScenario(id) {
+      appState.scenarios = appState.scenarios.filter(s => s.id !== id);
+      saveToLocalStorage();
+      renderScenarios();
+      showToast('Cenário eliminado', 'warning');
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenarios-list');
+      const filter = document.getElementById('filter-scenarios').value.toLowerCase();
+      const filtered = appState.scenarios.filter(s => s.name.toLowerCase().includes(filter));
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Nenhum cenário guardado.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(scenario => {
+        const date = new Date(scenario.createdAt).toLocaleDateString('pt-PT');
+        return `
+          <div class="bg-white rounded-lg p-4 card-left-accent-gold card-hover transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-800 mb-1">${scenario.name}</h4>
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span>Criado: ${date}</span>
+                  <span>${scenario.data.routes.length} rotas</span>
+                  <span>${scenario.data.shipments.length} remessas</span>
+                  <span>${scenario.data.carriers.length} transportadores</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 export-hide">
+                <button onclick="loadScenario('${scenario.id}')" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">Carregar</button>
+                <button onclick="cloneScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Clonar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+                <button onclick="deleteScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterScenarios() {
+      renderScenarios();
+    }
+
+    // Templates - Enriquecidos com dados realistas
+    function loadTemplate(type) {
+      const templates = {
+        // TEMPLATE 1: Básico
+        basic: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'REM-001', description: 'Equipamentos eletrónicos', route: '1', carrier: '1', weight: 250, value: 2500000, status: 'delivered', date: '2024-01-15' },
+            { id: 's2', code: 'REM-002', description: 'Alimentos embalados', route: '1', carrier: '1', weight: 500, value: 1500000, status: 'transit', date: '2024-01-18' }
+          ],
+          carriers: [
+            { id: '1', name: 'TransAngola Básico', nif: '5400000001', contact: '+244 923 000 001', email: 'basico@trans.ao', capacity: 10, rate: 300, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 2: Regional Angola
+        regional_ao: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '2', name: 'Luanda - Huambo', origin: 'Luanda', destination: 'Huambo', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '3', name: 'Benguela - Lubango', origin: 'Benguela', destination: 'Lubango', distance: 350, time: 5, cost: 120000, status: 'active' },
+            { id: '4', name: 'Luanda - Cabinda', origin: 'Luanda', destination: 'Cabinda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '5', name: 'Huambo - Kuito', origin: 'Huambo', destination: 'Kuito', distance: 250, time: 3, cost: 85000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'REM-AO-001', description: 'Cimento e materiais construção', route: '1', carrier: '1', weight: 1200, value: 3500000, status: 'delivered', date: '2024-01-10' },
+            { id: 's2', code: 'REM-AO-002', description: 'Géneros alimentares variados', route: '2', carrier: '2', weight: 800, value: 2200000, status: 'delivered', date: '2024-01-12' },
+            { id: 's3', code: 'REM-AO-003', description: 'Peças automotivas', route: '3', carrier: '1', weight: 450, value: 1800000, status: 'transit', date: '2024-01-15' },
+            { id: 's4', code: 'REM-AO-004', description: 'Equipamento industrial', route: '4', carrier: '3', weight: 2000, value: 5500000, status: 'pending', date: '2024-01-18' },
+            { id: 's5', code: 'REM-AO-005', description: 'Bebidas e refrigerantes', route: '5', carrier: '2', weight: 600, value: 1200000, status: 'transit', date: '2024-01-17' }
+          ],
+          carriers: [
+            { id: '1', name: 'TransAngola', nif: '5400000001', contact: '+244 923 100 001', email: 'info@transangola.ao', capacity: 25, rate: 350, status: 'active' },
+            { id: '2', name: 'LogiExpress Angola', nif: '5400000002', contact: '+244 923 100 002', email: 'logi@express.ao', capacity: 20, rate: 320, status: 'active' },
+            { id: '3', name: 'Transportes União', nif: '5400000003', contact: '+244 923 100 003', email: 'transuniao@gmail.ao', capacity: 30, rate: 380, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 3: CPLP Inter-regional
+        cplp_inter: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '2', name: 'Luanda - Maputo (MZ)', origin: 'Luanda', destination: 'Maputo', distance: 2800, time: 48, cost: 950000, status: 'active' },
+            { id: '3', name: 'Luanda - Praia (CV)', origin: 'Luanda', destination: 'Praia', distance: 3600, time: 72, cost: 1200000, status: 'active' },
+            { id: '4', name: 'Luanda - S.Tomé (ST)', origin: 'Luanda', destination: 'São Tomé', distance: 450, time: 36, cost: 550000, status: 'active' },
+            { id: '5', name: 'Luanda - Lisboa (PT)', origin: 'Luanda', destination: 'Lisboa', distance: 7200, time: 240, cost: 3500000, status: 'active' },
+            { id: '6', name: 'Maputo - Luanda', origin: 'Maputo', destination: 'Luanda', distance: 2800, time: 48, cost: 950000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'REM-CPLP-001', description: 'Exportação café moído - CPLP', route: '1', carrier: '1', weight: 500, value: 2800000, status: 'delivered', date: '2024-01-05' },
+            { id: 's2', code: 'REM-CPLP-002', description: 'Importação maquinaria Moçambique', route: '2', carrier: '2', weight: 1500, value: 4200000, status: 'delivered', date: '2024-01-08' },
+            { id: 's3', code: 'REM-CPLP-003', description: 'Têxteis Cabo Verde - export', route: '3', carrier: '1', weight: 800, value: 3500000, status: 'transit', date: '2024-01-12' },
+            { id: 's4', code: 'REM-CPLP-004', description: 'Cacau São Tomé - importação', route: '4', carrier: '3', weight: 650, value: 2200000, status: 'transit', date: '2024-01-14' },
+            { id: 's5', code: 'REM-CPLP-005', description: 'Componentes eletrónicos - Portugal', route: '5', carrier: '4', weight: 200, value: 8500000, status: 'pending', date: '2024-01-16' },
+            { id: 's6', code: 'REM-CPLP-006', description: 'Minério de ferro - Moçambique', route: '6', carrier: '2', weight: 3000, value: 6500000, status: 'pending', date: '2024-01-17' }
+          ],
+          carriers: [
+            { id: '1', name: 'CPLP Logistics Premium', nif: '5400000010', contact: '+244 923 200 010', email: 'premium@cplplog.ao', capacity: 50, rate: 450, status: 'active' },
+            { id: '2', name: 'Transportes Inter-Regional', nif: '5400000011', contact: '+244 923 200 011', email: 'inter@transreg.ao', capacity: 60, rate: 480, status: 'active' },
+            { id: '3', name: 'AirCargo Express CPLP', nif: '5400000012', contact: '+244 923 200 012', email: 'air@cargocplp.ao', capacity: 8, rate: 2500, status: 'active' },
+            { id: '4', name: 'Europe Logistics Angola', nif: '5400000013', contact: '+244 923 200 013', email: 'europe@logisticsao.ao', capacity: 40, rate: 5000, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 4: E-commerce Nacional
+        ecommerce_nat: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '2', name: 'Luanda - Huambo', origin: 'Luanda', destination: 'Huambo', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '3', name: 'Luanda - Lubango', origin: 'Luanda', destination: 'Lubango', distance: 980, time: 14, cost: 350000, status: 'active' },
+            { id: '4', name: 'Luanda - Soyo', origin: 'Luanda', destination: 'Soyo', distance: 220, time: 3, cost: 75000, status: 'active' },
+            { id: '5', name: 'Benguela - Namibe', origin: 'Benguela', destination: 'Namibe', distance: 380, time: 5, cost: 130000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'SHOP-001', description: 'Vestuário feminino e acessórios', route: '1', carrier: '1', weight: 150, value: 1200000, status: 'delivered', date: '2024-01-05' },
+            { id: 's2', code: 'SHOP-002', description: 'Eletrónicos (phones, tablets)', route: '2', carrier: '2', weight: 120, value: 4500000, status: 'delivered', date: '2024-01-06' },
+            { id: 's3', code: 'SHOP-003', description: 'Calçado e malas desportivas', route: '3', carrier: '1', weight: 280, value: 1800000, status: 'delivered', date: '2024-01-07' },
+            { id: 's4', code: 'SHOP-004', description: 'Cosmética e higiene pessoal', route: '4', carrier: '3', weight: 200, value: 950000, status: 'transit', date: '2024-01-15' },
+            { id: 's5', code: 'SHOP-005', description: 'Livros e material escolar', route: '5', carrier: '2', weight: 350, value: 880000, status: 'transit', date: '2024-01-16' },
+            { id: 's6', code: 'SHOP-006', description: 'Decoração casa e utensílios', route: '1', carrier: '1', weight: 400, value: 1500000, status: 'pending', date: '2024-01-18' },
+            { id: 's7', code: 'SHOP-007', description: 'Eletrodomésticos diversos', route: '2', carrier: '4', weight: 600, value: 3200000, status: 'pending', date: '2024-01-19' }
+          ],
+          carriers: [
+            { id: '1', name: 'E-Express Angola', nif: '5400000020', contact: '+244 923 300 020', email: 'eexpress@shop.ao', capacity: 15, rate: 280, status: 'active' },
+            { id: '2', name: 'Shop Delivery Plus', nif: '5400000021', contact: '+244 923 300 021', email: 'shopdelivery@plus.ao', capacity: 20, rate: 310, status: 'active' },
+            { id: '3', name: 'Logística Online Angola', nif: '5400000022', contact: '+244 923 300 022', email: 'online@logi.ao', capacity: 18, rate: 300, status: 'active' },
+            { id: '4', name: 'Entrega Rápida Nacional', nif: '5400000023', contact: '+244 923 300 023', email: 'rapida@entrega.ao', capacity: 25, rate: 320, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 5: Distribuição Produtosl Alimentares
+        food_dist: {
+          routes: [
+            { id: '1', name: 'Luanda - Viana', origin: 'Luanda', destination: 'Viana', distance: 50, time: 1, cost: 40000, status: 'active' },
+            { id: '2', name: 'Viana - Benguela', origin: 'Viana', destination: 'Benguela', distance: 500, time: 6, cost: 160000, status: 'active' },
+            { id: '3', name: 'Luanda - Huambo', origin: 'Luanda', destination: 'Huambo', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '4', name: 'Cabinda - Luanda', origin: 'Cabinda', destination: 'Luanda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '5', name: 'Lubango - Benguela', origin: 'Lubango', destination: 'Benguela', distance: 700, time: 10, cost: 250000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'ALI-001', description: 'Bebidas - Refrigerantes variados', route: '1', carrier: '1', weight: 1000, value: 1200000, status: 'delivered', date: '2024-01-10' },
+            { id: 's2', code: 'ALI-002', description: 'Frutas - Banana e abacaxi', route: '2', carrier: '2', weight: 2000, value: 800000, status: 'delivered', date: '2024-01-11' },
+            { id: 's3', code: 'ALI-003', description: 'Leite e derivados lácteos', route: '3', carrier: '1', weight: 800, value: 1500000, status: 'delivered', date: '2024-01-12' },
+            { id: 's4', code: 'ALI-004', description: 'Carnes congeladas variadas', route: '4', carrier: '3', weight: 1200, value: 3200000, status: 'transit', date: '2024-01-16' },
+            { id: 's5', code: 'ALI-005', description: 'Pão e pastelaria congelada', route: '5', carrier: '2', weight: 600, value: 900000, status: 'transit', date: '2024-01-17' },
+            { id: 's6', code: 'ALI-006', description: 'Azeite e óleos culinários', route: '1', carrier: '1', weight: 400, value: 1800000, status: 'pending', date: '2024-01-19' }
+          ],
+          carriers: [
+            { id: '1', name: 'FrozenFood Logistics', nif: '5400000030', contact: '+244 923 400 030', email: 'frozen@foodlog.ao', capacity: 35, rate: 320, status: 'active' },
+            { id: '2', name: 'Alimentos Express', nif: '5400000031', contact: '+244 923 400 031', email: 'alimentos@express.ao', capacity: 40, rate: 340, status: 'active' },
+            { id: '3', name: 'Distribuição Chiller Angola', nif: '5400000032', contact: '+244 923 400 032', email: 'chiller@dist.ao', capacity: 30, rate: 380, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 6: Construção e Materiais
+        construction: {
+          routes: [
+            { id: '1', name: 'Luanda - Bengo', origin: 'Luanda', destination: 'Bengo', distance: 80, time: 1, cost: 50000, status: 'active' },
+            { id: '2', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '3', name: 'Cabinda - Luanda', origin: 'Cabinda', destination: 'Luanda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '4', name: 'Huambo - Lubango', origin: 'Huambo', destination: 'Lubango', distance: 500, time: 7, cost: 175000, status: 'active' },
+            { id: '5', name: 'Soyo - Luanda', origin: 'Soyo', destination: 'Luanda', distance: 220, time: 3, cost: 75000, status: 'active' },
+            { id: '6', name: 'Benguela - Namibe', origin: 'Benguela', destination: 'Namibe', distance: 380, time: 5, cost: 130000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'CONST-001', description: 'Cimento Portland 50kg sacos', route: '1', carrier: '1', weight: 3000, value: 2500000, status: 'delivered', date: '2024-01-08' },
+            { id: 's2', code: 'CONST-002', description: 'Areia e cascalho diversos', route: '2', carrier: '2', weight: 5000, value: 1800000, status: 'delivered', date: '2024-01-10' },
+            { id: 's3', code: 'CONST-003', description: 'Tijolos e blocos cerâmicos', route: '3', carrier: '1', weight: 4000, value: 2200000, status: 'delivered', date: '2024-01-11' },
+            { id: 's4', code: 'CONST-004', description: 'Tubagens PVC e conexões', route: '4', carrier: '3', weight: 800, value: 1500000, status: 'transit', date: '2024-01-15' },
+            { id: 's5', code: 'CONST-005', description: 'Ferro e aço reforçado', route: '5', carrier: '2', weight: 2500, value: 3800000, status: 'transit', date: '2024-01-16' },
+            { id: 's6', code: 'CONST-006', description: 'Janelas e portas alumínio', route: '6', carrier: '1', weight: 600, value: 2800000, status: 'pending', date: '2024-01-19' },
+            { id: 's7', code: 'CONST-007', description: 'Revestimentos cerâmicos', route: '1', carrier: '4', weight: 1200, value: 2100000, status: 'pending', date: '2024-01-20' }
+          ],
+          carriers: [
+            { id: '1', name: 'ConstLogistics Angola', nif: '5400000040', contact: '+244 923 500 040', email: 'constlog@build.ao', capacity: 60, rate: 420, status: 'active' },
+            { id: '2', name: 'Materiais Pesados Transport', nif: '5400000041', contact: '+244 923 500 041', email: 'pesado@transport.ao', capacity: 80, rate: 450, status: 'active' },
+            { id: '3', name: 'Engenharia & Logística', nif: '5400000042', contact: '+244 923 500 042', email: 'englog@eng.ao', capacity: 50, rate: 400, status: 'active' },
+            { id: '4', name: 'Obra Expressa Transportes', nif: '5400000043', contact: '+244 923 500 043', email: 'obra@expressa.ao', capacity: 45, rate: 380, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 7: Farmacêutica e Saúde
+        pharma: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '2', name: 'Luanda - Huambo', origin: 'Luanda', destination: 'Huambo', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '3', name: 'Luanda - Lubango', origin: 'Luanda', destination: 'Lubango', distance: 980, time: 14, cost: 350000, status: 'active' },
+            { id: '4', name: 'Cabinda - Luanda', origin: 'Cabinda', destination: 'Luanda', distance: 800, time: 12, cost: 280000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'FARM-001', description: 'Medicamentos genéricos variados', route: '1', carrier: '1', weight: 250, value: 5200000, status: 'delivered', date: '2024-01-08' },
+            { id: 's2', code: 'FARM-002', description: 'Antibióticos e antiinflamatórios', route: '2', carrier: '2', weight: 180, value: 4800000, status: 'delivered', date: '2024-01-10' },
+            { id: 's3', code: 'FARM-003', description: 'Material médico e cirúrgico', route: '3', carrier: '1', weight: 320, value: 3500000, status: 'delivered', date: '2024-01-11' },
+            { id: 's4', code: 'FARM-004', description: 'Soros e vacinas refrigeradas', route: '4', carrier: '3', weight: 150, value: 8200000, status: 'transit', date: '2024-01-16' },
+            { id: 's5', code: 'FARM-005', description: 'Equipamento hospitalar', route: '1', carrier: '2', weight: 400, value: 6500000, status: 'pending', date: '2024-01-18' }
+          ],
+          carriers: [
+            { id: '1', name: 'PharmaCare Logistics', nif: '5400000050', contact: '+244 923 600 050', email: 'pharmacare@health.ao', capacity: 8, rate: 800, status: 'active' },
+            { id: '2', name: 'Medical Express Transport', nif: '5400000051', contact: '+244 923 600 051', email: 'medical@express.ao', capacity: 6, rate: 750, status: 'active' },
+            { id: '3', name: 'Healthcare Logistics Angola', nif: '5400000052', contact: '+244 923 600 052', email: 'healthcare@logi.ao', capacity: 10, rate: 900, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 8: Indústria e Manufatura
+        manufacturing: {
+          routes: [
+            { id: '1', name: 'Luanda - Viana', origin: 'Luanda', destination: 'Viana', distance: 50, time: 1, cost: 40000, status: 'active' },
+            { id: '2', name: 'Luanda - Cabinda', origin: 'Luanda', destination: 'Cabinda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '3', name: 'Soyo - Luanda', origin: 'Soyo', destination: 'Luanda', distance: 220, time: 3, cost: 75000, status: 'active' },
+            { id: '4', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '5', name: 'Cabinda - Soyo', origin: 'Cabinda', destination: 'Soyo', distance: 600, time: 9, cost: 210000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'MAN-001', description: 'Matérias-primas químicas', route: '1', carrier: '1', weight: 2000, value: 4500000, status: 'delivered', date: '2024-01-07' },
+            { id: 's2', code: 'MAN-002', description: 'Componentes mecânicos usinados', route: '2', carrier: '2', weight: 1200, value: 3800000, status: 'delivered', date: '2024-01-09' },
+            { id: 's3', code: 'MAN-003', description: 'Resinas e polímeros industriais', route: '3', carrier: '1', weight: 1500, value: 2800000, status: 'delivered', date: '2024-01-10' },
+            { id: 's4', code: 'MAN-004', description: 'Produtos acabados - lote', route: '4', carrier: '3', weight: 800, value: 2200000, status: 'transit', date: '2024-01-15' },
+            { id: 's5', code: 'MAN-005', description: 'Peças de reposição industriais', route: '5', carrier: '2', weight: 600, value: 1900000, status: 'transit', date: '2024-01-17' },
+            { id: 's6', code: 'MAN-006', description: 'Lubricantes industriais', route: '1', carrier: '4', weight: 500, value: 1200000, status: 'pending', date: '2024-01-19' }
+          ],
+          carriers: [
+            { id: '1', name: 'Industrial Logistics Angola', nif: '5400000060', contact: '+244 923 700 060', email: 'industrial@logi.ao', capacity: 70, rate: 520, status: 'active' },
+            { id: '2', name: 'Manufacturing Express', nif: '5400000061', contact: '+244 923 700 061', email: 'manuf@express.ao', capacity: 60, rate: 490, status: 'active' },
+            { id: '3', name: 'Petro-Química Transportes', nif: '5400000062', contact: '+244 923 700 062', email: 'petroquim@transport.ao', capacity: 50, rate: 550, status: 'active' },
+            { id: '4', name: 'Transportes Especializados SA', nif: '5400000063', contact: '+244 923 700 063', email: 'especial@trans.ao', capacity: 45, rate: 480, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 9: Exportação de Commodities
+        commodities: {
+          routes: [
+            { id: '1', name: 'Luanda - Soyo (Petróleo)', origin: 'Luanda', destination: 'Soyo', distance: 220, time: 3, cost: 75000, status: 'active' },
+            { id: '2', name: 'Luanda - Cabinda (Petróleo)', origin: 'Luanda', destination: 'Cabinda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '3', name: 'Huambo - Luanda (Café)', origin: 'Huambo', destination: 'Luanda', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '4', name: 'Huambo - Benguela (Café)', origin: 'Huambo', destination: 'Benguela', distance: 450, time: 6, cost: 160000, status: 'active' },
+            { id: '5', name: 'Benguela - Porto (Diamantes)', origin: 'Benguela', destination: 'Porto', distance: 100, time: 2, cost: 50000, status: 'active' },
+            { id: '6', name: 'Luanda - Porto (Exportação)', origin: 'Luanda', destination: 'Porto', distance: 40, time: 1, cost: 30000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'COM-OIL-001', description: 'Crude Oil Container - 20ft', route: '1', carrier: '1', weight: 25000, value: 18500000, status: 'delivered', date: '2024-01-05' },
+            { id: 's2', code: 'COM-CAFE-001', description: 'Café moído - sacos 60kg', route: '3', carrier: '2', weight: 5000, value: 8200000, status: 'delivered', date: '2024-01-08' },
+            { id: 's3', code: 'COM-DIA-001', description: 'Diamantes brutos - caixa segura', route: '5', carrier: '3', weight: 50, value: 12500000, status: 'delivered', date: '2024-01-10' },
+            { id: 's4', code: 'COM-OIL-002', description: 'Gas Natural Liquefeito', route: '2', carrier: '1', weight: 30000, value: 22000000, status: 'transit', date: '2024-01-14' },
+            { id: 's5', code: 'COM-CAFE-002', description: 'Café Arabica Premium', route: '4', carrier: '2', weight: 3000, value: 5800000, status: 'transit', date: '2024-01-16' },
+            { id: 's6', code: 'COM-EXP-001', description: 'Contentor multiusso - exportação', route: '6', carrier: '4', weight: 2000, value: 4200000, status: 'pending', date: '2024-01-18' }
+          ],
+          carriers: [
+            { id: '1', name: 'Oil & Gas Logistics', nif: '5400000070', contact: '+244 923 800 070', email: 'oilgas@logi.ao', capacity: 500, rate: 900, status: 'active' },
+            { id: '2', name: 'Commodity Express Angola', nif: '5400000071', contact: '+244 923 800 071', email: 'commodity@express.ao', capacity: 200, rate: 600, status: 'active' },
+            { id: '3', name: 'High-Security Transport', nif: '5400000072', contact: '+244 923 800 072', email: 'security@hst.ao', capacity: 10, rate: 3000, status: 'active' },
+            { id: '4', name: 'Port & Export Logistics', nif: '5400000073', contact: '+244 923 800 073', email: 'port@export.ao', capacity: 150, rate: 550, status: 'active' }
+          ]
+        },
+
+        // TEMPLATE 10: Multi-Sector Complexo
+        multisector: {
+          routes: [
+            { id: '1', name: 'Luanda - Benguela', origin: 'Luanda', destination: 'Benguela', distance: 550, time: 7, cost: 180000, status: 'active' },
+            { id: '2', name: 'Luanda - Huambo', origin: 'Luanda', destination: 'Huambo', distance: 600, time: 8, cost: 220000, status: 'active' },
+            { id: '3', name: 'Benguela - Lubango', origin: 'Benguela', destination: 'Lubango', distance: 350, time: 5, cost: 120000, status: 'active' },
+            { id: '4', name: 'Cabinda - Luanda', origin: 'Cabinda', destination: 'Luanda', distance: 800, time: 12, cost: 280000, status: 'active' },
+            { id: '5', name: 'Luanda - Maputo (MZ)', origin: 'Luanda', destination: 'Maputo', distance: 2800, time: 48, cost: 950000, status: 'active' },
+            { id: '6', name: 'Luanda - Porto', origin: 'Luanda', destination: 'Porto', distance: 40, time: 1, cost: 30000, status: 'active' },
+            { id: '7', name: 'Soyo - Luanda', origin: 'Soyo', destination: 'Luanda', distance: 220, time: 3, cost: 75000, status: 'active' },
+            { id: '8', name: 'Viana - Benguela', origin: 'Viana', destination: 'Benguela', distance: 500, time: 6, cost: 160000, status: 'active' }
+          ],
+          shipments: [
+            { id: 's1', code: 'MULTI-001', description: 'Mix: Alimentos + Eletrónica', route: '1', carrier: '1', weight: 1500, value: 4200000, status: 'delivered', date: '2024-01-05' },
+            { id: 's2', code: 'MULTI-002', description: 'Materiais construção + Peças auto', route: '2', carrier: '2', weight: 2500, value: 3800000, status: 'delivered', date: '2024-01-07' },
+            { id: 's3', code: 'MULTI-003', description: 'Farmacêutica + Cosmética', route: '3', carrier: '3', weight: 600, value: 5100000, status: 'delivered', date: '2024-01-08' },
+            { id: 's4', code: 'MULTI-004', description: 'Crude Oil container', route: '4', carrier: '4', weight: 25000, value: 18500000, status: 'transit', date: '2024-01-12' },
+            { id: 's5', code: 'MULTI-005', description: 'Exportação: Café + Diamantes', route: '5', carrier: '5', weight: 3200, value: 14200000, status: 'transit', date: '2024-01-14' },
+            { id: 's6', code: 'MULTI-006', description: 'Contentor porto - múltiplas marcas', route: '6', carrier: '2', weight: 18000, value: 9500000, status: 'transit', date: '2024-01-15' },
+            { id: 's7', code: 'MULTI-007', description: 'Bebidas + Alimentos congelados', route: '7', carrier: '1', weight: 2000, value: 2200000, status: 'pending', date: '2024-01-17' },
+            { id: 's8', code: 'MULTI-008', description: 'Vestuário + Sapatos + Bolsas', route: '8', carrier: '3', weight: 800, value: 1800000, status: 'pending', date: '2024-01-19' }
+          ],
+          carriers: [
+            { id: '1', name: 'Universal Logistics Group', nif: '5400000080', contact: '+244 923 900 080', email: 'universal@logigrup.ao', capacity: 80, rate: 520, status: 'active' },
+            { id: '2', name: 'Pan-Africa Transport', nif: '5400000081', contact: '+244 923 900 081', email: 'panafrica@trans.ao', capacity: 100, rate: 580, status: 'active' },
+            { id: '3', name: 'Multi-Modal CPLP', nif: '5400000082', contact: '+244 923 900 082', email: 'multimodal@cplp.ao', capacity: 70, rate: 450, status: 'active' },
+            { id: '4', name: 'Oil Tanker Solutions', nif: '5400000083', contact: '+244 923 900 083', email: 'oiltanker@sol.ao', capacity: 500, rate: 950, status: 'active' },
+            { id: '5', name: 'International Commodity', nif: '5400000084', contact: '+244 923 900 084', email: 'intcomm@logi.ao', capacity: 150, rate: 750, status: 'active' }
+          ]
+        }
+      };
+
+      const template = templates[type];
+      if (template) {
+        appState.routes = template.routes;
+        appState.shipments = template.shipments;
+        appState.carriers = template.carriers;
+        saveToLocalStorage();
+        renderAll();
+        showToast(`Template carregado com sucesso!`, 'success');
+      }
+    }
+
+    // CURRENCY
+    function renderCurrencyRates() {
+      const currencies = [
+        { code: 'USD', name: 'Dólar Americano', flag: '🇺🇸' },
+        { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+        { code: 'BRL', name: 'Real Brasileiro', flag: '🇧🇷' },
+        { code: 'CVE', name: 'Escudo Cabo-Verdiano', flag: '🇨🇻' },
+        { code: 'MZN', name: 'Metical Moçambicano', flag: '🇲🇿' },
+        { code: 'STN', name: 'Dobra São-Tomense', flag: '🇸🇹' }
+      ];
+
+      const container = document.getElementById('currency-rates');
+      container.innerHTML = currencies.map(curr => `
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl">${curr.flag}</span>
+            <div>
+              <p class="font-medium text-gray-800">${curr.code}</p>
+              <p class="text-xs text-gray-500">${curr.name}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">1 ${curr.code} =</span>
+            <input type="number" id="rate-${curr.code}" value="${appState.currencyRates[curr.code]}" 
+              class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 export-hide"
+              onchange="updateCurrencyRate('${curr.code}', this.value)">
+            <span class="text-xs text-gray-500">AOA</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateCurrencyRate(code, value) {
+      appState.currencyRates[code] = parseFloat(value) || 0;
+      saveToLocalStorage();
+      convertCurrency();
+    }
+
+    function resetCurrencyRates() {
+      appState.currencyRates = {
+        USD: 830,
+        EUR: 900,
+        BRL: 165,
+        CVE: 8.2,
+        MZN: 13,
+        STN: 37
+      };
+      saveToLocalStorage();
+      renderCurrencyRates();
+      convertCurrency();
+      showToast('Taxas repostas ao padrão', 'info');
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
+      const from = document.getElementById('convert-from').value;
+      const to = document.getElementById('convert-to').value;
+
+      let aoa = from === 'AOA' ? amount : amount * appState.currencyRates[from];
+      let result = to === 'AOA' ? aoa : aoa / appState.currencyRates[to];
+
+      document.getElementById('convert-result').textContent = 
+        `${formatCurrency(result.toFixed(2))} ${to}`;
+    }
+
+    // EXPORT/IMPORT
+    function exportJSON() {
+      const title = document.getElementById('title-input').value || 'IS LogiPro';
+      const data = {
+        title,
+        exportedAt: new Date().toISOString(),
+        data: appState
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados em JSON', 'success');
+    }
+
+    function importJSON() {
+      document.getElementById('import-file').click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (imported.data) {
+              appState = { ...appState, ...imported.data };
+              saveToLocalStorage();
+              renderAll();
+              renderCurrencyRates();
+              if (imported.title) {
+                document.getElementById('title-input').value = imported.title;
+              }
+              showToast('Dados importados com sucesso', 'success');
+            }
+          } catch (error) {
+            showToast('Erro ao importar ficheiro', 'error');
+          }
+        };
+        reader.readAsText(file);
+      }
+      event.target.value = '';
+    }
+
+    async function exportImage() {
+      const app = document.getElementById('app');
+      app.classList.add('exporting');
+      
+      try {
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#F8F9FA'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `IS_LogiPro_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada', 'success');
+      } catch (error) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      app.classList.remove('exporting');
+    }
+
+    async function exportChartImage(chartId) {
+      const chartCanvas = document.getElementById(chartId);
+      if (chartCanvas) {
+        const link = document.createElement('a');
+        link.download = `${chartId}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = chartCanvas.toDataURL('image/png', 1.0);
+        link.click();
+        showToast('Gráfico exportado', 'success');
+      }
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const title = document.getElementById('title-input').value || 'IS LogiPro';
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let currentPage = 1;
+
+      function addHeader() {
+        doc.setFillColor(30, 136, 229);
+        doc.rect(0, 0, pageWidth, 15, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title + ' - Relatório de Gestão Logística', 10, 10);
+        doc.setTextColor(0, 0, 0);
+      }
+
+      function addFooter() {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Página ${currentPage}`, pageWidth / 2, pageHeight - 4, { align: 'center' });
+        doc.text(`Exportado: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth - 10, pageHeight - 4, { align: 'right' });
+      }
+
+      addHeader();
+
+      let yPos = 25;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 136, 229);
+      doc.text('Resumo Operacional', 10, yPos);
+      yPos += 10;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      
+      const stats = [
+        `Rotas Ativas: ${appState.routes.filter(r => r.status === 'active').length}`,
+        `Total de Remessas: ${appState.shipments.length}`,
+        `Remessas Entregues: ${appState.shipments.filter(s => s.status === 'delivered').length}`,
+        `Transportadores: ${appState.carriers.length}`,
+        `Custo Total: ${formatCurrency(appState.shipments.reduce((sum, s) => sum + (s.value || 0), 0))} AOA`
+      ];
+
+      stats.forEach(stat => {
+        doc.text(`• ${stat}`, 15, yPos);
+        yPos += 6;
+      });
+
+      yPos += 10;
+
+      // Add charts
+      const chartIds = ['chart-shipments-month', 'chart-costs-carrier', 'chart-route-efficiency', 'chart-shipment-status'];
+      const chartTitles = ['Remessas por Mês', 'Custos por Transportador', 'Eficiência das Rotas', 'Status das Remessas'];
+
+      for (let i = 0; i < chartIds.length; i++) {
+        if (yPos > pageHeight - 80) {
+          addFooter();
+          doc.addPage();
+          currentPage++;
+          addHeader();
+          yPos = 25;
+        }
+
+        const chartCanvas = document.getElementById(chartIds[i]);
+        if (chartCanvas) {
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(chartTitles[i], 10, yPos);
+          yPos += 5;
+
+          const imgData = chartCanvas.toDataURL('image/png', 1.0);
+          doc.addImage(imgData, 'PNG', 10, yPos, 90, 50);
+          yPos += 60;
+        }
+      }
+
+      addFooter();
+      doc.save(`${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado', 'success');
+    }
+
+    // Render all
+    function renderAll() {
+      renderRoutes();
+      renderShipments();
+      renderCarriers();
+      renderScenarios();
+      updateCharts();
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d604c4c42ab77d9',t:'MTc3MjQ1MzQyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
