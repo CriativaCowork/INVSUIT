@@ -1,0 +1,963 @@
+
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Inventários - Gestão Multi-Armazém (Rastreio)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; background: rgba(30, 136, 229, 0.05); }
+    .card { background: white; border-radius: 8px; border-left: 4px solid #66CFF5; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease; }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .btn-primary { background: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-secondary { background: #F8F9FA; border: 1px solid #E0E0E0; transition: all 0.2s ease; }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .btn-success { background: #4CAF50; color: white; }
+    .btn-warning { background: #FF9800; color: white; }
+    .btn-danger { background: #F44336; color: white; }
+    .input-field { border: 1px solid #E0E0E0; border-radius: 6px; padding: 8px 12px; transition: all 0.2s ease; }
+    .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .scroll-area { scrollbar-width: thin; scrollbar-color: #E0E0E0 transparent; }
+    .scroll-area::-webkit-scrollbar { width: 6px; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+    .chart-container { position: relative; height: 250px; }
+    .table-row:hover { background: #F8F9FA; }
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-entry { background: #E0F4FD; color: #33BEF2; }
+    .status-exit { background: #F3E5F5; color: #6A1B9A; }
+    .status-transfer { background: #E8F5E9; color: #2E7D32; }
+    .status-expiry { background: #FFF3E0; color: #E65100; }
+    .status-seizure { background: #FFEBEE; color: #C62828; }
+    .status-destruction { background: #FCE4EC; color: #AD1457; }
+    body { box-sizing: border-box; }
+  </style>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full flex flex-col overflow-hidden">
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between no-export">
+    <div class="flex items-center gap-3">
+     <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Inventory Pro</h1>
+      <p id="company-name" class="text-sm text-gray-500" style="display: none; display: none;">Gestão Multi-Armazém com Rastreamento</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2"><input type="text" id="global-search" placeholder="Pesquisar..." class="input-field text-sm w-48" oninput="globalSearch(this.value)"> <button onclick="exportAllData()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg> Exportar </button> <button onclick="document.getElementById('import-file').click()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg> Importar </button> <input type="file" id="import-file" accept=".json" class="hidden" onchange="importAllData(event)"> <button onclick="exportPDF()" class="btn-warning px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg> PDF </button>
+    </div>
+   </header>
+   <nav class="bg-white border-b border-gray-200 px-4 flex gap-1 overflow-x-auto scroll-area no-export"><button onclick="switchTab('inventory')" id="tab-inventory" class="tab-active px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+     </svg> Inventário </button> <button onclick="switchTab('categories')" id="tab-categories" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+     </svg> Categorias </button> <button onclick="switchTab('warehouses')" id="tab-warehouses" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+     </svg> Armazéns </button> <button onclick="switchTab('movements')" id="tab-movements" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3v-6" />
+     </svg> Movimentações </button> <button onclick="switchTab('performance')" id="tab-performance" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+     </svg> Performance </button> <button onclick="switchTab('analytics')" id="tab-analytics" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+     </svg> Análises </button> <button onclick="switchTab('scenarios')" id="tab-scenarios" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+     </svg> Cenários </button> <button onclick="switchTab('currency')" id="tab-currency" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+     </svg> Moedas </button> <button onclick="switchTab('help')" id="tab-help" class="px-4 py-3 text-sm font-medium flex items-center gap-2 whitespace-nowrap rounded-t-lg text-gray-600 hover:bg-gray-50">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+     </svg> Ajuda </button>
+   </nav>
+   <main class="flex-1 overflow-auto scroll-area p-4" id="main-content">
+    <div id="content-inventory" class="tab-content">
+     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+      <div class="card p-4">
+       <p class="text-sm text-gray-500">Total de Produtos</p>
+       <p class="text-2xl font-bold text-gray-800" id="stat-total">0</p>
+      </div>
+      <div class="card p-4" style="border-left-color: #F44336;">
+       <p class="text-sm text-gray-500">Stock Baixo</p>
+       <p class="text-2xl font-bold text-red-500" id="stat-low">0</p>
+      </div>
+      <div class="card p-4" style="border-left-color: #4CAF50;">
+       <p class="text-sm text-gray-500">Valor Total (Kz)</p>
+       <p class="text-2xl font-bold text-green-500" id="stat-value">0</p>
+      </div>
+      <div class="card p-4" style="border-left-color: #FF9800;">
+       <p class="text-sm text-gray-500">Categorias</p>
+       <p class="text-2xl font-bold text-orange-500" id="stat-categories">0</p>
+      </div>
+     </div>
+     <div class="card p-4 mb-4 no-export">
+      <h3 class="font-semibold text-gray-800 mb-3">➕ Adicionar Produto</h3>
+      <div class="grid grid-cols-1 md:grid-cols-7 gap-3"><input type="text" id="product-name" placeholder="Nome do produto" class="input-field"> <input type="text" id="product-sku" placeholder="SKU/Código" class="input-field"> <select id="product-warehouse" class="input-field"><option value="">Armazém</option></select> <input type="number" id="product-qty" placeholder="Quantidade" min="0" class="input-field"> <input type="number" id="product-price" placeholder="Preço (Kz)" min="0" step="0.01" class="input-field"> <input type="number" id="product-min" placeholder="Stock mín." min="0" class="input-field"> <select id="product-category" class="input-field"><option value="">Categoria</option></select>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3"><select id="product-profit-type" class="input-field"><option value="fixed">Margem Fixa (Kz)</option><option value="percentage">Margem %</option></select> <input type="number" id="product-profit" placeholder="Valor margem" min="0" step="0.01" class="input-field"> <button onclick="addProduct()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Adicionar</button> <button onclick="clearProductForm()" class="btn-secondary px-4 py-2 rounded-lg text-sm">Limpar</button>
+      </div>
+     </div>
+     <div class="card p-3 mb-4 no-export">
+      <div class="flex flex-wrap items-center gap-3"><input type="text" id="filter-inventory" placeholder="Filtrar produtos..." class="input-field flex-1 min-w-48" oninput="filterInventory()"> <select id="filter-category" class="input-field" onchange="filterInventory()"><option value="">Todas categorias</option></select> <select id="filter-warehouse" class="input-field" onchange="filterInventory()"><option value="">Todos armazéns</option></select> <select id="filter-stock" class="input-field" onchange="filterInventory()"><option value="">Todos os stocks</option><option value="low">Stock baixo</option><option value="ok">Stock OK</option></select>
+      </div>
+     </div>
+     <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+       <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+         <tr>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Produto</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">SKU</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Categoria</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Armazém</th>
+          <th class="text-right px-4 py-3 text-sm font-semibold text-gray-600">Qtd</th>
+          <th class="text-right px-4 py-3 text-sm font-semibold text-gray-600">Preço (Kz)</th>
+          <th class="text-right px-4 py-3 text-sm font-semibold text-gray-600">Venda (Kz)</th>
+          <th class="text-right px-4 py-3 text-sm font-semibold text-gray-600">Valor Total</th>
+          <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600">Status</th>
+          <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600 no-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="products-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="10" class="px-4 py-8 text-center text-gray-400">Nenhum produto adicionado</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+    <div id="content-categories" class="tab-content hidden">
+     <div class="card p-4 mb-4 no-export">
+      <h3 class="font-semibold text-gray-800 mb-3">➕ Nova Categoria</h3>
+      <div class="flex gap-3"><input type="text" id="category-name" placeholder="Nome da categoria" class="input-field flex-1"> <textarea id="category-desc" placeholder="Descrição (opcional)" class="input-field flex-1 max-h-10 resize-none"></textarea> <button onclick="addCategory()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Criar</button>
+      </div>
+     </div>
+     <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+       <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+         <tr>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Categoria</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Descrição</th>
+          <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600">Produtos</th>
+          <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600 no-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="categories-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-gray-400">Nenhuma categoria criada</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+    <div id="content-warehouses" class="tab-content hidden">
+     <div class="card p-4 mb-4 no-export">
+      <h3 class="font-semibold text-gray-800 mb-3">➕ Novo Armazém</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><input type="text" id="warehouse-name" placeholder="Nome do armazém" class="input-field"> <input type="text" id="warehouse-location" placeholder="Localização" class="input-field"> <input type="text" id="warehouse-manager" placeholder="Responsável" class="input-field"> <button onclick="addWarehouse()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Criar Armazém</button>
+      </div>
+     </div>
+     <div id="warehouses-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <p class="text-gray-400">Nenhum armazém criado</p>
+     </div>
+    </div>
+    <div id="content-movements" class="tab-content hidden">
+     <div class="card p-4 mb-4 no-export">
+      <h3 class="font-semibold text-gray-800 mb-3">📦 Registrar Movimentação</h3>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><select id="move-product" class="input-field"><option value="">Selecione produto</option></select> <select id="move-warehouse" class="input-field"><option value="">Armazém</option></select> <select id="move-type" class="input-field" onchange="updateMoveFields()"><option value="entry">Entrada</option><option value="exit">Saída</option><option value="transfer">Transferência</option><option value="expiry">Expiração</option><option value="seizure">Apreensão</option><option value="destruction">Destruição</option></select> <input type="number" id="move-qty" placeholder="Quantidade" min="1" class="input-field"> <button onclick="recordMovement()" class="btn-success px-4 py-2 rounded-lg text-sm font-medium">Registrar</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"><input type="datetime-local" id="move-date" class="input-field">
+       <div id="move-extra-fields" class="col-span-2"></div>
+      </div>
+     </div>
+     <div class="card p-4">
+      <h3 class="font-semibold text-gray-800 mb-3">📋 Histórico de Movimentações</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+         <tr>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Data/Hora</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Produto</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Tipo</th>
+          <th class="text-right px-4 py-3 text-sm font-semibold text-gray-600">Qtd</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Armazém</th>
+          <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">Observações</th>
+          <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600 no-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="movements-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="7" class="px-4 py-8 text-center text-gray-400">Nenhuma movimentação registrada</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+    <div id="content-performance" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">🏪 Produtos Mais Requisitados</h3>
+       <div id="most-requested" class="space-y-2 max-h-96 overflow-y-auto">
+        <p class="text-gray-400">Sem dados disponíveis</p>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">📦 Stock Global por Produto</h3>
+       <div id="stock-distribution" class="space-y-2 max-h-96 overflow-y-auto">
+        <p class="text-gray-400">Sem dados disponíveis</p>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">🏢 Performance por Armazém</h3>
+       <div id="warehouse-performance" class="space-y-2 max-h-96 overflow-y-auto">
+        <p class="text-gray-400">Sem armazéns criados</p>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">📊 Movimentações por Tipo</h3>
+       <div id="movement-types" class="space-y-2">
+        <p class="text-gray-400">Sem movimentações registradas</p>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div id="content-analytics" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">Stock por Categoria</h3>
+       <div class="chart-container">
+        <canvas id="chart-category"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">Distribuição de Valor</h3>
+       <div class="chart-container">
+        <canvas id="chart-value"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">Níveis de Stock</h3>
+       <div class="chart-container">
+        <canvas id="chart-levels"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">Top 5 Produtos por Valor</h3>
+       <div class="chart-container">
+        <canvas id="chart-top"></canvas>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div id="content-scenarios" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="card p-4 no-export">
+       <h3 class="font-semibold text-gray-800 mb-3">💾 Guardar Cenário</h3>
+       <div class="space-y-3"><input type="text" id="scenario-name" placeholder="Nome (auto: Cenário X)" class="input-field w-full"> <textarea id="scenario-desc" placeholder="Descrição..." class="input-field w-full h-20 resize-none"></textarea> <button onclick="saveCurrentScenario()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium w-full">Guardar Atual</button>
+       </div>
+      </div>
+      <div class="lg:col-span-2">
+       <div class="card p-4">
+        <h3 class="font-semibold text-gray-800 mb-3">📌 Cenários Guardados</h3>
+        <div id="scenarios-list" class="space-y-2 max-h-96 overflow-y-auto">
+         <p class="text-gray-400">Nenhum cenário guardado</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div id="content-currency" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">💱 Taxas de Câmbio</h3>
+       <div id="currency-rates" class="space-y-3"></div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-3">🔄 Conversor</h3><input type="number" id="convert-amount" placeholder="Valor em Kz" class="input-field w-full mb-3" oninput="convertCurrency()">
+       <div id="conversion-results" class="space-y-2"></div>
+      </div>
+     </div>
+    </div>
+    <div id="content-help" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto space-y-4">
+      <div class="card p-6">
+       <h2 class="text-xl font-bold text-gray-800 mb-4">ℹ️ Bem-vindo ao IS Inventory Pro</h2>
+       <p class="text-gray-600 leading-relaxed">Sistema avançado de gestão multi-armazém com rastreamento completo de movimentações, datas editáveis e análise de margens de lucro.</p>
+      </div>
+      <div class="card p-6">
+       <h3 class="font-bold text-gray-800 mb-3">✨ Funcionalidades Principais</h3>
+       <ul class="space-y-2 text-gray-600 text-sm">
+        <li>✓ <strong>Categorias Personalizadas</strong> - Crie e organize categorias de produtos</li>
+        <li>✓ <strong>Armazém "Sede" Automático</strong> - Sistema cria armazém padrão. Adicione outros conforme necessário</li>
+        <li>✓ <strong>Produtos Obrigam Armazém</strong> - Cada produto deve estar associado a um armazém (são físicos!)</li>
+        <li>✓ <strong>Produtos com Margem</strong> - Defina margens em valor fixo (Kz) ou percentual (%)</li>
+        <li>✓ <strong>Movimentações com Datas Editáveis</strong> - Data/hora automática por padrão, mas edite quando necessário</li>
+        <li>✓ <strong>6 Tipos de Movimentação</strong> - Entrada, Saída, Transferência, Expiração, Apreensão, Destruição</li>
+        <li>✓ <strong>Preço de Venda Automático</strong> - Calcula preço com margem aplicada</li>
+        <li>✓ <strong>Histórico Completo Editável</strong> - Todos os dados podem ser atualizados</li>
+        <li>✓ <strong>Performance por Armazém</strong> - Análise de distribuição e requisições</li>
+        <li>✓ <strong>Gráficos Dinâmicos</strong> - Visualização em tempo real</li>
+       </ul>
+      </div>
+      <div class="card p-6">
+       <h3 class="font-bold text-gray-800 mb-3">📖 Passo a Passo</h3>
+       <div class="space-y-3 text-sm text-gray-600">
+        <div>
+         <p class="font-semibold text-gray-800">1️⃣ Criar Categorias</p>
+         <p>Vá para "Categorias" e crie as categorias de produtos que irá usar</p>
+        </div>
+        <div>
+         <p class="font-semibold text-gray-800">2️⃣ Armazéns Já Configurados</p>
+         <p>O sistema cria automaticamente o armazém "Sede". Adicione outros em "Armazéns" se precisar</p>
+        </div>
+        <div>
+         <p class="font-semibold text-gray-800">3️⃣ Adicionar Produtos</p>
+         <p>Em "Inventário": selecione armazém (obrigatório), nome, SKU, quantidade, preço, categoria e margem</p>
+        </div>
+        <div>
+         <p class="font-semibold text-gray-800">4️⃣ Registrar Movimentações</p>
+         <p>Em "Movimentações": escolha produto, armazém, tipo de movimento, quantidade. Data é automática (hoje), mas pode editar</p>
+        </div>
+        <div>
+         <p class="font-semibold text-gray-800">5️⃣ Editar Dados</p>
+         <p>Clique em ✏️ para editar qualquer produto ou movimentação. Todos os dados são atualizáveis</p>
+        </div>
+        <div>
+         <p class="font-semibold text-gray-800">6️⃣ Analisar e Guardar</p>
+         <p>Acompanhe em "Performance" e "Análises". Guarde cenários em "Cenários" para backup</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-6">
+       <h3 class="font-bold text-gray-800 mb-3">💡 Dicas Importantes</h3>
+       <ul class="space-y-2 text-sm text-gray-600">
+        <li>• <strong>Armazém obrigatório</strong> - Produtos devem estar em um armazém (não são cloud!)</li>
+        <li>• <strong>Margem Fixa (Kz)</strong> - Use para produtos com lucro fixo por unidade</li>
+        <li>• <strong>Margem Percentual (%)</strong> - Use para aplicar margem proporcional ao preço</li>
+        <li>• <strong>Datas editáveis</strong> - Registre com data de hoje (automático), mas edite se necessário</li>
+        <li>• <strong>Editar tudo</strong> - Produtos, movimentações e categorias podem ser atualizados a qualquer momento</li>
+        <li>• <strong>Cenários como backup</strong> - Guarde snapshots do sistema em momentos importantes</li>
+        <li>• <strong>Exportar dados</strong> - Faça backup em JSON ou veja relatório em PDF</li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div>
+  <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+   <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <h3 class="font-bold text-gray-800 mb-4">Editar Produto</h3><input type="hidden" id="edit-id">
+    <div class="space-y-3"><input type="text" id="edit-name" placeholder="Nome" class="input-field w-full"> <input type="text" id="edit-sku" placeholder="SKU" class="input-field w-full"> <select id="edit-warehouse" class="input-field w-full"></select> <input type="number" id="edit-qty" placeholder="Quantidade" class="input-field w-full"> <input type="number" id="edit-price" placeholder="Preço" class="input-field w-full"> <input type="number" id="edit-min" placeholder="Stock mínimo" class="input-field w-full"> <select id="edit-category" class="input-field w-full"></select>
+     <div class="grid grid-cols-2 gap-2"><select id="edit-profit-type" class="input-field"><option value="fixed">Margem Fixa</option><option value="percentage">Margem %</option></select> <input type="number" id="edit-profit" placeholder="Valor margem" class="input-field">
+     </div>
+    </div>
+    <div class="flex gap-2 mt-4"><button onclick="saveEdit()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex-1">Guardar</button> <button onclick="closeEditModal()" class="btn-secondary px-4 py-2 rounded-lg text-sm flex-1">Cancelar</button>
+    </div>
+   </div>
+  </div>
+  <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg hidden z-50"><span id="toast-message"></span>
+  </div>
+  <script>
+    let products = [], warehouses = [], movements = [], scenarios = [], categories = [];
+    let mainWarehouse = null;
+    let currencies = { USD: { name: 'Dólar Americano', rate: 0.0012 }, EUR: { name: 'Euro', rate: 0.0011 }, BRL: { name: 'Real Brasileiro', rate: 0.0060 } };
+    let charts = {}, currentTab = 'inventory';
+
+    (async () => { if (window.dataSdk) await window.dataSdk.init({ onDataChanged(data) { renderProducts(); updateStats(); } }); })();
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="tab-"]').forEach(el => { el.classList.remove('tab-active', 'bg-gray-50'); el.classList.add('text-gray-600'); });
+      document.getElementById(`content-${tab}`).classList.remove('hidden');
+      const tabEl = document.getElementById(`tab-${tab}`);
+      tabEl.classList.add('tab-active', 'bg-gray-50');
+      tabEl.classList.remove('text-gray-600');
+      if (tab === 'analytics') updateCharts();
+      if (tab === 'warehouses') renderWarehouses();
+      if (tab === 'movements') renderMovements();
+      if (tab === 'performance') updatePerformance();
+      if (tab === 'categories') renderCategories();
+      if (tab === 'scenarios') renderScenarios();
+      if (tab === 'currency') renderCurrency();
+    }
+
+    function addCategory() {
+      const name = document.getElementById('category-name').value.trim();
+      const desc = document.getElementById('category-desc').value.trim();
+      if (!name) { showToast('Insira o nome da categoria', 'error'); return; }
+      categories.push({ id: Date.now().toString(), name, desc, createdAt: new Date().toISOString() });
+      localStorage.setItem('is_categories', JSON.stringify(categories));
+      renderCategories();
+      updateCategorySelects();
+      document.getElementById('category-name').value = '';
+      document.getElementById('category-desc').value = '';
+      showToast('Categoria criada!', 'success');
+    }
+
+    function renderCategories() {
+      const tbody = document.getElementById('categories-table');
+      if (categories.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Nenhuma categoria criada</td></tr>'; return; }
+      tbody.innerHTML = categories.map(c => {
+        const count = products.filter(p => p.category === c.name).length;
+        return `<tr class="table-row"><td class="px-4 py-3 font-medium text-gray-800">${c.name}</td><td class="px-4 py-3 text-gray-600">${c.desc || '-'}</td><td class="px-4 py-3 text-center"><span class="badge bg-blue-100 text-blue-700">${count}</span></td><td class="px-4 py-3 text-center no-export"><button onclick="deleteCategory('${c.id}')" class="p-1 hover:bg-red-100 rounded">🗑️</button></td></tr>`;
+      }).join('');
+    }
+
+    function deleteCategory(id) {
+      const cat = categories.find(c => c.id === id);
+      const count = products.filter(p => p.category === cat.name).length;
+      if (count > 0) { showToast('Não pode eliminar categoria com produtos', 'error'); return; }
+      categories = categories.filter(c => c.id !== id);
+      localStorage.setItem('is_categories', JSON.stringify(categories));
+      renderCategories();
+      updateCategorySelects();
+      showToast('Categoria eliminada', 'success');
+    }
+
+    function updateCategorySelects() {
+      const opts = '<option value="">Categoria</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      document.getElementById('product-category').innerHTML = opts;
+      document.getElementById('filter-category').innerHTML = '<option value="">Todas categorias</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      const ec = document.getElementById('edit-category');
+      if (ec) ec.innerHTML = opts;
+    }
+
+    function addProduct() {
+      const name = document.getElementById('product-name').value.trim();
+      const sku = document.getElementById('product-sku').value.trim();
+      const warehouseId = document.getElementById('product-warehouse').value;
+      const qty = parseInt(document.getElementById('product-qty').value) || 0;
+      const price = parseFloat(document.getElementById('product-price').value) || 0;
+      const min = parseInt(document.getElementById('product-min').value) || 0;
+      const category = document.getElementById('product-category').value;
+      const profitType = document.getElementById('product-profit-type').value;
+      const profitMargin = parseFloat(document.getElementById('product-profit').value) || 0;
+      if (!name || !warehouseId || !category) { showToast('Preencha: Nome, Armazém e Categoria', 'error'); return; }
+      products.push({ id: Date.now().toString(), name, sku, warehouseId, qty, price, min, category, profitType, profitMargin, createdAt: new Date().toISOString() });
+      localStorage.setItem('is_products', JSON.stringify(products));
+      renderProducts();
+      updateStats();
+      clearProductForm();
+      showToast('Produto adicionado!', 'success');
+    }
+
+    function clearProductForm() {
+      ['product-name', 'product-sku', 'product-qty', 'product-price', 'product-min', 'product-profit'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('product-warehouse').value = '';
+      document.getElementById('product-category').value = '';
+    }
+
+    function renderProducts() {
+      const tbody = document.getElementById('products-table');
+      const filterText = document.getElementById('filter-inventory')?.value.toLowerCase() || '';
+      const filterCat = document.getElementById('filter-category')?.value || '';
+      const filterWarehouse = document.getElementById('filter-warehouse')?.value || '';
+      const filterStock = document.getElementById('filter-stock')?.value || '';
+      let filtered = [...products];
+      if (filterText) filtered = filtered.filter(p => p.name.toLowerCase().includes(filterText) || p.sku.toLowerCase().includes(filterText));
+      if (filterCat) filtered = filtered.filter(p => p.category === filterCat);
+      if (filterWarehouse) filtered = filtered.filter(p => p.warehouseId === filterWarehouse);
+      if (filterStock === 'low') filtered = filtered.filter(p => p.qty <= p.min);
+      if (filterStock === 'ok') filtered = filtered.filter(p => p.qty > p.min);
+      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-8 text-center text-gray-400">Nenhum produto encontrado</td></tr>'; return; }
+      tbody.innerHTML = filtered.map(p => {
+        const wh = warehouses.find(w => w.id === p.warehouseId);
+        const salePrice = p.profitType === 'percentage' ? p.price * (1 + p.profitMargin / 100) : p.price + p.profitMargin;
+        const total = p.qty * p.price;
+        const isLow = p.qty <= p.min;
+        return `<tr class="table-row"><td class="px-4 py-3 font-medium text-gray-800">${p.name}</td><td class="px-4 py-3 text-gray-600">${p.sku}</td><td class="px-4 py-3"><span class="badge bg-blue-100 text-blue-700">${p.category}</span></td><td class="px-4 py-3 text-gray-600">${wh ? wh.name : '-'}</td><td class="px-4 py-3 text-right font-medium ${isLow ? 'text-red-500' : 'text-gray-800'}">${p.qty}</td><td class="px-4 py-3 text-right text-gray-600">${formatCurrency(p.price)}</td><td class="px-4 py-3 text-right text-green-600 font-medium">${formatCurrency(salePrice)}</td><td class="px-4 py-3 text-right font-medium">${formatCurrency(total)}</td><td class="px-4 py-3 text-center">${isLow ? '<span class="badge bg-red-100 text-red-700">⚠️ Baixo</span>' : '<span class="badge bg-green-100 text-green-700">✓ OK</span>'}</td><td class="px-4 py-3 text-center no-export"><button onclick="editProduct('${p.id}')" class="p-1 hover:bg-gray-100 rounded">✏️</button><button onclick="deleteProduct('${p.id}')" class="p-1 hover:bg-red-100 rounded">🗑️</button></td></tr>`;
+      }).join('');
+      updateProductSelect();
+    }
+
+    function editProduct(id) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-name').value = p.name;
+      document.getElementById('edit-sku').value = p.sku;
+      document.getElementById('edit-warehouse').value = p.warehouseId;
+      document.getElementById('edit-qty').value = p.qty;
+      document.getElementById('edit-price').value = p.price;
+      document.getElementById('edit-min').value = p.min;
+      document.getElementById('edit-category').value = p.category;
+      document.getElementById('edit-profit-type').value = p.profitType;
+      document.getElementById('edit-profit').value = p.profitMargin;
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function saveEdit() {
+      const id = document.getElementById('edit-id').value;
+      const idx = products.findIndex(p => p.id === id);
+      if (idx === -1) return;
+      products[idx] = {
+        ...products[idx],
+        name: document.getElementById('edit-name').value.trim(),
+        sku: document.getElementById('edit-sku').value.trim(),
+        warehouseId: document.getElementById('edit-warehouse').value,
+        qty: parseInt(document.getElementById('edit-qty').value) || 0,
+        price: parseFloat(document.getElementById('edit-price').value) || 0,
+        min: parseInt(document.getElementById('edit-min').value) || 0,
+        category: document.getElementById('edit-category').value,
+        profitType: document.getElementById('edit-profit-type').value,
+        profitMargin: parseFloat(document.getElementById('edit-profit').value) || 0
+      };
+      localStorage.setItem('is_products', JSON.stringify(products));
+      renderProducts();
+      updateStats();
+      closeEditModal();
+      showToast('Produto atualizado!', 'success');
+    }
+
+    function deleteProduct(id) {
+      products = products.filter(p => p.id !== id);
+      localStorage.setItem('is_products', JSON.stringify(products));
+      renderProducts();
+      updateStats();
+      showToast('Produto eliminado', 'success');
+    }
+
+    function filterInventory() { renderProducts(); }
+
+    function addWarehouse() {
+      const name = document.getElementById('warehouse-name').value.trim();
+      const location = document.getElementById('warehouse-location').value.trim();
+      const manager = document.getElementById('warehouse-manager').value.trim();
+      if (!name) { showToast('Insira o nome do armazém', 'error'); return; }
+      warehouses.push({ id: Date.now().toString(), name, location, manager, isMain: warehouses.length === 0, createdAt: new Date().toISOString() });
+      if (mainWarehouse === null) mainWarehouse = warehouses[0].id;
+      localStorage.setItem('is_warehouses', JSON.stringify(warehouses));
+      renderWarehouses();
+      updateWarehouseSelects();
+      document.getElementById('warehouse-name').value = '';
+      document.getElementById('warehouse-location').value = '';
+      document.getElementById('warehouse-manager').value = '';
+      showToast('Armazém criado!', 'success');
+    }
+
+    function renderWarehouses() {
+      const container = document.getElementById('warehouses-list');
+      if (warehouses.length === 0) { container.innerHTML = '<p class="text-gray-400">Nenhum armazém criado</p>'; return; }
+      container.innerHTML = warehouses.map(w => {
+        const tp = products.filter(p => p.warehouseId === w.id).length;
+        const tv = products.filter(p => p.warehouseId === w.id).reduce((sum, p) => sum + (p.qty * p.price), 0);
+        return `<div class="card p-4"><div class="flex justify-between items-start mb-3"><div><h4 class="font-semibold text-gray-800">${w.name} ${w.isMain ? '⭐' : ''}</h4><p class="text-sm text-gray-500">📍 ${w.location}</p><p class="text-sm text-gray-500">👤 ${w.manager}</p></div><button onclick="deleteWarehouse('${w.id}')" class="text-red-500 hover:text-red-700">🗑️</button></div><div class="text-sm text-gray-600 border-t pt-2"><p>📦 ${tp} produtos</p><p>💰 Valor: ${formatCurrency(tv)}</p></div></div>`;
+      }).join('');
+    }
+
+    function deleteWarehouse(id) {
+      const count = products.filter(p => p.warehouseId === id).length;
+      if (count > 0) { showToast('Elimine todos os produtos antes de deletar o armazém', 'error'); return; }
+      warehouses = warehouses.filter(w => w.id !== id);
+      localStorage.setItem('is_warehouses', JSON.stringify(warehouses));
+      renderWarehouses();
+      updateWarehouseSelects();
+      showToast('Armazém eliminado', 'success');
+    }
+
+    function updateWarehouseSelects() {
+      const opts = '<option value="">Selecione armazém</option>' + warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+      document.getElementById('product-warehouse').innerHTML = opts;
+      document.getElementById('move-warehouse').innerHTML = opts;
+      document.getElementById('filter-warehouse').innerHTML = '<option value="">Todos armazéns</option>' + warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+      const ew = document.getElementById('edit-warehouse');
+      if (ew) ew.innerHTML = opts;
+    }
+
+    function updateProductSelect() {
+      document.getElementById('move-product').innerHTML = '<option value="">Selecione produto</option>' + products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+
+    function recordMovement() {
+      const productId = document.getElementById('move-product').value;
+      const warehouseId = document.getElementById('move-warehouse').value;
+      const type = document.getElementById('move-type').value;
+      const qty = parseInt(document.getElementById('move-qty').value) || 0;
+      let dateStr = document.getElementById('move-date').value;
+      if (!dateStr) dateStr = new Date().toISOString();
+      else dateStr = new Date(dateStr).toISOString();
+      if (!productId || !warehouseId || !qty) { showToast('Preencha todos os campos obrigatórios', 'error'); return; }
+      const p = products.find(x => x.id === productId);
+      const w = warehouses.find(x => x.id === warehouseId);
+      const dw = document.getElementById('move-dest-warehouse')?.value || '';
+      const obs = document.getElementById('move-observations')?.value || '';
+      movements.push({ id: Date.now().toString(), productId, productName: p.name, warehouseId, warehouseName: w.name, destWarehouse: dw, type, qty, observations: obs, timestamp: dateStr });
+      localStorage.setItem('is_movements', JSON.stringify(movements));
+      renderMovements();
+      updatePerformance();
+      if (type === 'entry') p.qty += qty;
+      else if (type !== 'transfer') p.qty = Math.max(0, p.qty - qty);
+      localStorage.setItem('is_products', JSON.stringify(products));
+      renderProducts();
+      document.getElementById('move-qty').value = '';
+      document.getElementById('move-product').value = '';
+      document.getElementById('move-date').value = '';
+      updateMoveFields();
+      showToast('Movimentação registrada!', 'success');
+    }
+
+    function updateMoveFields() {
+      const type = document.getElementById('move-type').value;
+      const container = document.getElementById('move-extra-fields');
+      container.innerHTML = '';
+      if (type === 'transfer') {
+        container.innerHTML += '<select id="move-dest-warehouse" class="input-field"><option value="">Destino</option>' + warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('') + '</select>';
+      }
+      container.innerHTML += '<textarea id="move-observations" placeholder="Observações..." class="input-field resize-none h-10"></textarea>';
+    }
+
+    function editMovement(id) {
+      const m = movements.find(x => x.id === id);
+      if (!m) return;
+      const editHtml = `
+        <div id="movement-edit-${id}" class="card p-4 bg-yellow-50 border-l-yellow-500 mb-2">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input type="number" id="edit-move-qty-${id}" value="${m.qty}" min="1" placeholder="Qtd" class="input-field">
+            <input type="datetime-local" id="edit-move-date-${id}" value="${m.timestamp.replace('Z', '')}" class="input-field">
+            <textarea id="edit-move-obs-${id}" placeholder="Obs" class="input-field resize-none h-10">${m.observations || ''}</textarea>
+            <div class="flex gap-1">
+              <button onclick="saveMovementEdit('${id}')" class="btn-success px-2 py-1 rounded text-sm flex-1">✓</button>
+              <button onclick="cancelMovementEdit('${id}')" class="btn-secondary px-2 py-1 rounded text-sm flex-1">✕</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const row = document.querySelector(`tr[data-movement-id="${id}"]`);
+      if (row) row.insertAdjacentHTML('afterend', editHtml);
+    }
+
+    function saveMovementEdit(id) {
+      const idx = movements.findIndex(m => m.id === id);
+      if (idx === -1) return;
+      const newQty = parseInt(document.getElementById(`edit-move-qty-${id}`).value) || movements[idx].qty;
+      const newDate = document.getElementById(`edit-move-date-${id}`).value;
+      const newObs = document.getElementById(`edit-move-obs-${id}`).value;
+      movements[idx].qty = newQty;
+      movements[idx].timestamp = new Date(newDate).toISOString();
+      movements[idx].observations = newObs;
+      localStorage.setItem('is_movements', JSON.stringify(movements));
+      renderMovements();
+      document.getElementById(`movement-edit-${id}`)?.remove();
+      showToast('Movimentação atualizada!', 'success');
+    }
+
+    function cancelMovementEdit(id) {
+      document.getElementById(`movement-edit-${id}`)?.remove();
+    }
+
+    function deleteMovement(id) {
+      movements = movements.filter(m => m.id !== id);
+      localStorage.setItem('is_movements', JSON.stringify(movements));
+      renderMovements();
+      updatePerformance();
+      showToast('Movimentação eliminada', 'success');
+    }
+
+    function renderMovements() {
+      const tbody = document.getElementById('movements-table');
+      if (movements.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Nenhuma movimentação registrada</td></tr>'; return; }
+      const tl = { entry: '📥 Entrada', exit: '📤 Saída', transfer: '🔄 Transferência', expiry: '⏰ Expiração', seizure: '⚖️ Apreensão', destruction: '🔥 Destruição' };
+      tbody.innerHTML = movements.map(m => `<tr class="table-row" data-movement-id="${m.id}"><td class="px-4 py-3 text-sm text-gray-600">${new Date(m.timestamp).toLocaleString('pt-PT')}</td><td class="px-4 py-3 font-medium text-gray-800">${m.productName}</td><td class="px-4 py-3"><span class="status-badge status-${m.type}">${tl[m.type] || m.type}</span></td><td class="px-4 py-3 text-right font-medium">${m.qty}</td><td class="px-4 py-3 text-gray-600">${m.warehouseName}</td><td class="px-4 py-3 text-sm text-gray-500">${m.observations || '-'}</td><td class="px-4 py-3 text-center no-export"><button onclick="editMovement('${m.id}')" class="p-1 hover:bg-yellow-100 rounded">✏️</button><button onclick="deleteMovement('${m.id}')" class="p-1 hover:bg-red-100 rounded">🗑️</button></td></tr>`).join('');
+    }
+
+    function updatePerformance() {
+      const rc = {};
+      movements.filter(m => m.type === 'exit').forEach(m => rc[m.productName] = (rc[m.productName] || 0) + m.qty);
+      const mr = Object.entries(rc).sort(([,a], [,b]) => b - a).slice(0, 5);
+      document.getElementById('most-requested').innerHTML = mr.length > 0 ? mr.map(([name, count]) => `<div class="flex justify-between"><span>${name}</span><span class="font-semibold">${count} unidades</span></div>`).join('') : '<p class="text-gray-400">Sem dados</p>';
+      const sh = products.length > 0 ? products.map(p => `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="text-gray-700">${p.name}</span><div class="flex items-center gap-2"><div class="w-24 bg-gray-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: ${Math.min((p.qty / (p.min * 3)) * 100, 100)}%"></div></div><span class="text-sm font-semibold text-gray-700 w-12">${p.qty}</span></div></div>`).join('') : '<p class="text-gray-400">Sem produtos</p>';
+      document.getElementById('stock-distribution').innerHTML = sh;
+      const wm = {};
+      movements.forEach(m => wm[m.warehouseName] = (wm[m.warehouseName] || 0) + m.qty);
+      const wh = Object.entries(wm).length > 0 ? Object.entries(wm).sort(([,a], [,b]) => b - a).map(([name, count]) => `<div class="flex justify-between"><span>${name}</span><span class="font-semibold">${count} movimentos</span></div>`).join('') : '<p class="text-gray-400">Sem dados</p>';
+      document.getElementById('warehouse-performance').innerHTML = wh;
+      const tc = {};
+      const tl = { entry: 'Entradas', exit: 'Saídas', transfer: 'Transferências', expiry: 'Expirações', seizure: 'Apreensões', destruction: 'Destruições' };
+      movements.forEach(m => tc[tl[m.type] || m.type] = (tc[tl[m.type] || m.type] || 0) + 1);
+      const th = Object.entries(tc).length > 0 ? Object.entries(tc).sort(([,a], [,b]) => b - a).map(([type, count]) => `<div class="flex justify-between"><span>${type}</span><span class="font-semibold">${count}</span></div>`).join('') : '<p class="text-gray-400">Sem dados</p>';
+      document.getElementById('movement-types').innerHTML = th;
+    }
+
+    function updateStats() {
+      const total = products.length;
+      const low = products.filter(p => p.qty <= p.min).length;
+      const value = products.reduce((sum, p) => sum + (p.qty * p.price), 0);
+      const cat_count = new Set(products.map(p => p.category)).size;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-low').textContent = low;
+      document.getElementById('stat-value').textContent = formatCurrency(value);
+      document.getElementById('stat-categories').textContent = cat_count;
+    }
+
+    function initCharts() {
+      const cfg = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } };
+      charts.category = new Chart(document.getElementById('chart-category'), { type: 'doughnut', data: { labels: [], datasets: [{ data: [], backgroundColor: ['#66CFF5', '#4CAF50', '#FF9800', '#F44336'] }] }, options: cfg });
+      charts.value = new Chart(document.getElementById('chart-value'), { type: 'pie', data: { labels: [], datasets: [{ data: [], backgroundColor: ['#66CFF5', '#4CAF50', '#FF9800', '#F44336', '#9C27B0'] }] }, options: cfg });
+      charts.levels = new Chart(document.getElementById('chart-levels'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Atual', data: [], backgroundColor: '#66CFF5' }, { label: 'Mínimo', data: [], backgroundColor: '#F44336' }] }, options: { ...cfg, scales: { y: { beginAtZero: true } } } });
+      charts.top = new Chart(document.getElementById('chart-top'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Valor', data: [], backgroundColor: '#4CAF50' }] }, options: { ...cfg, indexAxis: 'y', scales: { x: { beginAtZero: true } } } });
+    }
+
+    function updateCharts() {
+      if (!charts.category) initCharts();
+      const cat = {};
+      products.forEach(p => cat[p.category] = (cat[p.category] || 0) + p.qty);
+      charts.category.data.labels = Object.keys(cat);
+      charts.category.data.datasets[0].data = Object.values(cat);
+      charts.category.update();
+      const val = {};
+      products.forEach(p => val[p.category] = (val[p.category] || 0) + (p.qty * p.price));
+      charts.value.data.labels = Object.keys(val);
+      charts.value.data.datasets[0].data = Object.values(val);
+      charts.value.update();
+      const tq = [...products].sort((a, b) => a.qty - b.qty).slice(0, 10);
+      charts.levels.data.labels = tq.map(p => p.name.substring(0, 12));
+      charts.levels.data.datasets[0].data = tq.map(p => p.qty);
+      charts.levels.data.datasets[1].data = tq.map(p => p.min);
+      charts.levels.update();
+      const tv = [...products].map(p => ({ ...p, total: p.qty * p.price })).sort((a, b) => b.total - a.total).slice(0, 5);
+      charts.top.data.labels = tv.map(p => p.name.substring(0, 15));
+      charts.top.data.datasets[0].data = tv.map(p => p.total);
+      charts.top.update();
+    }
+
+    function saveCurrentScenario() {
+      const name = document.getElementById('scenario-name').value.trim() || `Cenário ${scenarios.length + 1}`;
+      const desc = document.getElementById('scenario-desc').value.trim();
+      scenarios.push({
+        id: Date.now().toString(),
+        name,
+        desc,
+        snapshot: { products: JSON.parse(JSON.stringify(products)), warehouses: JSON.parse(JSON.stringify(warehouses)), movements: JSON.parse(JSON.stringify(movements)), categories: JSON.parse(JSON.stringify(categories)) },
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('is_scenarios', JSON.stringify(scenarios));
+      renderScenarios();
+      document.getElementById('scenario-name').value = '';
+      document.getElementById('scenario-desc').value = '';
+      showToast('Cenário guardado!', 'success');
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenarios-list');
+      if (scenarios.length === 0) { container.innerHTML = '<p class="text-gray-400">Nenhum cenário guardado</p>'; return; }
+      container.innerHTML = scenarios.map(s => `
+        <div class="card p-3 border-l-purple-500">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <p class="font-semibold text-gray-800">${s.name}</p>
+              <p class="text-xs text-gray-500">${new Date(s.timestamp).toLocaleDateString('pt-PT')}</p>
+            </div>
+            <button onclick="deleteScenario('${s.id}')" class="text-red-500">🗑️</button>
+          </div>
+          <p class="text-sm text-gray-600 mb-2">${s.desc || 'Sem descrição'}</p>
+          <div class="text-xs text-gray-500 mb-2">
+            <span>📦 ${s.snapshot.products.length} produtos</span> | 
+            <span>🏢 ${s.snapshot.warehouses.length} armazéns</span> |
+            <span>📋 ${s.snapshot.movements.length} movimentações</span>
+          </div>
+          <button onclick="restoreScenario('${s.id}')" class="btn-primary px-3 py-1 rounded text-xs w-full">Restaurar</button>
+        </div>
+      `).join('');
+    }
+
+    function deleteScenario(id) {
+      scenarios = scenarios.filter(s => s.id !== id);
+      localStorage.setItem('is_scenarios', JSON.stringify(scenarios));
+      renderScenarios();
+      showToast('Cenário eliminado', 'success');
+    }
+
+    function restoreScenario(id) {
+      const s = scenarios.find(x => x.id === id);
+      if (!s) return;
+      products = JSON.parse(JSON.stringify(s.snapshot.products));
+      warehouses = JSON.parse(JSON.stringify(s.snapshot.warehouses));
+      movements = JSON.parse(JSON.stringify(s.snapshot.movements));
+      categories = JSON.parse(JSON.stringify(s.snapshot.categories));
+      localStorage.setItem('is_products', JSON.stringify(products));
+      localStorage.setItem('is_warehouses', JSON.stringify(warehouses));
+      localStorage.setItem('is_movements', JSON.stringify(movements));
+      localStorage.setItem('is_categories', JSON.stringify(categories));
+      renderProducts();
+      renderWarehouses();
+      renderMovements();
+      renderCategories();
+      updateStats();
+      showToast('Cenário restaurado!', 'success');
+    }
+
+    function renderCurrency() {
+      const rates = document.getElementById('currency-rates');
+      rates.innerHTML = Object.entries(currencies).map(([code, { name, rate }]) => `
+        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+          <span>${name} (${code})</span>
+          <span class="font-semibold">1 ${code} = ${(1/rate).toFixed(2)} Kz</span>
+        </div>
+      `).join('');
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
+      const results = document.getElementById('conversion-results');
+      results.innerHTML = Object.entries(currencies).map(([code, { name, rate }]) => `<div class="flex justify-between"><span>${name}</span><span class="font-semibold">${(amount * rate).toFixed(2)} ${code}</span></div>`).join('');
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(value).replace('AOA', 'Kz');
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toast-message');
+      toast.className = 'fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg hidden z-50';
+      if (type === 'success') toast.classList.add('bg-green-600', 'text-white');
+      else if (type === 'error') toast.classList.add('bg-red-600', 'text-white');
+      else toast.classList.add('bg-gray-800', 'text-white');
+      msgEl.textContent = message;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function exportAllData() {
+      const data = { products, warehouses, movements, scenarios, categories, exportDate: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `is_inventory_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados!', 'success');
+    }
+
+    function importAllData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.products) products = data.products;
+          if (data.warehouses) warehouses = data.warehouses;
+          if (data.movements) movements = data.movements;
+          if (data.categories) categories = data.categories;
+          localStorage.setItem('is_products', JSON.stringify(products));
+          localStorage.setItem('is_warehouses', JSON.stringify(warehouses));
+          localStorage.setItem('is_movements', JSON.stringify(movements));
+          localStorage.setItem('is_categories', JSON.stringify(categories));
+          renderProducts();
+          renderWarehouses();
+          renderMovements();
+          renderCategories();
+          updateStats();
+          showToast('Dados importados!', 'success');
+        } catch (err) {
+          showToast('Erro ao importar', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, 210, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(14);
+      pdf.text('IS Inventory Pro - Relatório', 15, 12);
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(10);
+      let yPos = 30;
+      pdf.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, 15, yPos);
+      yPos += 8;
+      pdf.text(`Total de Produtos: ${products.length}`, 15, yPos);
+      yPos += 8;
+      pdf.text(`Valor Total: ${formatCurrency(products.reduce((s, p) => s + p.qty * p.price, 0))}`, 15, yPos);
+      yPos += 15;
+      pdf.setFontSize(12);
+      pdf.text('Produtos', 15, yPos);
+      yPos += 8;
+      pdf.setFontSize(9);
+      products.slice(0, 20).forEach(p => {
+        pdf.text(`${p.name} - ${p.qty} unid. - ${formatCurrency(p.qty * p.price)}`, 15, yPos);
+        yPos += 7;
+        if (yPos > 270) { pdf.addPage(); yPos = 20; }
+      });
+      pdf.save(`is_inventory_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado!', 'success');
+    }
+
+    function globalSearch(query) {
+      if (!query) { renderProducts(); return; }
+      const filtered = products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.sku.toLowerCase().includes(query.toLowerCase()));
+      const tbody = document.getElementById('products-table');
+      tbody.innerHTML = filtered.map(p => {
+        const wh = warehouses.find(w => w.id === p.warehouseId);
+        const sp = p.profitType === 'percentage' ? p.price * (1 + p.profitMargin / 100) : p.price + p.profitMargin;
+        const total = p.qty * p.price;
+        return `<tr class="table-row"><td class="px-4 py-3">${p.name}</td><td class="px-4 py-3">${p.sku}</td><td class="px-4 py-3">${p.category}</td><td class="px-4 py-3">${wh ? wh.name : '-'}</td><td class="px-4 py-3 text-right">${p.qty}</td><td class="px-4 py-3 text-right">${formatCurrency(p.price)}</td><td class="px-4 py-3 text-right">${formatCurrency(sp)}</td><td class="px-4 py-3 text-right">${formatCurrency(total)}</td></tr>`;
+      }).join('');
+    }
+
+    function loadData() {
+      products = JSON.parse(localStorage.getItem('is_products') || '[]');
+      warehouses = JSON.parse(localStorage.getItem('is_warehouses') || '[]');
+      movements = JSON.parse(localStorage.getItem('is_movements') || '[]');
+      scenarios = JSON.parse(localStorage.getItem('is_scenarios') || '[]');
+      categories = JSON.parse(localStorage.getItem('is_categories') || '[]');
+      if (warehouses.length === 0) {
+        warehouses.push({ id: 'main_' + Date.now(), name: 'Sede', location: 'Principal', manager: 'Admin', isMain: true, createdAt: new Date().toISOString() });
+        localStorage.setItem('is_warehouses', JSON.stringify(warehouses));
+      }
+      mainWarehouse = warehouses.find(w => w.isMain)?.id || warehouses[0].id;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      renderProducts();
+      updateStats();
+      initCharts();
+      renderWarehouses();
+      renderCategories();
+      updateProductSelect();
+      updateWarehouseSelects();
+      updateCategorySelects();
+      updateMoveFields();
+      renderCurrency();
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('move-date').value = now.toISOString().slice(0, 16);
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d60088e870a77d9',t:'MTc3MjQ1MDY0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
