@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Independência Financeira</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; font-weight: 600; }
+    .btn-primary { background: #66CFF5; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-success { background: #4CAF50; transition: all 0.2s ease; }
+    .btn-success:hover { background: #388E3C; }
+    .btn-warning { background: #FF9800; transition: all 0.2s ease; }
+    .btn-warning:hover { background: #F57C00; }
+    .btn-danger { background: #F44336; transition: all 0.2s ease; }
+    .btn-danger:hover { background: #D32F2F; }
+    .input-field { transition: all 0.2s ease; border: 1px solid #E0E0E0; }
+    .input-field:focus { border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); outline: none; }
+    .chart-bar { transition: all 0.3s ease; }
+    .chart-bar:hover { opacity: 0.8; }
+    .tooltip { position: absolute; background: #333; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; z-index: 100; pointer-events: none; white-space: nowrap; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #F8F9FA; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full bg-gray-50 text-gray-800">
+  <div id="app" class="h-full flex flex-col overflow-auto"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-lg font-bold text-gray-900" style="display: none; display: none;">Simulador de Independência Financeira</h1>
+       <p class="text-xs text-gray-500" style="display: none;">Planeie o seu futuro financeiro</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2"><select id="currency-select" class="input-field text-sm px-3 py-2 rounded-lg bg-white"> <option value="AOA">AOA - Kwanza</option> <option value="BRL">BRL - Real</option> <option value="EUR">EUR - Euro</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="CVE">CVE - Escudo</option> <option value="USD">USD - Dólar</option> </select> <button onclick="openCurrencyModal()" class="p-2 rounded-lg hover:bg-gray-100 transition-all" title="Configurar moedas">
+       <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+       </svg></button>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-4 flex-shrink-0 overflow-x-auto">
+    <div class="max-w-7xl mx-auto flex gap-1"><button onclick="switchTab('simulator')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap tab-active" data-tab="simulator"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Simulador </span> </button> <button onclick="switchTab('scenarios')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="scenarios"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+       </svg> Cenários </span> </button> <button onclick="switchTab('examples')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="examples"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+       </svg> Exemplos </span> </button> <button onclick="switchTab('education')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="education"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Educação </span> </button> <button onclick="switchTab('about')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap" data-tab="about"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Sobre </span> </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-4">
+    <div class="max-w-7xl mx-auto"><!-- Simulator Tab -->
+     <div id="tab-simulator" class="tab-content fade-in">
+      <div class="grid lg:grid-cols-3 gap-6"><!-- Input Panel -->
+       <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+         <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg> Dados do Simulador</h2>
+         <div class="space-y-4">
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Idade Atual</label> <input type="number" id="current-age" value="30" min="18" max="80" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Idade de Reforma</label> <input type="number" id="retirement-age" value="65" min="40" max="100" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Património Atual</label> <input type="number" id="current-savings" value="50000" min="0" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Poupança Mensal</label> <input type="number" id="monthly-savings" value="1000" min="0" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Rentabilidade Anual (%)</label> <input type="number" id="annual-return" value="7" min="0" max="30" step="0.1" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Inflação Anual (%)</label> <input type="number" id="inflation-rate" value="3" min="0" max="20" step="0.1" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Despesas Mensais na Reforma</label> <input type="number" id="monthly-expenses" value="3000" min="0" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div><label class="block text-sm font-medium text-gray-700 mb-1">Esperança de Vida</label> <input type="number" id="life-expectancy" value="85" min="60" max="120" class="input-field w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+         </div>
+         <div class="mt-5 flex gap-2"><button onclick="calculateSimulation()" class="btn-primary flex-1 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+           </svg> Calcular </button> <button onclick="resetSimulator()" class="px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-all"> Limpar </button>
+         </div>
+        </div><!-- Quick Actions -->
+        <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+         <h3 class="text-sm font-semibold text-gray-900 mb-3">Ações Rápidas</h3>
+         <div class="grid grid-cols-2 gap-2"><button onclick="saveCurrentScenario()" class="btn-success text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+           </svg> Guardar </button> <button onclick="exportPDF()" class="btn-warning text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+           </svg> PDF </button> <button onclick="exportJSON()" class="px-3 py-2 rounded-lg text-xs font-medium border border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center gap-1">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+           </svg> Exportar </button> <button onclick="document.getElementById('import-file').click()" class="px-3 py-2 rounded-lg text-xs font-medium border border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center gap-1">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+           </svg> Importar </button> <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSON(event)">
+         </div>
+        </div>
+       </div><!-- Results Panel -->
+       <div class="lg:col-span-2 space-y-4"><!-- Summary Cards -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+         <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+          <div class="flex items-center gap-3">
+           <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-xs text-gray-500">Património Final</p>
+            <p id="result-final-wealth" class="text-lg font-bold text-gray-900">-</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+          <div class="flex items-center gap-3">
+           <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-xs text-gray-500">Meta FIRE</p>
+            <p id="result-fire-number" class="text-lg font-bold text-gray-900">-</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+          <div class="flex items-center gap-3">
+           <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-xs text-gray-500">Anos até FIRE</p>
+            <p id="result-years-to-fire" class="text-lg font-bold text-gray-900">-</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white rounded-xl p-4 border border-gray-200 card-hover">
+          <div class="flex items-center gap-3">
+           <div id="status-icon" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+           </div>
+           <div>
+            <p class="text-xs text-gray-500">Estado</p>
+            <p id="result-status" class="text-lg font-bold text-gray-900">-</p>
+           </div>
+          </div>
+         </div>
+        </div><!-- Charts -->
+        <div class="grid lg:grid-cols-2 gap-4"><!-- Bar Chart -->
+         <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+           <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+           </svg> Evolução do Património</h3>
+          <div id="bar-chart" class="h-64 relative flex items-end justify-around gap-1 px-2">
+           <div class="text-center text-gray-400 text-sm">
+            Clique em "Calcular" para ver o gráfico
+           </div>
+          </div>
+          <div id="bar-chart-legend" class="mt-3 flex flex-wrap gap-3 justify-center text-xs"></div>
+         </div><!-- Pie Chart -->
+         <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+           <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+           </svg> Composição do Património</h3>
+          <div id="pie-chart" class="h-64 relative flex items-center justify-center">
+           <div class="text-center text-gray-400 text-sm">
+            Clique em "Calcular" para ver o gráfico
+           </div>
+          </div>
+          <div id="pie-chart-legend" class="mt-3 flex flex-wrap gap-3 justify-center text-xs"></div>
+         </div>
+        </div><!-- Detailed Results -->
+        <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+         <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg> Análise Detalhada</h3>
+         <div id="detailed-results" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Anos até Reforma</p>
+           <p id="detail-years" class="font-semibold text-gray-900">-</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Total Contribuições</p>
+           <p id="detail-contributions" class="font-semibold text-gray-900">-</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Total Juros Compostos</p>
+           <p id="detail-interest" class="font-semibold text-gray-900">-</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Rentabilidade Real</p>
+           <p id="detail-real-return" class="font-semibold text-gray-900">-</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Renda Mensal Segura (4%)</p>
+           <p id="detail-safe-withdrawal" class="font-semibold text-gray-900">-</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+           <p class="text-gray-500 text-xs">Anos de Reforma Cobertos</p>
+           <p id="detail-retirement-years" class="font-semibold text-gray-900">-</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Scenarios Tab -->
+     <div id="tab-scenarios" class="tab-content hidden fade-in">
+      <div class="bg-white rounded-xl p-5 border border-gray-200">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+         </svg> Gestão de Cenários</h2>
+        <div class="flex gap-2"><select id="scenario-filter" class="input-field text-xs px-3 py-2 rounded-lg" onchange="filterScenarios()"> <option value="all">Todos</option> <option value="favorites">Favoritos</option> </select>
+        </div>
+       </div>
+       <div id="scenarios-list" class="space-y-3">
+        <div class="text-center py-8 text-gray-400">
+         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+         </svg>
+         <p class="text-sm">Nenhum cenário guardado</p>
+         <p class="text-xs mt-1">Use o botão "Guardar" no simulador</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Examples Tab -->
+     <div id="tab-examples" class="tab-content hidden fade-in">
+      <div class="bg-white rounded-xl p-5 border border-gray-200">
+       <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> 10 Cenários Exemplares</h2>
+       <p class="text-sm text-gray-600 mb-4">Clique em qualquer cenário para carregar os valores no simulador e aprender com diferentes estratégias.</p>
+       <div id="examples-list" class="grid sm:grid-cols-2 gap-4">
+       </div>
+      </div>
+     </div><!-- Education Tab -->
+     <div id="tab-education" class="tab-content hidden fade-in">
+      <div class="space-y-4"><!-- Concepts -->
+       <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+        <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+         </svg> Conceitos Fundamentais</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+         <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h3 class="font-semibold text-blue-900 mb-2">🔥 FIRE (Financial Independence, Retire Early)</h3>
+          <p class="text-sm text-blue-800">Movimento que visa alcançar independência financeira e reforma antecipada através de poupança agressiva e investimentos inteligentes.</p>
+         </div>
+         <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <h3 class="font-semibold text-green-900 mb-2">📈 Juros Compostos</h3>
+          <p class="text-sm text-green-800">Os juros ganham juros! É o efeito "bola de neve" que faz o seu dinheiro crescer exponencialmente ao longo do tempo.</p>
+         </div>
+         <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+          <h3 class="font-semibold text-yellow-900 mb-2">💰 Regra dos 4%</h3>
+          <p class="text-sm text-yellow-800">Pode levantar 4% do seu património anualmente na reforma sem esgotar o capital em 30+ anos (baseado em estudos históricos).</p>
+         </div>
+         <div class="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+          <h3 class="font-semibold text-purple-900 mb-2">🎯 Número FIRE</h3>
+          <p class="text-sm text-purple-800">Património necessário = Despesas Anuais × 25. É o valor que precisa acumular para viver dos rendimentos.</p>
+         </div>
+        </div>
+       </div><!-- Formulas -->
+       <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+        <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg> Fórmulas Utilizadas</h2>
+        <div class="space-y-4">
+         <div class="p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Valor Futuro com Contribuições Regulares</h3><code class="block bg-gray-800 text-green-400 p-3 rounded text-sm font-mono">FV = PV × (1 + r)^n + PMT × [((1 + r)^n - 1) / r]</code>
+          <p class="text-xs text-gray-600 mt-2">FV = Valor Futuro | PV = Valor Presente | r = Taxa mensal | n = Meses | PMT = Pagamento mensal</p>
+         </div>
+         <div class="p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Número FIRE</h3><code class="block bg-gray-800 text-green-400 p-3 rounded text-sm font-mono">FIRE Number = Despesas Anuais × 25</code>
+          <p class="text-xs text-gray-600 mt-2">Baseado na regra dos 4% de levantamento seguro</p>
+         </div>
+         <div class="p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-semibold text-gray-900 mb-2">Rentabilidade Real</h3><code class="block bg-gray-800 text-green-400 p-3 rounded text-sm font-mono">Taxa Real ≈ Taxa Nominal - Taxa de Inflação</code>
+          <p class="text-xs text-gray-600 mt-2">Poder de compra real após ajuste pela inflação</p>
+         </div>
+        </div>
+       </div><!-- Tips -->
+       <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+        <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg> Dicas Práticas</h2>
+        <div class="grid md:grid-cols-2 gap-3">
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">💡</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Comece Cedo</h4>
+           <p class="text-xs text-gray-600">10 anos de vantagem podem duplicar o seu património final graças aos juros compostos.</p>
+          </div>
+         </div>
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🎯</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Automatize</h4>
+           <p class="text-xs text-gray-600">Configure transferências automáticas para investimentos assim que receber o salário.</p>
+          </div>
+         </div>
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">📊</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Diversifique</h4>
+           <p class="text-xs text-gray-600">Não coloque todos os ovos no mesmo cesto. Distribua por diferentes classes de ativos.</p>
+          </div>
+         </div>
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🔄</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Reveja Anualmente</h4>
+           <p class="text-xs text-gray-600">Ajuste a sua estratégia conforme a vida muda: salário, despesas, objetivos.</p>
+          </div>
+         </div>
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🚫</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Evite Dívidas Caras</h4>
+           <p class="text-xs text-gray-600">Cartões de crédito e empréstimos pessoais podem destruir o seu progresso financeiro.</p>
+          </div>
+         </div>
+         <div class="flex gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-2xl">📚</span>
+          <div>
+           <h4 class="font-medium text-gray-900 text-sm">Eduque-se</h4>
+           <p class="text-xs text-gray-600">Invista em conhecimento financeiro. É o melhor retorno que pode obter.</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- About Tab -->
+     <div id="tab-about" class="tab-content hidden fade-in">
+      <div class="space-y-4">
+       <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+        <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg> Sobre o Simulador</h2>
+        <p class="text-sm text-gray-600 mb-4">O Simulador de Independência Financeira é uma ferramenta completa para planear o seu futuro financeiro. Desenvolvido com foco nos países da CPLP (Comunidade dos Países de Língua Portuguesa), permite simular diferentes cenários de poupança e investimento para alcançar a independência financeira.</p>
+        <div class="grid md:grid-cols-2 gap-4">
+         <div class="p-4 bg-blue-50 rounded-lg">
+          <h3 class="font-semibold text-blue-900 mb-2">🎯 Funcionalidades</h3>
+          <ul class="text-sm text-blue-800 space-y-1">
+           <li>• Cálculos profissionais com juros compostos</li>
+           <li>• Gráficos dinâmicos interativos</li>
+           <li>• Sistema de moedas CPLP completo</li>
+           <li>• Gestão de cenários com favoritos</li>
+           <li>• Exportação PDF profissional</li>
+           <li>• Backup/Restauro em JSON</li>
+           <li>• 10 cenários exemplares educativos</li>
+           <li>• Aba de educação financeira</li>
+          </ul>
+         </div>
+         <div class="p-4 bg-green-50 rounded-lg">
+          <h3 class="font-semibold text-green-900 mb-2">🌍 Moedas Suportadas</h3>
+          <ul class="text-sm text-green-800 space-y-1">
+           <li>• AOA - Kwanza Angolano</li>
+           <li>• BRL - Real Brasileiro</li>
+           <li>• EUR - Euro</li>
+           <li>• MZN - Metical Moçambicano</li>
+           <li>• STN - Dobra São-tomense</li>
+           <li>• CVE - Escudo Cabo-verdiano</li>
+           <li>• USD - Dólar Americano</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 border border-gray-200 card-hover">
+        <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg> Como Usar</h2>
+        <div class="space-y-4">
+         <div class="flex gap-4 items-start p-4 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+           1
+          </div>
+          <div>
+           <h4 class="font-medium text-gray-900">Preencha os Dados</h4>
+           <p class="text-sm text-gray-600">Insira a sua idade atual, idade de reforma desejada, património atual, poupança mensal e expectativas de rentabilidade.</p>
+          </div>
+         </div>
+         <div class="flex gap-4 items-start p-4 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+           2
+          </div>
+          <div>
+           <h4 class="font-medium text-gray-900">Clique em "Calcular"</h4>
+           <p class="text-sm text-gray-600">O simulador irá processar os dados e mostrar gráficos, métricas e análise detalhada do seu plano financeiro.</p>
+          </div>
+         </div>
+         <div class="flex gap-4 items-start p-4 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+           3
+          </div>
+          <div>
+           <h4 class="font-medium text-gray-900">Analise os Resultados</h4>
+           <p class="text-sm text-gray-600">Veja o património final projetado, número FIRE, anos até independência e se o plano é viável.</p>
+          </div>
+         </div>
+         <div class="flex gap-4 items-start p-4 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+           4
+          </div>
+          <div>
+           <h4 class="font-medium text-gray-900">Guarde Cenários</h4>
+           <p class="text-sm text-gray-600">Use o botão "Guardar" para salvar diferentes simulações. Pode favoritá-las e compará-las mais tarde.</p>
+          </div>
+         </div>
+         <div class="flex gap-4 items-start p-4 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+           5
+          </div>
+          <div>
+           <h4 class="font-medium text-gray-900">Exporte os Dados</h4>
+           <p class="text-sm text-gray-600">Gere um PDF profissional para imprimir ou partilhar, ou exporte em JSON para backup completo.</p>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+        <div class="flex items-center gap-3 mb-3">
+         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg>
+         <h3 class="text-lg font-bold">Dica Importante</h3>
+        </div>
+        <p class="text-sm text-blue-100">Este simulador é uma ferramenta educativa. Os resultados são projeções baseadas nos dados inseridos e não garantem resultados futuros. Consulte sempre um profissional de finanças antes de tomar decisões de investimento importantes.</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div><!-- Currency Modal -->
+   <div id="currency-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeCurrencyModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 w-full max-w-md max-h-[80%] overflow-auto shadow-xl">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Configurar Moedas</h3><button onclick="closeCurrencyModal()" class="p-1 hover:bg-gray-100 rounded-lg transition-all">
+       <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <p class="text-sm text-gray-600 mb-4">Edite as taxas de câmbio em relação ao EUR (base).</p>
+     <div id="currency-rates-form" class="space-y-3"></div>
+     <div class="mt-4 flex gap-2"><button onclick="saveCurrencyRates()" class="btn-primary flex-1 text-white px-4 py-2 rounded-lg text-sm font-medium">Guardar</button> <button onclick="resetCurrencyRates()" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-all">Repor Padrão</button>
+     </div>
+    </div>
+   </div><!-- Save Scenario Modal -->
+   <div id="save-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeSaveModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Guardar Cenário</h3><button onclick="closeSaveModal()" class="p-1 hover:bg-gray-100 rounded-lg transition-all">
+       <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cenário</label> <input type="text" id="scenario-name" class="input-field w-full px-3 py-2 rounded-lg text-sm" placeholder="Ex: Reforma aos 55">
+      </div>
+      <div class="flex items-center gap-2"><input type="checkbox" id="scenario-favorite" class="w-4 h-4 text-yellow-500 rounded"> <label for="scenario-favorite" class="text-sm text-gray-700">Marcar como favorito</label>
+      </div>
+     </div>
+     <div class="mt-4 flex gap-2"><button onclick="confirmSaveScenario()" class="btn-success flex-1 text-white px-4 py-2 rounded-lg text-sm font-medium">Guardar</button> <button onclick="closeSaveModal()" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-all">Cancelar</button>
+     </div>
+    </div>
+   </div><!-- Delete Confirmation Modal -->
+   <div id="delete-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeDeleteModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
+     <div class="text-center">
+      <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+       <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+       </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Eliminar Cenário?</h3>
+      <p id="delete-scenario-name" class="text-sm text-gray-600 mb-4"></p>
+     </div>
+     <div class="flex gap-2"><button onclick="confirmDeleteScenario()" class="btn-danger flex-1 text-white px-4 py-2 rounded-lg text-sm font-medium">Eliminar</button> <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-all">Cancelar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // ============================================
+    // APP STATE & CONFIGURATION
+    // ============================================
+    const defaultConfig = {
+      app_title: 'Simulador de Independência Financeira'
+    };
+
+    let appConfig = { ...defaultConfig };
+    let savedScenarios = [];
+    let currentSimulation = null;
+    let scenarioToDelete = null;
+    let isLoading = false;
+
+    // Currency Configuration
+    const defaultCurrencyRates = {
+      EUR: 1,
+      AOA: 920,
+      BRL: 5.4,
+      MZN: 70,
+      STN: 24.5,
+      CVE: 110,
+      USD: 1.08
+    };
+
+    let currencyRates = { ...defaultCurrencyRates };
+    let currentCurrency = 'AOA';
+
+    const currencySymbols = {
+      EUR: '€',
+      AOA: 'Kz',
+      BRL: 'R$',
+      MZN: 'MT',
+      STN: 'Db',
+      CVE: '$',
+      USD: '$'
+    };
+
+    const currencyNames = {
+      EUR: 'Euro',
+      AOA: 'Kwanza',
+      BRL: 'Real',
+      MZN: 'Metical',
+      STN: 'Dobra',
+      CVE: 'Escudo',
+      USD: 'Dólar'
+    };
+
+    // Example Scenarios
+    const exampleScenarios = [
+      {
+        name: "Jovem Ambicioso",
+        description: "Começa aos 25 com pouco, mas poupa agressivamente",
+        data: { currentAge: 25, retirementAge: 55, currentSavings: 5000, monthlySavings: 1500, annualReturn: 8, inflationRate: 3, monthlyExpenses: 2500, lifeExpectancy: 85 }
+      },
+      {
+        name: "Carreira Média",
+        description: "Profissional de 35 anos com salário estável",
+        data: { currentAge: 35, retirementAge: 60, currentSavings: 80000, monthlySavings: 2000, annualReturn: 7, inflationRate: 3, monthlyExpenses: 4000, lifeExpectancy: 85 }
+      },
+      {
+        name: "Início Tardio",
+        description: "Começa a poupar aos 45 anos",
+        data: { currentAge: 45, retirementAge: 65, currentSavings: 50000, monthlySavings: 3000, annualReturn: 6, inflationRate: 3, monthlyExpenses: 5000, lifeExpectancy: 85 }
+      },
+      {
+        name: "FIRE Agressivo",
+        description: "Taxa de poupança extrema (60%+)",
+        data: { currentAge: 28, retirementAge: 40, currentSavings: 100000, monthlySavings: 4000, annualReturn: 9, inflationRate: 3, monthlyExpenses: 2000, lifeExpectancy: 90 }
+      },
+      {
+        name: "Conservador",
+        description: "Baixo risco, retornos modestos",
+        data: { currentAge: 40, retirementAge: 67, currentSavings: 150000, monthlySavings: 1500, annualReturn: 4, inflationRate: 2, monthlyExpenses: 3500, lifeExpectancy: 85 }
+      },
+      {
+        name: "Herança Inesperada",
+        description: "Recebeu herança aos 35 anos",
+        data: { currentAge: 35, retirementAge: 55, currentSavings: 500000, monthlySavings: 1000, annualReturn: 6, inflationRate: 3, monthlyExpenses: 4000, lifeExpectancy: 90 }
+      },
+      {
+        name: "Empreendedor",
+        description: "Rendimentos variáveis, poupança irregular",
+        data: { currentAge: 32, retirementAge: 50, currentSavings: 200000, monthlySavings: 5000, annualReturn: 10, inflationRate: 4, monthlyExpenses: 6000, lifeExpectancy: 85 }
+      },
+      {
+        name: "Casal DINK",
+        description: "Duplo rendimento, sem filhos",
+        data: { currentAge: 30, retirementAge: 55, currentSavings: 120000, monthlySavings: 4000, annualReturn: 7, inflationRate: 3, monthlyExpenses: 5000, lifeExpectancy: 90 }
+      },
+      {
+        name: "Reforma Parcial",
+        description: "Planeia trabalhar part-time após 55",
+        data: { currentAge: 45, retirementAge: 55, currentSavings: 300000, monthlySavings: 2500, annualReturn: 6, inflationRate: 3, monthlyExpenses: 3000, lifeExpectancy: 85 }
+      },
+      {
+        name: "País Emergente",
+        description: "Inflação alta, ajustado à realidade",
+        data: { currentAge: 30, retirementAge: 60, currentSavings: 20000, monthlySavings: 800, annualReturn: 12, inflationRate: 8, monthlyExpenses: 2000, lifeExpectancy: 80 }
+      }
+    ];
+
+    // Chart colors
+    const chartColors = ['#66CFF5', '#4CAF50', '#FFC107', '#FF9800', '#F44336', '#9C27B0', '#00BCD4', '#8BC34A', '#FF5722', '#607D8B'];
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    async function initApp() {
+      // Load saved currency rates from localStorage
+      const savedRates = localStorage.getItem('currencyRates');
+      if (savedRates) {
+        try {
+          currencyRates = JSON.parse(savedRates);
+        } catch (e) {
+          currencyRates = { ...defaultCurrencyRates };
+        }
+      }
+
+      const savedCurrency = localStorage.getItem('currentCurrency');
+      if (savedCurrency) {
+        currentCurrency = savedCurrency;
+        document.getElementById('currency-select').value = currentCurrency;
+      }
+
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            appConfig = { ...config };
+            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init({
+          onDataChanged: (data) => {
+            savedScenarios = data.filter(d => d.type === 'scenario');
+            renderScenariosList();
+          }
+        });
+        if (!result.isOk) {
+          console.error('Failed to initialize Data SDK');
+        }
+      }
+
+      // Setup currency selector
+      document.getElementById('currency-select').addEventListener('change', (e) => {
+        currentCurrency = e.target.value;
+        localStorage.setItem('currentCurrency', currentCurrency);
+        if (currentSimulation) {
+          updateResultsDisplay();
+        }
+      });
+
+      // Render examples
+      renderExamples();
+
+      // Add input listeners for auto-calculation
+      const inputs = ['current-age', 'retirement-age', 'current-savings', 'monthly-savings', 'annual-return', 'inflation-rate', 'monthly-expenses', 'life-expectancy'];
+      inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', debounce(calculateSimulation, 500));
+      });
+    }
+
+    // Debounce utility
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // ============================================
+    // TAB NAVIGATION
+    // ============================================
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add('tab-active');
+        }
+      });
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    }
+
+    // ============================================
+    // CURRENCY FUNCTIONS
+    // ============================================
+    function formatCurrency(value, currency = currentCurrency) {
+      const rate = currencyRates[currency] / currencyRates.EUR;
+      const converted = value * rate;
+      const symbol = currencySymbols[currency];
+      
+      if (converted >= 1000000000) {
+        return `${symbol} ${(converted / 1000000000).toFixed(2)}B`;
+      } else if (converted >= 1000000) {
+        return `${symbol} ${(converted / 1000000).toFixed(2)}M`;
+      } else if (converted >= 1000) {
+        return `${symbol} ${(converted / 1000).toFixed(1)}K`;
+      }
+      return `${symbol} ${converted.toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+
+    function formatCurrencyFull(value, currency = currentCurrency) {
+      const rate = currencyRates[currency] / currencyRates.EUR;
+      const converted = value * rate;
+      const symbol = currencySymbols[currency];
+      return `${symbol} ${converted.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function openCurrencyModal() {
+      const form = document.getElementById('currency-rates-form');
+      form.innerHTML = Object.entries(currencyRates).map(([code, rate]) => `
+        <div class="flex items-center gap-3">
+          <label class="w-20 text-sm font-medium text-gray-700">${code}</label>
+          <input type="number" step="0.01" value="${rate}" data-currency="${code}" 
+            class="input-field flex-1 px-3 py-2 rounded-lg text-sm" ${code === 'EUR' ? 'disabled' : ''}>
+          <span class="text-xs text-gray-500 w-16">${currencyNames[code]}</span>
+        </div>
+      `).join('');
+      document.getElementById('currency-modal').classList.remove('hidden');
+    }
+
+    function closeCurrencyModal() {
+      document.getElementById('currency-modal').classList.add('hidden');
+    }
+
+    function saveCurrencyRates() {
+      const inputs = document.querySelectorAll('#currency-rates-form input');
+      inputs.forEach(input => {
+        const currency = input.dataset.currency;
+        const value = parseFloat(input.value);
+        if (!isNaN(value) && value > 0) {
+          currencyRates[currency] = value;
+        }
+      });
+      localStorage.setItem('currencyRates', JSON.stringify(currencyRates));
+      closeCurrencyModal();
+      showToast('Taxas de câmbio atualizadas', 'success');
+      if (currentSimulation) {
+        updateResultsDisplay();
+      }
+    }
+
+    function resetCurrencyRates() {
+      currencyRates = { ...defaultCurrencyRates };
+      localStorage.setItem('currencyRates', JSON.stringify(currencyRates));
+      openCurrencyModal();
+      showToast('Taxas de câmbio repostas', 'success');
+    }
+
+    // ============================================
+    // SIMULATION CALCULATIONS
+    // ============================================
+    function calculateSimulation() {
+      const currentAge = parseInt(document.getElementById('current-age').value) || 30;
+      const retirementAge = parseInt(document.getElementById('retirement-age').value) || 65;
+      const currentSavings = parseFloat(document.getElementById('current-savings').value) || 0;
+      const monthlySavings = parseFloat(document.getElementById('monthly-savings').value) || 0;
+      const annualReturn = parseFloat(document.getElementById('annual-return').value) || 7;
+      const inflationRate = parseFloat(document.getElementById('inflation-rate').value) || 3;
+      const monthlyExpenses = parseFloat(document.getElementById('monthly-expenses').value) || 3000;
+      const lifeExpectancy = parseInt(document.getElementById('life-expectancy').value) || 85;
+
+      // Calculate years and months
+      const yearsToRetirement = Math.max(0, retirementAge - currentAge);
+      const monthsToRetirement = yearsToRetirement * 12;
+
+      // Calculate monthly rates
+      const monthlyReturn = annualReturn / 100 / 12;
+      const realReturn = annualReturn - inflationRate;
+
+      // Future Value calculation with compound interest
+      let futureValue = currentSavings;
+      const yearlyData = [{ year: currentAge, value: currentSavings, contributions: 0, interest: 0 }];
+      
+      let totalContributions = currentSavings;
+      let yearlyContribution = 0;
+      let yearlyInterest = 0;
+
+      for (let month = 1; month <= monthsToRetirement; month++) {
+        const interest = futureValue * monthlyReturn;
+        futureValue += interest + monthlySavings;
+        yearlyContribution += monthlySavings;
+        yearlyInterest += interest;
+        totalContributions += monthlySavings;
+
+        if (month % 12 === 0) {
+          yearlyData.push({
+            year: currentAge + (month / 12),
+            value: futureValue,
+            contributions: yearlyContribution,
+            interest: yearlyInterest
+          });
+          yearlyContribution = 0;
+          yearlyInterest = 0;
+        }
+      }
+
+      // FIRE Number (25x annual expenses)
+      const annualExpenses = monthlyExpenses * 12;
+      const fireNumber = annualExpenses * 25;
+
+      // Years to FIRE
+      let yearsToFire = null;
+      let tempValue = currentSavings;
+      for (let year = 0; year <= 100; year++) {
+        if (tempValue >= fireNumber) {
+          yearsToFire = year;
+          break;
+        }
+        for (let month = 0; month < 12; month++) {
+          tempValue = tempValue * (1 + monthlyReturn) + monthlySavings;
+        }
+      }
+
+      // Safe withdrawal (4% rule)
+      const safeWithdrawal = futureValue * 0.04 / 12;
+
+      // Total interest earned
+      const totalInterest = futureValue - totalContributions;
+
+      // Years of retirement covered
+      const retirementYears = futureValue / annualExpenses;
+
+      // Status check
+      const isOnTrack = futureValue >= fireNumber;
+
+      currentSimulation = {
+        inputs: {
+          currentAge,
+          retirementAge,
+          currentSavings,
+          monthlySavings,
+          annualReturn,
+          inflationRate,
+          monthlyExpenses,
+          lifeExpectancy
+        },
+        results: {
+          futureValue,
+          fireNumber,
+          yearsToFire,
+          yearsToRetirement,
+          totalContributions,
+          totalInterest,
+          realReturn,
+          safeWithdrawal,
+          retirementYears,
+          isOnTrack,
+          yearlyData
+        }
+      };
+
+      updateResultsDisplay();
+    }
+
+    function updateResultsDisplay() {
+      if (!currentSimulation) return;
+
+      const { results } = currentSimulation;
+
+      // Update summary cards
+      document.getElementById('result-final-wealth').textContent = formatCurrency(results.futureValue);
+      document.getElementById('result-fire-number').textContent = formatCurrency(results.fireNumber);
+      document.getElementById('result-years-to-fire').textContent = results.yearsToFire !== null ? `${results.yearsToFire} anos` : '100+ anos';
+      
+      const statusIcon = document.getElementById('status-icon');
+      const statusText = document.getElementById('result-status');
+      
+      if (results.isOnTrack) {
+        statusIcon.className = 'w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center';
+        statusIcon.innerHTML = '<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        statusText.textContent = 'No Caminho';
+        statusText.className = 'text-lg font-bold text-green-600';
+      } else {
+        statusIcon.className = 'w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center';
+        statusIcon.innerHTML = '<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+        statusText.textContent = 'Ajustar';
+        statusText.className = 'text-lg font-bold text-yellow-600';
+      }
+
+      // Update detailed results
+      document.getElementById('detail-years').textContent = `${results.yearsToRetirement} anos`;
+      document.getElementById('detail-contributions').textContent = formatCurrency(results.totalContributions);
+      document.getElementById('detail-interest').textContent = formatCurrency(results.totalInterest);
+      document.getElementById('detail-real-return').textContent = `${results.realReturn.toFixed(2)}%`;
+      document.getElementById('detail-safe-withdrawal').textContent = formatCurrency(results.safeWithdrawal);
+      document.getElementById('detail-retirement-years').textContent = `${results.retirementYears.toFixed(1)} anos`;
+
+      // Update charts
+      renderBarChart(results.yearlyData);
+      renderPieChart(results);
+    }
+
+    function resetSimulator() {
+      document.getElementById('current-age').value = 30;
+      document.getElementById('retirement-age').value = 65;
+      document.getElementById('current-savings').value = 50000;
+      document.getElementById('monthly-savings').value = 1000;
+      document.getElementById('annual-return').value = 7;
+      document.getElementById('inflation-rate').value = 3;
+      document.getElementById('monthly-expenses').value = 3000;
+      document.getElementById('life-expectancy').value = 85;
+      
+      currentSimulation = null;
+      
+      // Reset displays
+      document.getElementById('result-final-wealth').textContent = '-';
+      document.getElementById('result-fire-number').textContent = '-';
+      document.getElementById('result-years-to-fire').textContent = '-';
+      document.getElementById('result-status').textContent = '-';
+      document.getElementById('result-status').className = 'text-lg font-bold text-gray-900';
+      
+      const statusIcon = document.getElementById('status-icon');
+      statusIcon.className = 'w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center';
+      statusIcon.innerHTML = '<svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+      document.getElementById('detail-years').textContent = '-';
+      document.getElementById('detail-contributions').textContent = '-';
+      document.getElementById('detail-interest').textContent = '-';
+      document.getElementById('detail-real-return').textContent = '-';
+      document.getElementById('detail-safe-withdrawal').textContent = '-';
+      document.getElementById('detail-retirement-years').textContent = '-';
+
+      document.getElementById('bar-chart').innerHTML = '<div class="text-center text-gray-400 text-sm">Clique em "Calcular" para ver o gráfico</div>';
+      document.getElementById('bar-chart-legend').innerHTML = '';
+      document.getElementById('pie-chart').innerHTML = '<div class="text-center text-gray-400 text-sm">Clique em "Calcular" para ver o gráfico</div>';
+      document.getElementById('pie-chart-legend').innerHTML = '';
+
+      showToast('Simulador reiniciado', 'success');
+    }
+
+    // ============================================
+    // CHART RENDERING
+    // ============================================
+    function renderBarChart(yearlyData) {
+      const container = document.getElementById('bar-chart');
+      const legend = document.getElementById('bar-chart-legend');
+      
+      if (!yearlyData || yearlyData.length < 2) {
+        container.innerHTML = '<div class="text-center text-gray-400 text-sm">Dados insuficientes</div>';
+        legend.innerHTML = '';
+        return;
+      }
+
+      // Sample data points (max 10 bars)
+      const step = Math.max(1, Math.floor(yearlyData.length / 10));
+      const sampledData = yearlyData.filter((_, i) => i % step === 0 || i === yearlyData.length - 1);
+      
+      const maxValue = Math.max(...sampledData.map(d => d.value));
+      
+      container.innerHTML = sampledData.map((data, i) => {
+        const height = (data.value / maxValue) * 100;
+        const color = chartColors[i % chartColors.length];
+        return `
+          <div class="flex flex-col items-center flex-1 min-w-0" style="max-width: 10%;">
+            <div class="w-full relative group" style="height: 200px;">
+              <div class="chart-bar absolute bottom-0 w-full rounded-t cursor-pointer" 
+                   style="height: ${height}%; background: ${color};"
+                   onmouseenter="showChartTooltip(event, '${data.year} anos', '${formatCurrencyFull(data.value)}')"
+                   onmouseleave="hideChartTooltip()">
+              </div>
+            </div>
+            <span class="text-xs text-gray-500 mt-1 truncate w-full text-center">${Math.round(data.year)}</span>
+          </div>
+        `;
+      }).join('');
+
+      legend.innerHTML = `
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded" style="background: ${chartColors[0]}"></div>
+          <span class="text-gray-600">Património ao longo dos anos</span>
+        </div>
+      `;
+    }
+
+    function renderPieChart(results) {
+      const container = document.getElementById('pie-chart');
+      const legend = document.getElementById('pie-chart-legend');
+
+      const initialSavings = currentSimulation.inputs.currentSavings;
+      const contributions = results.totalContributions - initialSavings;
+      const interest = results.totalInterest;
+      const total = results.futureValue;
+
+      const data = [
+        { label: 'Património Inicial', value: initialSavings, color: '#66CFF5' },
+        { label: 'Contribuições', value: contributions, color: '#4CAF50' },
+        { label: 'Juros Compostos', value: interest, color: '#FFC107' }
+      ].filter(d => d.value > 0);
+
+      // Calculate percentages and angles
+      let currentAngle = 0;
+      const segments = data.map(d => {
+        const percentage = (d.value / total) * 100;
+        const angle = (d.value / total) * 360;
+        const segment = {
+          ...d,
+          percentage,
+          startAngle: currentAngle,
+          endAngle: currentAngle + angle
+        };
+        currentAngle += angle;
+        return segment;
+      });
+
+      // Create SVG pie chart
+      const size = 200;
+      const center = size / 2;
+      const radius = 80;
+
+      const paths = segments.map(seg => {
+        const startRad = (seg.startAngle - 90) * Math.PI / 180;
+        const endRad = (seg.endAngle - 90) * Math.PI / 180;
+        
+        const x1 = center + radius * Math.cos(startRad);
+        const y1 = center + radius * Math.sin(startRad);
+        const x2 = center + radius * Math.cos(endRad);
+        const y2 = center + radius * Math.sin(endRad);
+        
+        const largeArc = seg.endAngle - seg.startAngle > 180 ? 1 : 0;
+        
+        return `
+          <path d="M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z"
+                fill="${seg.color}"
+                class="cursor-pointer transition-all hover:opacity-80"
+                onmouseenter="showChartTooltip(event, '${seg.label}', '${formatCurrencyFull(seg.value)} (${seg.percentage.toFixed(1)}%)')"
+                onmouseleave="hideChartTooltip()"/>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${size} ${size}" class="w-48 h-48">
+          ${paths}
+        </svg>
+      `;
+
+      legend.innerHTML = segments.map(seg => `
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded" style="background: ${seg.color}"></div>
+          <span class="text-gray-600">${seg.label} (${seg.percentage.toFixed(1)}%)</span>
+        </div>
+      `).join('');
+    }
+
+    function showChartTooltip(event, title, value) {
+      hideChartTooltip();
+      const tooltip = document.createElement('div');
+      tooltip.id = 'chart-tooltip';
+      tooltip.className = 'tooltip';
+      tooltip.innerHTML = `<strong>${title}</strong><br>${value}`;
+      document.body.appendChild(tooltip);
+      
+      const rect = event.target.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;
+    }
+
+    function hideChartTooltip() {
+      const existing = document.getElementById('chart-tooltip');
+      if (existing) existing.remove();
+    }
+
+    // ============================================
+    // SCENARIOS MANAGEMENT
+    // ============================================
+    function saveCurrentScenario() {
+      if (!currentSimulation) {
+        showToast('Calcule uma simulação primeiro', 'warning');
+        return;
+      }
+      document.getElementById('scenario-name').value = '';
+      document.getElementById('scenario-favorite').checked = false;
+      document.getElementById('save-modal').classList.remove('hidden');
+    }
+
+    function closeSaveModal() {
+      document.getElementById('save-modal').classList.add('hidden');
+    }
+
+    async function confirmSaveScenario() {
+      const name = document.getElementById('scenario-name').value.trim();
+      if (!name) {
+        showToast('Insira um nome para o cenário', 'warning');
+        return;
+      }
+
+      if (savedScenarios.length >= 999) {
+        showToast('Limite de 999 cenários atingido', 'error');
+        return;
+      }
+
+      const isFavorite = document.getElementById('scenario-favorite').checked;
+
+      isLoading = true;
+      const result = await window.dataSdk.create({
+        name,
+        type: 'scenario',
+        data: JSON.stringify(currentSimulation),
+        isFavorite,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      isLoading = false;
+
+      if (result.isOk) {
+        closeSaveModal();
+        showToast('Cenário guardado com sucesso', 'success');
+      } else {
+        showToast('Erro ao guardar cenário', 'error');
+      }
+    }
+
+    function renderScenariosList() {
+      const container = document.getElementById('scenarios-list');
+      const filter = document.getElementById('scenario-filter').value;
+      
+      let filtered = savedScenarios;
+      if (filter === 'favorites') {
+        filtered = savedScenarios.filter(s => s.isFavorite);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+            <p class="text-sm">${filter === 'favorites' ? 'Nenhum favorito' : 'Nenhum cenário guardado'}</p>
+            <p class="text-xs mt-1">Use o botão "Guardar" no simulador</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(scenario => {
+        let data;
+        try {
+          data = JSON.parse(scenario.data);
+        } catch (e) {
+          data = null;
+        }
+
+        const inputs = data?.inputs || {};
+        const results = data?.results || {};
+
+        return `
+          <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 card-hover">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-gray-900 truncate">${scenario.name}</h3>
+                  ${scenario.isFavorite ? '<svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+                </div>
+                <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
+                  <div><span class="text-gray-400">Idade:</span> ${inputs.currentAge || '-'} → ${inputs.retirementAge || '-'}</div>
+                  <div><span class="text-gray-400">Poup. Mensal:</span> ${formatCurrency(inputs.monthlySavings || 0)}</div>
+                  <div><span class="text-gray-400">Retorno:</span> ${inputs.annualReturn || '-'}%</div>
+                  <div><span class="text-gray-400">FIRE:</span> ${results.yearsToFire !== null ? results.yearsToFire + ' anos' : '-'}</div>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Criado: ${new Date(scenario.createdAt).toLocaleDateString('pt-PT')}</p>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <button onclick="loadScenario('${scenario.__backendId}')" class="p-2 hover:bg-blue-100 rounded-lg transition-all" title="Carregar">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                </button>
+                <button onclick="toggleFavorite('${scenario.__backendId}')" class="p-2 hover:bg-yellow-100 rounded-lg transition-all" title="Favorito">
+                  <svg class="w-4 h-4 ${scenario.isFavorite ? 'text-yellow-500' : 'text-gray-400'}" fill="${scenario.isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                </button>
+                <button onclick="openDeleteModal('${scenario.__backendId}', '${scenario.name}')" class="p-2 hover:bg-red-100 rounded-lg transition-all" title="Eliminar">
+                  <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterScenarios() {
+      renderScenariosList();
+    }
+
+    function loadScenario(backendId) {
+      const scenario = savedScenarios.find(s => s.__backendId === backendId);
+      if (!scenario) return;
+
+      try {
+        const data = JSON.parse(scenario.data);
+        const inputs = data.inputs;
+
+        document.getElementById('current-age').value = inputs.currentAge;
+        document.getElementById('retirement-age').value = inputs.retirementAge;
+        document.getElementById('current-savings').value = inputs.currentSavings;
+        document.getElementById('monthly-savings').value = inputs.monthlySavings;
+        document.getElementById('annual-return').value = inputs.annualReturn;
+        document.getElementById('inflation-rate').value = inputs.inflationRate;
+        document.getElementById('monthly-expenses').value = inputs.monthlyExpenses;
+        document.getElementById('life-expectancy').value = inputs.lifeExpectancy;
+
+        switchTab('simulator');
+        calculateSimulation();
+        showToast(`Cenário "${scenario.name}" carregado`, 'success');
+      } catch (e) {
+        showToast('Erro ao carregar cenário', 'error');
+      }
+    }
+
+    async function toggleFavorite(backendId) {
+      const scenario = savedScenarios.find(s => s.__backendId === backendId);
+      if (!scenario) return;
+
+      const result = await window.dataSdk.update({
+        ...scenario,
+        isFavorite: !scenario.isFavorite,
+        updatedAt: new Date().toISOString()
+      });
+
+      if (result.isOk) {
+        showToast(scenario.isFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos', 'success');
+      } else {
+        showToast('Erro ao atualizar favorito', 'error');
+      }
+    }
+
+    function openDeleteModal(backendId, name) {
+      scenarioToDelete = backendId;
+      document.getElementById('delete-scenario-name').textContent = `"${name}"`;
+      document.getElementById('delete-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').classList.add('hidden');
+      scenarioToDelete = null;
+    }
+
+    async function confirmDeleteScenario() {
+      if (!scenarioToDelete) return;
+
+      const scenario = savedScenarios.find(s => s.__backendId === scenarioToDelete);
+      if (!scenario) return;
+
+      const result = await window.dataSdk.delete(scenario);
+
+      if (result.isOk) {
+        closeDeleteModal();
+        showToast('Cenário eliminado', 'success');
+      } else {
+        showToast('Erro ao eliminar cenário', 'error');
+      }
+    }
+
+    // ============================================
+    // EXAMPLES
+    // ============================================
+    function renderExamples() {
+      const container = document.getElementById('examples-list');
+      container.innerHTML = exampleScenarios.map((example, i) => `
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 card-hover cursor-pointer" onclick="loadExample(${i})">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: ${chartColors[i % chartColors.length]}20; color: ${chartColors[i % chartColors.length]}">
+              <span class="font-bold text-sm">${i + 1}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-gray-900">${example.name}</h4>
+              <p class="text-xs text-gray-600 mt-1">${example.description}</p>
+              <div class="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-500">
+                <div>Idade: ${example.data.currentAge} → ${example.data.retirementAge}</div>
+                <div>Retorno: ${example.data.annualReturn}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadExample(index) {
+      const example = exampleScenarios[index];
+      if (!example) return;
+
+      document.getElementById('current-age').value = example.data.currentAge;
+      document.getElementById('retirement-age').value = example.data.retirementAge;
+      document.getElementById('current-savings').value = example.data.currentSavings;
+      document.getElementById('monthly-savings').value = example.data.monthlySavings;
+      document.getElementById('annual-return').value = example.data.annualReturn;
+      document.getElementById('inflation-rate').value = example.data.inflationRate;
+      document.getElementById('monthly-expenses').value = example.data.monthlyExpenses;
+      document.getElementById('life-expectancy').value = example.data.lifeExpectancy;
+
+      switchTab('simulator');
+      calculateSimulation();
+      showToast(`Exemplo "${example.name}" carregado`, 'success');
+    }
+
+    // ============================================
+    // EXPORT FUNCTIONS
+    // ============================================
+    function exportPDF() {
+      if (!currentSimulation) {
+        showToast('Calcule uma simulação primeiro', 'warning');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const { inputs, results } = currentSimulation;
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let y = 20;
+
+      // Header
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text('Simulador de Independência Financeira', 14, 20);
+
+      y = 45;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('Dados de Entrada', 14, y);
+      
+      y += 10;
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      
+      const inputData = [
+        ['Idade Atual', `${inputs.currentAge} anos`],
+        ['Idade de Reforma', `${inputs.retirementAge} anos`],
+        ['Património Atual', formatCurrencyFull(inputs.currentSavings)],
+        ['Poupança Mensal', formatCurrencyFull(inputs.monthlySavings)],
+        ['Rentabilidade Anual', `${inputs.annualReturn}%`],
+        ['Inflação Anual', `${inputs.inflationRate}%`],
+        ['Despesas Mensais na Reforma', formatCurrencyFull(inputs.monthlyExpenses)],
+        ['Esperança de Vida', `${inputs.lifeExpectancy} anos`]
+      ];
+
+      inputData.forEach(([label, value]) => {
+        doc.text(`${label}: ${value}`, 14, y);
+        y += 7;
+      });
+
+      y += 10;
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text('Resultados da Simulação', 14, y);
+      
+      y += 10;
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      
+      const resultData = [
+        ['Património Final Projetado', formatCurrencyFull(results.futureValue)],
+        ['Número FIRE', formatCurrencyFull(results.fireNumber)],
+        ['Anos até FIRE', results.yearsToFire !== null ? `${results.yearsToFire} anos` : 'Mais de 100 anos'],
+        ['Anos até Reforma', `${results.yearsToRetirement} anos`],
+        ['Total de Contribuições', formatCurrencyFull(results.totalContributions)],
+        ['Total de Juros Compostos', formatCurrencyFull(results.totalInterest)],
+        ['Rentabilidade Real', `${results.realReturn.toFixed(2)}%`],
+        ['Levantamento Mensal Seguro (4%)', formatCurrencyFull(results.safeWithdrawal)],
+        ['Anos de Reforma Cobertos', `${results.retirementYears.toFixed(1)} anos`],
+        ['Estado', results.isOnTrack ? 'No Caminho ✓' : 'Necessita Ajustes']
+      ];
+
+      resultData.forEach(([label, value]) => {
+        doc.text(`${label}: ${value}`, 14, y);
+        y += 7;
+      });
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-PT')} | Moeda: ${currentCurrency}`, 14, pageHeight - 10);
+      doc.text('Página 1 de 1', pageWidth - 30, pageHeight - 10);
+
+      doc.save('simulacao-fire.pdf');
+      showToast('PDF exportado com sucesso', 'success');
+    }
+
+    function exportJSON() {
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        currency: currentCurrency,
+        currencyRates,
+        currentSimulation,
+        scenarios: savedScenarios.map(s => ({
+          name: s.name,
+          data: s.data,
+          isFavorite: s.isFavorite,
+          createdAt: s.createdAt
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fire-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('Dados exportados com sucesso', 'success');
+    }
+
+    async function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        if (data.currencyRates) {
+          currencyRates = { ...defaultCurrencyRates, ...data.currencyRates };
+          localStorage.setItem('currencyRates', JSON.stringify(currencyRates));
+        }
+
+        if (data.currency) {
+          currentCurrency = data.currency;
+          localStorage.setItem('currentCurrency', currentCurrency);
+          document.getElementById('currency-select').value = currentCurrency;
+        }
+
+        if (data.currentSimulation) {
+          const inputs = data.currentSimulation.inputs;
+          document.getElementById('current-age').value = inputs.currentAge;
+          document.getElementById('retirement-age').value = inputs.retirementAge;
+          document.getElementById('current-savings').value = inputs.currentSavings;
+          document.getElementById('monthly-savings').value = inputs.monthlySavings;
+          document.getElementById('annual-return').value = inputs.annualReturn;
+          document.getElementById('inflation-rate').value = inputs.inflationRate;
+          document.getElementById('monthly-expenses').value = inputs.monthlyExpenses;
+          document.getElementById('life-expectancy').value = inputs.lifeExpectancy;
+          calculateSimulation();
+        }
+
+        if (data.scenarios && data.scenarios.length > 0) {
+          for (const scenario of data.scenarios) {
+            if (savedScenarios.length >= 999) {
+              showToast('Limite de cenários atingido', 'warning');
+              break;
+            }
+            await window.dataSdk.create({
+              name: scenario.name,
+              type: 'scenario',
+              data: scenario.data,
+              isFavorite: scenario.isFavorite || false,
+              createdAt: scenario.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+
+        showToast('Dados importados com sucesso', 'success');
+      } catch (e) {
+        showToast('Erro ao importar ficheiro', 'error');
+      }
+
+      event.target.value = '';
+    }
+
+    // ============================================
+    // TOAST NOTIFICATIONS
+    // ============================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+
+      const icons = {
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+      };
+
+      toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 fade-in`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg>
+        <span class="text-sm">${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ============================================
+    // INITIALIZE APP
+    // ============================================
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cfed4edb5f5d04e',t:'MTc3MTQzMTQxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador de Juros Compostos</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5','primary-dark':'#33BEF2','primary-light':'#BBDEFB',surface:'#F8F9FA',border:'#E0E0E0',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warning:'#FF9800'},fontFamily:{main:['Inter','sans-serif']}}}}
+</script>
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+.app-root{height:100%;width:100%;overflow:auto;background:#F8F9FA}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94A3B8}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:#64748B;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab-btn:hover{color:#66CFF5;background:#EBF5FF}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600;background:#EBF5FF}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;transition:all .2s ease;position:relative;overflow:hidden}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
+.btn{transition:all .2s ease;border-radius:6px;font-weight:500;font-size:13px;padding:8px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-outline{background:transparent;border:1px solid #E0E0E0;color:#64748B}
+.btn-outline:hover{border-color:#66CFF5;color:#66CFF5;background:#EBF5FF}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.input-field{border:1px solid #E0E0E0;border-radius:6px;padding:8px 12px;font-size:13px;width:100%;transition:all .2s ease;background:#fff;color:#1e293b}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+.input-field::placeholder{color:#94A3B8}
+select.input-field{cursor:pointer}
+.toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;animation:slideIn .3s ease;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.modal-content{background:#fff;border-radius:12px;max-width:500px;width:90%;max-height:80%;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:scaleIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.chart-container{position:relative;height:280px;background:#fff;border-radius:8px}
+.chart-bar{transition:all .4s ease;border-radius:3px 3px 0 0}
+.chart-line-point{transition:all .3s ease}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.animate-in{animation:fadeUp .4s ease forwards;opacity:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.tooltip-wrap{position:relative}
+.tooltip-wrap .tooltip-text{visibility:hidden;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;white-space:nowrap;z-index:50;margin-bottom:4px}
+.tooltip-wrap:hover .tooltip-text{visibility:visible}
+.export-hide{transition:all .2s ease}
+.tab-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab-scroll::-webkit-scrollbar{height:0}
+label{font-size:12px;font-weight:500;color:#475569;margin-bottom:4px;display:block}
+.section-title{font-size:15px;font-weight:600;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.divider{height:1px;background:#E0E0E0;margin:16px 0}
+.inline-confirm{background:#FFF3E0;border:1px solid #FFB74D;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#F8F9FA;padding:8px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #E0E0E0}
+td{padding:8px 12px;border-bottom:1px solid #F1F5F9;color:#1e293b}
+tr:hover td{background:#F8FAFF}
+.progress-ring{transform:rotate(-90deg)}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-root" id="appRoot"><!-- Toast container -->
+   <div id="toastContainer"></div><!-- Header -->
+   <header class="bg-white border-b border-border sticky top-0 z-50" style="border-bottom:3px solid #66CFF5">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center" style="display: none;">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-base font-bold text-gray-900" style="display: none; display: none; line-height:1.2">IS Simulador de Juros Compostos</h1>
+       <p class="text-xs text-gray-400" style="display: none;">Comunidade dos Países de Língua Portuguesa</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 flex-wrap">
+      <div class="relative"><input type="text" id="globalSearch" class="input-field text-xs py-1.5 pl-8 pr-3" placeholder="Filtrar..." style="width:160px" oninput="handleGlobalFilter(this.value)"> <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" style="width:14px;height:14px"></i>
+      </div><button class="btn btn-outline btn-sm export-hide" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i><span class="hidden sm:inline">JSON</span></button> <button class="btn btn-outline btn-sm export-hide" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i><span class="hidden sm:inline">Importar</span></button> <input type="file" id="importInput" accept=".json" class="hidden" onchange="importJSON(event)"> <button class="btn btn-outline btn-sm export-hide" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i><span class="hidden sm:inline">Imagem</span></button> <button class="btn btn-primary btn-sm export-hide" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i><span class="hidden sm:inline">PDF</span></button>
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-border sticky top-[57px] z-40">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="tab-scroll flex"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator" style="width:15px;height:15px"></i>Simulador</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="bookmark" style="width:15px;height:15px"></i>Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins" style="width:15px;height:15px"></i>Moedas</button> <button class="tab-btn" data-tab="guia" onclick="switchTab('guia')"><i data-lucide="book-open" style="width:15px;height:15px"></i>Guia</button>
+     </div>
+    </div>
+   </nav><!-- Tab: Simulador -->
+   <div id="tab-simulador" class="tab-content max-w-7xl mx-auto px-4 py-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5"><!-- Input Panel -->
+     <div class="lg:col-span-1 space-y-4">
+      <div class="card p-5">
+       <div class="card-accent bg-primary"></div>
+       <div class="section-title pl-2">
+        <i data-lucide="sliders" style="width:16px;height:16px" class="text-primary"></i>Parâmetros
+       </div>
+       <div class="space-y-3">
+        <div><label>Título do Cenário</label> <input type="text" id="simTitle" class="input-field" placeholder="Ex: Poupança Conservadora" value="">
+        </div>
+        <div><label>Capital Inicial (Kz)</label> <input type="number" id="simCapital" class="input-field" placeholder="100000" value="100000" min="0" oninput="runSimulation()">
+        </div>
+        <div><label>Aporte Mensal (Kz)</label> <input type="number" id="simAporte" class="input-field" placeholder="10000" value="10000" min="0" oninput="runSimulation()">
+        </div>
+        <div><label>Taxa de Juros Anual (%)</label> <input type="number" id="simTaxa" class="input-field" placeholder="12" value="12" min="0" step="0.1" oninput="runSimulation()">
+        </div>
+        <div><label>Período (anos)</label> <input type="number" id="simAnos" class="input-field" placeholder="10" value="10" min="1" max="50" oninput="runSimulation()">
+        </div>
+        <div><label>Frequência de Capitalização</label> <select id="simFreq" class="input-field" onchange="runSimulation()"> <option value="12">Mensal</option> <option value="4">Trimestral</option> <option value="2">Semestral</option> <option value="1">Anual</option> </select>
+        </div>
+        <div><label>Moeda de Visualização</label> <select id="simMoeda" class="input-field" onchange="runSimulation()"> <option value="AOA">Kz - Kwanza (AOA)</option> </select>
+        </div>
+       </div>
+       <div class="flex gap-2 mt-4 export-hide"><button class="btn btn-primary flex-1" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i>Guardar</button> <button class="btn btn-outline flex-1" onclick="resetSimulator()"><i data-lucide="rotate-ccw" style="width:14px;height:14px"></i>Limpar</button>
+       </div>
+      </div><!-- Quick Summary -->
+      <div class="card p-5" id="summaryCard">
+       <div class="card-accent bg-success"></div>
+       <div class="section-title pl-2">
+        <i data-lucide="trending-up" style="width:16px;height:16px" class="text-success"></i>Resumo
+       </div>
+       <div id="summaryContent" class="space-y-2 text-sm"></div>
+      </div>
+     </div><!-- Charts & Table -->
+     <div class="lg:col-span-2 space-y-4"><!-- Conversion Info -->
+      <div id="conversionBanner" class="card p-3 hidden">
+       <div class="card-accent bg-warning"></div>
+       <div class="flex items-center gap-2 pl-3 text-xs text-gray-600"><i data-lucide="info" style="width:14px;height:14px" class="text-warning"></i> <span id="conversionText"></span>
+       </div>
+      </div><!-- Bar Chart -->
+      <div class="card p-5" id="barChartCard">
+       <div class="card-accent bg-primary"></div>
+       <div class="flex items-center justify-between mb-3 pl-2">
+        <div class="section-title mb-0">
+         <i data-lucide="bar-chart-3" style="width:16px;height:16px" class="text-primary"></i>Crescimento Anual
+        </div><button class="btn btn-outline btn-xs export-hide" onclick="exportChartImage('barChartArea','grafico-barras')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       </div>
+       <div class="chart-container" id="barChartArea">
+        <canvas id="barChart"></canvas>
+       </div>
+      </div><!-- Line Chart -->
+      <div class="card p-5" id="lineChartCard">
+       <div class="card-accent bg-gold"></div>
+       <div class="flex items-center justify-between mb-3 pl-2">
+        <div class="section-title mb-0">
+         <i data-lucide="trending-up" style="width:16px;height:16px" class="text-yellow-500"></i>Evolução do Capital
+        </div><button class="btn btn-outline btn-xs export-hide" onclick="exportChartImage('lineChartArea','grafico-evolucao')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       </div>
+       <div class="chart-container" id="lineChartArea">
+        <canvas id="lineChart"></canvas>
+       </div>
+      </div><!-- Pie Chart -->
+      <div class="card p-5" id="pieChartCard">
+       <div class="card-accent bg-success"></div>
+       <div class="flex items-center justify-between mb-3 pl-2">
+        <div class="section-title mb-0">
+         <i data-lucide="pie-chart" style="width:16px;height:16px" class="text-success"></i>Composição Final
+        </div><button class="btn btn-outline btn-xs export-hide" onclick="exportChartImage('pieChartArea','grafico-composicao')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       </div>
+       <div class="chart-container" id="pieChartArea" style="height:220px">
+        <canvas id="pieChart"></canvas>
+       </div>
+      </div><!-- Data Table -->
+      <div class="card p-5" id="tableCard">
+       <div class="card-accent bg-primary"></div>
+       <div class="flex items-center justify-between mb-3 pl-2 flex-wrap gap-2">
+        <div class="section-title mb-0">
+         <i data-lucide="table" style="width:16px;height:16px" class="text-primary"></i>Tabela Detalhada
+        </div><input type="text" class="input-field text-xs py-1 export-hide" style="width:140px" placeholder="Filtrar ano..." oninput="filterTable(this.value)" id="tableFilter">
+       </div>
+       <div class="overflow-x-auto">
+        <table id="simTable">
+         <thead>
+          <tr>
+           <th>Ano</th>
+           <th>Capital Inicial</th>
+           <th>Aportes</th>
+           <th>Juros</th>
+           <th>Total</th>
+          </tr>
+         </thead>
+         <tbody id="simTableBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Tab: Cenários -->
+   <div id="tab-cenarios" class="tab-content max-w-7xl mx-auto px-4 py-5 hidden">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+     <div class="section-title mb-0">
+      <i data-lucide="bookmark" style="width:16px;height:16px" class="text-primary"></i>Cenários Guardados
+     </div>
+     <div class="flex gap-2"><input type="text" id="scenarioFilter" class="input-field text-xs py-1.5" style="width:180px" placeholder="Filtrar cenários..." oninput="renderScenarios()"> <button class="btn btn-primary btn-sm export-hide" onclick="switchTab('simulador');resetSimulator()"><i data-lucide="plus" style="width:14px;height:14px"></i>Novo</button>
+     </div>
+    </div>
+    <div id="scenariosList" class="space-y-3"></div>
+    <div id="noScenarios" class="text-center py-16 text-gray-400 hidden"><i data-lucide="inbox" style="width:48px;height:48px" class="mx-auto mb-3 opacity-50"></i>
+     <p class="text-sm">Nenhum cenário guardado ainda</p>
+     <p class="text-xs mt-1">Use o simulador para criar e guardar cenários</p>
+    </div>
+    <div class="divider"></div>
+    <div class="section-title">
+     <i data-lucide="graduation-cap" style="width:16px;height:16px" class="text-gold"></i>Templates de Aprendizagem
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="templatesList"></div>
+   </div><!-- Tab: Moedas -->
+   <div id="tab-moedas" class="tab-content max-w-7xl mx-auto px-4 py-5 hidden">
+    <div class="card p-5">
+     <div class="card-accent bg-gold"></div>
+     <div class="flex items-center justify-between mb-4 pl-2 flex-wrap gap-2">
+      <div class="section-title mb-0">
+       <i data-lucide="coins" style="width:16px;height:16px" class="text-yellow-500"></i>Taxas de Câmbio (Base: 1 Kz)
+      </div><button class="btn btn-primary btn-sm export-hide" onclick="showAddCurrency()"><i data-lucide="plus" style="width:14px;height:14px"></i>Adicionar</button>
+     </div>
+     <p class="text-xs text-gray-400 mb-4 pl-2">Defina as taxas de conversão para visualizar simulações em diferentes moedas</p>
+     <div class="overflow-x-auto">
+      <table id="currencyTable">
+       <thead>
+        <tr>
+         <th>Código</th>
+         <th>Moeda</th>
+         <th>Taxa (1 Kz =)</th>
+         <th class="export-hide">Ações</th>
+        </tr>
+       </thead>
+       <tbody id="currencyBody"></tbody>
+      </table>
+     </div>
+    </div>
+   </div><!-- Tab: Guia -->
+   <div id="tab-guia" class="tab-content max-w-7xl mx-auto px-4 py-5 hidden">
+    <div class="space-y-4">
+     <div class="card p-5">
+      <div class="card-accent bg-primary"></div>
+      <div class="section-title pl-2">
+       <i data-lucide="book-open" style="width:16px;height:16px" class="text-primary"></i>O que são Juros Compostos?
+      </div>
+      <p class="text-sm text-gray-600 leading-relaxed pl-2">Os juros compostos são calculados sobre o capital inicial <strong>mais</strong> os juros acumulados dos períodos anteriores. Diferente dos juros simples, onde os juros são calculados apenas sobre o capital inicial, nos juros compostos o seu dinheiro cresce de forma exponencial ao longo do tempo. Este efeito é frequentemente chamado de <strong>"bola de neve"</strong> financeira.</p>
+     </div>
+     <div class="card p-5">
+      <div class="card-accent bg-success"></div>
+      <div class="section-title pl-2">
+       <i data-lucide="target" style="width:16px;height:16px" class="text-success"></i>Como usar este Simulador
+      </div>
+      <div class="space-y-3 pl-2 text-sm text-gray-600">
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">1</span>
+        <p><strong>Defina o Capital Inicial:</strong> O valor que pretende investir inicialmente, em Kwanzas.</p>
+       </div>
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">2</span>
+        <p><strong>Aporte Mensal:</strong> Quanto pode poupar ou investir mensalmente de forma consistente.</p>
+       </div>
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">3</span>
+        <p><strong>Taxa de Juros Anual:</strong> A taxa de rendimento esperada do investimento (ex: depósito a prazo, fundos).</p>
+       </div>
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">4</span>
+        <p><strong>Período:</strong> Por quantos anos pretende manter o investimento.</p>
+       </div>
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">5</span>
+        <p><strong>Frequência:</strong> Com que regularidade os juros são capitalizados (mensal é mais comum).</p>
+       </div>
+       <div class="flex gap-3 items-start">
+        <span class="badge bg-blue-100 text-primary mt-0.5">6</span>
+        <p><strong>Guardar:</strong> Salve cenários para comparar diferentes estratégias de investimento.</p>
+       </div>
+      </div>
+     </div>
+     <div class="card p-5">
+      <div class="card-accent bg-gold"></div>
+      <div class="section-title pl-2">
+       <i data-lucide="lightbulb" style="width:16px;height:16px" class="text-yellow-500"></i>Melhores Práticas
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
+       <div class="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+        <strong class="text-success">✓ Comece cedo</strong>
+        <p class="text-gray-600 mt-1">Quanto mais cedo começar, mais tempo o efeito dos juros compostos trabalha a seu favor.</p>
+       </div>
+       <div class="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+        <strong class="text-success">✓ Seja consistente</strong>
+        <p class="text-gray-600 mt-1">Aportes regulares, mesmo que pequenos, fazem uma enorme diferença a longo prazo.</p>
+       </div>
+       <div class="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+        <strong class="text-success">✓ Reinvista os juros</strong>
+        <p class="text-gray-600 mt-1">Não retire os rendimentos. Deixe-os acumular para maximizar o crescimento.</p>
+       </div>
+       <div class="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+        <strong class="text-success">✓ Diversifique</strong>
+        <p class="text-gray-600 mt-1">Não coloque todos os seus investimentos num único produto financeiro.</p>
+       </div>
+       <div class="bg-red-50 p-3 rounded-lg border border-red-200 text-sm">
+        <strong class="text-danger">✗ Evite retirar cedo</strong>
+        <p class="text-gray-600 mt-1">Retiradas antecipadas quebram o ciclo dos juros compostos.</p>
+       </div>
+       <div class="bg-red-50 p-3 rounded-lg border border-red-200 text-sm">
+        <strong class="text-danger">✗ Atenção à inflação</strong>
+        <p class="text-gray-600 mt-1">A taxa real de retorno é a taxa nominal menos a inflação. Considere isto nas simulações.</p>
+       </div>
+      </div>
+     </div>
+     <div class="card p-5">
+      <div class="card-accent bg-primary"></div>
+      <div class="section-title pl-2">
+       <i data-lucide="calculator" style="width:16px;height:16px" class="text-primary"></i>Fórmula dos Juros Compostos
+      </div>
+      <div class="bg-gray-50 p-4 rounded-lg text-center pl-2">
+       <p class="text-lg font-semibold text-gray-800 mb-2" style="font-family:monospace">M = C × (1 + i/n)<sup>n×t</sup> + A × [((1 + i/n)<sup>n×t</sup> - 1) / (i/n)]</p>
+       <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3 text-xs text-gray-500"><span><strong>M</strong> = Montante final</span> <span><strong>C</strong> = Capital inicial</span> <span><strong>i</strong> = Taxa anual</span> <span><strong>n</strong> = Capitalizações/ano</span> <span><strong>t</strong> = Tempo em anos</span> <span><strong>A</strong> = Aporte periódico</span>
+       </div>
+      </div>
+     </div>
+     <div class="card p-5">
+      <div class="card-accent bg-warning"></div>
+      <div class="section-title pl-2">
+       <i data-lucide="globe" style="width:16px;height:16px" class="text-warning"></i>Sobre a CPLP
+      </div>
+      <p class="text-sm text-gray-600 pl-2 leading-relaxed">Este simulador foi concebido para cidadãos da Comunidade dos Países de Língua Portuguesa (CPLP): Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, e Timor-Leste. Pode converter os resultados para qualquer moeda da CPLP através do painel de moedas.</p>
+     </div>
+    </div>
+   </div><!-- Footer -->
+   <footer class="bg-white border-t border-border mt-8 py-4">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400">
+     <p>IS Simulador de Juros Compostos — CPLP © 2025</p>
+    </div>
+   </footer>
+  </div>
+  <script>
+// ===== STATE =====
+let state = {
+  scenarios: [],
+  currencies: [
+    {code:'AOA',name:'Kwanza Angolano',rate:1,fixed:true},
+    {code:'BRL',name:'Real Brasileiro',rate:0.0063,fixed:false},
+    {code:'CVE',name:'Escudo Cabo-verdiano',rate:1.17,fixed:false},
+    {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:0.73,fixed:false},
+    {code:'XAF',name:'Franco CFA (Guiné Equatorial)',rate:0.73,fixed:false},
+    {code:'MZN',name:'Metical Moçambicano',rate:0.076,fixed:false},
+    {code:'EUR',name:'Euro (Portugal)',rate:0.0011,fixed:false},
+    {code:'STN',name:'Dobra (São Tomé)',rate:0.027,fixed:false},
+    {code:'USD',name:'Dólar Americano',rate:0.0012,fixed:false}
+  ],
+  currentSimData: null,
+  globalFilter: ''
+};
+
+// ===== LOAD/SAVE =====
+function loadState() {
+  try {
+    const s = localStorage.getItem('is_sim_jc_state');
+    if (s) {
+      const parsed = JSON.parse(s);
+      state.scenarios = parsed.scenarios || [];
+      if (parsed.currencies && parsed.currencies.length) state.currencies = parsed.currencies;
+    }
+  } catch(e) {}
+}
+function saveState() {
+  try {
+    localStorage.setItem('is_sim_jc_state', JSON.stringify({scenarios:state.scenarios,currencies:state.currencies}));
+  } catch(e) {}
+}
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const bg = type==='success'?'#4CAF50':type==='error'?'#F44336':type==='warning'?'#FF9800':'#66CFF5';
+  const t = document.createElement('div');
+  t.className='toast';
+  t.style.background=bg;
+  t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.animation='fadeOut .3s ease forwards';setTimeout(()=>t.remove(),300)},2800);
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  if(tab==='cenarios') renderScenarios();
+  if(tab==='moedas') renderCurrencies();
+}
+
+// ===== FORMAT =====
+function fmt(val, currCode='AOA') {
+  const c = state.currencies.find(x=>x.code===currCode);
+  const converted = c ? val * c.rate : val;
+  const sym = currCode==='AOA'?'Kz':currCode==='BRL'?'R$':currCode==='EUR'?'€':currCode==='USD'?'$':currCode;
+  if (Math.abs(converted)>=1e9) return sym+' '+(converted/1e9).toFixed(2)+'B';
+  if (Math.abs(converted)>=1e6) return sym+' '+(converted/1e6).toFixed(2)+'M';
+  return sym+' '+converted.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtPct(v){return v.toFixed(2)+'%'}
+
+// ===== SIMULATION =====
+function getSimParams() {
+  return {
+    title: document.getElementById('simTitle').value || '',
+    capital: parseFloat(document.getElementById('simCapital').value)||0,
+    aporte: parseFloat(document.getElementById('simAporte').value)||0,
+    taxa: parseFloat(document.getElementById('simTaxa').value)||0,
+    anos: parseInt(document.getElementById('simAnos').value)||1,
+    freq: parseInt(document.getElementById('simFreq').value)||12,
+    moeda: document.getElementById('simMoeda').value||'AOA'
+  };
+}
+function runSimulation() {
+  const p = getSimParams();
+  const r = p.taxa/100;
+  const n = p.freq;
+  const data = [];
+  let totalAportes = p.capital;
+  
+  for (let y=0; y<=p.anos; y++) {
+    const periods = n * y;
+    const ratePerPeriod = r/n;
+    let montante;
+    if (ratePerPeriod===0) {
+      montante = p.capital + p.aporte * 12 * y;
+    } else {
+      const factor = Math.pow(1+ratePerPeriod, periods);
+      const aportePerPeriod = p.aporte * (12/n);
+      montante = p.capital * factor + aportePerPeriod * ((factor-1)/ratePerPeriod);
+    }
+    const invested = p.capital + p.aporte * 12 * y;
+    const juros = montante - invested;
+    data.push({ano:y, montante, invested, juros});
+  }
+  state.currentSimData = {params:p, data};
+  updateSummary(p, data);
+  drawBarChart(p, data);
+  drawLineChart(p, data);
+  drawPieChart(p, data);
+  updateTable(p, data);
+  updateConversionBanner(p);
+}
+
+function updateConversionBanner(p) {
+  const banner = document.getElementById('conversionBanner');
+  if (p.moeda !== 'AOA') {
+    const c = state.currencies.find(x=>x.code===p.moeda);
+    if (c) {
+      banner.classList.remove('hidden');
+      document.getElementById('conversionText').textContent = `Valores convertidos: 1 Kz = ${c.rate} ${c.code} (${c.name})`;
+    }
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function updateSummary(p, data) {
+  const last = data[data.length-1];
+  const jurosTotal = last.juros;
+  const investido = last.invested;
+  const montante = last.montante;
+  const pctJuros = montante>0 ? (jurosTotal/montante*100) : 0;
+  const m = p.moeda;
+  
+  document.getElementById('summaryContent').innerHTML = `
+    <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
+      <span class="text-gray-500">Total Investido</span>
+      <span class="font-semibold text-gray-800">${fmt(investido,m)}</span>
+    </div>
+    <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
+      <span class="text-gray-500">Juros Acumulados</span>
+      <span class="font-semibold text-success">${fmt(jurosTotal,m)}</span>
+    </div>
+    <div class="flex justify-between items-center py-1.5 border-b border-gray-100">
+      <span class="text-gray-500">Montante Final</span>
+      <span class="font-bold text-primary text-base">${fmt(montante,m)}</span>
+    </div>
+    <div class="flex justify-between items-center py-1.5">
+      <span class="text-gray-500">Rendimento</span>
+      <span class="font-semibold text-yellow-600">${fmtPct(pctJuros)}</span>
+    </div>
+  `;
+}
+
+// ===== CHARTS (Canvas) =====
+function drawBarChart(p, data) {
+  const canvas = document.getElementById('barChart');
+  const container = document.getElementById('barChartArea');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  canvas.width = W * 2; canvas.height = H * 2;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2,2);
+  ctx.clearRect(0,0,W,H);
+  
+  const filtered = data.filter(d=>d.ano>0);
+  if(!filtered.length) return;
+  
+  const margin = {top:20,right:20,bottom:40,left:65};
+  const cw = W-margin.left-margin.right;
+  const ch = H-margin.top-margin.bottom;
+  const maxVal = Math.max(...filtered.map(d=>d.montante));
+  const barW = Math.min(Math.max(cw/filtered.length - 4, 6), 40);
+  const gap = (cw - barW*filtered.length)/(filtered.length+1);
+  
+  // Grid
+  ctx.strokeStyle='#F1F5F9';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=margin.top+ch*(1-i/4);
+    ctx.beginPath();ctx.moveTo(margin.left,y);ctx.lineTo(W-margin.right,y);ctx.stroke();
+    ctx.fillStyle='#94A3B8';ctx.font='10px Inter';ctx.textAlign='right';
+    ctx.fillText(fmt(maxVal*i/4,p.moeda),margin.left-8,y+3);
+  }
+  
+  filtered.forEach((d,i)=>{
+    const x = margin.left + gap + i*(barW+gap);
+    const hInv = (d.invested/maxVal)*ch;
+    const hJur = (d.juros/maxVal)*ch;
+    
+    // Invested bar
+    ctx.fillStyle='#BBDEFB';
+    ctx.beginPath();
+    const r=2;
+    const bx=x, by=margin.top+ch-hInv-hJur, bw=barW, bh=hInv;
+    ctx.roundRect?ctx.roundRect(bx,by+hJur,bw,bh,0):ctx.fillRect(bx,by+hJur,bw,bh);
+    ctx.fill();
+    
+    // Interest bar
+    ctx.fillStyle='#66CFF5';
+    ctx.beginPath();
+    if(ctx.roundRect){ctx.roundRect(bx,by,bw,hJur,[r,r,0,0])}else{ctx.fillRect(bx,by,bw,hJur)}
+    ctx.fill();
+    
+    // Year label
+    ctx.fillStyle='#64748B';ctx.font='10px Inter';ctx.textAlign='center';
+    if(filtered.length<=20 || d.ano%Math.ceil(filtered.length/15)===0)
+      ctx.fillText(d.ano+'a',x+barW/2,H-margin.bottom+16);
+  });
+  
+  // Legend
+  ctx.fillStyle='#66CFF5';ctx.fillRect(margin.left,H-14,10,10);
+  ctx.fillStyle='#64748B';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText('Juros',margin.left+14,H-5);
+  ctx.fillStyle='#BBDEFB';ctx.fillRect(margin.left+60,H-14,10,10);
+  ctx.fillStyle='#64748B';ctx.fillText('Investido',margin.left+74,H-5);
+}
+
+function drawLineChart(p, data) {
+  const canvas = document.getElementById('lineChart');
+  const container = document.getElementById('lineChartArea');
+  const W = container.clientWidth; const H = container.clientHeight;
+  canvas.width=W*2;canvas.height=H*2;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2,2);ctx.clearRect(0,0,W,H);
+  
+  if(data.length<2) return;
+  const margin={top:20,right:20,bottom:40,left:65};
+  const cw=W-margin.left-margin.right;
+  const ch=H-margin.top-margin.bottom;
+  const maxVal=Math.max(...data.map(d=>d.montante));
+  
+  // Grid
+  ctx.strokeStyle='#F1F5F9';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=margin.top+ch*(1-i/4);
+    ctx.beginPath();ctx.moveTo(margin.left,y);ctx.lineTo(W-margin.right,y);ctx.stroke();
+    ctx.fillStyle='#94A3B8';ctx.font='10px Inter';ctx.textAlign='right';
+    ctx.fillText(fmt(maxVal*i/4,p.moeda),margin.left-8,y+3);
+  }
+  
+  function xPos(i){return margin.left+i/(data.length-1)*cw}
+  function yPos(v){return margin.top+ch-(v/maxVal)*ch}
+  
+  // Invested area
+  ctx.beginPath();
+  ctx.moveTo(xPos(0),yPos(0));
+  data.forEach((d,i)=>ctx.lineTo(xPos(i),yPos(d.invested)));
+  ctx.lineTo(xPos(data.length-1),margin.top+ch);
+  ctx.lineTo(xPos(0),margin.top+ch);
+  ctx.closePath();
+  ctx.fillStyle='rgba(187,222,251,0.3)';ctx.fill();
+  
+  // Invested line
+  ctx.beginPath();
+  data.forEach((d,i)=>{i===0?ctx.moveTo(xPos(i),yPos(d.invested)):ctx.lineTo(xPos(i),yPos(d.invested))});
+  ctx.strokeStyle='#90CAF9';ctx.lineWidth=2;ctx.stroke();
+  
+  // Total area
+  ctx.beginPath();
+  ctx.moveTo(xPos(0),yPos(data[0].montante));
+  data.forEach((d,i)=>ctx.lineTo(xPos(i),yPos(d.montante)));
+  ctx.lineTo(xPos(data.length-1),margin.top+ch);
+  ctx.lineTo(xPos(0),margin.top+ch);
+  ctx.closePath();
+  ctx.fillStyle='rgba(30,136,229,0.12)';ctx.fill();
+  
+  // Total line
+  ctx.beginPath();
+  data.forEach((d,i)=>{i===0?ctx.moveTo(xPos(i),yPos(d.montante)):ctx.lineTo(xPos(i),yPos(d.montante))});
+  ctx.strokeStyle='#66CFF5';ctx.lineWidth=2.5;ctx.stroke();
+  
+  // Points
+  data.forEach((d,i)=>{
+    if(data.length<=20||i%Math.ceil(data.length/15)===0){
+      ctx.beginPath();ctx.arc(xPos(i),yPos(d.montante),3,0,Math.PI*2);
+      ctx.fillStyle='#66CFF5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    if(data.length<=20||i%Math.ceil(data.length/10)===0){
+      ctx.fillStyle='#64748B';ctx.font='10px Inter';ctx.textAlign='center';
+      ctx.fillText(d.ano+'a',xPos(i),H-margin.bottom+16);
+    }
+  });
+  
+  // Legend
+  ctx.strokeStyle='#66CFF5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(margin.left,H-10);ctx.lineTo(margin.left+20,H-10);ctx.stroke();
+  ctx.fillStyle='#64748B';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText('Montante',margin.left+24,H-6);
+  ctx.strokeStyle='#90CAF9';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(margin.left+90,H-10);ctx.lineTo(margin.left+110,H-10);ctx.stroke();
+  ctx.fillStyle='#64748B';ctx.fillText('Investido',margin.left+114,H-6);
+}
+
+function drawPieChart(p, data) {
+  const canvas = document.getElementById('pieChart');
+  const container = document.getElementById('pieChartArea');
+  const W = container.clientWidth; const H = container.clientHeight;
+  canvas.width=W*2;canvas.height=H*2;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2,2);ctx.clearRect(0,0,W,H);
+  
+  const last = data[data.length-1];
+  if(!last||last.montante===0) return;
+  
+  const cx = W/2 - 60;
+  const cy = H/2;
+  const r = Math.min(cx,cy)-20;
+  const slices = [
+    {label:'Capital Inicial',val:p.capital,color:'#BBDEFB'},
+    {label:'Aportes',val:last.invested-p.capital,color:'#64B5F6'},
+    {label:'Juros',val:last.juros,color:'#66CFF5'}
+  ];
+  const total = slices.reduce((s,x)=>s+x.val,0);
+  let startAngle = -Math.PI/2;
+  
+  slices.forEach(s=>{
+    const sweep = (s.val/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,startAngle,startAngle+sweep);ctx.closePath();
+    ctx.fillStyle=s.color;ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    startAngle+=sweep;
+  });
+  
+  // Inner circle for donut
+  ctx.beginPath();ctx.arc(cx,cy,r*0.55,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#1e293b';ctx.font='bold 13px Inter';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(fmt(last.montante,p.moeda),cx,cy);
+  
+  // Legend
+  const lx = W/2 + 40;
+  slices.forEach((s,i)=>{
+    const ly = cy - 30 + i*28;
+    ctx.fillStyle=s.color;
+    ctx.beginPath();ctx.roundRect?ctx.roundRect(lx,ly-5,12,12,2):ctx.fillRect(lx,ly-5,12,12);ctx.fill();
+    ctx.fillStyle='#1e293b';ctx.font='500 12px Inter';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText(s.label,lx+18,ly+1);
+    ctx.fillStyle='#64748B';ctx.font='11px Inter';
+    ctx.fillText(fmt(s.val,p.moeda)+' ('+fmtPct(s.val/total*100)+')',lx+18,ly+16);
+  });
+}
+
+function updateTable(p, data) {
+  const tbody = document.getElementById('simTableBody');
+  const filter = (document.getElementById('tableFilter')?.value||'').toLowerCase();
+  const filtered = data.filter(d=>{
+    if(state.globalFilter){
+      const s = `${d.ano} ${fmt(d.montante,p.moeda)} ${fmt(d.invested,p.moeda)}`.toLowerCase();
+      if(!s.includes(state.globalFilter)) return false;
+    }
+    if(filter && !String(d.ano).includes(filter)) return false;
+    return true;
+  });
+  
+  tbody.innerHTML = filtered.map(d=>`
+    <tr>
+      <td class="font-medium">${d.ano}</td>
+      <td>${fmt(d.ano===0?d.invested:data[d.ano-1]?.montante||d.invested,p.moeda)}</td>
+      <td>${fmt(d.ano===0?0:p.aporte*12,p.moeda)}</td>
+      <td class="text-success font-medium">${fmt(d.ano===0?0:d.juros-(d.ano>1?data[d.ano-1].juros:0),p.moeda)}</td>
+      <td class="font-semibold text-primary">${fmt(d.montante,p.moeda)}</td>
+    </tr>
+  `).join('');
+}
+
+function filterTable(v){
+  if(state.currentSimData) updateTable(state.currentSimData.params, state.currentSimData.data);
+}
+
+// ===== SCENARIOS =====
+function saveScenario() {
+  const p = getSimParams();
+  if(!p.capital && !p.aporte){showToast('Defina pelo menos capital ou aporte','warning');return}
+  const num = state.scenarios.length+1;
+  const scenario = {
+    id: Date.now().toString(),
+    title: p.title || 'Cenário '+num,
+    params: p,
+    createdAt: new Date().toISOString()
+  };
+  state.scenarios.push(scenario);
+  saveState();
+  showToast('Cenário "'+scenario.title+'" guardado!');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenarioFilter')?.value||'').toLowerCase();
+  const list = document.getElementById('scenariosList');
+  const noEl = document.getElementById('noScenarios');
+  
+  let filtered = state.scenarios;
+  if(filter) filtered = filtered.filter(s=>s.title.toLowerCase().includes(filter)||s.params.capital.toString().includes(filter));
+  if(state.globalFilter) filtered = filtered.filter(s=>s.title.toLowerCase().includes(state.globalFilter));
+  
+  if(!filtered.length){
+    list.innerHTML='';
+    noEl.classList.toggle('hidden', state.scenarios.length>0 && filter);
+    if(!state.scenarios.length) noEl.classList.remove('hidden');
+    else if(filter) list.innerHTML='<p class="text-center text-gray-400 py-8 text-sm">Nenhum cenário corresponde ao filtro</p>';
+    return;
+  }
+  noEl.classList.add('hidden');
+  
+  list.innerHTML = filtered.map(s=>{
+    const p=s.params;
+    return `
+    <div class="card p-4 animate-in" style="animation-delay:${filtered.indexOf(s)*50}ms">
+      <div class="card-accent bg-primary"></div>
+      <div class="flex items-start justify-between pl-3 gap-3 flex-wrap">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="font-semibold text-sm text-gray-800 truncate">${s.title}</h3>
+            <span class="badge bg-blue-50 text-primary">${fmtPct(p.taxa)}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+            <span>Capital: ${fmt(p.capital)}</span>
+            <span>Aporte: ${fmt(p.aporte)}/mês</span>
+            <span>${p.anos} anos</span>
+            <span>${new Date(s.createdAt).toLocaleDateString('pt-PT')}</span>
+          </div>
+        </div>
+        <div class="flex gap-1.5 export-hide">
+          <button class="btn btn-outline btn-xs" onclick="loadScenario('${s.id}')" title="Carregar"><i data-lucide="play" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-outline btn-xs" onclick="cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-outline btn-xs" onclick="editScenarioTitle('${s.id}')" title="Editar título"><i data-lucide="edit" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-xs" style="color:#F44336;border:1px solid #FECDD3" onclick="confirmDeleteScenario('${s.id}')" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        </div>
+      </div>
+      <div id="confirm-${s.id}" class="hidden mt-2 ml-3"></div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id) {
+  const s = state.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('simTitle').value=s.title;
+  document.getElementById('simCapital').value=s.params.capital;
+  document.getElementById('simAporte').value=s.params.aporte;
+  document.getElementById('simTaxa').value=s.params.taxa;
+  document.getElementById('simAnos').value=s.params.anos;
+  document.getElementById('simFreq').value=s.params.freq;
+  document.getElementById('simMoeda').value=s.params.moeda||'AOA';
+  switchTab('simulador');
+  runSimulation();
+  showToast('Cenário "'+s.title+'" carregado');
+}
+
+function cloneScenario(id) {
+  const s = state.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id=Date.now().toString();
+  clone.title=s.title+' (Cópia)';
+  clone.createdAt=new Date().toISOString();
+  state.scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado!');
+}
+
+function editScenarioTitle(id) {
+  const s = state.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const el = document.getElementById('confirm-'+id);
+  el.classList.remove('hidden');
+  el.innerHTML=`
+    <div class="flex gap-2 items-center">
+      <input type="text" class="input-field text-xs py-1" value="${s.title}" id="edit-title-${id}" style="flex:1">
+      <button class="btn btn-primary btn-xs" onclick="applyEditTitle('${id}')"><i data-lucide="check" style="width:12px;height:12px"></i></button>
+      <button class="btn btn-outline btn-xs" onclick="document.getElementById('confirm-${id}').classList.add('hidden')"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+    </div>`;
+  lucide.createIcons();
+  document.getElementById('edit-title-'+id).focus();
+}
+
+function applyEditTitle(id) {
+  const s = state.scenarios.find(x=>x.id===id);
+  const v = document.getElementById('edit-title-'+id).value.trim();
+  if(s&&v){s.title=v;saveState();renderScenarios();showToast('Título atualizado');}
+}
+
+function confirmDeleteScenario(id) {
+  const el = document.getElementById('confirm-'+id);
+  el.classList.remove('hidden');
+  el.innerHTML=`
+    <div class="inline-confirm">
+      <span>Eliminar este cenário?</span>
+      <button class="btn btn-danger btn-xs" onclick="deleteScenario('${id}')">Sim</button>
+      <button class="btn btn-outline btn-xs" onclick="document.getElementById('confirm-${id}').classList.add('hidden')">Não</button>
+    </div>`;
+  lucide.createIcons();
+}
+
+function deleteScenario(id) {
+  state.scenarios = state.scenarios.filter(x=>x.id!==id);
+  saveState();
+  renderScenarios();
+  showToast('Cenário eliminado','warning');
+}
+
+function resetSimulator() {
+  document.getElementById('simTitle').value='';
+  document.getElementById('simCapital').value='100000';
+  document.getElementById('simAporte').value='10000';
+  document.getElementById('simTaxa').value='12';
+  document.getElementById('simAnos').value='10';
+  document.getElementById('simFreq').value='12';
+  document.getElementById('simMoeda').value='AOA';
+  runSimulation();
+}
+
+// ===== TEMPLATES =====
+const templates = [
+  {title:'Poupança Conservadora',desc:'Depósito a prazo com taxa baixa e aportes regulares',capital:500000,aporte:25000,taxa:8,anos:10,freq:12},
+  {title:'Investimento Moderado',desc:'Fundo de investimento com retorno médio',capital:1000000,aporte:50000,taxa:15,anos:15,freq:12},
+  {title:'Crescimento Agressivo',desc:'Investimento de alto risco e retorno elevado',capital:2000000,aporte:100000,taxa:25,anos:20,freq:12},
+  {title:'Primeiro Milhão',desc:'Caminho para acumular 1 milhão de Kz partindo do zero',capital:0,aporte:30000,taxa:12,anos:10,freq:12},
+  {title:'Reforma Antecipada',desc:'Planeamento de poupança para reforma aos 50',capital:5000000,aporte:200000,taxa:10,anos:25,freq:4},
+  {title:'Educação dos Filhos',desc:'Fundo para educação universitária',capital:200000,aporte:15000,taxa:9,anos:18,freq:12}
+];
+
+function renderTemplates() {
+  document.getElementById('templatesList').innerHTML = templates.map((t,i)=>`
+    <div class="card p-4 cursor-pointer hover:border-primary" onclick="loadTemplate(${i})">
+      <div class="card-accent bg-gold"></div>
+      <div class="pl-3">
+        <h4 class="font-semibold text-sm text-gray-800 mb-1">${t.title}</h4>
+        <p class="text-xs text-gray-500 mb-2">${t.desc}</p>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="badge bg-blue-50 text-primary">${fmtPct(t.taxa)}/ano</span>
+          <span class="badge bg-gray-100 text-gray-600">${t.anos} anos</span>
+          <span class="badge bg-green-50 text-success">${fmt(t.capital)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadTemplate(idx) {
+  const t = templates[idx];
+  document.getElementById('simTitle').value=t.title;
+  document.getElementById('simCapital').value=t.capital;
+  document.getElementById('simAporte').value=t.aporte;
+  document.getElementById('simTaxa').value=t.taxa;
+  document.getElementById('simAnos').value=t.anos;
+  document.getElementById('simFreq').value=t.freq;
+  document.getElementById('simMoeda').value='AOA';
+  switchTab('simulador');
+  runSimulation();
+  showToast('Template "'+t.title+'" carregado');
+}
+
+// ===== CURRENCIES =====
+function renderCurrencies() {
+  const tbody = document.getElementById('currencyBody');
+  tbody.innerHTML = state.currencies.map(c=>`
+    <tr>
+      <td><span class="font-semibold">${c.code}</span></td>
+      <td class="text-gray-600">${c.name}</td>
+      <td>
+        ${c.fixed?'<span class="text-gray-400">1.000000</span>':`<input type="number" class="input-field text-xs py-1 export-hide" style="width:120px" value="${c.rate}" step="0.000001" min="0" onchange="updateCurrencyRate('${c.code}',this.value)">`}
+        ${c.fixed?'':'<span class="hidden-on-export-show text-xs text-gray-500" style="display:none">'+c.rate+'</span>'}
+      </td>
+      <td class="export-hide">
+        ${c.fixed?'<span class="text-xs text-gray-400">Base</span>':`
+          <button class="btn btn-xs" style="color:#F44336;border:1px solid #FECDD3" onclick="confirmDeleteCurrency('${c.code}',this)"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        `}
+      </td>
+    </tr>
+  `).join('');
+  updateCurrencySelect();
+  lucide.createIcons();
+}
+
+function updateCurrencyRate(code, val) {
+  const c = state.currencies.find(x=>x.code===code);
+  if(c){c.rate=parseFloat(val)||0;saveState();if(state.currentSimData)runSimulation();}
+}
+
+function confirmDeleteCurrency(code, btn) {
+  const row = btn.closest('tr');
+  const td = row.querySelector('td:last-child');
+  td.innerHTML=`
+    <div class="flex gap-1">
+      <button class="btn btn-danger btn-xs" onclick="deleteCurrency('${code}')">Sim</button>
+      <button class="btn btn-outline btn-xs" onclick="renderCurrencies()">Não</button>
+    </div>`;
+  lucide.createIcons();
+}
+
+function deleteCurrency(code) {
+  state.currencies=state.currencies.filter(x=>x.code!==code);
+  saveState();renderCurrencies();
+  showToast('Moeda removida','warning');
+}
+
+function showAddCurrency() {
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='addCurrencyModal';
+  overlay.innerHTML=`
+    <div class="modal-content p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-gray-800">Adicionar Moeda</h3>
+        <button onclick="document.getElementById('addCurrencyModal').remove()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div><label>Código (ex: TRY)</label><input type="text" id="newCurrCode" class="input-field" placeholder="XXX" maxlength="5"></div>
+        <div><label>Nome da Moeda</label><input type="text" id="newCurrName" class="input-field" placeholder="Lira Turca"></div>
+        <div><label>Taxa (1 Kz = ?)</label><input type="number" id="newCurrRate" class="input-field" placeholder="0.001" step="0.000001" min="0"></div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-primary flex-1" onclick="addCurrency()">Adicionar</button>
+        <button class="btn btn-outline flex-1" onclick="document.getElementById('addCurrencyModal').remove()">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  lucide.createIcons();
+}
+
+function addCurrency() {
+  const code=document.getElementById('newCurrCode').value.trim().toUpperCase();
+  const name=document.getElementById('newCurrName').value.trim();
+  const rate=parseFloat(document.getElementById('newCurrRate').value);
+  if(!code||!name||isNaN(rate)||rate<=0){showToast('Preencha todos os campos','error');return}
+  if(state.currencies.find(c=>c.code===code)){showToast('Código já existe','error');return}
+  state.currencies.push({code,name,rate,fixed:false});
+  saveState();
+  document.getElementById('addCurrencyModal').remove();
+  renderCurrencies();
+  showToast('Moeda '+code+' adicionada!');
+}
+
+function updateCurrencySelect() {
+  const sel = document.getElementById('simMoeda');
+  const current = sel.value;
+  sel.innerHTML = state.currencies.map(c=>`<option value="${c.code}">${c.code} - ${c.name}</option>`).join('');
+  sel.value = state.currencies.find(x=>x.code===current)?current:'AOA';
+}
+
+// ===== GLOBAL FILTER =====
+function handleGlobalFilter(v) {
+  state.globalFilter = v.toLowerCase();
+  if(state.currentSimData) updateTable(state.currentSimData.params, state.currentSimData.data);
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if(activeTab==='cenarios') renderScenarios();
+}
+
+// ===== EXPORT/IMPORT =====
+function exportJSON() {
+  const data = {
+    version:'1.0',
+    appName:'IS Simulador de Juros Compostos',
+    exportedAt:new Date().toISOString(),
+    scenarios:state.scenarios,
+    currencies:state.currencies
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='is-simulador-juros-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Dados exportados em JSON');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.scenarios) state.scenarios=[...state.scenarios,...data.scenarios];
+      if(data.currencies) {
+        data.currencies.forEach(c=>{
+          if(!state.currencies.find(x=>x.code===c.code)) state.currencies.push(c);
+          else {const ex=state.currencies.find(x=>x.code===c.code);if(!ex.fixed)ex.rate=c.rate;}
+        });
+      }
+      saveState();
+      renderCurrencies();
+      runSimulation();
+      showToast('Dados importados com sucesso!');
+    } catch(err) {showToast('Ficheiro inválido','error');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+async function exportAppImage() {
+  showToast('A preparar imagem...','info');
+  const el = document.getElementById('appRoot');
+  // Hide export elements
+  document.querySelectorAll('.export-hide').forEach(e=>e.style.display='none');
+  // Show rate values for currency table
+  document.querySelectorAll('.hidden-on-export-show').forEach(e=>e.style.display='inline');
+  
+  try {
+    const canvas = await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#F8F9FA',scrollY:-window.scrollY,height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const a=document.createElement('a');
+    a.download='is-simulador-juros-compostos.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    showToast('Imagem exportada!');
+  }catch(e){showToast('Erro ao exportar imagem','error');}
+  
+  document.querySelectorAll('.export-hide').forEach(e=>e.style.display='');
+  document.querySelectorAll('.hidden-on-export-show').forEach(e=>e.style.display='none');
+}
+
+async function exportChartImage(containerId, filename) {
+  const el = document.getElementById(containerId);
+  try {
+    const canvas = await html2canvas(el,{scale:3,backgroundColor:'#ffffff'});
+    const a=document.createElement('a');
+    a.download=filename+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    showToast('Gráfico exportado em HD!');
+  }catch(e){showToast('Erro ao exportar','error');}
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...','info');
+  const {jsPDF} = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const usableW = pw-margin*2;
+  let y = 30;
+  const title = document.getElementById('appTitle')?.textContent || 'IS Simulador de Juros Compostos';
+  
+  function addHeader(pageNum) {
+    pdf.setFillColor(30,136,229);
+    pdf.rect(0,0,pw,18,'F');
+    pdf.setTextColor(255,255,255);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(10);
+    pdf.text(title,margin,12);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica','normal');
+    pdf.text('Pág. '+pageNum,pw-margin,12,{align:'right'});
+  }
+  function addFooter(pageNum) {
+    pdf.setFillColor(248,249,250);
+    pdf.rect(0,ph-12,pw,12,'F');
+    pdf.setTextColor(100,116,139);
+    pdf.setFontSize(7);
+    pdf.text(title+' — CPLP © '+new Date().getFullYear(),margin,ph-5);
+    pdf.text('Exportado: '+new Date().toLocaleDateString('pt-PT'),pw-margin,ph-5,{align:'right'});
+  }
+  function checkNewPage() {
+    if(y>ph-35){addFooter(pdf.internal.getNumberOfPages());pdf.addPage();addHeader(pdf.internal.getNumberOfPages());y=28;return true;}
+    return false;
+  }
+  
+  addHeader(1);
+  
+  // Summary
+  if(state.currentSimData) {
+    const p=state.currentSimData.params;
+    const d=state.currentSimData.data;
+    const last=d[d.length-1];
+    
+    pdf.setTextColor(30,41,59);pdf.setFontSize(12);pdf.setFont('helvetica','bold');
+    pdf.text('Resumo da Simulação',margin,y);y+=8;
+    
+    pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.setTextColor(71,85,105);
+    const info = [
+      ['Título', p.title||'Sem título'],
+      ['Capital Inicial', fmt(p.capital,p.moeda)],
+      ['Aporte Mensal', fmt(p.aporte,p.moeda)],
+      ['Taxa Anual', fmtPct(p.taxa)],
+      ['Período', p.anos+' anos'],
+      ['Capitalização', p.freq===12?'Mensal':p.freq===4?'Trimestral':p.freq===2?'Semestral':'Anual'],
+      ['Total Investido', fmt(last.invested,p.moeda)],
+      ['Juros Acumulados', fmt(last.juros,p.moeda)],
+      ['Montante Final', fmt(last.montante,p.moeda)]
+    ];
+    info.forEach(([k,v])=>{
+      pdf.setFont('helvetica','bold');pdf.text(k+':',margin,y);
+      pdf.setFont('helvetica','normal');pdf.text(v,margin+45,y);
+      y+=5;
+    });
+    y+=5;
+    
+    // Charts - small size
+    const charts = [
+      {id:'barChart',label:'Crescimento Anual'},
+      {id:'lineChart',label:'Evolução do Capital'},
+      {id:'pieChart',label:'Composição Final'}
+    ];
+    for(const ch of charts) {
+      checkNewPage();
+      const canvas = document.getElementById(ch.id);
+      if(canvas) {
+        pdf.setTextColor(30,41,59);pdf.setFontSize(10);pdf.setFont('helvetica','bold');
+        pdf.text(ch.label,margin,y);y+=4;
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = Math.min(usableW*0.7, 120);
+        const ratio = canvas.height/canvas.width;
+        const imgH = imgW*ratio;
+        if(y+imgH>ph-30){checkNewPage();}
+        pdf.addImage(imgData,'PNG',margin,y,imgW,imgH);
+        y+=imgH+8;
+      }
+    }
+    
+    // Table
+    checkNewPage();
+    pdf.setTextColor(30,41,59);pdf.setFontSize(10);pdf.setFont('helvetica','bold');
+    pdf.text('Tabela Detalhada',margin,y);y+=6;
+    
+    pdf.setFontSize(7);
+    const cols=['Ano','Capital','Aportes','Juros','Total'];
+    const colW=[12,35,30,30,35];
+    
+    // Header
+    pdf.setFillColor(241,245,249);pdf.rect(margin,y-3,usableW,6,'F');
+    pdf.setFont('helvetica','bold');pdf.setTextColor(71,85,105);
+    let cx=margin;
+    cols.forEach((c,i)=>{pdf.text(c,cx+1,y);cx+=colW[i]});
+    y+=5;
+    
+    pdf.setFont('helvetica','normal');pdf.setTextColor(30,41,59);
+    d.forEach(row=>{
+      if(y>ph-25){addFooter(pdf.internal.getNumberOfPages());pdf.addPage();addHeader(pdf.internal.getNumberOfPages());y=28;
+        pdf.setFillColor(241,245,249);pdf.rect(margin,y-3,usableW,6,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(71,85,105);
+        let hx=margin;cols.forEach((c,i)=>{pdf.text(c,hx+1,y);hx+=colW[i]});y+=5;
+        pdf.setFont('helvetica','normal');pdf.setTextColor(30,41,59);
+      }
+      cx=margin;
+      const vals=[
+        row.ano.toString(),
+        fmt(row.ano===0?row.invested:d[row.ano-1]?.montante||row.invested,p.moeda),
+        fmt(row.ano===0?0:p.aporte*12,p.moeda),
+        fmt(row.ano===0?0:row.juros-(row.ano>1?d[row.ano-1].juros:0),p.moeda),
+        fmt(row.montante,p.moeda)
+      ];
+      vals.forEach((v,i)=>{pdf.text(v,cx+1,y);cx+=colW[i]});
+      y+=4;
+    });
+  }
+  
+  addFooter(pdf.internal.getNumberOfPages());
+  pdf.save('is-simulador-juros-compostos.pdf');
+  showToast('PDF exportado com sucesso!');
+}
+
+// ===== ELEMENT SDK =====
+const defaultConfig = {
+  app_title: 'IS Simulador de Juros Compostos',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#1E293B',
+  primary_action: '#66CFF5',
+  secondary_action: '#64748B',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action || defaultConfig.primary_action;
+  const secondary = config.secondary_action || defaultConfig.secondary_action;
+  const font = config.font_family || defaultConfig.font_family;
+  const size = config.font_size || defaultConfig.font_size;
+  
+  const root = document.getElementById('appRoot');
+  root.style.backgroundColor = bg;
+  root.style.color = text;
+  root.style.fontFamily = font+', Inter, sans-serif';
+  root.style.fontSize = size+'px';
+  
+  document.querySelectorAll('.card').forEach(c=>c.style.backgroundColor=surface);
+  document.querySelectorAll('header, nav, footer').forEach(e=>{e.style.backgroundColor=surface});
+  document.querySelectorAll('.btn-primary').forEach(b=>{b.style.backgroundColor=primary;b.style.color='#fff'});
+  document.querySelectorAll('h1,h2,h3,.section-title').forEach(e=>e.style.color=text);
+  document.querySelectorAll('.text-gray-500,.text-gray-400,.text-gray-600').forEach(e=>{
+    if(!e.classList.contains('section-title'))e.style.color=secondary;
+  });
+  
+  document.querySelectorAll('th').forEach(e=>{e.style.backgroundColor=bg});
+  
+  const titleEl = document.getElementById('appTitle');
+  if(titleEl) titleEl.textContent = config.app_title || defaultConfig.app_title;
+  
+  // Font size scaling
+  document.querySelectorAll('.section-title').forEach(e=>e.style.fontSize=(size*1.07)+'px');
+  document.querySelectorAll('h1').forEach(e=>e.style.fontSize=(size*1.15)+'px');
+  document.querySelectorAll('.text-xs').forEach(e=>e.style.fontSize=(size*0.78)+'px');
+  document.querySelectorAll('.text-sm').forEach(e=>e.style.fontSize=(size*0.9)+'px');
+  document.querySelectorAll('label').forEach(e=>e.style.fontSize=(size*0.85)+'px');
+}
+
+if(window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        {get:()=>config.background_color||defaultConfig.background_color, set:(v)=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+        {get:()=>config.surface_color||defaultConfig.surface_color, set:(v)=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+        {get:()=>config.text_color||defaultConfig.text_color, set:(v)=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+        {get:()=>config.primary_action||defaultConfig.primary_action, set:(v)=>{config.primary_action=v;window.elementSdk.setConfig({primary_action:v})}},
+        {get:()=>config.secondary_action||defaultConfig.secondary_action, set:(v)=>{config.secondary_action=v;window.elementSdk.setConfig({secondary_action:v})}}
+      ],
+      borderables: [],
+      fontEditable: {get:()=>config.font_family||defaultConfig.font_family, set:(v)=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+      fontSizeable: {get:()=>config.font_size||defaultConfig.font_size, set:(v)=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title]
+    ])
+  });
+}
+
+// ===== RESIZE HANDLER =====
+let resizeTimeout;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimeout);
+  resizeTimeout=setTimeout(()=>{if(state.currentSimData)runSimulation()},200);
+});
+
+// ===== INIT =====
+loadState();
+renderTemplates();
+renderCurrencies();
+runSimulation();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd1c99a43cdd04e',t:'MTc3MzY0MzQ0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

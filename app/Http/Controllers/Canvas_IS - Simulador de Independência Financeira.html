@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS - Simulador de Independência Financeira</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#aaa}
+.tab-btn{position:relative;padding:10px 16px;font-size:13px;font-weight:500;color:#666;cursor:pointer;border:none;background:none;display:flex;align-items:center;gap:6px;transition:all .2s ease;white-space:nowrap;border-bottom:2px solid transparent}
+.tab-btn:hover{color:#66CFF5;background:rgba(30,136,229,.05)}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;overflow:hidden;transition:all .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-accent{border-left:3px solid #66CFF5}
+.card-accent-green{border-left:3px solid #4CAF50}
+.card-accent-gold{border-left:3px solid #FFC107}
+.card-accent-orange{border-left:3px solid #FF9800}
+.card-accent-red{border-left:3px solid #F44336}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s ease}
+.btn-primary{background:#66CFF5;color:#fff}.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}.btn-success:hover{background:#388E3C}
+.btn-warning{background:#FF9800;color:#fff}.btn-warning:hover{background:#F57C00}
+.btn-danger{background:#F44336;color:#fff}.btn-danger:hover{background:#D32F2F}
+.btn-outline{background:#fff;color:#66CFF5;border:1px solid #66CFF5}.btn-outline:hover{background:rgba(30,136,229,.08)}
+.btn-ghost{background:transparent;color:#666;border:1px solid #E0E0E0}.btn-ghost:hover{background:#F8F9FA;color:#333}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;color:#333;background:#fff;transition:all .2s ease;font-family:'Inter',sans-serif}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+.input-field::placeholder{color:#aaa}
+label.field-label{font-size:12px;font-weight:500;color:#555;margin-bottom:4px;display:block}
+select.input-field{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-box{background:#fff;border-radius:10px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,.2);transform:scale(.95);transition:transform .2s ease}
+.modal-overlay.show .modal-box{transform:scale(1)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-blue{background:rgba(30,136,229,.1);color:#66CFF5}
+.badge-green{background:rgba(76,175,80,.1);color:#4CAF50}
+.badge-gold{background:rgba(255,193,7,.15);color:#F57F17}
+.chart-container{position:relative;width:100%;height:280px}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:10;padding:4px 8px;background:rgba(255,255,255,.9);border:1px solid #E0E0E0;border-radius:4px;cursor:pointer;font-size:11px;color:#666;display:flex;align-items:center;gap:4px;transition:all .2s ease}
+.chart-export-btn:hover{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.scenario-card{transition:all .2s ease;cursor:pointer}
+.scenario-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,136,229,.15)}
+.no-export{transition:all .2s ease}
+@media print{.no-export{display:none!important}}
+.metric-value{font-size:22px;font-weight:700;color:#66CFF5}
+.metric-label{font-size:11px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.progress-bar{height:6px;background:#E0E0E0;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.tip-box{background:rgba(30,136,229,.04);border:1px solid rgba(30,136,229,.15);border-radius:8px;padding:14px;font-size:13px;color:#555;line-height:1.6}
+.learning-card{border-left:3px solid #FFC107;background:#FFFDE7;border-radius:8px;padding:16px;margin-bottom:12px}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',secondary:'#F8F9FA',border:'#E0E0E0',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warning:'#FF9800'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full flex flex-col overflow-auto w-full" style="background:#F8F9FA"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0" id="app-header">
+    <div class="flex items-center gap-3">
+     <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center" style="display: none;"><i data-lucide="trending-up" style="width:20px;height:20px;color:#66CFF5"></i>
+     </div>
+     <div>
+      <h1 id="appTitle" class="text-base font-semibold text-gray-800" style="display: none; display: none; line-height:1.2">IS - Simulador de Independência Financeira</h1>
+      <p class="text-xs text-gray-400" style="display: none;">Comunidade dos Países de Língua Portuguesa</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 no-export"><input type="text" id="globalFilter" placeholder="Filtrar dados..." class="input-field" style="width:180px;padding:6px 10px;font-size:12px"> <button class="btn btn-ghost btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"> <button class="btn btn-ghost btn-sm" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn btn-outline btn-sm" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-gray-200 flex overflow-x-auto flex-shrink-0" id="tabNav"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator"></i>Simulador</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers"></i>Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins"></i>Moedas</button> <button class="tab-btn" data-tab="graficos" onclick="switchTab('graficos')"><i data-lucide="bar-chart-2"></i>Gráficos</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda')"><i data-lucide="help-circle"></i>Ajuda</button>
+   </nav><!-- Tab Content -->
+   <div class="flex-1 overflow-auto p-4" id="tabContent"><!-- SIMULADOR TAB -->
+    <div id="tab-simulador" class="tab-panel fade-in">
+     <div class="flex items-center justify-between mb-4">
+      <div>
+       <h2 class="text-lg font-semibold text-gray-800">Simulação de Independência Financeira</h2>
+       <p class="text-xs text-gray-400 mt-1">Preencha os dados para calcular o seu caminho para a independência financeira</p>
+      </div>
+      <div class="flex gap-2 no-export"><button class="btn btn-primary btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i>Guardar Cenário</button> <button class="btn btn-ghost btn-sm" onclick="resetSimulator()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Limpar</button>
+      </div>
+     </div><!-- Title -->
+     <div class="card card-accent p-4 mb-4 no-export"><label class="field-label">Título da Simulação</label> <input type="text" id="simTitle" class="input-field" placeholder="Ex: Plano de Reforma 2030" value="" oninput="recalculate()">
+     </div><!-- Inputs Grid -->
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div class="card card-accent p-4"><label class="field-label"><i data-lucide="user" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Idade Atual</label> <input type="number" id="simAge" class="input-field no-export" placeholder="30" value="30" min="18" max="80" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent p-4"><label class="field-label"><i data-lucide="target" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Idade Objetivo</label> <input type="number" id="simTarget" class="input-field no-export" placeholder="55" value="55" min="25" max="90" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent p-4"><label class="field-label"><i data-lucide="wallet" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Rendimento Mensal (Kz)</label> <input type="number" id="simIncome" class="input-field no-export" placeholder="500000" value="500000" min="0" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-green p-4"><label class="field-label"><i data-lucide="piggy-bank" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Poupança Mensal (Kz)</label> <input type="number" id="simSavings" class="input-field no-export" placeholder="150000" value="150000" min="0" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-green p-4"><label class="field-label"><i data-lucide="landmark" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Capital Atual (Kz)</label> <input type="number" id="simCapital" class="input-field no-export" placeholder="2000000" value="2000000" min="0" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-gold p-4"><label class="field-label"><i data-lucide="percent" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Rendimento Anual (%)</label> <input type="number" id="simReturn" class="input-field no-export" placeholder="8" value="8" min="0" max="50" step="0.5" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-gold p-4"><label class="field-label"><i data-lucide="trending-down" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Inflação Anual (%)</label> <input type="number" id="simInflation" class="input-field no-export" placeholder="5" value="5" min="0" max="50" step="0.5" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-orange p-4"><label class="field-label"><i data-lucide="shopping-cart" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Despesa Mensal Desejada (Kz)</label> <input type="number" id="simExpense" class="input-field no-export" placeholder="300000" value="300000" min="0" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+      <div class="card card-accent-orange p-4"><label class="field-label"><i data-lucide="activity" style="width:12px;height:12px;display:inline;vertical-align:middle;color:#999"></i> Expectativa de Vida</label> <input type="number" id="simLifeExpect" class="input-field no-export" placeholder="80" value="80" min="50" max="110" oninput="recalculate()"> <span class="sim-display-val text-sm text-gray-600 hidden"></span>
+      </div>
+     </div><!-- Results -->
+     <div id="simResults" class="space-y-4">
+      <div class="card card-accent p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-3">Resultados da Simulação</h3>
+       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+         <div class="metric-label">
+          Capital Necessário
+         </div>
+         <div class="metric-value" id="resCapNeeded">
+          -
+         </div>
+        </div>
+        <div>
+         <div class="metric-label">
+          Capital Projetado
+         </div>
+         <div class="metric-value" id="resCapProjected" style="color:#4CAF50">
+          -
+         </div>
+        </div>
+        <div>
+         <div class="metric-label">
+          Anos Restantes
+         </div>
+         <div class="metric-value" id="resYears">
+          -
+         </div>
+        </div>
+        <div>
+         <div class="metric-label">
+          Taxa Poupança
+         </div>
+         <div class="metric-value" id="resSavingsRate">
+          -
+         </div>
+        </div>
+       </div>
+       <div class="mt-4">
+        <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Progresso para Independência</span> <span id="resProgressPct">0%</span>
+        </div>
+        <div class="progress-bar">
+         <div class="progress-fill" id="resProgressBar" style="width:0%;background:linear-gradient(90deg,#66CFF5,#4CAF50)"></div>
+        </div>
+       </div>
+       <div id="resVerdict" class="mt-3 text-sm font-medium"></div>
+      </div><!-- Mini Chart -->
+      <div class="card p-4">
+       <div class="chart-container" style="height:220px"><button class="chart-export-btn no-export" onclick="exportChartImage('simChart')"><i data-lucide="download" style="width:12px;height:12px"></i>HD</button>
+        <canvas id="simChart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- CENARIOS TAB -->
+    <div id="tab-cenarios" class="tab-panel fade-in" style="display:none">
+     <div class="flex items-center justify-between mb-4">
+      <div>
+       <h2 class="text-lg font-semibold text-gray-800">Cenários Guardados</h2>
+       <p class="text-xs text-gray-400 mt-1">Gerir, comparar e reutilizar cenários de simulação</p>
+      </div>
+      <div class="flex gap-2 no-export"><input type="text" id="scenarioFilter" class="input-field" style="width:180px;padding:6px 10px;font-size:12px" placeholder="Filtrar cenários..." oninput="renderScenarios()"> <button class="btn btn-primary btn-sm" onclick="createNewScenario()"><i data-lucide="plus" style="width:14px;height:14px"></i>Novo</button>
+      </div>
+     </div>
+     <div id="scenarioList" class="space-y-3"></div>
+     <div id="emptyScenarios" class="text-center py-12 text-gray-400"><i data-lucide="layers" style="width:48px;height:48px;margin:0 auto 12px;display:block;color:#ddd"></i>
+      <p class="text-sm">Nenhum cenário guardado</p>
+      <p class="text-xs mt-1">Crie uma simulação e guarde-a</p>
+     </div><!-- Learning Templates -->
+     <div class="mt-8">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="book-open" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FFC107"></i> Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="learningTemplates"></div>
+     </div>
+    </div><!-- MOEDAS TAB -->
+    <div id="tab-moedas" class="tab-panel fade-in" style="display:none">
+     <div class="flex items-center justify-between mb-4">
+      <div>
+       <h2 class="text-lg font-semibold text-gray-800">Taxas de Câmbio — CPLP + USD</h2>
+       <p class="text-xs text-gray-400 mt-1">Base: Kwanza Angolano (Kz) · Edite as taxas conforme necessário</p>
+      </div><button class="btn btn-ghost btn-sm no-export" onclick="resetExchangeRates()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Repor Padrão</button>
+     </div>
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="currencyGrid"></div>
+     <div class="card card-accent-gold p-4 mt-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Conversor Rápido</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end no-export">
+       <div><label class="field-label">Valor (Kz)</label> <input type="number" id="convertAmount" class="input-field" placeholder="1000000" value="1000000" oninput="convertCurrency()">
+       </div>
+       <div><label class="field-label">Moeda Destino</label> <select id="convertTo" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+       <div>
+        <div class="metric-label">
+         Resultado
+        </div>
+        <div class="metric-value" id="convertResult">
+         -
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- GRAFICOS TAB -->
+    <div id="tab-graficos" class="tab-panel fade-in" style="display:none">
+     <div class="flex items-center justify-between mb-4">
+      <div>
+       <h2 class="text-lg font-semibold text-gray-800">Análise Gráfica Detalhada</h2>
+       <p class="text-xs text-gray-400 mt-1">Visualizações da sua simulação atual</p>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card p-4">
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Evolução do Património</h4>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('patrimonyChart')"><i data-lucide="download" style="width:12px;height:12px"></i>HD</button>
+        <canvas id="patrimonyChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Poupança vs Investimento</h4>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('savingsVsInvestChart')"><i data-lucide="download" style="width:12px;height:12px"></i>HD</button>
+        <canvas id="savingsVsInvestChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Distribuição de Rendimentos</h4>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('distributionChart')"><i data-lucide="download" style="width:12px;height:12px"></i>HD</button>
+        <canvas id="distributionChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Impacto da Inflação</h4>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('inflationChart')"><i data-lucide="download" style="width:12px;height:12px"></i>HD</button>
+        <canvas id="inflationChart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- AJUDA TAB -->
+    <div id="tab-ajuda" class="tab-panel fade-in" style="display:none">
+     <div class="mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Guia de Utilização &amp; Melhores Práticas</h2>
+      <p class="text-xs text-gray-400 mt-1">Aprenda a usar o simulador e a planear a sua independência financeira</p>
+     </div>
+     <div class="space-y-4">
+      <div class="card card-accent p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="info" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> O que é Independência Financeira?</h3>
+       <p class="text-sm text-gray-600 leading-relaxed">A independência financeira é o ponto em que os seus rendimentos passivos (investimentos, rendas, dividendos) cobrem todas as suas despesas de vida, sem necessidade de trabalhar ativamente. É alcançada quando o seu património gera rendimento suficiente para manter o seu estilo de vida.</p>
+      </div>
+      <div class="card card-accent-green p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="compass" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#4CAF50"></i> Como Usar o Simulador</h3>
+       <div class="text-sm text-gray-600 leading-relaxed space-y-2">
+        <p><strong>1. Simulador:</strong> Preencha os seus dados financeiros atuais — idade, rendimento, poupança, capital e retorno esperado dos investimentos.</p>
+        <p><strong>2. Cenários:</strong> Guarde diferentes simulações para comparar estratégias. Pode clonar, editar ou criar do zero.</p>
+        <p><strong>3. Moedas:</strong> Ajuste taxas de câmbio entre moedas da CPLP e USD. Útil se os seus investimentos são internacionais.</p>
+        <p><strong>4. Gráficos:</strong> Analise visualmente a evolução do seu património, distribuição e impacto da inflação.</p>
+        <p><strong>5. Exportação:</strong> Exporte os dados em JSON, imagem ou PDF para partilhar ou arquivar.</p>
+       </div>
+      </div>
+      <div class="card card-accent-gold p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="star" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FFC107"></i> Melhores Práticas</h3>
+       <div class="text-sm text-gray-600 leading-relaxed space-y-2">
+        <p>• <strong>Regra dos 4%:</strong> O capital necessário é ~25x as despesas anuais. Este simulador usa esta referência.</p>
+        <p>• <strong>Comece cedo:</strong> O juro composto é mais poderoso quanto mais tempo tiver.</p>
+        <p>• <strong>Diversifique:</strong> Não coloque todos os ovos no mesmo cesto — diversifique investimentos.</p>
+        <p>• <strong>Considere a inflação:</strong> O poder de compra diminui com o tempo. Use taxas reais (retorno - inflação).</p>
+        <p>• <strong>Fundo de emergência:</strong> Mantenha 3-6 meses de despesas antes de investir agressivamente.</p>
+        <p>• <strong>Reveja regularmente:</strong> Atualize os cenários a cada trimestre com dados reais.</p>
+        <p>• <strong>Aumente a poupança:</strong> Tente poupar pelo menos 20-30% do rendimento mensal.</p>
+       </div>
+      </div>
+      <div class="card card-accent-orange p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="alert-triangle" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FF9800"></i> Limitações &amp; Avisos</h3>
+       <div class="text-sm text-gray-600 leading-relaxed space-y-2">
+        <p>• Este simulador é uma ferramenta educativa e não constitui aconselhamento financeiro profissional.</p>
+        <p>• Os retornos dos investimentos podem variar significativamente. Resultados passados não garantem ganhos futuros.</p>
+        <p>• Considere consultar um consultor financeiro certificado para decisões importantes.</p>
+        <p>• As taxas de câmbio são indicativas e devem ser atualizadas manualmente.</p>
+       </div>
+      </div>
+      <div class="card card-accent p-5">
+       <h3 class="text-sm font-semibold text-gray-700 mb-2"><i data-lucide="book" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Glossário</h3>
+       <div class="text-sm text-gray-600 leading-relaxed space-y-1">
+        <p><strong>Juro Composto:</strong> Juros calculados sobre o capital inicial e juros acumulados anteriores.</p>
+        <p><strong>Rendimento Passivo:</strong> Dinheiro gerado sem participação ativa contínua (dividendos, rendas, juros).</p>
+        <p><strong>Taxa Real de Retorno:</strong> Retorno do investimento ajustado pela inflação.</p>
+        <p><strong>FIRE:</strong> Financial Independence, Retire Early — movimento de independência financeira.</p>
+        <p><strong>Taxa de Poupança:</strong> Percentagem do rendimento que é poupada/investida mensalmente.</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Toast -->
+   <div id="toast" class="toast"></div><!-- Modal -->
+   <div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" id="modalContent"></div>
+   </div>
+   <script>
+// ====== STATE ======
+const STORAGE_KEY = 'is_fin_independence_v2';
+let state = {
+  scenarios: [],
+  exchangeRates: {},
+  currentSim: {}
+};
+let charts = {};
+let simData = { labels:[], patrimony:[], savings:[], investment:[], inflationImpact:[] };
+
+// Default exchange rates (1 Kz = X units)
+const DEFAULT_RATES = {
+  'BRL': {name:'Real Brasileiro',symbol:'R$',rate:0.0059,flag:'🇧🇷'},
+  'CVE': {name:'Escudo Cabo-verdiano',symbol:'$',rate:0.119,flag:'🇨🇻'},
+  'XOF': {name:'Franco CFA (Guiné-Bissau)',symbol:'CFA',rate:0.706,flag:'🇬🇼'},
+  'MZN': {name:'Metical Moçambicano',symbol:'MT',rate:0.077,flag:'🇲🇿'},
+  'EUR': {name:'Euro (Portugal)',symbol:'€',rate:0.00108,flag:'🇵🇹'},
+  'STN': {name:'Dobra (São Tomé)',symbol:'Db',rate:0.0264,flag:'🇸🇹'},
+  'USD': {name:'Dólar Americano',symbol:'$',rate:0.00121,flag:'🇺🇸'},
+  'TPL': {name:'Dólar (Timor-Leste)',symbol:'$',rate:0.00121,flag:'🇹🇱'}
+};
+
+const TEMPLATES = [
+  {name:'Conservador',desc:'Baixo risco, retorno modesto',age:30,target:60,income:400000,savings:80000,capital:1000000,ret:5,infl:5,expense:250000,life:80},
+  {name:'Moderado',desc:'Equilíbrio entre risco e retorno',age:30,target:55,income:600000,savings:180000,capital:3000000,ret:8,infl:5,expense:350000,life:80},
+  {name:'Agressivo',desc:'Alto risco, alto retorno potencial',age:25,target:45,income:800000,savings:400000,capital:5000000,ret:12,infl:5,expense:400000,life:85},
+  {name:'FIRE Lean',desc:'Estilo de vida frugal para reforma antecipada',age:28,target:40,income:500000,savings:300000,capital:2000000,ret:10,infl:4,expense:200000,life:85}
+];
+
+// ====== PERSISTENCE (localStorage) ======
+function loadState(){
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s){const parsed=JSON.parse(s);state={...state,...parsed}}
+  }catch(e){}
+  if(!state.exchangeRates||Object.keys(state.exchangeRates).length===0){
+    state.exchangeRates=JSON.parse(JSON.stringify(DEFAULT_RATES));
+  }
+}
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}
+}
+
+// ====== TABS ======
+function switchTab(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const panel=document.getElementById('tab-'+tab);
+  if(panel){panel.style.display='block';panel.classList.add('fade-in')}
+  const btn=document.querySelector(`[data-tab="${tab}"]`);
+  if(btn)btn.classList.add('active');
+  if(tab==='graficos')setTimeout(()=>updateAllCharts(),100);
+  if(tab==='cenarios')renderScenarios();
+  if(tab==='moedas')renderCurrencies();
+}
+
+// ====== TOAST ======
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.className='toast toast-'+type+' show';
+  t.innerHTML=msg;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ====== MODAL ======
+function openModal(html){
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+
+// ====== FORMATTER ======
+function fmtKz(v){
+  if(v===null||v===undefined||isNaN(v))return'-';
+  return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',maximumFractionDigits:0}).format(v).replace('AOA','Kz');
+}
+function fmtPct(v){return(v||0).toFixed(1)+'%'}
+function fmtNum(v){return new Intl.NumberFormat('pt-AO').format(Math.round(v||0))}
+
+// ====== SIMULATION CORE ======
+function getSimInputs(){
+  return{
+    title:document.getElementById('simTitle').value||'Simulação',
+    age:parseFloat(document.getElementById('simAge').value)||30,
+    target:parseFloat(document.getElementById('simTarget').value)||55,
+    income:parseFloat(document.getElementById('simIncome').value)||0,
+    savings:parseFloat(document.getElementById('simSavings').value)||0,
+    capital:parseFloat(document.getElementById('simCapital').value)||0,
+    ret:parseFloat(document.getElementById('simReturn').value)||0,
+    infl:parseFloat(document.getElementById('simInflation').value)||0,
+    expense:parseFloat(document.getElementById('simExpense').value)||0,
+    life:parseFloat(document.getElementById('simLifeExpect').value)||80
+  };
+}
+function setSimInputs(s){
+  document.getElementById('simTitle').value=s.title||'';
+  document.getElementById('simAge').value=s.age||30;
+  document.getElementById('simTarget').value=s.target||55;
+  document.getElementById('simIncome').value=s.income||0;
+  document.getElementById('simSavings').value=s.savings||0;
+  document.getElementById('simCapital').value=s.capital||0;
+  document.getElementById('simReturn').value=s.ret||8;
+  document.getElementById('simInflation').value=s.infl||5;
+  document.getElementById('simExpense').value=s.expense||0;
+  document.getElementById('simLifeExpect').value=s.life||80;
+  recalculate();
+}
+
+function recalculate(){
+  const s=getSimInputs();
+  const years=Math.max(s.target-s.age,1);
+  const retirementYears=Math.max(s.life-s.target,1);
+  const monthlyRate=s.ret/100/12;
+  const realRate=(s.ret-s.infl)/100;
+  const annualExpense=s.expense*12;
+  // Capital needed (25x rule adjusted for inflation over retirement)
+  const inflAdjExpense=annualExpense*Math.pow(1+s.infl/100,years);
+  const capitalNeeded=inflAdjExpense*25;
+  // Project capital
+  let projected=s.capital;
+  const labels=[];const patrimony=[];const savArr=[];const invArr=[];const inflArr=[];
+  let totalSaved=0;let totalInvGain=0;
+  for(let y=0;y<=years;y++){
+    labels.push(''+(s.age+y));
+    patrimony.push(Math.round(projected));
+    savArr.push(Math.round(totalSaved));
+    invArr.push(Math.round(totalInvGain));
+    inflArr.push(Math.round(annualExpense*Math.pow(1+s.infl/100,y)));
+    if(y<years){
+      const annualSav=s.savings*12;
+      totalSaved+=annualSav;
+      const gain=projected*(s.ret/100);
+      totalInvGain+=gain;
+      projected+=annualSav+gain;
+    }
+  }
+  simData={labels,patrimony,savings:savArr,investment:invArr,inflationImpact:inflArr};
+  // Update UI
+  document.getElementById('resCapNeeded').textContent=fmtKz(capitalNeeded);
+  document.getElementById('resCapProjected').textContent=fmtKz(projected);
+  document.getElementById('resCapProjected').style.color=projected>=capitalNeeded?'#4CAF50':'#F44336';
+  document.getElementById('resYears').textContent=years;
+  const savRate=s.income>0?((s.savings/s.income)*100):0;
+  document.getElementById('resSavingsRate').textContent=fmtPct(savRate);
+  const progress=capitalNeeded>0?Math.min((projected/capitalNeeded)*100,100):0;
+  document.getElementById('resProgressPct').textContent=fmtPct(progress);
+  document.getElementById('resProgressBar').style.width=progress+'%';
+  const verdict=document.getElementById('resVerdict');
+  if(projected>=capitalNeeded){
+    verdict.innerHTML='<span style="color:#4CAF50">✓ Parabéns! O capital projetado ultrapassa o necessário. Está no caminho certo!</span>';
+  }else{
+    const deficit=capitalNeeded-projected;
+    const extraMonthly=deficit/(years*12);
+    verdict.innerHTML=`<span style="color:#F44336">✗ Défice de ${fmtKz(deficit)}. Considere poupar mais ${fmtKz(extraMonthly)}/mês ou aumentar o retorno.</span>`;
+  }
+  state.currentSim=s;saveState();
+  updateSimChart();
+}
+
+// ====== CHARTS ======
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+const chartColors={blue:'#66CFF5',green:'#4CAF50',gold:'#FFC107',orange:'#FF9800',red:'#F44336',blueLight:'rgba(30,136,229,.15)',greenLight:'rgba(76,175,80,.15)'};
+
+function updateSimChart(){
+  destroyChart('simChart');
+  const ctx=document.getElementById('simChart');
+  if(!ctx)return;
+  charts['simChart']=new Chart(ctx,{type:'line',data:{labels:simData.labels,datasets:[{label:'Património (Kz)',data:simData.patrimony,borderColor:chartColors.blue,backgroundColor:chartColors.blueLight,fill:true,tension:.3,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{family:'Inter',size:11},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',size:10}}},y:{ticks:{font:{family:'Inter',size:10},callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#f0f0f0'}}}}});
+}
+
+function updateAllCharts(){
+  recalculate();
+  // Patrimony
+  destroyChart('patrimonyChart');
+  const ctx1=document.getElementById('patrimonyChart');
+  if(ctx1){
+    charts['patrimonyChart']=new Chart(ctx1,{type:'line',data:{labels:simData.labels,datasets:[{label:'Património',data:simData.patrimony,borderColor:chartColors.blue,backgroundColor:chartColors.blueLight,fill:true,tension:.3,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Inter',size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':fmtNum(v)},grid:{color:'#f0f0f0'}}}}});
+  }
+  // Savings vs Investment
+  destroyChart('savingsVsInvestChart');
+  const ctx2=document.getElementById('savingsVsInvestChart');
+  if(ctx2){
+    charts['savingsVsInvestChart']=new Chart(ctx2,{type:'bar',data:{labels:simData.labels,datasets:[{label:'Poupança Acumulada',data:simData.savings,backgroundColor:chartColors.blue,borderRadius:2},{label:'Ganho Investimento',data:simData.investment,backgroundColor:chartColors.green,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Inter',size:11},boxWidth:12}}},scales:{x:{grid:{display:false},stacked:true},y:{stacked:true,ticks:{callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':fmtNum(v)},grid:{color:'#f0f0f0'}}}}});
+  }
+  // Distribution pie
+  destroyChart('distributionChart');
+  const ctx3=document.getElementById('distributionChart');
+  if(ctx3){
+    const s=getSimInputs();
+    const savAmt=s.savings;const expAmt=s.expense;const otherAmt=Math.max(s.income-s.savings-s.expense,0);
+    charts['distributionChart']=new Chart(ctx3,{type:'doughnut',data:{labels:['Poupança','Despesas','Outros'],datasets:[{data:[savAmt,expAmt,otherAmt],backgroundColor:[chartColors.blue,chartColors.orange,chartColors.green],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Inter',size:11},boxWidth:12,padding:12}}}}});
+  }
+  // Inflation
+  destroyChart('inflationChart');
+  const ctx4=document.getElementById('inflationChart');
+  if(ctx4){
+    const s=getSimInputs();
+    const nominalLine=simData.labels.map(()=>s.expense*12);
+    charts['inflationChart']=new Chart(ctx4,{type:'line',data:{labels:simData.labels,datasets:[{label:'Despesa Nominal',data:nominalLine,borderColor:chartColors.green,borderDash:[5,5],pointRadius:0,tension:.3},{label:'Despesa Ajustada (Inflação)',data:simData.inflationImpact,borderColor:chartColors.red,backgroundColor:'rgba(244,67,54,.1)',fill:true,tension:.3,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Inter',size:11},boxWidth:12}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':fmtNum(v)},grid:{color:'#f0f0f0'}}}}});
+  }
+}
+
+// ====== CHART EXPORT ======
+function exportChartImage(chartId){
+  const c=charts[chartId];
+  if(!c)return;
+  const url=c.toBase64Image('image/png',2);
+  const a=document.createElement('a');
+  a.href=url;a.download=chartId+'_HD.png';a.click();
+  showToast('Gráfico exportado em HD','success');
+}
+
+// ====== SCENARIOS ======
+function saveScenario(){
+  const s=getSimInputs();
+  const num=state.scenarios.length+1;
+  if(!s.title||s.title==='Simulação')s.title='Cenário '+num;
+  s.id=Date.now().toString();
+  s.createdAt=new Date().toISOString();
+  state.scenarios.push(s);
+  saveState();
+  showToast('Cenário "'+s.title+'" guardado','success');
+}
+function createNewScenario(){
+  setSimInputs({title:'',age:30,target:55,income:0,savings:0,capital:0,ret:8,infl:5,expense:0,life:80});
+  switchTab('simulador');
+  showToast('Novo cenário — preencha os dados','info');
+}
+function loadScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(s){setSimInputs(s);switchTab('simulador');showToast('Cenário carregado','info')}
+}
+function cloneScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(s){
+    const c={...s,id:Date.now().toString(),title:s.title+' (Cópia)',createdAt:new Date().toISOString()};
+    state.scenarios.push(c);saveState();renderScenarios();
+    showToast('Cenário clonado','success');
+  }
+}
+function deleteScenario(id){
+  const idx=state.scenarios.findIndex(x=>x.id===id);
+  if(idx===-1)return;
+  const s=state.scenarios[idx];
+  openModal(`<h3 class="text-base font-semibold mb-3">Eliminar Cenário</h3><p class="text-sm text-gray-600 mb-4">Tem a certeza que deseja eliminar "<strong>${s.title}</strong>"?</p><div class="flex gap-2 justify-end"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteScenario('${id}')">Eliminar</button></div>`);
+}
+function confirmDeleteScenario(id){
+  state.scenarios=state.scenarios.filter(x=>x.id!==id);
+  saveState();closeModal();renderScenarios();showToast('Cenário eliminado','success');
+}
+function editScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(!s)return;
+  openModal(`<h3 class="text-base font-semibold mb-3">Editar Cenário</h3>
+    <div class="space-y-3">
+      <div><label class="field-label">Título</label><input id="editTitle" class="input-field" value="${s.title}"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="field-label">Idade Atual</label><input id="editAge" type="number" class="input-field" value="${s.age}"></div>
+        <div><label class="field-label">Idade Objetivo</label><input id="editTarget" type="number" class="input-field" value="${s.target}"></div>
+        <div><label class="field-label">Rendimento (Kz)</label><input id="editIncome" type="number" class="input-field" value="${s.income}"></div>
+        <div><label class="field-label">Poupança (Kz)</label><input id="editSavings" type="number" class="input-field" value="${s.savings}"></div>
+        <div><label class="field-label">Capital (Kz)</label><input id="editCapital" type="number" class="input-field" value="${s.capital}"></div>
+        <div><label class="field-label">Retorno (%)</label><input id="editReturn" type="number" class="input-field" value="${s.ret}" step="0.5"></div>
+        <div><label class="field-label">Inflação (%)</label><input id="editInflation" type="number" class="input-field" value="${s.infl}" step="0.5"></div>
+        <div><label class="field-label">Despesa (Kz)</label><input id="editExpense" type="number" class="input-field" value="${s.expense}"></div>
+      </div>
+      <div class="flex gap-2 justify-end mt-2"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="saveEditScenario('${id}')">Guardar</button></div>
+    </div>`);
+}
+function saveEditScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(!s)return;
+  s.title=document.getElementById('editTitle').value||s.title;
+  s.age=parseFloat(document.getElementById('editAge').value)||s.age;
+  s.target=parseFloat(document.getElementById('editTarget').value)||s.target;
+  s.income=parseFloat(document.getElementById('editIncome').value)||s.income;
+  s.savings=parseFloat(document.getElementById('editSavings').value)||s.savings;
+  s.capital=parseFloat(document.getElementById('editCapital').value)||s.capital;
+  s.ret=parseFloat(document.getElementById('editReturn').value)||s.ret;
+  s.infl=parseFloat(document.getElementById('editInflation').value)||s.infl;
+  s.expense=parseFloat(document.getElementById('editExpense').value)||s.expense;
+  saveState();closeModal();renderScenarios();showToast('Cenário atualizado','success');
+}
+
+function renderScenarios(){
+  const filter=(document.getElementById('scenarioFilter')?.value||'').toLowerCase();
+  const globalF=(document.getElementById('globalFilter')?.value||'').toLowerCase();
+  const list=document.getElementById('scenarioList');
+  const empty=document.getElementById('emptyScenarios');
+  let filtered=state.scenarios;
+  if(filter)filtered=filtered.filter(s=>s.title.toLowerCase().includes(filter));
+  if(globalF)filtered=filtered.filter(s=>s.title.toLowerCase().includes(globalF));
+  if(filtered.length===0){list.innerHTML='';empty.style.display='block';return}
+  empty.style.display='none';
+  list.innerHTML=filtered.map(s=>{
+    const years=Math.max(s.target-s.age,1);
+    const annualExp=s.expense*12;
+    const inflAdj=annualExp*Math.pow(1+s.infl/100,years);
+    const needed=inflAdj*25;
+    let proj=s.capital;for(let y=0;y<years;y++)proj+=s.savings*12+proj*(s.ret/100);
+    const ok=proj>=needed;
+    return`<div class="card scenario-card ${ok?'card-accent-green':'card-accent-red'} p-4">
+      <div class="flex items-start justify-between">
+        <div class="flex-1 min-w-0" onclick="loadScenario('${s.id}')">
+          <div class="flex items-center gap-2 mb-1"><span class="text-sm font-semibold text-gray-800">${s.title}</span><span class="badge ${ok?'badge-green':''}"">${ok?'Viável':'Défice'}</span></div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-500 mt-2">
+            <span>Idade: ${s.age}→${s.target}</span><span>Poupança: ${fmtKz(s.savings)}/mês</span><span>Capital: ${fmtKz(s.capital)}</span><span>Retorno: ${s.ret}%</span>
+          </div>
+          <div class="text-xs text-gray-400 mt-1">Criado: ${new Date(s.createdAt).toLocaleDateString('pt-PT')}</div>
+        </div>
+        <div class="flex gap-1 ml-3 no-export flex-shrink-0">
+          <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editScenario('${s.id}')" title="Editar"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:13px;height:13px"></i></button>
+          <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deleteScenario('${s.id}')" title="Eliminar" style="color:#F44336"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function renderLearningTemplates(){
+  const el=document.getElementById('learningTemplates');
+  el.innerHTML=TEMPLATES.map((t,i)=>`<div class="learning-card cursor-pointer" onclick="applyTemplate(${i})">
+    <div class="flex items-center gap-2 mb-1"><i data-lucide="zap" style="width:14px;height:14px;color:#FFC107"></i><span class="text-sm font-semibold text-gray-700">${t.name}</span></div>
+    <p class="text-xs text-gray-500">${t.desc}</p>
+    <div class="text-xs text-gray-400 mt-2">Rendimento: ${fmtKz(t.income)} · Poupança: ${fmtKz(t.savings)} · Retorno: ${t.ret}%</div>
+  </div>`).join('');
+}
+function applyTemplate(idx){
+  const t=TEMPLATES[idx];
+  setSimInputs({title:t.name,age:t.age,target:t.target,income:t.income,savings:t.savings,capital:t.capital,ret:t.ret,infl:t.infl,expense:t.expense,life:t.life});
+  switchTab('simulador');
+  showToast('Template "'+t.name+'" aplicado','info');
+}
+
+// ====== CURRENCIES ======
+function renderCurrencies(){
+  const grid=document.getElementById('currencyGrid');
+  const select=document.getElementById('convertTo');
+  const rates=state.exchangeRates;
+  grid.innerHTML=Object.entries(rates).map(([code,c])=>`<div class="card card-accent p-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2"><span class="text-lg">${c.flag}</span><span class="text-sm font-semibold text-gray-700">${code}</span></div>
+      <span class="text-xs text-gray-400">${c.symbol}</span>
+    </div>
+    <p class="text-xs text-gray-500 mb-2">${c.name}</p>
+    <div class="no-export">
+      <label class="field-label">1 Kz =</label>
+      <input type="number" class="input-field" step="0.00001" value="${c.rate}" onchange="updateRate('${code}',this.value)" style="font-size:13px">
+    </div>
+    <div class="text-xs text-gray-400 mt-2">1 ${code} = ${fmtKz(1/c.rate)}</div>
+  </div>`).join('');
+  select.innerHTML=Object.entries(rates).map(([code,c])=>`<option value="${code}">${c.flag} ${code} - ${c.name}</option>`).join('');
+  convertCurrency();
+}
+function updateRate(code,val){
+  state.exchangeRates[code].rate=parseFloat(val)||0;
+  saveState();convertCurrency();
+}
+function resetExchangeRates(){
+  state.exchangeRates=JSON.parse(JSON.stringify(DEFAULT_RATES));
+  saveState();renderCurrencies();showToast('Taxas repostas ao padrão','info');
+}
+function convertCurrency(){
+  const amt=parseFloat(document.getElementById('convertAmount')?.value)||0;
+  const code=document.getElementById('convertTo')?.value;
+  if(!code||!state.exchangeRates[code])return;
+  const r=state.exchangeRates[code];
+  const result=amt*r.rate;
+  const el=document.getElementById('convertResult');
+  if(el)el.textContent=r.symbol+' '+fmtNum(result);
+}
+
+// ====== RESET ======
+function resetSimulator(){
+  setSimInputs({title:'',age:30,target:55,income:500000,savings:150000,capital:2000000,ret:8,infl:5,expense:300000,life:80});
+  showToast('Simulador reiniciado','info');
+}
+
+// ====== GLOBAL FILTER ======
+document.getElementById('globalFilter')?.addEventListener('input',function(){
+  renderScenarios();
+});
+
+// ====== EXPORT JSON ======
+function exportJSON(){
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='IS_Independencia_Financeira.json';a.click();
+  URL.revokeObjectURL(url);
+  showToast('Dados exportados em JSON','success');
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const imported=JSON.parse(ev.target.result);
+      if(imported.scenarios)state.scenarios=imported.scenarios;
+      if(imported.exchangeRates)state.exchangeRates=imported.exchangeRates;
+      if(imported.currentSim)setSimInputs(imported.currentSim);
+      saveState();recalculate();renderScenarios();renderCurrencies();
+      showToast('Dados importados com sucesso','success');
+    }catch(err){showToast('Erro ao importar ficheiro','error')}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ====== EXPORT IMAGE ======
+function exportAppImage(){
+  const noExports=document.querySelectorAll('.no-export');
+  noExports.forEach(el=>el.style.display='none');
+  // Show display values
+  document.querySelectorAll('.sim-display-val').forEach(sp=>{
+    const inp=sp.previousElementSibling;
+    if(inp&&inp.tagName==='INPUT'){sp.textContent=inp.value;sp.classList.remove('hidden')}
+  });
+  setTimeout(()=>{
+    const el=document.getElementById('app');
+    html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#F8F9FA',logging:false}).then(canvas=>{
+      const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+      a.download='IS_Simulador.png';a.click();
+      noExports.forEach(el=>el.style.display='');
+      document.querySelectorAll('.sim-display-val').forEach(sp=>sp.classList.add('hidden'));
+      showToast('Imagem exportada','success');
+    }).catch(()=>{
+      noExports.forEach(el=>el.style.display='');
+      document.querySelectorAll('.sim-display-val').forEach(sp=>sp.classList.add('hidden'));
+      showToast('Erro ao exportar imagem','error');
+    });
+  },100);
+}
+
+// ====== EXPORT PDF ======
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('p','mm','a4');
+  const w=doc.internal.pageSize.getWidth();
+  const h=doc.internal.pageSize.getHeight();
+  const margin=15;
+  const contentW=w-2*margin;
+  let y=margin;
+  const appName='IS - Simulador de Independência Financeira';
+  const title=document.getElementById('simTitle').value||'Simulação';
+
+  function addHeader(){
+    doc.setFillColor(30,136,229);doc.rect(0,0,w,12,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255);
+    doc.text(appName,margin,8);
+    doc.text(new Date().toLocaleDateString('pt-PT'),w-margin,8,{align:'right'});
+    y=20;
+  }
+  function addFooter(pageNum){
+    doc.setFillColor(248,249,250);doc.rect(0,h-10,w,10,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(150);
+    doc.text(appName,margin,h-4);
+    doc.text('Página '+pageNum,w-margin,h-4,{align:'right'});
+  }
+  function checkPage(needed){
+    if(y+needed>h-15){addFooter(doc.internal.getNumberOfPages());doc.addPage();addHeader()}
+  }
+
+  addHeader();
+  // Title
+  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(30,30,30);
+  doc.text(title,margin,y);y+=8;
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100);
+  doc.text('Relatório gerado em '+new Date().toLocaleString('pt-PT'),margin,y);y+=10;
+
+  // Inputs
+  const s=getSimInputs();
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(30,136,229);
+  doc.text('Parâmetros da Simulação',margin,y);y+=6;
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60);
+  const params=[['Idade Atual',s.age],['Idade Objetivo',s.target],['Rendimento Mensal',fmtKz(s.income)],['Poupança Mensal',fmtKz(s.savings)],['Capital Atual',fmtKz(s.capital)],['Retorno Anual',s.ret+'%'],['Inflação',s.infl+'%'],['Despesa Mensal',fmtKz(s.expense)],['Expectativa Vida',s.life]];
+  params.forEach(([k,v])=>{checkPage(5);doc.text(k+': '+v,margin,y);y+=5});y+=5;
+
+  // Results
+  checkPage(30);
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(30,136,229);
+  doc.text('Resultados',margin,y);y+=6;
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60);
+  doc.text('Capital Necessário: '+document.getElementById('resCapNeeded').textContent,margin,y);y+=5;
+  doc.text('Capital Projetado: '+document.getElementById('resCapProjected').textContent,margin,y);y+=5;
+  doc.text('Anos: '+document.getElementById('resYears').textContent,margin,y);y+=5;
+  doc.text('Taxa Poupança: '+document.getElementById('resSavingsRate').textContent,margin,y);y+=10;
+
+  // Charts — small size
+  const chartIds=['simChart','patrimonyChart','savingsVsInvestChart','distributionChart','inflationChart'];
+  const chartNames=['Evolução Resumida','Evolução do Património','Poupança vs Investimento','Distribuição','Impacto da Inflação'];
+  chartIds.forEach((id,i)=>{
+    const c=charts[id];
+    if(!c)return;
+    checkPage(55);
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(30,136,229);
+    doc.text(chartNames[i],margin,y);y+=4;
+    try{
+      const img=c.toBase64Image('image/png',1.5);
+      doc.addImage(img,'PNG',margin,y,contentW*0.6,40);
+      y+=45;
+    }catch(e){y+=5}
+  });
+
+  addFooter(doc.internal.getNumberOfPages());
+  doc.save('IS_Simulador_Relatorio.pdf');
+  showToast('PDF exportado','success');
+}
+
+// ====== ELEMENT SDK ======
+const defaultConfig={
+  app_title:'IS - Simulador de Independência Financeira',
+  background_color:'#F8F9FA',
+  surface_color:'#FFFFFF',
+  text_color:'#333333',
+  primary_action_color:'#66CFF5',
+  secondary_action_color:'#4CAF50',
+  font_family:'Inter',
+  font_size:14
+};
+
+function applyConfig(config){
+  const c={...defaultConfig,...config};
+  document.getElementById('appTitle').textContent=c.app_title||defaultConfig.app_title;
+  document.getElementById('app').style.background=c.background_color;
+  document.querySelectorAll('.card').forEach(el=>el.style.backgroundColor=c.surface_color);
+  document.body.style.color=c.text_color;
+  document.querySelectorAll('h1,h2,h3,.text-gray-800,.text-gray-700').forEach(el=>el.style.color=c.text_color);
+  document.querySelectorAll('.btn-primary').forEach(el=>{el.style.backgroundColor=c.primary_action_color;el.style.borderColor=c.primary_action_color});
+  document.querySelectorAll('.btn-success,.btn-outline').forEach(el=>{
+    if(el.classList.contains('btn-outline')){el.style.color=c.primary_action_color;el.style.borderColor=c.primary_action_color}
+    else{el.style.backgroundColor=c.secondary_action_color}
+  });
+  const ff=c.font_family||defaultConfig.font_family;
+  document.body.style.fontFamily=`${ff}, Inter, sans-serif`;
+  const bs=c.font_size||defaultConfig.font_size;
+  document.querySelectorAll('.metric-value').forEach(el=>el.style.fontSize=(bs*1.6)+'px');
+  document.querySelectorAll('.metric-label').forEach(el=>el.style.fontSize=(bs*0.78)+'px');
+  document.querySelectorAll('h2').forEach(el=>el.style.fontSize=(bs*1.3)+'px');
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange:async(config)=>applyConfig(config),
+  mapToCapabilities:(config)=>({
+    recolorables:[
+      {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+      {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+      {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+      {get:()=>config.primary_action_color||defaultConfig.primary_action_color,set:v=>{config.primary_action_color=v;window.elementSdk.setConfig({primary_action_color:v})}},
+      {get:()=>config.secondary_action_color||defaultConfig.secondary_action_color,set:v=>{config.secondary_action_color=v;window.elementSdk.setConfig({secondary_action_color:v})}}
+    ],
+    borderables:[],
+    fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+    fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+  }),
+  mapToEditPanelValues:(config)=>new Map([['app_title',config.app_title||defaultConfig.app_title]])
+});
+
+// ====== INIT ======
+loadState();
+if(state.currentSim&&state.currentSim.age)setSimInputs(state.currentSim);
+recalculate();
+renderLearningTemplates();
+renderCurrencies();
+renderScenarios();
+lucide.createIcons();
+</script>
+  </div>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd1e1ad3706d04e',t:'MTc3MzY0NDQzMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

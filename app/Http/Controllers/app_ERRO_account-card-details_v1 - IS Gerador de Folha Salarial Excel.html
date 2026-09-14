@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Folha de Salários</title>
+    <!-- Fonte Inter para visual moderno -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Biblioteca SheetJS para gerar Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #66CFF5;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: #111827; }
+        p { margin-top: 5px; color: #6b7280; font-size: 0.9rem; }
+
+        /* Configurações de Cabeçalho */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        /* Tabela */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f9fafb;
+            color: #4b5563;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        input.cell-input {
+            width: 100%;
+            border: 1px solid transparent;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        input.cell-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: #fff;
+        }
+
+        /* Botões */
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-add { background: #e0e7ff; color: var(--primary); }
+        .btn-add:hover { background: #c7d2fe; }
+
+        .btn-export { background: var(--primary); color: white; }
+        .btn-export:hover { background: var(--primary-hover); }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        .btn-delete:hover { background: #fecaca; }
+
+        /* Rodapé da Tabela (Total) */
+        .total-row td {
+            font-weight: 700;
+            background: #f8fafc;
+            border-top: 2px solid var(--border);
+        }
+        
+        .total-value {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <heade style="display: none;">>
+        <h1>Gerador de Folha de Pagamento</h1>
+        <p>Preencha os dados, ajuste os cabeçalhos conforme o seu banco e exporte o Excel.</p>
+    </header>
+
+    <!-- Área de Configuração dos Cabeçalhos -->
+    <div class="settings-grid">
+        <div class="input-group">
+            <label>Nome da Coluna 1 (Nome)</label>
+            <input type="text" id="headerName" value="Nome do Funcionário">
+        </div>
+        <div class="input-group">
+            <label>Nome da Coluna 2 (IBAN/Conta)</label>
+            <input type="text" id="headerIban" value="IBAN">
+        </div>
+        <div class="input-group">
+            <label>Nome da Coluna 3 (Valor)</label>
+            <input type="text" id="headerAmount" value="Salário Líquido">
+        </div>
+    </div>
+
+    <!-- Tabela de Dados -->
+    <div class="table-container">
+        <table id="payrollTable">
+            <thead>
+                <tr>
+                    <th style="width: 40%">Nome Completo</th>
+                    <th style="width: 40%">IBAN / Conta</th>
+                    <th style="width: 15%">Valor (AOA)</th>
+                    <th style="width: 5%"></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Linhas inseridas via JS -->
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="2" style="text-align: right;">TOTAL A PAGAR:</td>
+                    <td class="total-value" id="totalDisplay">0.00 AOA</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-add" onclick="addRow()">+ Adicionar Funcionário</button>
+        <button class="btn btn-export" onclick="exportToExcel()">📥 Baixar Ficheiro Excel</button>
+    </div>
+</div>
+
+<script>
+    // Inicializa com 5 linhas vazias
+    document.addEventListener('DOMContentLoaded', () => {
+        for(let i=0; i<5; i++) addRow();
+    });
+
+    function addRow() {
+        const tbody = document.getElementById('tableBody');
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td><input type="text" class="cell-input" placeholder="Ex: João Silva" required></td>
+            <td><input type="text" class="cell-input" placeholder="PT50..." required></td>
+            <td><input type="number" class="cell-input amount-input" placeholder="0.00" step="0.01" oninput="calculateTotal()"></td>
+            <td style="text-align: center;"><button class="btn btn-delete" onclick="removeRow(this)">X</button></td>
+        `;
+        
+        tbody.appendChild(tr);
+    }
+
+    function removeRow(btn) {
+        const row = btn.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        const amounts = document.querySelectorAll('.amount-input');
+        
+        amounts.forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                total += val;
+            }
+        });
+
+        // Formatação para moeda (Portugal/Europa)
+        document.getElementById('totalDisplay').textContent = total.toLocaleString('ao-AO', { 
+            style: 'currency', 
+            currency: 'AOA' 
+        });
+    }
+
+    function exportToExcel() {
+        // 1. Obter cabeçalhos personalizados
+        const hName = document.getElementById('headerName').value || "Nome";
+        const hIban = document.getElementById('headerIban').value || "IBAN";
+        const hAmount = document.getElementById('headerAmount').value || "Valor";
+
+        // 2. Construir o Array de Arrays para o Excel
+        // Linha 1: Cabeçalhos
+        const data = [
+            [hName, hIban, hAmount]
+        ];
+
+        // Linhas de Dados
+        const rows = document.querySelectorAll('#tableBody tr');
+        let totalValue = 0;
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const name = inputs[0].value.trim();
+            const iban = inputs[1].value.trim(); // Mantém como string para evitar notação científica
+            const amount = parseFloat(inputs[2].value);
+
+            if (name && iban && !isNaN(amount)) {
+                data.push([name, iban, amount]);
+                totalValue += amount;
+            }
+        });
+
+        if (data.length === 1) {
+            alert("Por favor, preencha pelo menos um funcionário válido.");
+            return;
+        }
+
+        // Linha Final: Total
+        // Deixamos as duas primeiras colunas vazias e somamos na terceira
+        data.push(["", "TOTAL GERAL", totalValue]);
+
+        // 3. Criar a Planilha
+        const ws = XLSX.utils.aoa_to_sheet(data);
+
+        // Ajustar largura das colunas (opcional, mas bom para UX)
+        const wscols = [
+            {wch: 30}, // Coluna Nome
+            {wch: 25}, // Coluna IBAN
+            {wch: 15}  // Coluna Valor
+        ];
+        ws['!cols'] = wscols;
+
+        // 4. Criar o Livro e Baixar
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
+        
+        // Nome do arquivo com data atual
+        const date = new Date().toISOString().slice(0,10);
+        XLSX.writeFile(wb, `Folha_Salarios_${date}.xlsx`);
+    }
+</script>
+
+</body>
+</html>

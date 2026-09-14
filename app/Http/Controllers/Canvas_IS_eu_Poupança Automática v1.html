@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Poupança Automática</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+.app-wrap{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.header-fixed{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tabs-fixed{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #E0E0E0;padding:0 12px;overflow-x:auto;white-space:nowrap;display:flex;gap:2px}
+.tabs-fixed::-webkit-scrollbar{height:3px}
+.tabs-fixed::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+.tab-btn{padding:10px 16px;font-size:13px;font-weight:500;color:#666;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.tab-btn:hover{color:#66CFF5;background:#f0f7ff}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn i,.tab-btn svg{width:15px;height:15px}
+.content-area{flex:1;overflow-y:auto;padding:16px 20px 30px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:14px;position:relative;transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-accent{border-left:3px solid #66CFF5}
+.card-accent-green{border-left:3px solid #4CAF50}
+.card-accent-gold{border-left:3px solid #FFC107}
+.card-accent-orange{border-left:3px solid #FF9800}
+.card-accent-red{border-left:3px solid #F44336}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#66CFF5;color:#fff}.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}.btn-success:hover{background:#388E3C}
+.btn-warn{background:#FF9800;color:#fff}.btn-warn:hover{background:#F57C00}
+.btn-danger{background:#F44336;color:#fff}.btn-danger:hover{background:#D32F2F}
+.btn-outline{background:#fff;color:#66CFF5;border:1px solid #66CFF5}.btn-outline:hover{background:#E0F4FD}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:5px}
+.btn-xs{padding:3px 7px;font-size:10px;border-radius:4px}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;transition:border .2s ease;background:#fff;font-family:'Inter',sans-serif}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,.15)}
+select.input-field{appearance:auto}
+label.lbl{font-size:12px;font-weight:500;color:#555;margin-bottom:4px;display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.stat-box{text-align:center;padding:12px;border-radius:8px;background:#f9fafb}
+.stat-val{font-size:18px;font-weight:700;color:#66CFF5}
+.stat-lbl{font-size:11px;color:#888;margin-top:2px}
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.chart-container{position:relative;width:100%;max-width:100%}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:10px;max-width:500px;width:100%;max-height:80%;overflow-y:auto;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.hidden{display:none!important}
+.fade-in{animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.scenario-card{cursor:pointer;transition:all .2s ease}
+.scenario-card:hover{transform:translateY(-1px)}
+.template-card{border-left:3px solid #FFC107;cursor:pointer}
+.template-card:hover{background:#FFFDE7}
+.print-hide{/* elements to hide in exports */}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500;background:#E0F4FD;color:#66CFF5;margin-right:4px}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',pLight:'#E0F4FD',success:'#4CAF50',warn:'#FF9800',danger:'#F44336',gold:'#FFC107'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrap" id="appWrap"><!-- Header -->
+   <div class="header-fixed" id="appHeader">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+     <div>
+      <h1 id="appTitle" style="display: none; display: none; font-size:17px;font-weight:700;color:#66CFF5;margin:0">IS Poupança Automática</h1>
+      <p id="appDesc" style="display: none; display: none; font-size:11px;color:#888;margin:2px 0 0">Calculadora de Poupança Automática para a Comunidade dos Países de Língua Portuguesa</p>
+     </div>
+     <div style="display:flex;gap:6px;flex-wrap:wrap" class="print-hide"><button class="btn btn-outline btn-sm" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:13px;height:13px"></i> Imagem</button> <button class="btn btn-outline btn-sm" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:13px;height:13px"></i> PDF</button> <button class="btn btn-outline btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:13px;height:13px"></i> JSON</button> <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:13px;height:13px"></i> Importar</button> <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)">
+     </div>
+    </div>
+   </div><!-- Tabs -->
+   <div class="tabs-fixed print-hide" id="tabsBar"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador',this)"><i data-lucide="calculator"></i> Simulador</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios',this)"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="taxas" onclick="switchTab('taxas',this)"><i data-lucide="coins"></i> Taxas Câmbio</button> <button class="tab-btn" data-tab="aprendizagem" onclick="switchTab('aprendizagem',this)"><i data-lucide="book-open"></i> Aprendizagem</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda',this)"><i data-lucide="help-circle"></i> Ajuda</button>
+   </div><!-- Content -->
+   <div class="content-area" id="contentArea"><!-- TAB: Simulador -->
+    <div id="tab-simulador" class="tab-content fade-in">
+     <div class="card card-accent">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+       <h2 style="font-size:14px;font-weight:600;margin:0">Parâmetros de Poupança</h2>
+       <div class="print-hide" style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:12px;height:12px"></i> Guardar Cenário</button> <button class="btn btn-outline btn-sm" onclick="resetSimulator()"><i data-lucide="rotate-ccw" style="width:12px;height:12px"></i> Limpar</button>
+       </div>
+      </div>
+      <div class="print-hide">
+       <div style="margin-bottom:10px"><label class="lbl">Título do Cenário</label> <input type="text" id="scenarioTitle" class="input-field" placeholder="Ex: Poupança para reforma" maxlength="60">
+       </div>
+       <div class="grid4">
+        <div><label class="lbl">Saldo Inicial (AOA)</label> <input type="number" id="initialBalance" class="input-field" value="0" min="0" step="1000" oninput="calculate()">
+        </div>
+        <div><label class="lbl">Depósito Mensal (AOA)</label> <input type="number" id="monthlyDeposit" class="input-field" value="50000" min="0" step="1000" oninput="calculate()">
+        </div>
+        <div><label class="lbl">Taxa Juros Anual (%)</label> <input type="number" id="annualRate" class="input-field" value="7" min="0" max="100" step="0.1" oninput="calculate()">
+        </div>
+        <div><label class="lbl">Período (meses)</label> <input type="number" id="periodMonths" class="input-field" value="60" min="1" max="600" step="1" oninput="calculate()">
+        </div>
+       </div>
+       <div class="grid3" style="margin-top:10px">
+        <div><label class="lbl">Incremento Anual (%)</label> <input type="number" id="annualIncrement" class="input-field" value="0" min="0" max="100" step="0.5" oninput="calculate()">
+        </div>
+        <div><label class="lbl">Frequência de Capitalização</label> <select id="compFreq" class="input-field" onchange="calculate()"> <option value="12" selected>Mensal</option> <option value="4">Trimestral</option> <option value="2">Semestral</option> <option value="1">Anual</option> </select>
+        </div>
+        <div><label class="lbl">Moeda de Visualização</label> <select id="displayCurrency" class="input-field" onchange="calculate()"> <option value="AOA" selected>AOA (Kwanza)</option> </select>
+        </div>
+       </div>
+      </div>
+     </div><!-- Results -->
+     <div class="card card-accent-green" id="resultsCard">
+      <h2 style="font-size:14px;font-weight:600;margin:0 0 12px">Resultados da Simulação</h2>
+      <div class="grid4" id="resultStats">
+       <div class="stat-box">
+        <div class="stat-val" id="rTotalFinal">
+         0
+        </div>
+        <div class="stat-lbl">
+         Total Final
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-val" id="rTotalDeposits">
+         0
+        </div>
+        <div class="stat-lbl">
+         Total Depositado
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-val" id="rTotalInterest" style="color:#4CAF50">
+         0
+        </div>
+        <div class="stat-lbl">
+         Juros Ganhos
+        </div>
+       </div>
+       <div class="stat-box">
+        <div class="stat-val" id="rInterestPct" style="color:#FF9800">
+         0%
+        </div>
+        <div class="stat-lbl">
+         % de Juros
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts -->
+     <div class="grid2">
+      <div class="card chart-container" id="chartCard1"><button class="btn btn-xs btn-outline chart-export-btn print-hide" onclick="exportChart('growthChart','Evolução da Poupança')"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+       <h3 style="font-size:13px;font-weight:600;margin:0 0 8px">Evolução da Poupança</h3>
+       <canvas id="growthChart" height="200"></canvas>
+      </div>
+      <div class="card chart-container" id="chartCard2"><button class="btn btn-xs btn-outline chart-export-btn print-hide" onclick="exportChart('compositionChart','Composição do Saldo')"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+       <h3 style="font-size:13px;font-weight:600;margin:0 0 8px">Composição do Saldo</h3>
+       <canvas id="compositionChart" height="200"></canvas>
+      </div>
+     </div>
+     <div class="grid2">
+      <div class="card chart-container" id="chartCard3"><button class="btn btn-xs btn-outline chart-export-btn print-hide" onclick="exportChart('monthlyChart','Juros Mensais')"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+       <h3 style="font-size:13px;font-weight:600;margin:0 0 8px">Juros por Mês</h3>
+       <canvas id="monthlyChart" height="200"></canvas>
+      </div>
+      <div class="card chart-container" id="chartCard4"><button class="btn btn-xs btn-outline chart-export-btn print-hide" onclick="exportChart('donutChart','Distribuição Final')"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+       <h3 style="font-size:13px;font-weight:600;margin:0 0 8px">Distribuição Final</h3>
+       <canvas id="donutChart" height="200"></canvas>
+      </div>
+     </div><!-- Detailed Table -->
+     <div class="card" id="tableCard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+       <h3 style="font-size:13px;font-weight:600;margin:0">Tabela Detalhada</h3>
+       <div class="print-hide" style="display:flex;gap:6px;align-items:center"><input type="text" id="tableFilter" class="input-field" style="width:180px;padding:5px 10px;font-size:11px" placeholder="Filtrar mês ou valor..." oninput="filterTable()"> <select id="tableView" class="input-field" style="width:120px;padding:5px 10px;font-size:11px" onchange="renderTable()"> <option value="all">Todos os Meses</option> <option value="yearly">Anual</option> <option value="quarterly">Trimestral</option> </select>
+       </div>
+      </div>
+      <div style="overflow-x:auto;max-height:350px;overflow-y:auto">
+       <table style="width:100%;border-collapse:collapse;font-size:11px" id="detailTable">
+        <thead style="position:sticky;top:0;background:#fff">
+         <tr style="border-bottom:2px solid #E0E0E0">
+          <th style="text-align:left;padding:6px;font-weight:600;color:#555">Mês</th>
+          <th style="text-align:right;padding:6px;font-weight:600;color:#555">Depósito</th>
+          <th style="text-align:right;padding:6px;font-weight:600;color:#555">Juros</th>
+          <th style="text-align:right;padding:6px;font-weight:600;color:#555">Saldo</th>
+         </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+       </table>
+      </div>
+     </div>
+    </div><!-- TAB: Cenários -->
+    <div id="tab-cenarios" class="tab-content hidden fade-in">
+     <div class="card card-accent-gold">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+       <h2 style="font-size:14px;font-weight:600;margin:0">Cenários Guardados</h2>
+       <div class="print-hide" style="display:flex;gap:6px;align-items:center"><input type="text" id="scenarioFilter" class="input-field" style="width:200px;padding:5px 10px;font-size:11px" placeholder="Filtrar cenários..." oninput="renderScenarios()"> <button class="btn btn-primary btn-sm" onclick="newScenarioFromScratch()"><i data-lucide="plus" style="width:12px;height:12px"></i> Novo</button>
+       </div>
+      </div>
+      <div id="scenariosList"></div>
+     </div><!-- Templates -->
+     <div class="card card-accent-gold" style="margin-top:14px">
+      <h2 style="font-size:14px;font-weight:600;margin:0 0 12px">Templates de Aprendizagem</h2>
+      <p style="font-size:11px;color:#888;margin-bottom:10px">Clique para carregar um cenário pré-configurado e aprender com ele.</p>
+      <div class="grid2" id="templatesList"></div>
+     </div>
+    </div><!-- TAB: Taxas de Câmbio -->
+    <div id="tab-taxas" class="tab-content hidden fade-in">
+     <div class="card card-accent-orange">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+       <h2 style="font-size:14px;font-weight:600;margin:0">Taxas de Câmbio CPLP + USD</h2>
+       <p style="font-size:11px;color:#888;margin:0">Base: 1 AOA (Kwanza Angolano)</p>
+      </div>
+      <p style="font-size:11px;color:#FF9800;margin-bottom:10px"><i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;vertical-align:middle"></i> Edite as taxas conforme valores atualizados do mercado.</p>
+      <div id="ratesList"></div>
+      <div class="print-hide" style="margin-top:12px;display:flex;gap:6px"><button class="btn btn-primary btn-sm" onclick="saveRates()"><i data-lucide="save" style="width:12px;height:12px"></i> Guardar Taxas</button> <button class="btn btn-outline btn-sm" onclick="resetRates()"><i data-lucide="rotate-ccw" style="width:12px;height:12px"></i> Repor Padrão</button>
+      </div>
+     </div><!-- Converter -->
+     <div class="card card-accent">
+      <h2 style="font-size:14px;font-weight:600;margin:0 0 12px">Conversor Rápido</h2>
+      <div class="grid3 print-hide">
+       <div><label class="lbl">Valor</label> <input type="number" id="convAmount" class="input-field" value="100000" min="0" oninput="convertCurrency()">
+       </div>
+       <div><label class="lbl">De</label> <select id="convFrom" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+       <div><label class="lbl">Para</label> <select id="convTo" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+      </div>
+      <div id="convResult" style="margin-top:12px;font-size:16px;font-weight:700;color:#66CFF5;text-align:center"></div>
+     </div>
+    </div><!-- TAB: Aprendizagem -->
+    <div id="tab-aprendizagem" class="tab-content hidden fade-in">
+     <div id="learnContent"></div>
+    </div><!-- TAB: Ajuda -->
+    <div id="tab-ajuda" class="tab-content hidden fade-in">
+     <div id="helpContent"></div>
+    </div>
+   </div><!-- /content-area --> <!-- Toast -->
+   <div class="toast" id="toast"></div><!-- Modal -->
+   <div class="modal-overlay hidden" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" id="modalBox"></div>
+   </div>
+  </div><!-- /app-wrap -->
+  <script>
+// ============ STATE ============
+let state = {
+  scenarios: [],
+  rates: {},
+  currentCalc: [],
+  config: { app_title: 'IS Poupança Automática', app_description: 'Calculadora de Poupança Automática para a Comunidade dos Países de Língua Portuguesa' }
+};
+
+const DEFAULT_RATES = {
+  AOA: { name: 'Kwanza (Angola)', symbol: 'AOA', rate: 1 },
+  BRL: { name: 'Real (Brasil)', symbol: 'BRL', rate: 0.006 },
+  CVE: { name: 'Escudo (Cabo Verde)', symbol: 'CVE', rate: 0.119 },
+  XOF: { name: 'Franco CFA (Guiné-Bissau)', symbol: 'XOF', rate: 0.706 },
+  MZN: { name: 'Metical (Moçambique)', symbol: 'MZN', rate: 0.077 },
+  EUR: { name: 'Euro (Portugal)', symbol: 'EUR', rate: 0.00108 },
+  STN: { name: 'Dobra (São Tomé)', symbol: 'STN', rate: 0.0264 },
+  TPL: { name: 'Dólar (Timor-Leste)', symbol: 'USD*', rate: 0.0012 },
+  USD: { name: 'Dólar Americano', symbol: 'USD', rate: 0.0012 },
+  GQ:  { name: 'Franco CFA (Guiné Eq.)', symbol: 'XAF', rate: 0.706 }
+};
+
+const TEMPLATES = [
+  { title: 'Fundo de Emergência', desc: 'Poupe 3 a 6 meses de despesas.', initial: 0, monthly: 30000, rate: 5, months: 12, increment: 0 },
+  { title: 'Poupança para Reforma', desc: 'Planeamento a longo prazo para reforma.', initial: 100000, monthly: 50000, rate: 8, months: 240, increment: 3 },
+  { title: 'Educação dos Filhos', desc: 'Fundo para propinas universitárias.', initial: 50000, monthly: 40000, rate: 6, months: 120, increment: 2 },
+  { title: 'Viagem de Sonho', desc: 'Poupe para aquela viagem especial.', initial: 0, monthly: 25000, rate: 4, months: 24, increment: 0 },
+  { title: 'Compra de Imóvel', desc: 'Entrada para compra de casa.', initial: 200000, monthly: 80000, rate: 7, months: 60, increment: 5 },
+  { title: 'Investimento Inicial', desc: 'Capital semente para negócio.', initial: 0, monthly: 60000, rate: 9, months: 36, increment: 0 }
+];
+
+let charts = {};
+
+// ============ PERSISTENCE ============
+function saveState() {
+  try { localStorage.setItem('is_poupanca_state', JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const d = localStorage.getItem('is_poupanca_state');
+    if (d) { const p = JSON.parse(d); state = { ...state, ...p }; }
+  } catch(e) {}
+  if (!state.rates || Object.keys(state.rates).length === 0) state.rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
+  if (!state.scenarios) state.scenarios = [];
+}
+
+// ============ TOAST ============
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type ? 'toast-'+type : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ============ TABS ============
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('tab-' + tab);
+  if (el) { el.classList.remove('hidden'); el.classList.add('fade-in'); }
+  if (btn) btn.classList.add('active');
+  if (tab === 'cenarios') renderScenarios();
+  if (tab === 'taxas') renderRates();
+}
+
+// ============ CALCULATION ============
+function calculate() {
+  const initial = parseFloat(document.getElementById('initialBalance').value) || 0;
+  const monthly = parseFloat(document.getElementById('monthlyDeposit').value) || 0;
+  const annualRate = parseFloat(document.getElementById('annualRate').value) || 0;
+  const months = parseInt(document.getElementById('periodMonths').value) || 1;
+  const increment = parseFloat(document.getElementById('annualIncrement').value) || 0;
+  const compFreq = parseInt(document.getElementById('compFreq').value) || 12;
+  const dispCur = document.getElementById('displayCurrency').value;
+
+  const ratePerPeriod = (annualRate / 100) / compFreq;
+  const monthsPerPeriod = 12 / compFreq;
+
+  let balance = initial;
+  let totalDeposits = initial;
+  let totalInterest = 0;
+  let currentMonthly = monthly;
+  const data = [];
+
+  for (let m = 1; m <= months; m++) {
+    if (increment > 0 && m > 1 && (m - 1) % 12 === 0) {
+      currentMonthly *= (1 + increment / 100);
+    }
+    balance += currentMonthly;
+    totalDeposits += currentMonthly;
+    let mInterest = 0;
+    if (m % monthsPerPeriod === 0 || m === months) {
+      mInterest = balance * ratePerPeriod;
+      balance += mInterest;
+      totalInterest += mInterest;
+    }
+    data.push({ month: m, deposit: currentMonthly, interest: mInterest, balance: balance, totalDep: totalDeposits, totalInt: totalInterest });
+  }
+
+  state.currentCalc = data;
+
+  const cRate = getCurrencyRate(dispCur);
+  const fmt = (v) => formatCurrency(v * cRate, dispCur);
+
+  document.getElementById('rTotalFinal').textContent = fmt(balance);
+  document.getElementById('rTotalDeposits').textContent = fmt(totalDeposits);
+  document.getElementById('rTotalInterest').textContent = fmt(totalInterest);
+  const pct = totalDeposits > 0 ? ((totalInterest / totalDeposits) * 100).toFixed(1) : '0';
+  document.getElementById('rInterestPct').textContent = pct + '%';
+
+  updateCharts(data, dispCur);
+  renderTable();
+}
+
+function getCurrencyRate(code) {
+  if (code === 'AOA') return 1;
+  const r = state.rates[code];
+  return r ? r.rate : 1;
+}
+
+function formatCurrency(val, cur) {
+  const v = Math.round(val);
+  return v.toLocaleString('pt-PT') + ' ' + (cur || 'AOA');
+}
+
+// ============ CHARTS ============
+function updateCharts(data, cur) {
+  const labels = data.map(d => 'M' + d.month);
+  const cRate = getCurrencyRate(cur);
+  const balances = data.map(d => Math.round(d.balance * cRate));
+  const deposits = data.map(d => Math.round(d.totalDep * cRate));
+  const interests = data.map(d => Math.round(d.totalInt * cRate));
+  const mInterests = data.map(d => Math.round(d.interest * cRate));
+
+  const last = data[data.length - 1];
+  const totalDep = Math.round(last.totalDep * cRate);
+  const totalInt = Math.round(last.totalInt * cRate);
+  const total = totalDep + totalInt;
+  const depPct = total > 0 ? ((totalDep / total) * 100).toFixed(1) : '0';
+  const intPct = total > 0 ? ((totalInt / total) * 100).toFixed(1) : '0';
+
+  // Skip labels for large datasets
+  const skipN = data.length > 60 ? Math.ceil(data.length / 30) : (data.length > 24 ? 2 : 1);
+  const filteredLabels = labels.map((l, i) => i % skipN === 0 ? l : '');
+
+  const commonOpts = { responsive: true, maintainAspectRatio: true, animation: { duration: 400 }, plugins: { legend: { labels: { font: { family: 'Inter', size: 10 } } } }, scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { ticks: { font: { size: 9 }, callback: v => (v / 1000).toFixed(0) + 'k' } } } };
+
+  // Growth Chart
+  if (charts.growth) charts.growth.destroy();
+  charts.growth = new Chart(document.getElementById('growthChart'), {
+    type: 'line',
+    data: {
+      labels: filteredLabels,
+      datasets: [
+        { label: 'Saldo Total', data: balances, borderColor: '#66CFF5', backgroundColor: 'rgba(30,136,229,.1)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Depositado', data: deposits, borderColor: '#4CAF50', backgroundColor: 'transparent', borderDash: [4,3], tension: 0.3, pointRadius: 0, borderWidth: 1.5 }
+      ]
+    },
+    options: commonOpts
+  });
+
+  // Composition Chart
+  if (charts.composition) charts.composition.destroy();
+  charts.composition = new Chart(document.getElementById('compositionChart'), {
+    type: 'bar',
+    data: {
+      labels: filteredLabels,
+      datasets: [
+        { label: 'Depósitos', data: deposits, backgroundColor: 'rgba(30,136,229,.6)', borderRadius: 2 },
+        { label: 'Juros', data: interests, backgroundColor: 'rgba(76,175,80,.6)', borderRadius: 2 }
+      ]
+    },
+    options: { ...commonOpts, scales: { ...commonOpts.scales, x: { ...commonOpts.scales.x, stacked: true }, y: { ...commonOpts.scales.y, stacked: true } } }
+  });
+
+  // Monthly Interest Chart
+  if (charts.monthly) charts.monthly.destroy();
+  charts.monthly = new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: filteredLabels,
+      datasets: [{ label: 'Juros Mês', data: mInterests, backgroundColor: 'rgba(255,152,0,.6)', borderRadius: 2 }]
+    },
+    options: commonOpts
+  });
+
+  // Donut Chart
+  if (charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Depósitos (' + depPct + '%)', 'Juros (' + intPct + '%)'],
+      datasets: [{ data: [totalDep, totalInt], backgroundColor: ['#66CFF5', '#4CAF50'], borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, animation: { duration: 400 },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const v = ctx.parsed;
+              const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const p = t > 0 ? ((v / t) * 100).toFixed(1) : '0';
+              return ctx.label.split('(')[0].trim() + ': ' + v.toLocaleString('pt-PT') + ' ' + cur + ' (' + p + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============ TABLE ============
+function renderTable() {
+  const view = document.getElementById('tableView').value;
+  const filter = (document.getElementById('tableFilter').value || '').toLowerCase();
+  const dispCur = document.getElementById('displayCurrency').value;
+  const cRate = getCurrencyRate(dispCur);
+  let data = state.currentCalc || [];
+  if (view === 'yearly') data = data.filter(d => d.month % 12 === 0 || d.month === data.length);
+  else if (view === 'quarterly') data = data.filter(d => d.month % 3 === 0 || d.month === data.length);
+
+  if (filter) {
+    data = data.filter(d => {
+      return ('mês ' + d.month).includes(filter) ||
+        (d.deposit * cRate).toFixed(0).includes(filter) ||
+        (d.balance * cRate).toFixed(0).includes(filter) ||
+        d.month.toString().includes(filter);
+    });
+  }
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(d => `<tr style="border-bottom:1px solid #f0f0f0">
+    <td style="padding:5px 6px;color:#555">Mês ${d.month}</td>
+    <td style="padding:5px 6px;text-align:right;color:#66CFF5">${formatCurrency(d.deposit * cRate, dispCur)}</td>
+    <td style="padding:5px 6px;text-align:right;color:#4CAF50">${formatCurrency(d.interest * cRate, dispCur)}</td>
+    <td style="padding:5px 6px;text-align:right;font-weight:600">${formatCurrency(d.balance * cRate, dispCur)}</td>
+  </tr>`).join('');
+}
+
+function filterTable() { renderTable(); }
+
+// ============ SCENARIOS ============
+function saveScenario() {
+  const title = document.getElementById('scenarioTitle').value.trim();
+  const n = state.scenarios.length + 1;
+  const sc = {
+    id: Date.now().toString(),
+    title: title || 'Cenário ' + n,
+    initial: parseFloat(document.getElementById('initialBalance').value) || 0,
+    monthly: parseFloat(document.getElementById('monthlyDeposit').value) || 0,
+    rate: parseFloat(document.getElementById('annualRate').value) || 0,
+    months: parseInt(document.getElementById('periodMonths').value) || 1,
+    increment: parseFloat(document.getElementById('annualIncrement').value) || 0,
+    compFreq: parseInt(document.getElementById('compFreq').value) || 12,
+    createdAt: new Date().toISOString()
+  };
+  state.scenarios.push(sc);
+  saveState();
+  showToast('Cenário "' + sc.title + '" guardado!', 'success');
+}
+
+function loadScenario(id) {
+  const sc = state.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  document.getElementById('scenarioTitle').value = sc.title;
+  document.getElementById('initialBalance').value = sc.initial;
+  document.getElementById('monthlyDeposit').value = sc.monthly;
+  document.getElementById('annualRate').value = sc.rate;
+  document.getElementById('periodMonths').value = sc.months;
+  document.getElementById('annualIncrement').value = sc.increment || 0;
+  document.getElementById('compFreq').value = sc.compFreq || 12;
+  calculate();
+  switchTab('simulador', document.querySelector('[data-tab="simulador"]'));
+  showToast('Cenário "' + sc.title + '" carregado!', 'success');
+}
+
+function cloneScenario(id) {
+  const sc = state.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  const n = state.scenarios.length + 1;
+  const clone = { ...sc, id: Date.now().toString(), title: sc.title + ' (Cópia)', createdAt: new Date().toISOString() };
+  state.scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado!', 'success');
+}
+
+function deleteScenario(id) {
+  const sc = state.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  showModal(`
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Eliminar Cenário</h3>
+    <p style="font-size:13px;color:#666">Tem a certeza que deseja eliminar "<strong>${sc.title}</strong>"?</p>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteScenario('${id}')">Eliminar</button>
+    </div>
+  `);
+}
+
+function confirmDeleteScenario(id) {
+  state.scenarios = state.scenarios.filter(s => s.id !== id);
+  saveState();
+  closeModal();
+  renderScenarios();
+  showToast('Cenário eliminado.', 'error');
+}
+
+function editScenario(id) {
+  const sc = state.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  showModal(`
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 12px">Editar Cenário</h3>
+    <div style="margin-bottom:8px"><label class="lbl">Título</label><input type="text" id="editScTitle" class="input-field" value="${sc.title}"></div>
+    <div class="grid2">
+      <div><label class="lbl">Saldo Inicial (AOA)</label><input type="number" id="editScInit" class="input-field" value="${sc.initial}"></div>
+      <div><label class="lbl">Depósito Mensal (AOA)</label><input type="number" id="editScMonth" class="input-field" value="${sc.monthly}"></div>
+      <div><label class="lbl">Taxa Juros Anual (%)</label><input type="number" id="editScRate" class="input-field" value="${sc.rate}" step="0.1"></div>
+      <div><label class="lbl">Período (meses)</label><input type="number" id="editScMonths" class="input-field" value="${sc.months}"></div>
+      <div><label class="lbl">Incremento Anual (%)</label><input type="number" id="editScInc" class="input-field" value="${sc.increment || 0}" step="0.5"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveEditScenario('${id}')">Guardar</button>
+    </div>
+  `);
+}
+
+function saveEditScenario(id) {
+  const sc = state.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  sc.title = document.getElementById('editScTitle').value.trim() || sc.title;
+  sc.initial = parseFloat(document.getElementById('editScInit').value) || 0;
+  sc.monthly = parseFloat(document.getElementById('editScMonth').value) || 0;
+  sc.rate = parseFloat(document.getElementById('editScRate').value) || 0;
+  sc.months = parseInt(document.getElementById('editScMonths').value) || 1;
+  sc.increment = parseFloat(document.getElementById('editScInc').value) || 0;
+  saveState();
+  closeModal();
+  renderScenarios();
+  showToast('Cenário atualizado!', 'success');
+}
+
+function newScenarioFromScratch() {
+  document.getElementById('scenarioTitle').value = '';
+  document.getElementById('initialBalance').value = 0;
+  document.getElementById('monthlyDeposit').value = 50000;
+  document.getElementById('annualRate').value = 7;
+  document.getElementById('periodMonths').value = 60;
+  document.getElementById('annualIncrement').value = 0;
+  calculate();
+  switchTab('simulador', document.querySelector('[data-tab="simulador"]'));
+  showToast('Novo cenário em branco pronto.', 'success');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenarioFilter')?.value || '').toLowerCase();
+  let list = state.scenarios;
+  if (filter) list = list.filter(s => s.title.toLowerCase().includes(filter) || (s.rate + '').includes(filter));
+
+  const container = document.getElementById('scenariosList');
+  if (list.length === 0) {
+    container.innerHTML = '<p style="font-size:12px;color:#999;text-align:center;padding:20px">Nenhum cenário guardado. Vá ao Simulador e guarde um cenário.</p>';
+    return;
+  }
+  container.innerHTML = list.map(sc => {
+    const date = new Date(sc.createdAt).toLocaleDateString('pt-PT');
+    return `<div class="card card-accent scenario-card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div style="flex:1;min-width:200px" onclick="loadScenario('${sc.id}')">
+          <div style="font-size:13px;font-weight:600;color:#333">${sc.title}</div>
+          <div style="font-size:10px;color:#888;margin-top:2px">
+            <span class="tag">AOA ${sc.monthly?.toLocaleString('pt-PT')}/mês</span>
+            <span class="tag">${sc.rate}% a.a.</span>
+            <span class="tag">${sc.months} meses</span>
+            <span style="color:#bbb;margin-left:4px">${date}</span>
+          </div>
+        </div>
+        <div class="print-hide" style="display:flex;gap:4px">
+          <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();loadScenario('${sc.id}')" title="Carregar"><i data-lucide="play" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();editScenario('${sc.id}')" title="Editar"><i data-lucide="edit" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();cloneScenario('${sc.id}')" title="Clonar"><i data-lucide="copy" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteScenario('${sc.id}')" title="Eliminar"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// ============ TEMPLATES ============
+function renderTemplates() {
+  const container = document.getElementById('templatesList');
+  container.innerHTML = TEMPLATES.map((t, i) => `
+    <div class="card template-card" onclick="loadTemplate(${i})">
+      <div style="font-size:13px;font-weight:600;color:#333">${t.title}</div>
+      <div style="font-size:11px;color:#888;margin-top:3px">${t.desc}</div>
+      <div style="margin-top:6px">
+        <span class="tag">AOA ${t.monthly?.toLocaleString('pt-PT')}/mês</span>
+        <span class="tag">${t.rate}% a.a.</span>
+        <span class="tag">${t.months} meses</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadTemplate(idx) {
+  const t = TEMPLATES[idx];
+  if (!t) return;
+  document.getElementById('scenarioTitle').value = t.title;
+  document.getElementById('initialBalance').value = t.initial;
+  document.getElementById('monthlyDeposit').value = t.monthly;
+  document.getElementById('annualRate').value = t.rate;
+  document.getElementById('periodMonths').value = t.months;
+  document.getElementById('annualIncrement').value = t.increment;
+  calculate();
+  switchTab('simulador', document.querySelector('[data-tab="simulador"]'));
+  showToast('Template "' + t.title + '" carregado!', 'success');
+}
+
+// ============ RATES ============
+function renderRates() {
+  const container = document.getElementById('ratesList');
+  const keys = Object.keys(state.rates);
+  container.innerHTML = `<div class="grid3">${keys.map(k => {
+    const r = state.rates[k];
+    const isBase = k === 'AOA';
+    return `<div class="card" style="padding:10px;margin-bottom:0;${isBase ? 'background:#E0F4FD' : ''}">
+      <div style="font-size:11px;font-weight:600;color:#333">${r.symbol} <span style="font-weight:400;color:#888">- ${r.name}</span></div>
+      <div style="margin-top:6px">
+        <label class="lbl">1 AOA = ? ${r.symbol}</label>
+        <input type="number" class="input-field print-hide" style="font-size:12px;padding:5px 8px" value="${r.rate}" step="0.0001" min="0" ${isBase ? 'disabled' : ''} onchange="state.rates['${k}'].rate=parseFloat(this.value)||0">
+        ${isBase ? '<div style="font-size:10px;color:#66CFF5;margin-top:3px;font-weight:500">Moeda Base</div>' : ''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+  updateCurrencySelectors();
+}
+
+function saveRates() {
+  saveState();
+  calculate();
+  showToast('Taxas guardadas!', 'success');
+}
+
+function resetRates() {
+  state.rates = JSON.parse(JSON.stringify(DEFAULT_RATES));
+  saveState();
+  renderRates();
+  calculate();
+  showToast('Taxas repostas ao padrão.', 'success');
+}
+
+function updateCurrencySelectors() {
+  const keys = Object.keys(state.rates);
+  const opts = keys.map(k => `<option value="${k}">${state.rates[k].symbol} (${state.rates[k].name})</option>`).join('');
+  document.getElementById('displayCurrency').innerHTML = opts;
+  document.getElementById('displayCurrency').value = 'AOA';
+  document.getElementById('convFrom').innerHTML = opts;
+  document.getElementById('convTo').innerHTML = opts;
+  document.getElementById('convFrom').value = 'AOA';
+  document.getElementById('convTo').value = 'USD';
+}
+
+function convertCurrency() {
+  const amount = parseFloat(document.getElementById('convAmount').value) || 0;
+  const from = document.getElementById('convFrom').value;
+  const to = document.getElementById('convTo').value;
+  const fromRate = state.rates[from]?.rate || 1;
+  const toRate = state.rates[to]?.rate || 1;
+  const aoaVal = amount / fromRate;
+  const result = aoaVal * toRate;
+  document.getElementById('convResult').innerHTML = `${amount.toLocaleString('pt-PT')} ${state.rates[from]?.symbol} = <strong>${result.toLocaleString('pt-PT', { maximumFractionDigits: 2 })} ${state.rates[to]?.symbol}</strong>`;
+}
+
+// ============ LEARNING CONTENT ============
+function renderLearning() {
+  const lessons = [
+    { title: 'Juros Compostos', icon: 'trending-up', color: '#66CFF5', content: 'Os juros compostos são calculados sobre o capital inicial e sobre os juros acumulados de períodos anteriores. Este efeito de "juros sobre juros" é a base do crescimento exponencial da poupança a longo prazo. Quanto mais tempo o dinheiro estiver investido, maior será o efeito dos juros compostos.' },
+    { title: 'Regra dos 72', icon: 'divide', color: '#4CAF50', content: 'A Regra dos 72 é uma forma rápida de estimar quanto tempo demora para o seu dinheiro duplicar. Divida 72 pela taxa de juro anual. Por exemplo, a 8% ao ano, o dinheiro duplica em aproximadamente 9 anos (72 ÷ 8 = 9).' },
+    { title: 'Poupança Automática', icon: 'repeat', color: '#FF9800', content: 'Automatizar depósitos mensais é a estratégia mais eficaz para construir riqueza. Ao definir um valor fixo mensal, elimina-se a tentação de gastar e garante-se consistência na poupança. Comece com um valor confortável e aumente gradualmente.' },
+    { title: 'Fundo de Emergência', icon: 'shield', color: '#F44336', content: 'Antes de investir a longo prazo, crie um fundo de emergência equivalente a 3 a 6 meses de despesas mensais. Este fundo deve estar facilmente acessível e protege contra imprevistos sem comprometer investimentos de longo prazo.' },
+    { title: 'Diversificação', icon: 'pie-chart', color: '#9C27B0', content: 'Não coloque todos os ovos no mesmo cesto. Distribua a sua poupança por diferentes instrumentos e moedas para reduzir o risco. Para cidadãos da CPLP, considere manter parte da poupança em moedas mais estáveis como EUR ou USD.' },
+    { title: 'Inflação', icon: 'alert-triangle', color: '#795548', content: 'A inflação reduz o poder de compra do dinheiro ao longo do tempo. Certifique-se que a taxa de retorno dos seus investimentos supera a inflação. Nos países CPLP, as taxas de inflação podem ser significativas, tornando essencial investir em vez de apenas poupar.' }
+  ];
+  document.getElementById('learnContent').innerHTML = lessons.map(l => `
+    <div class="card card-accent" style="border-left-color:${l.color}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:32px;height:32px;border-radius:8px;background:${l.color}15;display:flex;align-items:center;justify-content:center"><i data-lucide="${l.icon}" style="width:16px;height:16px;color:${l.color}"></i></div>
+        <h3 style="font-size:14px;font-weight:600;margin:0">${l.title}</h3>
+      </div>
+      <p style="font-size:12px;color:#555;line-height:1.6;margin:0">${l.content}</p>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+// ============ HELP CONTENT ============
+function renderHelp() {
+  const sections = [
+    { title: 'Como Usar o Simulador', icon: 'play-circle', items: [
+      'Preencha os campos no separador <strong>Simulador</strong>: saldo inicial, depósito mensal, taxa de juros e período.',
+      'Os resultados e gráficos atualizam automaticamente em tempo real.',
+      'Use o <strong>Incremento Anual</strong> para simular aumentos no depósito mensal.',
+      'Altere a <strong>Moeda de Visualização</strong> para ver valores noutras moedas.'
+    ]},
+    { title: 'Guardar e Gerir Cenários', icon: 'save', items: [
+      'Clique em <strong>Guardar Cenário</strong> para salvar a simulação atual.',
+      'No separador <strong>Cenários</strong>, pode carregar, editar, clonar ou eliminar cenários.',
+      'Use os <strong>Templates</strong> para começar com cenários pré-configurados.',
+      'Use o campo de filtragem para encontrar cenários rapidamente.'
+    ]},
+    { title: 'Taxas de Câmbio', icon: 'coins', items: [
+      'No separador <strong>Taxas Câmbio</strong>, edite as taxas das moedas CPLP.',
+      'A moeda base é o <strong>Kwanza (AOA)</strong>.',
+      'Use o <strong>Conversor Rápido</strong> para converter entre moedas.',
+      'Clique em <strong>Guardar Taxas</strong> para persistir as alterações.'
+    ]},
+    { title: 'Exportação', icon: 'download', items: [
+      '<strong>Imagem</strong>: Exporta uma captura do aplicativo (campos editáveis ocultos).',
+      '<strong>PDF</strong>: Gera um documento PDF com cabeçalho, dados e gráficos.',
+      '<strong>JSON</strong>: Exporta todos os dados para backup ou transferência.',
+      '<strong>Importar</strong>: Carregue um ficheiro JSON para restaurar dados.',
+      'Cada gráfico tem um botão <strong>HD</strong> para exportar individualmente.'
+    ]},
+    { title: 'Melhores Práticas', icon: 'award', items: [
+      'Comece com um cenário conservador e ajuste gradualmente.',
+      'Compare múltiplos cenários para encontrar o plano ideal.',
+      'Reveja e atualize as taxas de câmbio periodicamente.',
+      'Exporte backups JSON regularmente para não perder dados.',
+      'Use o incremento anual para simular aumentos salariais.'
+    ]}
+  ];
+  document.getElementById('helpContent').innerHTML = sections.map(s => `
+    <div class="card card-accent">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <i data-lucide="${s.icon}" style="width:18px;height:18px;color:#66CFF5"></i>
+        <h3 style="font-size:14px;font-weight:600;margin:0">${s.title}</h3>
+      </div>
+      <ul style="margin:0;padding-left:20px;font-size:12px;color:#555;line-height:1.8">${s.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+// ============ MODAL ============
+function showModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  lucide.createIcons();
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+// ============ RESET ============
+function resetSimulator() {
+  document.getElementById('scenarioTitle').value = '';
+  document.getElementById('initialBalance').value = 0;
+  document.getElementById('monthlyDeposit').value = 50000;
+  document.getElementById('annualRate').value = 7;
+  document.getElementById('periodMonths').value = 60;
+  document.getElementById('annualIncrement').value = 0;
+  document.getElementById('compFreq').value = 12;
+  document.getElementById('displayCurrency').value = 'AOA';
+  calculate();
+  showToast('Simulador reiniciado.', 'success');
+}
+
+// ============ EXPORTS ============
+async function exportAppImage() {
+  showToast('A gerar imagem...', '');
+  const el = document.getElementById('appWrap');
+  // Hide print elements
+  const hideEls = el.querySelectorAll('.print-hide, input, select, textarea');
+  hideEls.forEach(e => { e.dataset.origDisplay = e.style.display; e.style.display = 'none'; });
+  // Show all tabs temporarily
+  const tabs = el.querySelectorAll('.tab-content');
+  const tabStates = [];
+  tabs.forEach(t => { tabStates.push(t.classList.contains('hidden')); t.classList.remove('hidden'); });
+  try {
+    await new Promise(r => setTimeout(r, 300));
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: 0, windowHeight: el.scrollHeight });
+    const link = document.createElement('a');
+    link.download = 'IS_Poupanca_Automatica_' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Imagem exportada!', 'success');
+  } catch(e) { showToast('Erro ao exportar imagem.', 'error'); }
+  // Restore
+  hideEls.forEach(e => { e.style.display = e.dataset.origDisplay || ''; delete e.dataset.origDisplay; });
+  tabs.forEach((t, i) => { if (tabStates[i]) t.classList.add('hidden'); });
+}
+
+async function exportChart(chartId, title) {
+  try {
+    const canvas = document.getElementById(chartId);
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width * 2;
+    tempCanvas.height = canvas.height * 2;
+    const ctx = tempCanvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(canvas, 0, 0);
+    const link = document.createElement('a');
+    link.download = title.replace(/\s/g, '_') + '_HD.png';
+    link.href = tempCanvas.toDataURL('image/png', 1.0);
+    link.click();
+    showToast('Gráfico exportado em HD!', 'success');
+  } catch(e) { showToast('Erro ao exportar gráfico.', 'error'); }
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...', '');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const usable = pw - margin * 2;
+    let y = margin;
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const appName = document.getElementById('appTitle').textContent || 'IS Poupança Automática';
+
+    function addHeader() {
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pw, 18, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text(appName, margin, 11);
+      doc.setFontSize(7);
+      doc.setFont(undefined, 'normal');
+      doc.text(dateStr, pw - margin, 11, { align: 'right' });
+      y = 25;
+    }
+
+    function addFooter(pageNum, totalPages) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(0, ph - 12, pw, 12, 'F');
+      doc.setTextColor(130, 130, 130);
+      doc.setFontSize(7);
+      doc.text('Gerado por ' + appName + ' · ' + dateStr + ' · www.investesuite.com', margin, ph - 5);
+      doc.text('Página ' + pageNum + ' / ' + totalPages, pw - margin, ph - 5, { align: 'right' });
+    }
+
+    function checkPage(need) {
+      if (y + need > ph - 20) { doc.addPage(); addHeader(); return true; }
+      return false;
+    }
+
+    addHeader();
+
+    // Title
+    doc.setTextColor(30, 136, 229);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Relatório de Simulação', margin, y);
+    y += 8;
+
+    // Scenario info
+    const scTitle = document.getElementById('scenarioTitle').value || 'Sem título';
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text('Cenário: ' + scTitle, margin, y); y += 5;
+
+    // Parameters
+    const params = [
+      ['Saldo Inicial', document.getElementById('initialBalance').value + ' AOA'],
+      ['Depósito Mensal', document.getElementById('monthlyDeposit').value + ' AOA'],
+      ['Taxa Juros Anual', document.getElementById('annualRate').value + '%'],
+      ['Período', document.getElementById('periodMonths').value + ' meses'],
+      ['Incremento Anual', document.getElementById('annualIncrement').value + '%']
+    ];
+
+    doc.setFillColor(240, 247, 255);
+    doc.roundedRect(margin, y, usable, params.length * 5 + 8, 2, 2, 'F');
+    y += 5;
+    doc.setFontSize(8);
+    params.forEach(([k, v]) => {
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(k + ':', margin + 4, y);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(30, 136, 229);
+      doc.text(v, margin + 50, y);
+      y += 5;
+    });
+    y += 6;
+
+    // Results
+    checkPage(20);
+    doc.setTextColor(30, 136, 229);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Resultados', margin, y); y += 6;
+    const results = [
+      ['Total Final', document.getElementById('rTotalFinal').textContent],
+      ['Total Depositado', document.getElementById('rTotalDeposits').textContent],
+      ['Juros Ganhos', document.getElementById('rTotalInterest').textContent],
+      ['Percentagem de Juros', document.getElementById('rInterestPct').textContent]
+    ];
+    doc.setFontSize(8);
+    results.forEach(([k, v]) => {
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(k + ':', margin + 4, y);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(76, 175, 80);
+      doc.text(v, margin + 50, y);
+      y += 5;
+    });
+    y += 8;
+
+    // Charts - small size
+    const chartIds = ['growthChart', 'compositionChart', 'monthlyChart', 'donutChart'];
+    const chartTitles = ['Evolução da Poupança', 'Composição do Saldo', 'Juros por Mês', 'Distribuição Final'];
+    for (let i = 0; i < chartIds.length; i += 2) {
+      checkPage(55);
+      for (let j = 0; j < 2 && (i + j) < chartIds.length; j++) {
+        const canvas = document.getElementById(chartIds[i + j]);
+        if (canvas) {
+          const imgData = canvas.toDataURL('image/png', 0.9);
+          const xOff = j === 0 ? margin : margin + usable / 2 + 3;
+          const cw = usable / 2 - 3;
+          doc.setTextColor(80, 80, 80);
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'bold');
+          doc.text(chartTitles[i + j], xOff, y);
+          doc.addImage(imgData, 'PNG', xOff, y + 2, cw, cw * 0.6);
+        }
+      }
+      y += usable / 2 * 0.6 + 10;
+    }
+
+    // Table
+    checkPage(30);
+    doc.setTextColor(30, 136, 229);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Tabela Resumo (Anual)', margin, y); y += 6;
+
+    const annualData = (state.currentCalc || []).filter(d => d.month % 12 === 0 || d.month === state.currentCalc.length);
+    doc.setFontSize(7);
+    // Table header
+    doc.setFillColor(30, 136, 229);
+    doc.rect(margin, y - 3, usable, 5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'bold');
+    doc.text('Mês', margin + 2, y);
+    doc.text('Depósito', margin + 25, y);
+    doc.text('Juros', margin + 60, y);
+    doc.text('Saldo', margin + 95, y);
+    y += 4;
+
+    doc.setFont(undefined, 'normal');
+    annualData.forEach((d, idx) => {
+      if (y > ph - 25) { doc.addPage(); addHeader(); y += 3; }
+      const bg = idx % 2 === 0 ? [248, 249, 250] : [255, 255, 255];
+      doc.setFillColor(...bg);
+      doc.rect(margin, y - 3, usable, 4.5, 'F');
+      doc.setTextColor(80, 80, 80);
+      doc.text('Mês ' + d.month, margin + 2, y);
+      doc.text(Math.round(d.deposit).toLocaleString('pt-PT') + ' AOA', margin + 25, y);
+      doc.setTextColor(76, 175, 80);
+      doc.text(Math.round(d.interest).toLocaleString('pt-PT') + ' AOA', margin + 60, y);
+      doc.setTextColor(30, 136, 229);
+      doc.text(Math.round(d.balance).toLocaleString('pt-PT') + ' AOA', margin + 95, y);
+      y += 4.5;
+    });
+
+    // Add footers
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooter(i, totalPages);
+    }
+
+    doc.save('IS_Poupanca_Automatica_' + new Date().toISOString().slice(0,10) + '.pdf');
+    showToast('PDF exportado!', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('Erro ao gerar PDF.', 'error');
+  }
+}
+
+function exportJSON() {
+  const data = {
+    app: 'IS Poupança Automática',
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    scenarios: state.scenarios,
+    rates: state.rates,
+    config: state.config
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = 'IS_Poupanca_Automatica_Backup_' + new Date().toISOString().slice(0,10) + '.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast('JSON exportado!', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.scenarios) state.scenarios = data.scenarios;
+      if (data.rates) state.rates = data.rates;
+      if (data.config) state.config = { ...state.config, ...data.config };
+      saveState();
+      renderRates();
+      calculate();
+      showToast('Dados importados com sucesso!', 'success');
+    } catch(err) {
+      showToast('Erro: ficheiro JSON inválido.', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============ ELEMENT SDK ============
+const defaultConfig = {
+  app_title: 'IS Poupança Automática',
+  app_description: 'Calculadora de Poupança Automática para a Comunidade dos Países de Língua Portuguesa',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 13
+};
+
+function applyConfig(config) {
+  const bg = config.background_color || defaultConfig.background_color;
+  const sf = config.surface_color || defaultConfig.surface_color;
+  const tx = config.text_color || defaultConfig.text_color;
+  const pa = config.primary_action_color || defaultConfig.primary_action_color;
+  const sa = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const ff = config.font_family || defaultConfig.font_family;
+  const fs = config.font_size || defaultConfig.font_size;
+
+  document.body.style.background = bg;
+  document.body.style.color = tx;
+  document.body.style.fontFamily = `${ff}, Inter, sans-serif`;
+
+  const appTitle = document.getElementById('appTitle');
+  if (appTitle) {
+    appTitle.textContent = config.app_title || defaultConfig.app_title;
+    appTitle.style.color = pa;
+    appTitle.style.fontSize = `${fs * 1.3}px`;
+    appTitle.style.fontFamily = `${ff}, Inter, sans-serif`;
+  }
+
+  const appDesc = document.getElementById('appDesc');
+  if (appDesc) {
+    appDesc.textContent = config.app_description || defaultConfig.app_description;
+    appDesc.style.fontSize = `${fs * 0.85}px`;
+    appDesc.style.fontFamily = `${ff}, Inter, sans-serif`;
+  }
+
+  document.querySelectorAll('.card').forEach(c => {
+    c.style.backgroundColor = sf;
+    c.style.color = tx;
+  });
+
+  document.querySelectorAll('.btn-primary').forEach(b => {
+    b.style.backgroundColor = pa;
+  });
+
+  document.querySelectorAll('.btn-success').forEach(b => {
+    b.style.backgroundColor = sa;
+  });
+
+  document.querySelectorAll('.stat-val').forEach(el => {
+    if (!el.id.includes('Interest') && !el.id.includes('Pct')) el.style.color = pa;
+  });
+
+  document.querySelectorAll('h2, h3').forEach(el => {
+    el.style.fontFamily = `${ff}, Inter, sans-serif`;
+    el.style.fontSize = `${fs * 1.08}px`;
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(t => {
+    t.style.fontFamily = `${ff}, Inter, sans-serif`;
+    t.style.fontSize = `${fs}px`;
+  });
+
+  document.querySelectorAll('.header-fixed').forEach(h => {
+    h.style.backgroundColor = sf;
+  });
+
+  document.querySelectorAll('.tabs-fixed').forEach(h => {
+    h.style.backgroundColor = sf;
+  });
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => { applyConfig(config); },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+      { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+    fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['app_title', config.app_title || defaultConfig.app_title],
+    ['app_description', config.app_description || defaultConfig.app_description]
+  ])
+});
+
+// ============ INIT ============
+loadState();
+renderRates();
+renderTemplates();
+renderLearning();
+renderHelp();
+calculate();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ded112ed1550710',t:'MTc3MzkyOTQ5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Tempo de Vida</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#CCC;border-radius:3px}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:#777;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;transition:all .2s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#66CFF5;border-radius:8px 0 0 8px}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.btn-primary{background:#66CFF5;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#fff;color:#555;border:1px solid #E0E0E0;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-secondary:hover{background:#F0F0F0}
+.btn-danger{background:#F44336;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
+.btn-danger:hover{background:#D32F2F}
+.btn-success{background:#4CAF50;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
+.btn-success:hover{background:#388E3C}
+.btn-warn{background:#FF9800;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
+.btn-warn:hover{background:#F57C00}
+.btn-icon{background:none;border:1px solid #E0E0E0;border-radius:6px;padding:6px;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;justify-content:center;color:#777}
+.btn-icon:hover{background:#F0F0F0;color:#66CFF5}
+input,select,textarea{border:1px solid #E0E0E0;border-radius:6px;padding:8px 12px;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s ease;width:100%;background:#fff;color:#333}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+label{font-size:12px;font-weight:500;color:#555;display:block;margin-bottom:4px}
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;animation:slideIn .3s ease;display:flex;align-items:center;gap:8px}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal-content{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.chart-container{position:relative;background:#fff;border-radius:8px;padding:16px;border:1px solid #E0E0E0}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:10;background:#fff;border:1px solid #E0E0E0;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;color:#777;transition:all .2s ease;display:flex;align-items:center;gap:4px}
+.chart-export-btn:hover{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.confirm-bar{background:#FFF3E0;border:1px solid #FFB74D;border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#E65100}
+.export-hide{} 
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',pHover:'#33BEF2',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warn:'#FF9800'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full flex flex-col" style="overflow:hidden"><!-- HEADER -->
+   <header id="appHeader" class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between" style="flex-shrink:0;position:sticky;top:0;z-index:100">
+    <div class="flex items-center gap-3">
+     <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center flex-shrink-0" style="display: none;">
+      <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewbox="0 0 24 24">
+       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="mainTitle" class="text-base font-semibold text-gray-800" style="display: none; display: none; line-height:1.2">Tempo de Vida</h1>
+      <p id="mainDesc" class="text-xs text-gray-400" style="display: none; display: none; line-height:1.3;margin-top:1px">Descubra quanto tempo da sua vida custa cada compra</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2"><input id="globalSearch" type="text" placeholder="Filtrar..." style="width:160px;padding:6px 10px;font-size:12px" class="export-hide"> <button class="btn-icon export-hide" onclick="exportAppImage()" title="Exportar imagem"><i data-lucide="image" style="width:16px;height:16px"></i></button> <button class="btn-icon export-hide" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:16px;height:16px"></i></button> <button class="btn-icon export-hide" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:16px;height:16px"></i></button> <button class="btn-icon export-hide" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:16px;height:16px"></i></button> <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>
+   </header><!-- TABS -->
+   <nav id="tabNav" class="bg-white border-b border-gray-200 flex overflow-x-auto px-2" style="flex-shrink:0;position:sticky;top:56px;z-index:99"><button class="tab-btn active" data-tab="calc" onclick="switchTab('calc')"><i data-lucide="calculator" style="width:14px;height:14px"></i> Calculadora</button> <button class="tab-btn" data-tab="scenarios" onclick="switchTab('scenarios')"><i data-lucide="bookmark" style="width:14px;height:14px"></i> Cenários</button> <button class="tab-btn" data-tab="currencies" onclick="switchTab('currencies')"><i data-lucide="coins" style="width:14px;height:14px"></i> Moedas</button> <button class="tab-btn" data-tab="guide" onclick="switchTab('guide')"><i data-lucide="book-open" style="width:14px;height:14px"></i> Guia</button>
+   </nav><!-- MAIN CONTENT -->
+   <main id="mainContent" class="flex-1 overflow-auto p-4" style="padding-bottom:20px"><!-- TAB: CALCULADORA -->
+    <div id="tab-calc" class="tab-content fade-in" style="max-width:1100px;margin:0 auto"><!-- Subcategorias -->
+     <div class="flex gap-2 mb-4 flex-wrap"><button class="btn-secondary text-xs subtab-btn active" data-sub="essentials" onclick="switchSubTab('essentials')" style="font-size:12px"><i data-lucide="home" style="width:12px;height:12px"></i> Essenciais</button> <button class="btn-secondary text-xs subtab-btn" data-sub="lifestyle" onclick="switchSubTab('lifestyle')" style="font-size:12px"><i data-lucide="coffee" style="width:12px;height:12px"></i> Estilo de Vida</button> <button class="btn-secondary text-xs subtab-btn" data-sub="luxury" onclick="switchSubTab('luxury')" style="font-size:12px"><i data-lucide="gem" style="width:12px;height:12px"></i> Luxo</button> <button class="btn-secondary text-xs subtab-btn" data-sub="custom" onclick="switchSubTab('custom')" style="font-size:12px"><i data-lucide="plus-circle" style="width:12px;height:12px"></i> Personalizado</button>
+     </div><!-- Formulário principal -->
+     <div class="card p-5 mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+       <div><label>Rendimento Mensal (Kz)</label> <input id="income" type="number" placeholder="150000" min="0" oninput="calculate()">
+       </div>
+       <div><label>Horas de trabalho/mês</label> <input id="workHours" type="number" placeholder="176" min="1" value="176" oninput="calculate()">
+       </div>
+       <div><label id="itemLabel">Nome do Item</label> <input id="itemName" type="text" placeholder="Ex: Telemóvel novo">
+       </div>
+       <div><label>Custo do Item (Kz)</label> <input id="itemCost" type="number" placeholder="85000" min="0" oninput="calculate()">
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+       <div><label>Categoria</label> <select id="itemCategory" onchange="handleCategoryChange()"> <option value="essentials">Essenciais</option> <option value="lifestyle">Estilo de Vida</option> <option value="luxury">Luxo</option> <option value="custom">Personalizado</option> </select>
+       </div>
+       <div><label>Frequência</label> <select id="frequency" onchange="calculate()"> <option value="once">Única vez</option> <option value="daily">Diário</option> <option value="weekly">Semanal</option> <option value="monthly">Mensal</option> <option value="yearly">Anual</option> </select>
+       </div>
+       <div><label>Moeda de conversão</label> <select id="currencySelect" onchange="calculate()"> <option value="AOA">Kz (Kwanza)</option> </select>
+       </div>
+       <div class="flex items-end gap-2"><button class="btn-primary flex-1" onclick="addItem()"><i data-lucide="plus" style="width:14px;height:14px"></i> Adicionar</button> <button class="btn-secondary" onclick="saveScenario()" title="Guardar cenário"><i data-lucide="save" style="width:14px;height:14px"></i></button>
+       </div>
+      </div>
+     </div><!-- Resultados -->
+     <div id="resultPanel" class="card p-5 mb-4" style="display:none">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3" style="width:16px;height:16px;color:#66CFF5"></i> Resultado da Análise</h3>
+      <div id="resultCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+      <div id="resultMessage" class="text-sm text-gray-600 mt-2 p-3 rounded-lg" style="background:#F0F7FF;border-left:3px solid #66CFF5"></div>
+     </div><!-- Itens adicionados -->
+     <div id="itemsSection" class="mb-4" style="display:none">
+      <div class="flex items-center justify-between mb-3">
+       <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2"><i data-lucide="list" style="width:16px;height:16px;color:#66CFF5"></i> Itens Adicionados</h3>
+       <div class="flex gap-2 export-hide"><input id="itemFilter" type="text" placeholder="Filtrar itens..." style="width:140px;padding:5px 8px;font-size:12px" oninput="renderItems()"> <select id="itemCatFilter" style="width:auto;padding:5px 8px;font-size:12px" onchange="renderItems()"> <option value="all">Todas</option> <option value="essentials">Essenciais</option> <option value="lifestyle">Estilo de Vida</option> <option value="luxury">Luxo</option> <option value="custom">Personalizado</option> </select>
+       </div>
+      </div>
+      <div id="itemsList"></div>
+     </div><!-- Gráficos -->
+     <div id="chartsSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" style="display:none">
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChart('barChart')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Tempo de Vida por Item</h4>
+       <canvas id="barChart"></canvas>
+      </div>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChart('doughnutChart')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Distribuição por Categoria</h4>
+       <canvas id="doughnutChart"></canvas>
+      </div>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChart('lineChart')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Custo Acumulado ao Longo do Tempo</h4>
+       <canvas id="lineChart"></canvas>
+      </div>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChart('radarChart')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+       <h4 class="text-xs font-semibold text-gray-600 mb-2">Impacto por Categoria</h4>
+       <canvas id="radarChart"></canvas>
+      </div>
+     </div>
+    </div><!-- TAB: CENÁRIOS -->
+    <div id="tab-scenarios" class="tab-content fade-in" style="display:none;max-width:1100px;margin:0 auto">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2"><i data-lucide="bookmark" style="width:16px;height:16px;color:#66CFF5"></i> Cenários Salvos</h3>
+      <div class="flex gap-2 export-hide"><input id="scenarioFilter" type="text" placeholder="Filtrar cenários..." style="width:160px;padding:5px 8px;font-size:12px" oninput="renderScenarios()"> <button class="btn-primary text-xs" onclick="createNewScenario()"><i data-lucide="plus" style="width:12px;height:12px"></i> Novo</button>
+      </div>
+     </div>
+     <div id="scenariosList"></div>
+     <div id="emptyScenarios" class="text-center py-12 text-gray-400"><i data-lucide="bookmark" style="width:40px;height:40px;margin:0 auto 12px;display:block;opacity:.3"></i>
+      <p class="text-sm">Nenhum cenário salvo ainda</p>
+      <p class="text-xs mt-1">Use a calculadora e clique em guardar</p>
+     </div><!-- Templates -->
+     <div class="mt-8">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="graduation-cap" style="width:16px;height:16px;color:#FFC107"></i> Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="templatesList"></div>
+     </div>
+    </div><!-- TAB: MOEDAS -->
+    <div id="tab-currencies" class="tab-content fade-in" style="display:none;max-width:800px;margin:0 auto">
+     <div class="card p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="coins" style="width:16px;height:16px;color:#FFC107"></i> Taxas de Câmbio (Base: 1 Kwanza)</h3>
+      <p class="text-xs text-gray-400 mb-4">Edite as taxas para converter valores. Moedas da CPLP + USD.</p>
+      <div id="currencyList"></div>
+      <div class="mt-4 flex gap-2 export-hide"><button class="btn-primary text-xs" onclick="saveCurrencies()"><i data-lucide="save" style="width:12px;height:12px"></i> Guardar Taxas</button> <button class="btn-secondary text-xs" onclick="resetCurrencies()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i> Repor Padrão</button>
+      </div>
+     </div>
+    </div><!-- TAB: GUIA -->
+    <div id="tab-guide" class="tab-content fade-in" style="display:none;max-width:900px;margin:0 auto">
+     <div class="card p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="book-open" style="width:16px;height:16px;color:#66CFF5"></i> Como Usar</h3>
+      <div class="space-y-4 text-sm text-gray-600">
+       <div class="p-4 rounded-lg" style="background:#F0F7FF;border-left:3px solid #66CFF5">
+        <h4 class="font-semibold text-gray-700 mb-1">1. Introduza os seus dados</h4>
+        <p>Preencha o seu rendimento mensal em Kwanzas e as horas de trabalho mensais. O simulador calcula automaticamente o valor da sua hora de trabalho.</p>
+       </div>
+       <div class="p-4 rounded-lg" style="background:#F0F7FF;border-left:3px solid #66CFF5">
+        <h4 class="font-semibold text-gray-700 mb-1">2. Adicione itens ou despesas</h4>
+        <p>Insira o nome e custo de cada item. Escolha a categoria e frequência. O sistema calcula quantas horas de vida cada compra representa.</p>
+       </div>
+       <div class="p-4 rounded-lg" style="background:#F0F7FF;border-left:3px solid #66CFF5">
+        <h4 class="font-semibold text-gray-700 mb-1">3. Analise os gráficos</h4>
+        <p>Os gráficos dinâmicos mostram a distribuição dos custos, comparação entre itens e o impacto acumulado no seu tempo de vida.</p>
+       </div>
+       <div class="p-4 rounded-lg" style="background:#F0F7FF;border-left:3px solid #66CFF5">
+        <h4 class="font-semibold text-gray-700 mb-1">4. Guarde e compare cenários</h4>
+        <p>Salve diferentes cenários para comparar decisões financeiras. Clone cenários existentes para testar variações.</p>
+       </div>
+       <div class="p-4 rounded-lg" style="background:#FFF8E1;border-left:3px solid #FFC107">
+        <h4 class="font-semibold text-gray-700 mb-1">5. Exporte os resultados</h4>
+        <p>Exporte em PDF, imagem ou JSON. Use a importação para recuperar dados salvos anteriormente.</p>
+       </div>
+      </div>
+     </div>
+     <div class="card p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="lightbulb" style="width:16px;height:16px;color:#FFC107"></i> Importância</h3>
+      <div class="text-sm text-gray-600 space-y-2">
+       <p>Quando pensamos no preço de algo, raramente pensamos em <strong>quanto tempo da nossa vida</strong> aquele item realmente custa. Este simulador transforma valores monetários em horas de trabalho, tornando as decisões financeiras mais tangíveis.</p>
+       <p>Ao visualizar o custo real em tempo, criamos uma consciência financeira mais profunda, ajudando a priorizar gastos e a construir o caminho para a <strong>independência financeira</strong>.</p>
+      </div>
+     </div>
+     <div class="card p-5">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="target" style="width:16px;height:16px;color:#4CAF50"></i> Melhores Práticas</h3>
+      <ul class="text-sm text-gray-600 space-y-2 list-disc pl-5">
+       <li>Inclua <strong>todos os rendimentos</strong> no valor mensal para uma análise precisa</li>
+       <li>Considere <strong>custos recorrentes</strong> usando a opção de frequência adequada</li>
+       <li>Compare cenários diferentes antes de tomar decisões de compra importantes</li>
+       <li>Reveja os seus cenários mensalmente para ajustar hábitos de consumo</li>
+       <li>Use os templates de aprendizagem como ponto de partida para análises comuns</li>
+       <li>Mantenha as taxas de câmbio atualizadas para conversões precisas</li>
+       <li>Exporte regularmente os seus dados em JSON como cópia de segurança</li>
+      </ul>
+     </div>
+    </div>
+   </main>
+  </div><!-- Toast container -->
+  <div id="toastContainer"></div>
+  <script>
+// STATE
+let state = {
+  items: [],
+  scenarios: [],
+  currencies: {
+    AOA: { name: 'Kwanza', symbol: 'Kz', rate: 1 },
+    BRL: { name: 'Real Brasileiro', symbol: 'R$', rate: 0.006 },
+    EUR: { name: 'Euro', symbol: '€', rate: 0.0009 },
+    USD: { name: 'Dólar Americano', symbol: '$', rate: 0.0011 },
+    CVE: { name: 'Escudo Cabo-verdiano', symbol: '$', rate: 0.11 },
+    MZN: { name: 'Metical', symbol: 'MT', rate: 0.076 },
+    STN: { name: 'Dobra', symbol: 'Db', rate: 0.024 },
+    XOF: { name: 'Franco CFA (Guiné-Bissau)', symbol: 'CFA', rate: 0.7 },
+    MOP: { name: 'Pataca (Macau)', symbol: 'MOP$', rate: 0.0097 },
+    TPL: { name: 'Dólar Timor-Leste', symbol: '$', rate: 0.0011 }
+  },
+  activeTab: 'calc',
+  activeSubTab: 'essentials',
+  currentIncome: 0,
+  currentHours: 176
+};
+
+const defaultCurrencies = JSON.parse(JSON.stringify(state.currencies));
+
+const chartInstances = {};
+const catNames = { essentials: 'Essenciais', lifestyle: 'Estilo de Vida', luxury: 'Luxo', custom: 'Personalizado' };
+const catColors = { essentials: '#66CFF5', lifestyle: '#FF9800', luxury: '#9C27B0', custom: '#4CAF50' };
+const freqNames = { once: 'Única vez', daily: 'Diário', weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' };
+const freqMultiplier = { once: 1, daily: 30, weekly: 4.33, monthly: 1, yearly: 1/12 };
+
+const templates = [
+  { name: 'Jovem Profissional', desc: 'Cenário típico de um recém-formado em Luanda', income: 180000, hours: 176, items: [
+    { name: 'Renda mensal', cost: 60000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Transporte', cost: 25000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Alimentação', cost: 45000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Café diário', cost: 500, category: 'lifestyle', frequency: 'daily' }
+  ]},
+  { name: 'Família Média', desc: 'Despesas familiares mensais comuns', income: 350000, hours: 176, items: [
+    { name: 'Renda apartamento', cost: 120000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Escola filhos', cost: 45000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Supermercado', cost: 80000, category: 'essentials', frequency: 'monthly' },
+    { name: 'Jantar fora', cost: 15000, category: 'lifestyle', frequency: 'weekly' }
+  ]},
+  { name: 'Compra Tecnológica', desc: 'Analisar custo real de gadgets', income: 200000, hours: 176, items: [
+    { name: 'iPhone novo', cost: 450000, category: 'luxury', frequency: 'once' },
+    { name: 'Computador portátil', cost: 280000, category: 'lifestyle', frequency: 'once' },
+    { name: 'Subscrição streaming', cost: 5000, category: 'lifestyle', frequency: 'monthly' }
+  ]}
+];
+
+// LOAD/SAVE
+function loadState() {
+  try {
+    const s = localStorage.getItem('is_tempo_vida');
+    if (s) {
+      const parsed = JSON.parse(s);
+      state.items = parsed.items || [];
+      state.scenarios = parsed.scenarios || [];
+      if (parsed.currencies) state.currencies = {...state.currencies, ...parsed.currencies};
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('is_tempo_vida', JSON.stringify({
+      items: state.items,
+      scenarios: state.scenarios,
+      currencies: state.currencies
+    }));
+  } catch(e) {}
+}
+
+// TABS
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  const el = document.getElementById('tab-' + tab);
+  if (el) { el.style.display = ''; el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); }
+  if (tab === 'scenarios') renderScenarios();
+  if (tab === 'currencies') renderCurrencies();
+}
+
+function switchSubTab(sub) {
+  state.activeSubTab = sub;
+  document.querySelectorAll('.subtab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sub === sub);
+    if (b.dataset.sub === sub) {
+      b.style.background = '#66CFF5'; b.style.color = '#fff'; b.style.borderColor = '#66CFF5';
+    } else {
+      b.style.background = '#fff'; b.style.color = '#555'; b.style.borderColor = '#E0E0E0';
+    }
+  });
+  document.getElementById('itemCategory').value = sub;
+  renderItems();
+}
+
+function handleCategoryChange() {
+  const cat = document.getElementById('itemCategory').value;
+  switchSubTab(cat);
+}
+
+// CALCULATE
+function calculate() {
+  const income = parseFloat(document.getElementById('income').value) || 0;
+  const hours = parseFloat(document.getElementById('workHours').value) || 176;
+  const cost = parseFloat(document.getElementById('itemCost').value) || 0;
+  const currency = document.getElementById('currencySelect').value;
+  
+  state.currentIncome = income;
+  state.currentHours = hours;
+  
+  if (income <= 0 || cost <= 0) {
+    document.getElementById('resultPanel').style.display = 'none';
+    return;
+  }
+
+  const rate = state.currencies[currency]?.rate || 1;
+  const costInKz = currency === 'AOA' ? cost : cost / rate;
+  const hourlyRate = income / hours;
+  const hoursNeeded = costInKz / hourlyRate;
+  const daysNeeded = hoursNeeded / (hours / 22);
+  const weeksNeeded = daysNeeded / 5;
+
+  document.getElementById('resultPanel').style.display = '';
+  
+  const cards = document.getElementById('resultCards');
+  cards.innerHTML = `
+    <div class="p-3 rounded-lg text-center" style="background:#F0F7FF">
+      <div class="text-xs text-gray-500 mb-1">Valor da Hora</div>
+      <div class="text-lg font-bold text-primary">${formatKz(hourlyRate)}</div>
+    </div>
+    <div class="p-3 rounded-lg text-center" style="background:#FFF8E1">
+      <div class="text-xs text-gray-500 mb-1">Horas de Trabalho</div>
+      <div class="text-lg font-bold" style="color:#FF9800">${hoursNeeded.toFixed(1)}h</div>
+    </div>
+    <div class="p-3 rounded-lg text-center" style="background:#E8F5E9">
+      <div class="text-xs text-gray-500 mb-1">Dias de Trabalho</div>
+      <div class="text-lg font-bold" style="color:#4CAF50">${daysNeeded.toFixed(1)} dias</div>
+    </div>
+    <div class="p-3 rounded-lg text-center" style="background:#FCE4EC">
+      <div class="text-xs text-gray-500 mb-1">Semanas</div>
+      <div class="text-lg font-bold" style="color:#E91E63">${weeksNeeded.toFixed(1)} sem.</div>
+    </div>
+  `;
+  
+  const pct = (costInKz / income * 100).toFixed(1);
+  const name = document.getElementById('itemName').value || 'Este item';
+  let message = `<strong>${name}</strong> custa <strong>${hoursNeeded.toFixed(1)} horas</strong> da sua vida laboral (${pct}% do rendimento mensal).`;
+  if (pct > 50) message += ' <span style="color:#F44336">⚠ Este item representa mais de metade do seu rendimento mensal!</span>';
+  else if (pct > 25) message += ' <span style="color:#FF9800">⚡ Atenção: custo significativo em relação ao rendimento.</span>';
+  else message += ' <span style="color:#4CAF50">✓ Dentro de um intervalo razoável.</span>';
+  
+  document.getElementById('resultMessage').innerHTML = message;
+}
+
+function formatKz(val) { return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val) + ' Kz'; }
+
+// ITEMS
+function addItem() {
+  const income = parseFloat(document.getElementById('income').value) || 0;
+  const hours = parseFloat(document.getElementById('workHours').value) || 176;
+  const cost = parseFloat(document.getElementById('itemCost').value) || 0;
+  const name = document.getElementById('itemName').value.trim();
+  const category = document.getElementById('itemCategory').value;
+  const frequency = document.getElementById('frequency').value;
+  const currency = document.getElementById('currencySelect').value;
+
+  if (!name) { showToast('Insira o nome do item', 'warn'); return; }
+  if (income <= 0) { showToast('Insira o rendimento mensal', 'warn'); return; }
+  if (cost <= 0) { showToast('Insira o custo do item', 'warn'); return; }
+
+  const rate = state.currencies[currency]?.rate || 1;
+  const costInKz = currency === 'AOA' ? cost : cost / rate;
+  const hourlyRate = income / hours;
+  const monthlyCost = costInKz * freqMultiplier[frequency];
+  const hoursNeeded = costInKz / hourlyRate;
+  const monthlyHours = monthlyCost / hourlyRate;
+
+  const item = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name, cost: costInKz, originalCost: cost, currency,
+    category, frequency, hoursNeeded, monthlyHours,
+    monthlyCost, income, workHours: hours,
+    createdAt: new Date().toISOString()
+  };
+
+  state.items.push(item);
+  saveState();
+  renderItems();
+  updateCharts();
+  
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemCost').value = '';
+  showToast('Item adicionado com sucesso', 'success');
+}
+
+function removeItem(id) {
+  const el = document.querySelector(`[data-item-id="${id}"]`);
+  if (el) {
+    const confirmEl = el.querySelector('.confirm-bar');
+    if (confirmEl) {
+      state.items = state.items.filter(i => i.id !== id);
+      saveState(); renderItems(); updateCharts();
+      showToast('Item removido', 'info');
+    } else {
+      const actions = el.querySelector('.item-actions');
+      const bar = document.createElement('div');
+      bar.className = 'confirm-bar mt-2';
+      bar.innerHTML = `<i data-lucide="alert-triangle" style="width:14px;height:14px;flex-shrink:0"></i><span class="flex-1">Confirmar remoção?</span><button class="btn-danger" onclick="confirmRemove('${id}')">Sim</button><button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cancelRemove('${id}')">Não</button>`;
+      el.appendChild(bar);
+      lucide.createIcons();
+    }
+  }
+}
+
+function confirmRemove(id) {
+  state.items = state.items.filter(i => i.id !== id);
+  saveState(); renderItems(); updateCharts();
+  showToast('Item removido', 'info');
+}
+
+function cancelRemove(id) {
+  const el = document.querySelector(`[data-item-id="${id}"]`);
+  if (el) { const bar = el.querySelector('.confirm-bar'); if (bar) bar.remove(); }
+}
+
+function renderItems() {
+  const filter = (document.getElementById('itemFilter')?.value || '').toLowerCase();
+  const catFilter = document.getElementById('itemCatFilter')?.value || 'all';
+  const globalFilter = (document.getElementById('globalSearch')?.value || '').toLowerCase();
+  const subTab = state.activeSubTab;
+  
+  let items = state.items.filter(i => {
+    if (catFilter !== 'all' && i.category !== catFilter) return false;
+    if (subTab && i.category !== subTab && catFilter === 'all') return false;
+    if (filter && !i.name.toLowerCase().includes(filter)) return false;
+    if (globalFilter && !i.name.toLowerCase().includes(globalFilter)) return false;
+    return true;
+  });
+
+  const section = document.getElementById('itemsSection');
+  const list = document.getElementById('itemsList');
+  
+  if (state.items.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Nenhum item nesta categoria</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(item => `
+    <div class="card p-4 mb-2" data-item-id="${item.id}" style="border-left:4px solid ${catColors[item.category] || '#66CFF5'}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-sm text-gray-800">${escHtml(item.name)}</span>
+            <span class="badge" style="background:${catColors[item.category]}22;color:${catColors[item.category]}">${catNames[item.category]}</span>
+            <span class="badge" style="background:#F5F5F5;color:#777">${freqNames[item.frequency]}</span>
+          </div>
+          <div class="flex gap-4 mt-2 text-xs text-gray-500 flex-wrap">
+            <span><strong>${formatKz(item.cost)}</strong></span>
+            <span>⏱ ${item.hoursNeeded.toFixed(1)}h de trabalho</span>
+            <span>📅 ${item.monthlyHours.toFixed(1)}h/mês</span>
+            <span>💰 ${formatKz(item.monthlyCost)}/mês</span>
+          </div>
+        </div>
+        <div class="item-actions flex gap-1 export-hide flex-shrink-0">
+          <button class="btn-icon" onclick="editItem('${item.id}')" title="Editar"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" onclick="removeItem('${item.id}')" title="Remover" style="color:#F44336"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function editItem(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('income').value = item.income;
+  document.getElementById('workHours').value = item.workHours;
+  document.getElementById('itemName').value = item.name;
+  document.getElementById('itemCost').value = item.cost;
+  document.getElementById('itemCategory').value = item.category;
+  document.getElementById('frequency').value = item.frequency;
+  state.items = state.items.filter(i => i.id !== id);
+  saveState(); renderItems(); updateCharts(); calculate();
+  showToast('Item carregado para edição', 'info');
+}
+
+// CHARTS
+function updateCharts() {
+  const items = state.items;
+  const section = document.getElementById('chartsSection');
+  if (items.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  // Bar chart
+  updateBarChart(items);
+  updateDoughnutChart(items);
+  updateLineChart(items);
+  updateRadarChart(items);
+}
+
+function updateBarChart(items) {
+  const ctx = document.getElementById('barChart');
+  if (chartInstances.barChart) chartInstances.barChart.destroy();
+  chartInstances.barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: items.map(i => i.name.length > 15 ? i.name.slice(0,15)+'…' : i.name),
+      datasets: [{
+        label: 'Horas de Trabalho',
+        data: items.map(i => i.hoursNeeded),
+        backgroundColor: items.map(i => catColors[i.category] + 'CC'),
+        borderColor: items.map(i => catColors[i.category]),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas', font: { size: 11 } } } } }
+  });
+}
+
+function updateDoughnutChart(items) {
+  const ctx = document.getElementById('doughnutChart');
+  if (chartInstances.doughnutChart) chartInstances.doughnutChart.destroy();
+  const catData = {};
+  items.forEach(i => { catData[i.category] = (catData[i.category] || 0) + i.monthlyCost; });
+  const total = Object.values(catData).reduce((a,b) => a+b, 0);
+  const cats = Object.keys(catData);
+  
+  chartInstances.doughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => catNames[c]),
+      datasets: [{ data: cats.map(c => catData[c]), backgroundColor: cats.map(c => catColors[c] + 'CC'), borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.parsed;
+              const pct = total > 0 ? (val / total * 100).toFixed(1) : 0;
+              return `${ctx.label}: ${formatKz(val)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateLineChart(items) {
+  const ctx = document.getElementById('lineChart');
+  if (chartInstances.lineChart) chartInstances.lineChart.destroy();
+  const sorted = [...items].sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+  let cumulative = 0;
+  const data = sorted.map(i => { cumulative += i.monthlyCost; return cumulative; });
+  
+  chartInstances.lineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sorted.map(i => i.name.length > 10 ? i.name.slice(0,10)+'…' : i.name),
+      datasets: [{
+        label: 'Custo Mensal Acumulado (Kz)',
+        data, fill: true,
+        backgroundColor: 'rgba(30,136,229,0.1)', borderColor: '#66CFF5', borderWidth: 2,
+        pointBackgroundColor: '#66CFF5', tension: 0.3
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+}
+
+function updateRadarChart(items) {
+  const ctx = document.getElementById('radarChart');
+  if (chartInstances.radarChart) chartInstances.radarChart.destroy();
+  const catHours = {};
+  items.forEach(i => { catHours[i.category] = (catHours[i.category] || 0) + i.monthlyHours; });
+  const cats = Object.keys(catNames);
+  
+  chartInstances.radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: cats.map(c => catNames[c]),
+      datasets: [{
+        label: 'Horas/mês por Categoria',
+        data: cats.map(c => catHours[c] || 0),
+        backgroundColor: 'rgba(30,136,229,0.15)', borderColor: '#66CFF5', borderWidth: 2,
+        pointBackgroundColor: '#66CFF5'
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { r: { beginAtZero: true } } }
+  });
+}
+
+function exportChart(chartId) {
+  const canvas = document.getElementById(chartId);
+  if (!canvas) return;
+  // Create HD export
+  const ratio = 2;
+  const w = canvas.width * ratio;
+  const h = canvas.height * ratio;
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = w; exportCanvas.height = h;
+  const ctx = exportCanvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(canvas, 0, 0);
+  
+  const link = document.createElement('a');
+  link.download = `grafico_${chartId}_${Date.now()}.png`;
+  link.href = exportCanvas.toDataURL('image/png', 1.0);
+  link.click();
+  showToast('Gráfico exportado em HD', 'success');
+}
+
+// SCENARIOS
+function saveScenario() {
+  if (state.items.length === 0) { showToast('Adicione itens antes de guardar', 'warn'); return; }
+  const num = state.scenarios.length + 1;
+  const scenario = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: `Cenário ${num}`,
+    income: state.currentIncome || parseFloat(document.getElementById('income').value) || 0,
+    workHours: state.currentHours || parseFloat(document.getElementById('workHours').value) || 176,
+    items: JSON.parse(JSON.stringify(state.items)),
+    createdAt: new Date().toISOString()
+  };
+  state.scenarios.push(scenario);
+  saveState();
+  showToast(`Cenário ${num} guardado`, 'success');
+}
+
+function createNewScenario() {
+  switchTab('calc');
+  state.items = [];
+  document.getElementById('income').value = '';
+  document.getElementById('workHours').value = '176';
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemCost').value = '';
+  saveState(); renderItems(); updateCharts();
+  document.getElementById('resultPanel').style.display = 'none';
+  showToast('Novo cenário em branco', 'info');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenarioFilter')?.value || '').toLowerCase();
+  const globalFilter = (document.getElementById('globalSearch')?.value || '').toLowerCase();
+  let scenarios = state.scenarios.filter(s => {
+    if (filter && !s.name.toLowerCase().includes(filter)) return false;
+    if (globalFilter && !s.name.toLowerCase().includes(globalFilter)) return false;
+    return true;
+  });
+
+  const list = document.getElementById('scenariosList');
+  const empty = document.getElementById('emptyScenarios');
+  
+  if (state.scenarios.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  list.innerHTML = scenarios.map(s => {
+    const totalCost = s.items.reduce((a,i) => a + i.monthlyCost, 0);
+    const totalHours = s.items.reduce((a,i) => a + i.monthlyHours, 0);
+    const dt = new Date(s.createdAt);
+    const dateStr = dt.toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
+    return `
+    <div class="card p-4 mb-2" data-scenario-id="${s.id}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="scenario-name font-medium text-sm text-gray-800">${escHtml(s.name)}</span>
+            <span class="badge" style="background:#E0F4FD;color:#66CFF5">${s.items.length} itens</span>
+          </div>
+          <div class="flex gap-4 mt-2 text-xs text-gray-500 flex-wrap">
+            <span>💰 ${formatKz(totalCost)}/mês</span>
+            <span>⏱ ${totalHours.toFixed(1)}h/mês</span>
+            <span>📅 ${dateStr}</span>
+          </div>
+        </div>
+        <div class="flex gap-1 export-hide flex-shrink-0">
+          <button class="btn-icon" onclick="renameScenario('${s.id}')" title="Renomear"><i data-lucide="type" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" onclick="loadScenario('${s.id}')" title="Carregar"><i data-lucide="folder-open" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" onclick="cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" onclick="editScenarioInline('${s.id}')" title="Editar"><i data-lucide="edit-2" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" onclick="removeScenario('${s.id}')" title="Remover" style="color:#F44336"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function renameScenario(id) {
+  const s = state.scenarios.find(sc => sc.id === id);
+  if (!s) return;
+  const el = document.querySelector(`[data-scenario-id="${id}"] .scenario-name`);
+  if (!el) return;
+  const current = s.name;
+  el.innerHTML = `<input type="text" value="${escHtml(current)}" style="font-size:13px;padding:3px 8px;width:200px" onkeydown="if(event.key==='Enter'){finishRename('${id}',this.value);}" onblur="finishRename('${id}',this.value)" autofocus>`;
+  el.querySelector('input').focus();
+}
+
+function finishRename(id, newName) {
+  const s = state.scenarios.find(sc => sc.id === id);
+  if (s && newName.trim()) { s.name = newName.trim(); saveState(); }
+  renderScenarios();
+}
+
+function loadScenario(id) {
+  const s = state.scenarios.find(sc => sc.id === id);
+  if (!s) return;
+  state.items = JSON.parse(JSON.stringify(s.items));
+  document.getElementById('income').value = s.income || '';
+  document.getElementById('workHours').value = s.workHours || 176;
+  state.currentIncome = s.income; state.currentHours = s.workHours;
+  saveState();
+  switchTab('calc');
+  renderItems(); updateCharts(); calculate();
+  showToast(`"${s.name}" carregado`, 'success');
+}
+
+function cloneScenario(id) {
+  const s = state.scenarios.find(sc => sc.id === id);
+  if (!s) return;
+  const num = state.scenarios.length + 1;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  clone.name = `${s.name} (Cópia)`;
+  clone.createdAt = new Date().toISOString();
+  state.scenarios.push(clone);
+  saveState(); renderScenarios();
+  showToast('Cenário clonado', 'success');
+}
+
+function editScenarioInline(id) {
+  loadScenario(id);
+  showToast('Edite os itens e guarde novamente', 'info');
+}
+
+function removeScenario(id) {
+  const el = document.querySelector(`[data-scenario-id="${id}"]`);
+  if (!el) return;
+  const existing = el.querySelector('.confirm-bar');
+  if (existing) {
+    state.scenarios = state.scenarios.filter(s => s.id !== id);
+    saveState(); renderScenarios();
+    showToast('Cenário removido', 'info');
+  } else {
+    const bar = document.createElement('div');
+    bar.className = 'confirm-bar mt-2';
+    bar.innerHTML = `<i data-lucide="alert-triangle" style="width:14px;height:14px;flex-shrink:0"></i><span class="flex-1">Confirmar remoção?</span><button class="btn-danger" onclick="state.scenarios=state.scenarios.filter(s=>s.id!=='${id}');saveState();renderScenarios();showToast('Cenário removido','info')">Sim</button><button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="renderScenarios()">Não</button>`;
+    el.appendChild(bar);
+    lucide.createIcons();
+  }
+}
+
+function loadTemplate(idx) {
+  const t = templates[idx];
+  if (!t) return;
+  state.items = t.items.map(i => ({
+    ...i,
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    cost: i.cost, originalCost: i.cost, currency: 'AOA',
+    hoursNeeded: i.cost / (t.income / t.hours),
+    monthlyHours: (i.cost * freqMultiplier[i.frequency]) / (t.income / t.hours),
+    monthlyCost: i.cost * freqMultiplier[i.frequency],
+    income: t.income, workHours: t.hours,
+    createdAt: new Date().toISOString()
+  }));
+  document.getElementById('income').value = t.income;
+  document.getElementById('workHours').value = t.hours;
+  state.currentIncome = t.income; state.currentHours = t.hours;
+  saveState(); switchTab('calc'); renderItems(); updateCharts(); calculate();
+  showToast(`Template "${t.name}" carregado`, 'success');
+}
+
+// CURRENCIES
+function renderCurrencies() {
+  const list = document.getElementById('currencyList');
+  const currencies = state.currencies;
+  list.innerHTML = Object.entries(currencies).map(([code, c]) => `
+    <div class="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:${code==='AOA'?'#66CFF5':code==='USD'?'#4CAF50':code==='EUR'?'#9C27B0':'#FF9800'}">${code}</div>
+      <div class="flex-1">
+        <div class="text-sm font-medium text-gray-700">${c.name} (${c.symbol})</div>
+        <div class="text-xs text-gray-400">1 Kz = ${c.rate} ${code}</div>
+      </div>
+      <div style="width:120px" class="export-hide">
+        <input type="number" step="0.0001" min="0" value="${c.rate}" ${code==='AOA'?'disabled':''} data-currency="${code}" style="text-align:right;font-size:12px;padding:5px 8px">
+      </div>
+    </div>
+  `).join('');
+  
+  // Update currency select
+  const sel = document.getElementById('currencySelect');
+  const current = sel.value;
+  sel.innerHTML = Object.entries(currencies).map(([code, c]) => `<option value="${code}"${code===current?' selected':''}>${c.symbol} (${code})</option>`).join('');
+}
+
+function saveCurrencies() {
+  document.querySelectorAll('[data-currency]').forEach(input => {
+    const code = input.dataset.currency;
+    const val = parseFloat(input.value);
+    if (code !== 'AOA' && !isNaN(val) && val > 0) {
+      state.currencies[code].rate = val;
+    }
+  });
+  saveState();
+  renderCurrencies();
+  showToast('Taxas de câmbio atualizadas', 'success');
+}
+
+function resetCurrencies() {
+  state.currencies = JSON.parse(JSON.stringify(defaultCurrencies));
+  saveState(); renderCurrencies();
+  showToast('Taxas repostas ao padrão', 'info');
+}
+
+// EXPORT/IMPORT
+function exportJSON() {
+  const data = { items: state.items, scenarios: state.scenarios, currencies: state.currencies, exportedAt: new Date().toISOString(), app: 'IS Tempo de Vida' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = `is_tempo_vida_${Date.now()}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast('Dados exportados em JSON', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.items) state.items = data.items;
+      if (data.scenarios) state.scenarios = data.scenarios;
+      if (data.currencies) state.currencies = {...state.currencies, ...data.currencies};
+      saveState(); renderItems(); updateCharts();
+      if (state.activeTab === 'scenarios') renderScenarios();
+      if (state.activeTab === 'currencies') renderCurrencies();
+      showToast('Dados importados com sucesso', 'success');
+    } catch(err) {
+      showToast('Ficheiro inválido', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function exportAppImage() {
+  showToast('A gerar imagem…', 'info');
+  // Hide export-hide elements
+  document.querySelectorAll('.export-hide').forEach(el => el.style.display = 'none');
+  try {
+    const app = document.getElementById('app');
+    const canvas = await html2canvas(app, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: -window.scrollY, height: app.scrollHeight });
+    const link = document.createElement('a');
+    link.download = `is_tempo_vida_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+    showToast('Imagem exportada', 'success');
+  } catch(err) {
+    showToast('Erro ao gerar imagem', 'error');
+  }
+  document.querySelectorAll('.export-hide').forEach(el => el.style.display = '');
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF…', 'info');
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = 30;
+    let pageNum = 1;
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-PT', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const appName = document.getElementById('mainTitle').textContent || 'Tempo de Vida';
+
+    function addHeader() {
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageW, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`IS ${appName}`, margin, 13);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(dateStr, pageW - margin, 13, { align: 'right' });
+      pdf.setTextColor(51, 51, 51);
+    }
+
+    function addFooter() {
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Gerado por IS ${appName} | ${dateStr} | www.investesuite.com`, pageW / 2, pageH - 8, { align: 'center' });
+      pdf.text(`Página ${pageNum}`, pageW - margin, pageH - 8, { align: 'right' });
+    }
+
+    function checkPage(neededH) {
+      if (y + neededH > pageH - 20) {
+        addFooter(); pdf.addPage(); pageNum++; addHeader(); y = 30;
+      }
+    }
+
+    addHeader();
+
+    // Summary
+    pdf.setFontSize(13); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 136, 229);
+    pdf.text('Resumo Geral', margin, y); y += 8;
+    pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(80, 80, 80);
+
+    const totalMonthly = state.items.reduce((a, i) => a + i.monthlyCost, 0);
+    const totalHours = state.items.reduce((a, i) => a + i.monthlyHours, 0);
+    const income = state.currentIncome || (state.items[0]?.income || 0);
+
+    pdf.text(`Total de itens: ${state.items.length}`, margin, y); y += 5;
+    pdf.text(`Custo mensal total: ${formatKz(totalMonthly)}`, margin, y); y += 5;
+    pdf.text(`Horas de trabalho/mês: ${totalHours.toFixed(1)}h`, margin, y); y += 5;
+    if (income > 0) { pdf.text(`Rendimento mensal: ${formatKz(income)}`, margin, y); y += 5; }
+    y += 5;
+
+    // Items table
+    if (state.items.length > 0) {
+      checkPage(20);
+      pdf.setFontSize(11); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 136, 229);
+      pdf.text('Itens', margin, y); y += 7;
+
+      // Table header
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(margin, y - 4, contentW, 7, 'F');
+      pdf.setFontSize(7); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(80, 80, 80);
+      pdf.text('Item', margin + 2, y);
+      pdf.text('Categoria', margin + 55, y);
+      pdf.text('Custo (Kz)', margin + 95, y);
+      pdf.text('Horas', margin + 130, y);
+      pdf.text('Mensal (Kz)', margin + 155, y);
+      y += 7;
+
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7);
+      state.items.forEach(item => {
+        checkPage(7);
+        pdf.setTextColor(60, 60, 60);
+        pdf.text(item.name.slice(0, 30), margin + 2, y);
+        pdf.text(catNames[item.category] || '', margin + 55, y);
+        pdf.text(formatKz(item.cost), margin + 95, y);
+        pdf.text(item.hoursNeeded.toFixed(1) + 'h', margin + 130, y);
+        pdf.text(formatKz(item.monthlyCost), margin + 155, y);
+        y += 6;
+      });
+      y += 5;
+    }
+
+    // Charts - smaller sizes
+    const chartIds = ['barChart', 'doughnutChart', 'lineChart', 'radarChart'];
+    const chartTitles = ['Tempo de Vida por Item', 'Distribuição por Categoria', 'Custo Acumulado', 'Impacto por Categoria'];
+
+    for (let i = 0; i < chartIds.length; i++) {
+      const canvas = document.getElementById(chartIds[i]);
+      if (!canvas || !chartInstances[chartIds[i]]) continue;
+      
+      checkPage(55);
+      pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(30, 136, 229);
+      pdf.text(chartTitles[i], margin, y); y += 5;
+      
+      try {
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const chartW = 80;
+        const chartH = 45;
+        pdf.addImage(imgData, 'PNG', margin, y, chartW, chartH);
+        y += chartH + 8;
+      } catch(e) {}
+    }
+
+    addFooter();
+    pdf.save(`is_tempo_vida_${Date.now()}.pdf`);
+    showToast('PDF exportado com sucesso', 'success');
+  } catch(err) {
+    showToast('Erro ao gerar PDF', 'error');
+    console.error(err);
+  }
+}
+
+// TOAST
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const colors = { success: '#4CAF50', error: '#F44336', warn: '#FF9800', info: '#66CFF5' };
+  const icons = { success: 'check-circle', error: 'x-circle', warn: 'alert-triangle', info: 'info' };
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
+  toast.innerHTML = `<i data-lucide="${icons[type] || 'info'}" style="width:16px;height:16px;color:${colors[type]}"></i> ${msg}`;
+  container.appendChild(toast);
+  lucide.createIcons();
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function escHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+// TEMPLATES RENDER
+function renderTemplates() {
+  const list = document.getElementById('templatesList');
+  list.innerHTML = templates.map((t, i) => `
+    <div class="card p-4 cursor-pointer" onclick="loadTemplate(${i})" style="border-left:4px solid #FFC107">
+      <div class="flex items-center gap-2 mb-2">
+        <i data-lucide="graduation-cap" style="width:16px;height:16px;color:#FFC107"></i>
+        <span class="font-medium text-sm text-gray-800">${t.name}</span>
+      </div>
+      <p class="text-xs text-gray-500 mb-2">${t.desc}</p>
+      <div class="flex gap-3 text-xs text-gray-400">
+        <span>💰 ${formatKz(t.income)}/mês</span>
+        <span>📦 ${t.items.length} itens</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// GLOBAL SEARCH
+document.getElementById('globalSearch').addEventListener('input', function() {
+  renderItems();
+  if (state.activeTab === 'scenarios') renderScenarios();
+});
+
+// ELEMENT SDK
+const defaultConfig = {
+  app_title: 'Tempo de Vida',
+  app_description: 'Descubra quanto tempo da sua vida custa cada compra',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_color: '#66CFF5',
+  accent_color: '#FFC107',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const t = config.app_title || defaultConfig.app_title;
+  const d = config.app_description || defaultConfig.app_description;
+  const bg = config.background_color || defaultConfig.background_color;
+  const sf = config.surface_color || defaultConfig.surface_color;
+  const tx = config.text_color || defaultConfig.text_color;
+  const pr = config.primary_color || defaultConfig.primary_color;
+  const ac = config.accent_color || defaultConfig.accent_color;
+  const ff = config.font_family || defaultConfig.font_family;
+  const fs = config.font_size || defaultConfig.font_size;
+
+  document.getElementById('mainTitle').textContent = t;
+  document.getElementById('mainDesc').textContent = d;
+  document.body.style.background = bg;
+  document.body.style.color = tx;
+  document.body.style.fontFamily = `${ff}, Inter, sans-serif`;
+
+  document.querySelectorAll('.card, .chart-container').forEach(el => { el.style.background = sf; });
+  
+  const header = document.getElementById('appHeader');
+  if (header) header.style.background = sf;
+  const nav = document.getElementById('tabNav');
+  if (nav) nav.style.background = sf;
+
+  document.querySelectorAll('.btn-primary').forEach(el => { el.style.background = pr; });
+  document.querySelectorAll('.tab-btn.active').forEach(el => { el.style.borderBottomColor = pr; el.style.color = pr; });
+
+  // Font sizing
+  document.getElementById('mainTitle').style.fontSize = `${fs * 1.14}px`;
+  document.getElementById('mainDesc').style.fontSize = `${fs * 0.85}px`;
+  document.querySelectorAll('label').forEach(el => { el.style.fontSize = `${fs * 0.85}px`; });
+  document.querySelectorAll('input, select').forEach(el => { el.style.fontSize = `${fs * 0.93}px`; });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+        { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+}
+
+// INIT
+loadState();
+renderItems();
+updateCharts();
+renderCurrencies();
+renderTemplates();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd265507298d04e',t:'MTc3MzY0OTgyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

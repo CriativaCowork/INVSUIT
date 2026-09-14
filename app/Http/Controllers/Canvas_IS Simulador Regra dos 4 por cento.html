@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador Regra dos 4%</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+.app-wrap{height:100%;width:100%;overflow-y:auto;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+.tab-btn{padding:10px 18px;cursor:pointer;border:none;background:transparent;color:#666;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;border-bottom:2px solid transparent;transition:all .2s ease;white-space:nowrap}
+.tab-btn:hover{color:#66CFF5;background:rgba(30,136,229,.05)}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;position:relative;overflow:hidden;transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-accent{border-left:4px solid #66CFF5}
+.card-accent-gold{border-left:4px solid #FFC107}
+.card-accent-green{border-left:4px solid #4CAF50}
+.card-accent-orange{border-left:4px solid #FF9800}
+.card-accent-red{border-left:4px solid #F44336}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#66CFF5;color:#fff}.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}.btn-success:hover{background:#388E3C}
+.btn-warning{background:#FF9800;color:#fff}.btn-warning:hover{background:#F57C00}
+.btn-danger{background:#F44336;color:#fff}.btn-danger:hover{background:#D32F2F}
+.btn-outline{background:transparent;border:1px solid #E0E0E0;color:#666}.btn-outline:hover{border-color:#66CFF5;color:#66CFF5}
+.btn-sm{padding:5px 10px;font-size:12px}
+.input-field{width:100%;padding:9px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;transition:all .2s ease;background:#fff;color:#333}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+.input-field::placeholder{color:#aaa}
+label.field-label{font-size:12px;font-weight:500;color:#555;margin-bottom:4px;display:block}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.toast-container{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeInM .2s ease}
+.modal-box{background:#fff;border-radius:10px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+@keyframes fadeInM{from{opacity:0}to{opacity:1}}
+.chart-wrap{position:relative;background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:5;background:#fff;border:1px solid #E0E0E0;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;color:#666;transition:all .2s ease;display:flex;align-items:center;gap:4px}
+.chart-export-btn:hover{border-color:#66CFF5;color:#66CFF5}
+.sub-tab{padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid #E0E0E0;background:#fff;color:#666;transition:all .2s ease}
+.sub-tab.active{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.scenario-card{border:1px solid #E0E0E0;border-radius:8px;padding:14px;background:#fff;transition:all .2s ease;border-left:4px solid #66CFF5}
+.scenario-card:hover{box-shadow:0 4px 12px rgba(30,136,229,.12)}
+.hide-on-export{transition:opacity .2s ease}
+.table-row{transition:background .15s ease}
+.table-row:hover{background:rgba(30,136,229,.04)}
+.confirm-overlay{position:absolute;inset:0;background:rgba(255,255,255,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;border-radius:8px;animation:fadeInM .15s ease}
+select.input-field{appearance:auto}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',secondary:'#F8F9FA'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrap" id="appWrap">
+   <div id="toastContainer" class="toast-container"></div><!-- HEADER -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-50" id="appHeader">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center flex-shrink-0" style="display: none;">
+       <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v6l3-3M12 2v6l-3-3" /><path d="M2 12a10 10 0 1 0 20 0 10 10 0 1 0-20 0" /><path d="M12 6v6l4 2" />
+       </svg>
+      </div>
+      <div>
+       <h1 class="text-base font-bold text-gray-800 leading-tight" id="appTitle" style="display: none; display: none;">IS Simulador Regra dos 4%</h1>
+       <p class="text-xs text-gray-400" style="display: none;">Independência Financeira · CPLP</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 hide-on-export"><input type="text" id="globalSearch" class="input-field" placeholder="Filtrar..." style="width:180px;padding:6px 10px;font-size:12px" oninput="handleGlobalFilter(this.value)"> <button class="btn btn-outline btn-sm" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn btn-outline btn-sm" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button> <button class="btn btn-outline btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn btn-outline btn-sm" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+     </div>
+    </div>
+   </header><!-- TABS -->
+   <nav class="bg-white border-b border-gray-200 overflow-x-auto" id="tabNav">
+    <div class="max-w-7xl mx-auto flex" id="tabContainer"><button class="tab-btn active" data-tab="simulator" onclick="switchTab('simulator')"><i data-lucide="calculator" style="width:15px;height:15px"></i> Simulador</button> <button class="tab-btn" data-tab="scenarios" onclick="switchTab('scenarios')"><i data-lucide="layers" style="width:15px;height:15px"></i> Cenários</button> <button class="tab-btn" data-tab="currencies" onclick="switchTab('currencies')"><i data-lucide="coins" style="width:15px;height:15px"></i> Moedas</button> <button class="tab-btn" data-tab="guide" onclick="switchTab('guide')"><i data-lucide="book-open" style="width:15px;height:15px"></i> Guia</button>
+    </div>
+   </nav><!-- MAIN CONTENT -->
+   <main class="max-w-7xl mx-auto p-4" id="mainContent"><!-- ============ SIMULATOR TAB ============ -->
+    <section id="tab-simulator" class="tab-panel"><!-- Input Section -->
+     <div class="card card-accent p-5 mb-4">
+      <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2"><i data-lucide="sliders" style="width:16px;height:16px;color:#66CFF5"></i> Parâmetros da Simulação</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hide-on-export" id="simInputs">
+       <div><label class="field-label" for="monthlyExpenses">Despesas Mensais (Kz)</label> <input type="number" id="monthlyExpenses" class="input-field" value="350000" min="0" step="1000" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="currentSavings">Poupança Atual (Kz)</label> <input type="number" id="currentSavings" class="input-field" value="5000000" min="0" step="10000" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="monthlySaving">Poupança Mensal (Kz)</label> <input type="number" id="monthlySaving" class="input-field" value="200000" min="0" step="1000" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="annualReturn">Retorno Anual (%)</label> <input type="number" id="annualReturn" class="input-field" value="8" min="0" max="50" step="0.5" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="inflationRate">Inflação Anual (%)</label> <input type="number" id="inflationRate" class="input-field" value="15" min="0" max="100" step="0.5" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="withdrawalRate">Taxa de Retirada (%)</label> <input type="number" id="withdrawalRate" class="input-field" value="4" min="1" max="10" step="0.5" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="simYears">Horizonte (anos)</label> <input type="number" id="simYears" class="input-field" value="25" min="1" max="60" step="1" oninput="runSimulation()">
+       </div>
+       <div><label class="field-label" for="simTitle">Título do Cenário</label> <input type="text" id="simTitle" class="input-field" value="" placeholder="Ex: Plano Conservador">
+       </div>
+      </div>
+      <div class="flex gap-2 mt-4 hide-on-export"><button class="btn btn-primary" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i> Guardar Cenário</button> <button class="btn btn-outline" onclick="resetSimulator()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Limpar</button>
+      </div>
+     </div><!-- Results Summary -->
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4" id="resultCards">
+      <div class="card card-accent-green p-4">
+       <p class="text-xs text-gray-500 font-medium">Meta FIRE (Kz)</p>
+       <p class="text-xl font-bold text-gray-800 mt-1" id="fireTarget">0</p>
+       <p class="text-xs text-gray-400 mt-1">Despesas anuais ÷ taxa retirada</p>
+      </div>
+      <div class="card card-accent p-4">
+       <p class="text-xs text-gray-500 font-medium">Anos até FIRE</p>
+       <p class="text-xl font-bold text-gray-800 mt-1" id="yearsToFire">--</p>
+       <p class="text-xs text-gray-400 mt-1">Estimativa c/ poupança + retorno</p>
+      </div>
+      <div class="card card-accent-gold p-4">
+       <p class="text-xs text-gray-500 font-medium">Retirada Mensal (Kz)</p>
+       <p class="text-xl font-bold text-gray-800 mt-1" id="monthlyWithdrawal">0</p>
+       <p class="text-xs text-gray-400 mt-1">Ao atingir a meta</p>
+      </div>
+      <div class="card card-accent-orange p-4">
+       <p class="text-xs text-gray-500 font-medium">Progresso (%)</p>
+       <p class="text-xl font-bold text-gray-800 mt-1" id="progressPct">0%</p>
+       <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+        <div id="progressBar" class="h-2 rounded-full bg-primary transition-all duration-500" style="width:0%"></div>
+       </div>
+      </div>
+     </div><!-- Charts -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="chart-wrap" id="chartWrap1"><button class="chart-export-btn" onclick="exportChartImage('growthChart','Crescimento_Patrimonio')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+       <h3 class="text-xs font-semibold text-gray-600 mb-2">Crescimento do Património</h3>
+       <canvas id="growthChart" height="220"></canvas>
+      </div>
+      <div class="chart-wrap" id="chartWrap2"><button class="chart-export-btn" onclick="exportChartImage('withdrawalChart','Fase_Retirada')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+       <h3 class="text-xs font-semibold text-gray-600 mb-2">Fase de Retirada (Pós-FIRE)</h3>
+       <canvas id="withdrawalChart" height="220"></canvas>
+      </div>
+     </div>
+     <div class="chart-wrap mb-4" id="chartWrap3"><button class="chart-export-btn" onclick="exportChartImage('compChart','Composicao')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+      <h3 class="text-xs font-semibold text-gray-600 mb-2">Composição: Contribuições vs Rendimentos</h3>
+      <canvas id="compChart" height="180"></canvas>
+     </div><!-- Yearly Table -->
+     <div class="card p-4 mb-4">
+      <h3 class="text-xs font-semibold text-gray-600 mb-3 flex items-center gap-2"><i data-lucide="table" style="width:14px;height:14px;color:#66CFF5"></i> Projeção Anual Detalhada</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-xs" id="projTable">
+        <thead>
+         <tr class="text-left text-gray-500 border-b border-gray-200">
+          <th class="py-2 px-2 font-medium">Ano</th>
+          <th class="py-2 px-2 font-medium">Contribuição (Kz)</th>
+          <th class="py-2 px-2 font-medium">Rendimento (Kz)</th>
+          <th class="py-2 px-2 font-medium">Total Acumulado (Kz)</th>
+          <th class="py-2 px-2 font-medium">Meta FIRE (Kz)</th>
+          <th class="py-2 px-2 font-medium">Estado</th>
+         </tr>
+        </thead>
+        <tbody id="projBody"></tbody>
+       </table>
+      </div>
+     </div>
+    </section><!-- ============ SCENARIOS TAB ============ -->
+    <section id="tab-scenarios" class="tab-panel" style="display:none">
+     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2"><i data-lucide="layers" style="width:16px;height:16px;color:#66CFF5"></i> Cenários Guardados</h2>
+      <div class="flex gap-2 hide-on-export"><input type="text" id="scenarioFilter" class="input-field" placeholder="Filtrar cenários..." style="width:200px;padding:6px 10px;font-size:12px" oninput="renderScenarios()"> <button class="btn btn-primary btn-sm" onclick="switchTab('simulator');resetSimulator()"><i data-lucide="plus" style="width:14px;height:14px"></i> Novo</button>
+      </div>
+     </div>
+     <div id="scenariosList"></div>
+     <div id="noScenarios" class="text-center py-12 text-gray-400 text-sm" style="display:none"><i data-lucide="inbox" style="width:40px;height:40px;margin:0 auto 8px;display:block;color:#ccc"></i> Nenhum cenário guardado. Vá ao Simulador e guarde um cenário.
+     </div>
+    </section><!-- ============ CURRENCIES TAB ============ -->
+    <section id="tab-currencies" class="tab-panel" style="display:none">
+     <div class="card card-accent-gold p-5 mb-4">
+      <h2 class="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2"><i data-lucide="coins" style="width:16px;height:16px;color:#FFC107"></i> Taxas de Câmbio (Base: Kwanza Angolano — Kz)</h2>
+      <p class="text-xs text-gray-400 mb-4">Defina as taxas de câmbio relativamente ao Kwanza. Valores editáveis.</p>
+      <div class="overflow-x-auto">
+       <table class="w-full text-xs" id="currTable">
+        <thead>
+         <tr class="text-left text-gray-500 border-b border-gray-200">
+          <th class="py-2 px-2 font-medium">Moeda</th>
+          <th class="py-2 px-2 font-medium">Código</th>
+          <th class="py-2 px-2 font-medium">1 Kz =</th>
+          <th class="py-2 px-2 font-medium hide-on-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="currBody"></tbody>
+       </table>
+      </div>
+      <div class="flex gap-2 mt-4 hide-on-export"><button class="btn btn-primary btn-sm" onclick="showAddCurrency()"><i data-lucide="plus" style="width:14px;height:14px"></i> Adicionar Moeda</button>
+      </div>
+     </div><!-- Converter -->
+     <div class="card card-accent p-5">
+      <h3 class="text-xs font-semibold text-gray-600 mb-3 flex items-center gap-2"><i data-lucide="repeat" style="width:14px;height:14px;color:#66CFF5"></i> Conversor Rápido</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 hide-on-export">
+       <div><label class="field-label">Valor (Kz)</label> <input type="number" id="convAmount" class="input-field" value="1000000" oninput="convertCurrency()">
+       </div>
+       <div><label class="field-label">Para</label> <select id="convTarget" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+       <div><label class="field-label">Resultado</label>
+        <div class="input-field bg-gray-50 font-semibold" id="convResult">
+         —
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- ============ GUIDE TAB ============ -->
+    <section id="tab-guide" class="tab-panel" style="display:none">
+     <div class="space-y-4">
+      <div class="card card-accent p-5">
+       <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="info" style="width:16px;height:16px;color:#66CFF5"></i> O que é a Regra dos 4%?</h2>
+       <p class="text-xs text-gray-600 leading-relaxed mb-3">A <strong>Regra dos 4%</strong> é uma diretriz financeira originária do estudo Trinity (1998) que sugere que pode retirar <strong>4% do seu portfólio de investimento por ano</strong> durante a reforma, com uma probabilidade elevada de o dinheiro durar pelo menos 30 anos.</p>
+       <p class="text-xs text-gray-600 leading-relaxed"><strong>Como funciona:</strong> Se as suas despesas anuais são de 4.200.000 Kz, necessita de um portfólio de 105.000.000 Kz (4.200.000 ÷ 0.04). Este é o seu número FIRE (Financial Independence, Retire Early).</p>
+      </div>
+      <div class="card card-accent-green p-5">
+       <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50"></i> Melhores Práticas</h2>
+       <ul class="text-xs text-gray-600 space-y-2">
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Considere a inflação local — Angola e outros países CPLP têm taxas variáveis.</li>
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Diversifique investimentos entre moedas (Kz, USD, EUR, BRL).</li>
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Use uma taxa de retirada conservadora (3-3.5%) em mercados voláteis.</li>
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Revise o plano anualmente e ajuste despesas se necessário.</li>
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Mantenha um fundo de emergência separado (6-12 meses de despesas).</li>
+        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Guarde múltiplos cenários para comparar estratégias.</li>
+       </ul>
+      </div>
+      <div class="card card-accent-gold p-5">
+       <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="lightbulb" style="width:16px;height:16px;color:#FFC107"></i> Como Usar Este Simulador</h2>
+       <ol class="text-xs text-gray-600 space-y-2 list-decimal list-inside">
+        <li><strong>Simulador:</strong> Preencha os parâmetros — despesas, poupança atual e mensal, taxas de retorno e inflação.</li>
+        <li><strong>Resultados:</strong> Veja instantaneamente a meta FIRE, anos estimados e gráficos interativos.</li>
+        <li><strong>Guardar:</strong> Clique "Guardar Cenário" para salvar a simulação. Pode criar múltiplos cenários.</li>
+        <li><strong>Cenários:</strong> Compare, edite, clone ou elimine cenários guardados.</li>
+        <li><strong>Moedas:</strong> Configure taxas de câmbio CPLP e converta valores rapidamente.</li>
+        <li><strong>Exportar:</strong> Use os botões no topo para exportar em JSON, PDF ou Imagem.</li>
+       </ol>
+      </div>
+      <div class="card card-accent-orange p-5">
+       <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="alert-triangle" style="width:16px;height:16px;color:#FF9800"></i> Limitações e Avisos</h2>
+       <ul class="text-xs text-gray-600 space-y-2">
+        <li class="flex gap-2"><span class="text-orange-500 font-bold">!</span> Este simulador é uma ferramenta educacional — não constitui aconselhamento financeiro profissional.</li>
+        <li class="flex gap-2"><span class="text-orange-500 font-bold">!</span> A regra dos 4% foi desenvolvida para o mercado dos EUA — adapte para a realidade local.</li>
+        <li class="flex gap-2"><span class="text-orange-500 font-bold">!</span> Resultados passados não garantem retornos futuros.</li>
+        <li class="flex gap-2"><span class="text-orange-500 font-bold">!</span> Em economias com inflação elevada, considere taxas de retirada mais baixas.</li>
+       </ul>
+      </div>
+     </div>
+    </section>
+   </main><!-- Footer -->
+   <footer class="border-t border-gray-200 bg-white py-3 text-center text-xs text-gray-400">
+    IS Simulador Regra dos 4% · Independência Financeira · CPLP
+   </footer>
+  </div><!-- Modal Container -->
+  <div id="modalContainer"></div>
+  <script>
+// ===== STATE =====
+let APP = {
+  scenarios: [],
+  currencies: [
+    {name:'Dólar Americano',code:'USD',rate:0.0012,locked:true},
+    {name:'Real Brasileiro',code:'BRL',rate:0.006,locked:true},
+    {name:'Euro',code:'EUR',rate:0.0011,locked:true},
+    {name:'Metical Moçambicano',code:'MZN',rate:0.076,locked:true},
+    {name:'Escudo Cabo-Verdiano',code:'CVE',rate:0.122,locked:true},
+    {name:'Dobra São-Tomense',code:'STN',rate:0.027,locked:true},
+    {name:'Franco CFA (Guiné-Bissau)',code:'XOF',rate:0.724,locked:true},
+    {name:'Pataca Macaense',code:'MOP',rate:0.0097,locked:true},
+    {name:'Rupia Timorense/USD',code:'USD-TL',rate:0.0012,locked:true}
+  ],
+  nextScenarioNum: 1,
+  globalFilter: ''
+};
+let simData = {labels:[],values:[],contributions:[],earnings:[]};
+let charts = {};
+
+// ===== PERSISTENCE (localStorage) =====
+function saveState(){try{localStorage.setItem('is_fire_sim',JSON.stringify(APP))}catch(e){}}
+function loadState(){
+  try{
+    const d=JSON.parse(localStorage.getItem('is_fire_sim'));
+    if(d){
+      APP.scenarios=d.scenarios||[];
+      if(d.currencies&&d.currencies.length) APP.currencies=d.currencies;
+      APP.nextScenarioNum=d.nextScenarioNum||1;
+    }
+  }catch(e){}
+}
+
+// ===== FORMAT HELPERS =====
+function fmtKz(v){return new Intl.NumberFormat('pt-AO',{maximumFractionDigits:0}).format(v)+' Kz'}
+function fmtN(v){return new Intl.NumberFormat('pt-AO',{maximumFractionDigits:0}).format(v)}
+function fmtPct(v){return v.toFixed(1)+'%'}
+
+// ===== TOAST =====
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const colors={info:'#66CFF5',success:'#4CAF50',error:'#F44336',warning:'#FF9800'};
+  const t=document.createElement('div');
+  t.className='toast';
+  t.style.background=colors[type]||colors.info;
+  t.innerHTML=msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.animation='fadeOut .3s ease forwards';setTimeout(()=>t.remove(),300)},3000);
+}
+
+// ===== TABS =====
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  const panel=document.getElementById('tab-'+id);
+  if(panel) panel.style.display='block';
+  if(id==='scenarios') renderScenarios();
+  if(id==='currencies'){renderCurrencies();updateConvSelect();}
+}
+
+// ===== SIMULATION ENGINE =====
+function getInputs(){
+  return {
+    monthlyExpenses: parseFloat(document.getElementById('monthlyExpenses').value)||0,
+    currentSavings: parseFloat(document.getElementById('currentSavings').value)||0,
+    monthlySaving: parseFloat(document.getElementById('monthlySaving').value)||0,
+    annualReturn: parseFloat(document.getElementById('annualReturn').value)||0,
+    inflationRate: parseFloat(document.getElementById('inflationRate').value)||0,
+    withdrawalRate: parseFloat(document.getElementById('withdrawalRate').value)||4,
+    simYears: parseInt(document.getElementById('simYears').value)||25,
+    title: document.getElementById('simTitle').value.trim()
+  };
+}
+function setInputs(s){
+  document.getElementById('monthlyExpenses').value=s.monthlyExpenses||350000;
+  document.getElementById('currentSavings').value=s.currentSavings||5000000;
+  document.getElementById('monthlySaving').value=s.monthlySaving||200000;
+  document.getElementById('annualReturn').value=s.annualReturn||8;
+  document.getElementById('inflationRate').value=s.inflationRate||15;
+  document.getElementById('withdrawalRate').value=s.withdrawalRate||4;
+  document.getElementById('simYears').value=s.simYears||25;
+  document.getElementById('simTitle').value=s.title||'';
+}
+
+function runSimulation(){
+  const inp=getInputs();
+  const annualExpenses=inp.monthlyExpenses*12;
+  const fireTarget=annualExpenses/(inp.withdrawalRate/100);
+  const realReturn=(inp.annualReturn-inp.inflationRate)/100;
+  const monthlyReturn=realReturn/12;
+
+  // Growth phase
+  let balance=inp.currentSavings;
+  let labels=[], values=[], contribs=[], earns=[];
+  let totalContrib=inp.currentSavings, totalEarn=0;
+  let yearsToFire='30+';
+  let fireReached=false;
+
+  for(let y=0;y<=inp.simYears;y++){
+    labels.push('Ano '+y);
+    values.push(Math.max(0,balance));
+    contribs.push(totalContrib);
+    earns.push(Math.max(0,totalEarn));
+    if(!fireReached && balance>=fireTarget && y>0){yearsToFire=y;fireReached=true;}
+    const yearContrib=inp.monthlySaving*12;
+    const yearEarn=balance*realReturn;
+    balance+=yearContrib+yearEarn;
+    totalContrib+=yearContrib;
+    totalEarn+=yearEarn;
+  }
+
+  simData={labels,values,contributions:contribs,earnings:earns};
+
+  // Withdrawal phase
+  let wLabels=[],wValues=[];
+  let wBalance=fireTarget;
+  const annualWithdrawal=fireTarget*(inp.withdrawalRate/100);
+  for(let y=0;y<=30;y++){
+    wLabels.push('Ano '+y);
+    wValues.push(Math.max(0,wBalance));
+    wBalance=wBalance*(1+realReturn)-annualWithdrawal;
+    if(wBalance<0){wBalance=0;}
+  }
+
+  // Update UI
+  document.getElementById('fireTarget').textContent=fmtKz(fireTarget);
+  document.getElementById('yearsToFire').textContent=typeof yearsToFire==='number'?yearsToFire+' anos':yearsToFire;
+  document.getElementById('monthlyWithdrawal').textContent=fmtKz(annualWithdrawal/12);
+  const pct=Math.min(100,(inp.currentSavings/fireTarget)*100);
+  document.getElementById('progressPct').textContent=fmtPct(pct);
+  document.getElementById('progressBar').style.width=pct+'%';
+
+  updateCharts(wLabels,wValues);
+  updateTable(inp);
+}
+
+function updateCharts(wLabels,wValues){
+  const ctx1=document.getElementById('growthChart');
+  const ctx2=document.getElementById('withdrawalChart');
+  const ctx3=document.getElementById('compChart');
+  const chartOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{font:{size:11,family:'Inter'},boxWidth:12}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>fmtN(v)},grid:{color:'#f0f0f0'}}}};
+
+  if(charts.growth) charts.growth.destroy();
+  charts.growth=new Chart(ctx1,{type:'line',data:{labels:simData.labels,datasets:[{label:'Património (Kz)',data:simData.values,borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,0.08)',fill:true,tension:.3,pointRadius:2,borderWidth:2}]},options:chartOpts});
+
+  if(charts.withdrawal) charts.withdrawal.destroy();
+  charts.withdrawal=new Chart(ctx2,{type:'line',data:{labels:wLabels,datasets:[{label:'Património Restante (Kz)',data:wValues,borderColor:'#4CAF50',backgroundColor:'rgba(76,175,80,0.08)',fill:true,tension:.3,pointRadius:2,borderWidth:2}]},options:chartOpts});
+
+  if(charts.comp) charts.comp.destroy();
+  charts.comp=new Chart(ctx3,{type:'bar',data:{labels:simData.labels,datasets:[{label:'Contribuições (Kz)',data:simData.contributions,backgroundColor:'#66CFF5',borderRadius:3},{label:'Rendimentos (Kz)',data:simData.earnings,backgroundColor:'#FFC107',borderRadius:3}]},options:{...chartOpts,plugins:{...chartOpts.plugins},scales:{...chartOpts.scales,x:{...chartOpts.scales.x,stacked:true},y:{...chartOpts.scales.y,stacked:true}}}});
+}
+
+function updateTable(inp){
+  const tbody=document.getElementById('projBody');
+  const realReturn=(inp.annualReturn-inp.inflationRate)/100;
+  const filter=APP.globalFilter.toLowerCase();
+  let balance=inp.currentSavings;
+  const annualExpenses=inp.monthlyExpenses*12;
+  const fireTarget=annualExpenses/(inp.withdrawalRate/100);
+  let rows='';
+  for(let y=0;y<=inp.simYears;y++){
+    const yearContrib=y===0?0:inp.monthlySaving*12;
+    const yearEarn=y===0?0:balance*realReturn;
+    if(y>0) balance+=yearContrib+yearEarn;
+    const state=balance>=fireTarget?'<span class="badge" style="background:#E8F5E9;color:#388E3C">FIRE ✓</span>':'<span class="badge" style="background:#FFF3E0;color:#F57C00">Acumulando</span>';
+    const row=`Ano ${y} ${fmtKz(yearContrib)} ${fmtKz(Math.max(0,yearEarn))} ${fmtKz(Math.max(0,balance))} ${fmtKz(fireTarget)}`;
+    if(!filter||row.toLowerCase().includes(filter)){
+      rows+=`<tr class="table-row border-b border-gray-100"><td class="py-2 px-2 font-medium">${y}</td><td class="py-2 px-2">${fmtKz(yearContrib)}</td><td class="py-2 px-2">${fmtKz(Math.max(0,yearEarn))}</td><td class="py-2 px-2 font-semibold">${fmtKz(Math.max(0,balance))}</td><td class="py-2 px-2">${fmtKz(fireTarget)}</td><td class="py-2 px-2">${state}</td></tr>`;
+    }
+  }
+  tbody.innerHTML=rows;
+}
+
+// ===== SCENARIOS =====
+function saveScenario(){
+  const inp=getInputs();
+  if(!inp.title) inp.title='Cenário '+APP.nextScenarioNum;
+  APP.scenarios.push({...inp,id:Date.now().toString(),createdAt:new Date().toISOString()});
+  APP.nextScenarioNum++;
+  saveState();
+  toast('Cenário "'+inp.title+'" guardado!','success');
+}
+
+function renderScenarios(){
+  const container=document.getElementById('scenariosList');
+  const noEl=document.getElementById('noScenarios');
+  const filter=(document.getElementById('scenarioFilter')?.value||'').toLowerCase();
+  const globalF=APP.globalFilter.toLowerCase();
+  let filtered=APP.scenarios.filter(s=>{
+    const str=(s.title+' '+fmtKz(s.monthlyExpenses)+' '+fmtKz(s.currentSavings)).toLowerCase();
+    return (!filter||str.includes(filter))&&(!globalF||str.includes(globalF));
+  });
+  if(!filtered.length){container.innerHTML='';noEl.style.display='block';return;}
+  noEl.style.display='none';
+  container.innerHTML=filtered.map(s=>`
+    <div class="scenario-card mb-3" id="sc-${s.id}">
+      <div class="flex items-start justify-between flex-wrap gap-2">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-800">${s.title}</h3>
+          <p class="text-xs text-gray-400 mt-1">${new Date(s.createdAt).toLocaleDateString('pt-PT')}</p>
+        </div>
+        <div class="flex gap-1 hide-on-export">
+          <button class="btn btn-outline btn-sm" onclick="loadScenario('${s.id}')" title="Carregar"><i data-lucide="play" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-outline btn-sm" onclick="editScenario('${s.id}')" title="Editar"><i data-lucide="edit" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-outline btn-sm" onclick="cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-sm" style="background:#FFF3E0;color:#F44336;border:1px solid #FFCDD2" onclick="confirmDeleteScenario('${s.id}',this)" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 text-xs">
+        <div><span class="text-gray-400">Despesas:</span> <strong>${fmtKz(s.monthlyExpenses)}/mês</strong></div>
+        <div><span class="text-gray-400">Poupança:</span> <strong>${fmtKz(s.currentSavings)}</strong></div>
+        <div><span class="text-gray-400">Mensal:</span> <strong>${fmtKz(s.monthlySaving)}</strong></div>
+        <div><span class="text-gray-400">Retorno:</span> <strong>${s.annualReturn}%</strong> | <span class="text-gray-400">Inflação:</span> <strong>${s.inflationRate}%</strong></div>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id){
+  const s=APP.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  setInputs(s);
+  switchTab('simulator');
+  runSimulation();
+  toast('Cenário "'+s.title+'" carregado.','info');
+}
+function cloneScenario(id){
+  const s=APP.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const clone={...s,id:Date.now().toString(),title:s.title+' (cópia)',createdAt:new Date().toISOString()};
+  APP.scenarios.push(clone);
+  APP.nextScenarioNum++;
+  saveState();renderScenarios();
+  toast('Cenário clonado!','success');
+}
+function confirmDeleteScenario(id,btn){
+  const card=btn.closest('.scenario-card');
+  if(card.querySelector('.confirm-overlay')) return;
+  const overlay=document.createElement('div');
+  overlay.className='confirm-overlay';
+  overlay.innerHTML=`<p class="text-sm font-semibold text-gray-700">Eliminar este cenário?</p><div class="flex gap-2"><button class="btn btn-danger btn-sm" onclick="deleteScenario('${id}')">Sim, eliminar</button><button class="btn btn-outline btn-sm" onclick="this.closest('.confirm-overlay').remove()">Cancelar</button></div>`;
+  card.style.position='relative';
+  card.appendChild(overlay);
+}
+function deleteScenario(id){
+  APP.scenarios=APP.scenarios.filter(x=>x.id!==id);
+  saveState();renderScenarios();
+  toast('Cenário eliminado.','error');
+}
+function editScenario(id){
+  const s=APP.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  showEditModal(s);
+}
+function showEditModal(s){
+  const m=document.getElementById('modalContainer');
+  m.innerHTML=`
+  <div class="modal-overlay" onclick="if(event.target===this)this.remove()">
+    <div class="modal-box">
+      <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="edit" style="width:16px;height:16px;color:#66CFF5"></i> Editar Cenário</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div><label class="field-label">Título</label><input type="text" id="edTitle" class="input-field" value="${s.title}"></div>
+        <div><label class="field-label">Despesas Mensais (Kz)</label><input type="number" id="edExpenses" class="input-field" value="${s.monthlyExpenses}"></div>
+        <div><label class="field-label">Poupança Atual (Kz)</label><input type="number" id="edSavings" class="input-field" value="${s.currentSavings}"></div>
+        <div><label class="field-label">Poupança Mensal (Kz)</label><input type="number" id="edMonthlySav" class="input-field" value="${s.monthlySaving}"></div>
+        <div><label class="field-label">Retorno Anual (%)</label><input type="number" id="edReturn" class="input-field" value="${s.annualReturn}"></div>
+        <div><label class="field-label">Inflação (%)</label><input type="number" id="edInflation" class="input-field" value="${s.inflationRate}"></div>
+        <div><label class="field-label">Taxa Retirada (%)</label><input type="number" id="edWithdrawal" class="input-field" value="${s.withdrawalRate}"></div>
+        <div><label class="field-label">Horizonte (anos)</label><input type="number" id="edYears" class="input-field" value="${s.simYears}"></div>
+      </div>
+      <div class="flex gap-2 mt-4 justify-end">
+        <button class="btn btn-outline" onclick="document.querySelector('.modal-overlay').remove()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditScenario('${s.id}')">Guardar</button>
+      </div>
+    </div>
+  </div>`;
+  lucide.createIcons();
+}
+function saveEditScenario(id){
+  const s=APP.scenarios.find(x=>x.id===id);
+  if(!s) return;
+  s.title=document.getElementById('edTitle').value.trim()||s.title;
+  s.monthlyExpenses=parseFloat(document.getElementById('edExpenses').value)||s.monthlyExpenses;
+  s.currentSavings=parseFloat(document.getElementById('edSavings').value)||s.currentSavings;
+  s.monthlySaving=parseFloat(document.getElementById('edMonthlySav').value)||s.monthlySaving;
+  s.annualReturn=parseFloat(document.getElementById('edReturn').value)||s.annualReturn;
+  s.inflationRate=parseFloat(document.getElementById('edInflation').value)||s.inflationRate;
+  s.withdrawalRate=parseFloat(document.getElementById('edWithdrawal').value)||s.withdrawalRate;
+  s.simYears=parseInt(document.getElementById('edYears').value)||s.simYears;
+  saveState();
+  document.querySelector('.modal-overlay').remove();
+  renderScenarios();
+  toast('Cenário atualizado!','success');
+}
+
+function resetSimulator(){
+  setInputs({monthlyExpenses:350000,currentSavings:5000000,monthlySaving:200000,annualReturn:8,inflationRate:15,withdrawalRate:4,simYears:25,title:''});
+  runSimulation();
+}
+
+// ===== CURRENCIES =====
+function renderCurrencies(){
+  const tbody=document.getElementById('currBody');
+  const filter=APP.globalFilter.toLowerCase();
+  tbody.innerHTML=APP.currencies.filter(c=>!filter||(c.name+c.code).toLowerCase().includes(filter)).map((c,i)=>`
+    <tr class="table-row border-b border-gray-100">
+      <td class="py-2 px-2 text-xs">${c.name}</td>
+      <td class="py-2 px-2 text-xs font-mono font-semibold">${c.code}</td>
+      <td class="py-2 px-2"><input type="number" class="input-field hide-on-export" style="width:120px;padding:4px 8px;font-size:12px" value="${c.rate}" step="0.0001" onchange="updateCurrRate(${i},this.value)"><span class="show-on-print text-xs" style="display:none">${c.rate}</span></td>
+      <td class="py-2 px-2 hide-on-export"><button class="btn btn-sm" style="color:#F44336" onclick="confirmDeleteCurrency(${i},this)" title="Remover"><i data-lucide="x" style="width:12px;height:12px"></i></button></td>
+    </tr>
+  `).join('');
+  lucide.createIcons();
+}
+function updateCurrRate(i,v){APP.currencies[i].rate=parseFloat(v)||0;saveState();convertCurrency();}
+function confirmDeleteCurrency(i,btn){
+  const tr=btn.closest('tr');
+  if(tr.querySelector('.confirm-overlay')) return;
+  tr.style.position='relative';
+  const ov=document.createElement('div');
+  ov.className='confirm-overlay';
+  ov.style.flexDirection='row';ov.style.gap='8px';
+  ov.innerHTML=`<span class="text-xs font-medium">Remover?</span><button class="btn btn-danger btn-sm" onclick="deleteCurrency(${i})">Sim</button><button class="btn btn-outline btn-sm" onclick="this.closest('.confirm-overlay').remove()">Não</button>`;
+  tr.appendChild(ov);
+}
+function deleteCurrency(i){APP.currencies.splice(i,1);saveState();renderCurrencies();updateConvSelect();toast('Moeda removida.','error');}
+function showAddCurrency(){
+  const m=document.getElementById('modalContainer');
+  m.innerHTML=`
+  <div class="modal-overlay" onclick="if(event.target===this)this.remove()">
+    <div class="modal-box">
+      <h3 class="text-sm font-semibold text-gray-800 mb-4">Adicionar Moeda</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div><label class="field-label">Nome</label><input type="text" id="newCurrName" class="input-field" placeholder="Ex: Rand Sul-Africano"></div>
+        <div><label class="field-label">Código</label><input type="text" id="newCurrCode" class="input-field" placeholder="Ex: ZAR" maxlength="5"></div>
+        <div><label class="field-label">Taxa (1 Kz =)</label><input type="number" id="newCurrRate" class="input-field" value="0.001" step="0.0001"></div>
+      </div>
+      <div class="flex gap-2 mt-4 justify-end">
+        <button class="btn btn-outline" onclick="document.querySelector('.modal-overlay').remove()">Cancelar</button>
+        <button class="btn btn-primary" onclick="addCurrency()">Adicionar</button>
+      </div>
+    </div>
+  </div>`;
+}
+function addCurrency(){
+  const name=document.getElementById('newCurrName').value.trim();
+  const code=document.getElementById('newCurrCode').value.trim().toUpperCase();
+  const rate=parseFloat(document.getElementById('newCurrRate').value)||0;
+  if(!name||!code){toast('Preencha nome e código.','warning');return;}
+  APP.currencies.push({name,code,rate,locked:false});
+  saveState();
+  document.querySelector('.modal-overlay').remove();
+  renderCurrencies();updateConvSelect();
+  toast('Moeda adicionada!','success');
+}
+function updateConvSelect(){
+  const sel=document.getElementById('convTarget');
+  sel.innerHTML=APP.currencies.map(c=>`<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
+  convertCurrency();
+}
+function convertCurrency(){
+  const amt=parseFloat(document.getElementById('convAmount').value)||0;
+  const code=document.getElementById('convTarget').value;
+  const curr=APP.currencies.find(c=>c.code===code);
+  if(!curr){document.getElementById('convResult').textContent='—';return;}
+  const result=amt*curr.rate;
+  document.getElementById('convResult').textContent=result.toLocaleString('pt-AO',{maximumFractionDigits:4})+' '+code;
+}
+
+// ===== GLOBAL FILTER =====
+function handleGlobalFilter(v){
+  APP.globalFilter=v;
+  runSimulation();
+  const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+  if(activeTab==='scenarios') renderScenarios();
+  if(activeTab==='currencies') renderCurrencies();
+}
+
+// ===== EXPORT: JSON =====
+function exportJSON(){
+  const data=JSON.stringify(APP,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='IS_Regra4pct_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('JSON exportado!','success');
+}
+function importJSON(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.scenarios) APP.scenarios=d.scenarios;
+      if(d.currencies) APP.currencies=d.currencies;
+      if(d.nextScenarioNum) APP.nextScenarioNum=d.nextScenarioNum;
+      saveState();runSimulation();renderScenarios();renderCurrencies();updateConvSelect();
+      toast('Dados importados com sucesso!','success');
+    }catch(err){toast('Erro ao importar ficheiro.','error');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ===== EXPORT: IMAGE =====
+async function exportAppImage(){
+  toast('A gerar imagem...','info');
+  const els=document.querySelectorAll('.hide-on-export');
+  els.forEach(el=>el.style.display='none');
+  try{
+    const canvas=await html2canvas(document.getElementById('appWrap'),{scale:2,useCORS:true,backgroundColor:'#F8F9FA'});
+    els.forEach(el=>el.style.display='');
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');
+    a.download='IS_Regra4pct_'+new Date().toISOString().slice(0,10)+'.png';
+    a.click();
+    toast('Imagem exportada!','success');
+  }catch(err){
+    els.forEach(el=>el.style.display='');
+    toast('Erro ao exportar imagem.','error');
+  }
+}
+
+// ===== EXPORT: INDIVIDUAL CHART HD =====
+function exportChartImage(chartId,name){
+  const canvas=document.getElementById(chartId);
+  if(!canvas) return;
+  // Create a high res version
+  const tempCanvas=document.createElement('canvas');
+  const ratio=3;
+  tempCanvas.width=canvas.width*ratio;
+  tempCanvas.height=canvas.height*ratio;
+  const ctx=tempCanvas.getContext('2d');
+  ctx.scale(ratio,ratio);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(canvas,0,0);
+  const a=document.createElement('a');
+  a.href=tempCanvas.toDataURL('image/png',1.0);
+  a.download=name+'_HD.png';
+  a.click();
+  toast('Gráfico exportado em HD!','success');
+}
+
+// ===== EXPORT: PDF =====
+async function exportPDF(){
+  toast('A gerar PDF...','info');
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('p','mm','a4');
+  const pw=doc.internal.pageSize.getWidth();
+  const ph=doc.internal.pageSize.getHeight();
+  const margin=15;
+  const title='IS Simulador Regra dos 4%';
+  let pageNum=1;
+
+  function addHeaderFooter(){
+    doc.setFontSize(8);doc.setTextColor(150);
+    doc.text(title,margin,8);
+    doc.text('Página '+pageNum,pw-margin,8,{align:'right'});
+    doc.text(title+' · CPLP · '+new Date().toLocaleDateString('pt-PT'),margin,ph-5);
+    doc.text('Página '+pageNum,pw-margin,ph-5,{align:'right'});
+    doc.setDrawColor(200);
+    doc.line(margin,10,pw-margin,10);
+    doc.line(margin,ph-8,pw-margin,ph-8);
+  }
+
+  addHeaderFooter();
+  let y=18;
+
+  doc.setFontSize(14);doc.setTextColor(30,136,229);
+  doc.text(title,margin,y);y+=8;
+  doc.setFontSize(9);doc.setTextColor(80);
+  doc.text('Gerado em: '+new Date().toLocaleString('pt-PT'),margin,y);y+=10;
+
+  // Parameters
+  const inp=getInputs();
+  doc.setFontSize(10);doc.setTextColor(30);
+  doc.text('Parâmetros',margin,y);y+=6;
+  doc.setFontSize(8);doc.setTextColor(80);
+  const params=[
+    ['Despesas Mensais',fmtKz(inp.monthlyExpenses)],['Poupança Atual',fmtKz(inp.currentSavings)],
+    ['Poupança Mensal',fmtKz(inp.monthlySaving)],['Retorno Anual',inp.annualReturn+'%'],
+    ['Inflação',inp.inflationRate+'%'],['Taxa Retirada',inp.withdrawalRate+'%'],['Horizonte',inp.simYears+' anos']
+  ];
+  params.forEach(p=>{doc.text(p[0]+': '+p[1],margin+2,y);y+=4.5;});
+  y+=4;
+
+  // Results
+  doc.setFontSize(10);doc.setTextColor(30);
+  doc.text('Resultados',margin,y);y+=6;
+  doc.setFontSize(8);doc.setTextColor(80);
+  doc.text('Meta FIRE: '+document.getElementById('fireTarget').textContent,margin+2,y);y+=4.5;
+  doc.text('Anos até FIRE: '+document.getElementById('yearsToFire').textContent,margin+2,y);y+=4.5;
+  doc.text('Retirada Mensal: '+document.getElementById('monthlyWithdrawal').textContent,margin+2,y);y+=4.5;
+  doc.text('Progresso: '+document.getElementById('progressPct').textContent,margin+2,y);y+=8;
+
+  // Charts (small)
+  const chartIds=['growthChart','withdrawalChart','compChart'];
+  const chartNames=['Crescimento do Património','Fase de Retirada','Composição'];
+  for(let i=0;i<chartIds.length;i++){
+    const cvs=document.getElementById(chartIds[i]);
+    if(!cvs) continue;
+    if(y>ph-60){doc.addPage();pageNum++;addHeaderFooter();y=18;}
+    doc.setFontSize(9);doc.setTextColor(30);
+    doc.text(chartNames[i],margin,y);y+=4;
+    const imgData=cvs.toDataURL('image/png',1.0);
+    const cw=pw-margin*2;
+    const ch=45;
+    doc.addImage(imgData,'PNG',margin,y,cw,ch);
+    y+=ch+6;
+  }
+
+  doc.save('IS_Regra4pct_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF exportado!','success');
+}
+
+// ===== ELEMENT SDK =====
+const defaultConfig={app_title:'IS Simulador Regra dos 4%',primary_color:'#66CFF5',surface_color:'#FFFFFF',text_color:'#333333',accent_color:'#FFC107',action_color:'#4CAF50',font_family:'Inter',font_size:13};
+
+function applyConfig(config){
+  const t=config.app_title||defaultConfig.app_title;
+  const el=document.getElementById('appTitle');
+  if(el) el.textContent=t;
+  document.title=t;
+  document.documentElement.style.setProperty('--primary',config.primary_color||defaultConfig.primary_color);
+  // Apply primary color
+  const pc=config.primary_color||defaultConfig.primary_color;
+  document.querySelectorAll('.btn-primary').forEach(b=>b.style.background=pc);
+  document.querySelectorAll('.card-accent').forEach(c=>c.style.borderLeftColor=pc);
+  document.querySelectorAll('.tab-btn.active').forEach(b=>b.style.borderBottomColor=pc);
+  const hdrIcon=document.querySelector('header .rounded-lg');
+  if(hdrIcon) hdrIcon.style.background=pc;
+  // Surface
+  const sc=config.surface_color||defaultConfig.surface_color;
+  document.querySelectorAll('.card').forEach(c=>c.style.background=sc);
+  // Text
+  const tc=config.text_color||defaultConfig.text_color;
+  document.body.style.color=tc;
+  // Font
+  const ff=config.font_family||defaultConfig.font_family;
+  const fs=config.font_size||defaultConfig.font_size;
+  document.body.style.fontFamily=ff+',Inter,sans-serif';
+  document.querySelectorAll('h1,h2,h3').forEach(h=>{h.style.fontFamily=ff+',Inter,sans-serif';});
+  document.querySelectorAll('.text-xs,.text-sm').forEach(el=>{el.style.fontSize=fs+'px';});
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange:async(config)=>{applyConfig(config);},
+  mapToCapabilities:(config)=>({
+    recolorables:[
+      {get:()=>config.primary_color||defaultConfig.primary_color,set:v=>{config.primary_color=v;window.elementSdk.setConfig({primary_color:v})}},
+      {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+      {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+      {get:()=>config.accent_color||defaultConfig.accent_color,set:v=>{config.accent_color=v;window.elementSdk.setConfig({accent_color:v})}},
+      {get:()=>config.action_color||defaultConfig.action_color,set:v=>{config.action_color=v;window.elementSdk.setConfig({action_color:v})}}
+    ],
+    borderables:[],
+    fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+    fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+  }),
+  mapToEditPanelValues:(config)=>new Map([['app_title',config.app_title||defaultConfig.app_title]])
+});
+
+// ===== INIT =====
+loadState();
+runSimulation();
+renderCurrencies();
+updateConvSelect();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd1eefaf114d04e',t:'MTc3MzY0NDk3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

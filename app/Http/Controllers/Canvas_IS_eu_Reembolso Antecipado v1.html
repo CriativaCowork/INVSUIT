@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Reembolso Antecipado</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#f1f1f1;border-radius:3px}
+::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#999}
+
+.tab-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;font-weight:500;
+  color:#666;border-bottom:2px solid transparent;transition:all .2s ease;white-space:nowrap;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;
+}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+
+.card{
+  background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;
+  transition:all .2s ease;border-left:3px solid #66CFF5;position:relative;
+}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-gold{border-left-color:#FFC107}
+.card-green{border-left-color:#4CAF50}
+.card-red{border-left-color:#F44336}
+.card-orange{border-left-color:#FF9800}
+
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;border:none;
+}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-outline{background:#fff;color:#66CFF5;border:1px solid #66CFF5}
+.btn-outline:hover{background:#E0F4FD}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:#666;padding:6px 10px}
+.btn-ghost:hover{background:#f0f0f0;color:#333}
+
+.input-field{
+  width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;
+  transition:all .2s ease;background:#fff;color:#333;
+}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,.15)}
+
+.toast{
+  position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;
+  font-size:13px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;
+  transition:all .3s ease;display:flex;align-items:center;gap:8px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);
+  z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;
+  pointer-events:none;transition:opacity .2s ease;
+}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-content{
+  background:#fff;border-radius:10px;padding:24px;max-width:500px;width:90%;
+  max-height:80%;overflow-y:auto;transform:scale(.95);transition:transform .2s ease;
+}
+.modal-overlay.show .modal-content{transform:scale(1)}
+
+.badge{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;
+  font-size:11px;font-weight:600;
+}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-gold{background:#FFF8E1;color:#F57C00}
+.badge-red{background:#FFEBEE;color:#F44336}
+
+.chart-container{position:relative;background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:12px}
+.chart-export-btn{
+  position:absolute;top:8px;right:8px;z-index:5;background:#fff;border:1px solid #E0E0E0;
+  border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;color:#666;
+  transition:all .2s ease;display:flex;align-items:center;gap:4px;
+}
+.chart-export-btn:hover{border-color:#66CFF5;color:#66CFF5}
+
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.export-hidden{display:none !important}
+
+select.input-field{appearance:auto}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#F8F9FA;padding:8px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #E0E0E0}
+td{padding:8px;border-bottom:1px solid #f0f0f0;color:#444}
+tr:hover td{background:#FAFBFC}
+</style>
+  <script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#66CFF5',
+        surface: '#F8F9FA',
+        border: '#E0E0E0'
+      }
+    }
+  }
+}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-root" class="h-full flex flex-col w-full overflow-auto" style="background:#F8F9FA"><!-- Header -->
+   <header id="app-header" class="w-full bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0" style="position:sticky;top:0;z-index:100">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="display: none; background:#66CFF5">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="main-title" class="text-base font-bold text-gray-800" style="display: none; display: none; letter-spacing:-.3px">IS Reembolso Antecipado</h1>
+       <p id="main-desc" class="text-xs text-gray-400 font-normal" style="display: none;">Simulador de Reembolso Antecipado de Empréstimo CPLP</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 export-hidden"><input id="global-search" type="text" placeholder="Filtrar dados..." class="input-field" style="width:180px;font-size:12px;padding:6px 10px"> <button onclick="exportAppImage()" class="btn btn-outline btn-sm"><i data-lucide="image" style="width:14px;height:14px"></i> Imagem</button> <button onclick="exportPDF()" class="btn btn-outline btn-sm"><i data-lucide="file-text" style="width:14px;height:14px"></i> PDF</button> <button onclick="exportJSON()" class="btn btn-outline btn-sm"><i data-lucide="download" style="width:14px;height:14px"></i> JSON</button> <label class="btn btn-outline btn-sm" style="cursor:pointer"><i data-lucide="upload" style="width:14px;height:14px"></i> Importar<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+     </div>
+    </div>
+   </header><!-- Tabs Navigation -->
+   <nav id="tabs-nav" class="w-full bg-white border-b border-gray-200 flex-shrink-0" style="position:sticky;top:56px;z-index:99">
+    <div class="max-w-7xl mx-auto flex overflow-x-auto px-4" style="gap:2px"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator" style="width:15px;height:15px"></i> Simulador</button> <button class="tab-btn" data-tab="amortizacao" onclick="switchTab('amortizacao')"><i data-lucide="list" style="width:15px;height:15px"></i> Amortização</button> <button class="tab-btn" data-tab="graficos" onclick="switchTab('graficos')"><i data-lucide="bar-chart-2" style="width:15px;height:15px"></i> Gráficos</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers" style="width:15px;height:15px"></i> Cenários</button> <button class="tab-btn" data-tab="cambio" onclick="switchTab('cambio')"><i data-lucide="repeat" style="width:15px;height:15px"></i> Câmbio</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda')"><i data-lucide="help-circle" style="width:15px;height:15px"></i> Guia</button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 w-full" style="padding-bottom:40px">
+    <div class="max-w-7xl mx-auto px-4 py-4"><!-- TAB: Simulador -->
+     <section id="tab-simulador" class="tab-content fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Simulação de Empréstimo</h2>
+        <p class="text-xs text-gray-400">Preencha os dados do empréstimo e reembolso antecipado</p>
+       </div>
+       <div class="flex gap-2 export-hidden"><input id="sim-title" type="text" placeholder="Título do cenário..." class="input-field" style="width:200px;font-size:12px"> <button onclick="saveScenario()" class="btn btn-success btn-sm"><i data-lucide="save" style="width:14px;height:14px"></i> Guardar</button>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><!-- Dados do Empréstimo -->
+       <div class="card">
+        <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide flex items-center gap-2"><i data-lucide="credit-card" style="width:14px;height:14px;color:#66CFF5"></i> Dados do Empréstimo</h3>
+        <div class="space-y-3">
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="loan-amount">Montante do Empréstimo (Kz)</label> <input id="loan-amount" type="number" class="input-field" value="5000000" min="0" step="10000" oninput="calculate()">
+         </div>
+         <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs text-gray-500 font-medium block mb-1" for="loan-rate">Taxa Anual (%)</label> <input id="loan-rate" type="number" class="input-field" value="18" min="0" max="100" step="0.1" oninput="calculate()">
+          </div>
+          <div><label class="text-xs text-gray-500 font-medium block mb-1" for="loan-term">Prazo (meses)</label> <input id="loan-term" type="number" class="input-field" value="60" min="1" max="600" step="1" oninput="calculate()">
+          </div>
+         </div>
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="loan-type">Sistema de Amortização</label> <select id="loan-type" class="input-field" onchange="calculate()"> <option value="price">Tabela Price (Prestações Fixas)</option> <option value="sac">SAC (Amortização Constante)</option> </select>
+         </div>
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="loan-start">Data de Início</label> <input id="loan-start" type="date" class="input-field" oninput="calculate()">
+         </div>
+        </div>
+       </div><!-- Reembolso Antecipado -->
+       <div class="card card-gold">
+        <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide flex items-center gap-2"><i data-lucide="trending-down" style="width:14px;height:14px;color:#FFC107"></i> Reembolso Antecipado</h3>
+        <div class="space-y-3">
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="prepay-month">Mês do Reembolso Antecipado</label> <input id="prepay-month" type="number" class="input-field" value="12" min="1" step="1" oninput="calculate()">
+         </div>
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="prepay-amount">Montante do Reembolso (Kz)</label> <input id="prepay-amount" type="number" class="input-field" value="1000000" min="0" step="10000" oninput="calculate()">
+         </div>
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="prepay-type">Tipo de Reembolso</label> <select id="prepay-type" class="input-field" onchange="calculate()"> <option value="reduce-term">Reduzir Prazo (manter prestação)</option> <option value="reduce-payment">Reduzir Prestação (manter prazo)</option> <option value="full">Liquidação Total</option> </select>
+         </div>
+         <div><label class="text-xs text-gray-500 font-medium block mb-1" for="prepay-penalty">Penalização (%)</label> <input id="prepay-penalty" type="number" class="input-field" value="0.5" min="0" max="100" step="0.1" oninput="calculate()">
+         </div>
+        </div>
+       </div>
+      </div><!-- Results -->
+      <div id="results-section" class="mb-4">
+       <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Resultados da Simulação</h3>
+       <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="result-cards"></div>
+      </div><!-- Comparison Summary -->
+      <div id="comparison-section" class="card card-green">
+       <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide flex items-center gap-2"><i data-lucide="git-compare" style="width:14px;height:14px;color:#4CAF50"></i> Comparação</h3>
+       <div id="comparison-content" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm"></div>
+      </div>
+     </section><!-- TAB: Amortização -->
+     <section id="tab-amortizacao" class="tab-content fade-in" style="display:none">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Tabela de Amortização</h2>
+        <p class="text-xs text-gray-400">Plano detalhado de pagamentos mês a mês</p>
+       </div>
+       <div class="flex gap-2 export-hidden"><select id="amort-view" class="input-field" style="width:170px;font-size:12px" onchange="renderAmortTable()"> <option value="original">Sem Reembolso</option> <option value="prepaid" selected>Com Reembolso</option> <option value="both">Comparar Ambos</option> </select>
+       </div>
+      </div>
+      <div class="card" style="overflow-x:auto">
+       <div id="amort-table-wrap"></div>
+      </div>
+     </section><!-- TAB: Gráficos -->
+     <section id="tab-graficos" class="tab-content fade-in" style="display:none">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Análise Gráfica</h2>
+        <p class="text-xs text-gray-400">Visualização dos dados da simulação</p>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div class="chart-container" id="chart-box-balance"><button class="chart-export-btn export-hidden" onclick="exportChart('chartBalance')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+        <h4 class="text-xs font-semibold text-gray-500 mb-2">Evolução do Saldo Devedor</h4>
+        <canvas id="chartBalance" height="220"></canvas>
+       </div>
+       <div class="chart-container" id="chart-box-payments"><button class="chart-export-btn export-hidden" onclick="exportChart('chartPayments')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+        <h4 class="text-xs font-semibold text-gray-500 mb-2">Prestações Mensais</h4>
+        <canvas id="chartPayments" height="220"></canvas>
+       </div>
+       <div class="chart-container" id="chart-box-breakdown"><button class="chart-export-btn export-hidden" onclick="exportChart('chartBreakdown')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+        <h4 class="text-xs font-semibold text-gray-500 mb-2">Composição Capital vs Juros</h4>
+        <canvas id="chartBreakdown" height="220"></canvas>
+       </div>
+       <div class="chart-container" id="chart-box-donut"><button class="chart-export-btn export-hidden" onclick="exportChart('chartDonut')"><i data-lucide="download" style="width:12px;height:12px"></i> HD</button>
+        <h4 class="text-xs font-semibold text-gray-500 mb-2">Distribuição Total de Pagamentos</h4>
+        <canvas id="chartDonut" height="220"></canvas>
+       </div>
+      </div>
+     </section><!-- TAB: Cenários -->
+     <section id="tab-cenarios" class="tab-content fade-in" style="display:none">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Cenários Guardados</h2>
+        <p class="text-xs text-gray-400">Gerir cenários de simulação</p>
+       </div>
+       <div class="flex gap-2 export-hidden"><input id="scenario-filter" type="text" placeholder="Filtrar cenários..." class="input-field" style="width:180px;font-size:12px" oninput="renderScenarios()"> <button onclick="newScenario()" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Novo</button>
+       </div>
+      </div>
+      <div id="scenarios-list" class="space-y-3"></div>
+      <div id="no-scenarios" class="text-center py-12 text-gray-400 text-sm" style="display:none"><i data-lucide="inbox" style="width:40px;height:40px;margin:0 auto 12px;display:block;color:#ddd"></i> Nenhum cenário guardado. Simule e guarde o primeiro.
+      </div>
+     </section><!-- TAB: Câmbio -->
+     <section id="tab-cambio" class="tab-content fade-in" style="display:none">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Painel de Câmbio</h2>
+        <p class="text-xs text-gray-400">Taxas de conversão Kwanza para moedas CPLP e USD</p>
+       </div><button onclick="resetRates()" class="btn btn-outline btn-sm export-hidden"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Repor</button>
+      </div>
+      <div class="card mb-4">
+       <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Converter Valor</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div><label class="text-xs text-gray-500 font-medium block mb-1" for="convert-amount">Montante (Kz)</label> <input id="convert-amount" type="number" class="input-field" value="1000000" oninput="convertCurrency()">
+        </div>
+        <div><label class="text-xs text-gray-500 font-medium block mb-1" for="convert-to">Para</label> <select id="convert-to" class="input-field" onchange="convertCurrency()"> <option value="USD">USD (Dólar Americano)</option> <option value="EUR">EUR (Euro)</option> <option value="BRL">BRL (Real Brasileiro)</option> <option value="CVE">CVE (Escudo Cabo-verdiano)</option> <option value="MZN">MZN (Metical Moçambicano)</option> <option value="STN">STN (Dobra São Tomé)</option> <option value="XOF">XOF (Franco CFA - Guiné-Bissau)</option> <option value="MOP">MOP (Pataca Macau)</option> <option value="TPE">TPE (Dólar Timor-Leste)</option> </select>
+        </div>
+        <div><label class="text-xs text-gray-500 font-medium block mb-1">Resultado</label>
+         <div id="convert-result" class="input-field" style="background:#F8F9FA;font-weight:600;color:#66CFF5">
+          —
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="card">
+       <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide flex items-center gap-2">Taxas de Câmbio (1 Kz =)</h3>
+       <div class="space-y-2" id="rates-list"></div>
+      </div>
+     </section><!-- TAB: Ajuda -->
+     <section id="tab-ajuda" class="tab-content fade-in" style="display:none">
+      <div class="mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">Guia de Utilização</h2>
+       <p class="text-xs text-gray-400">Como utilizar o simulador e melhores práticas</p>
+      </div>
+      <div class="space-y-4">
+       <div class="card">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="info" style="width:16px;height:16px;color:#66CFF5"></i> O que é o Reembolso Antecipado?</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">O reembolso antecipado consiste em pagar uma parte ou a totalidade do empréstimo antes do prazo contratado. Esta prática é muito comum na Europa e permite ao mutuário reduzir significativamente o custo total do crédito, nomeadamente os juros pagos ao banco. Na maioria dos países da CPLP, os bancos permitem esta operação, podendo aplicar uma pequena penalização (geralmente entre 0% e 2% do montante reembolsado).</p>
+       </div>
+       <div class="card card-green">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="target" style="width:16px;height:16px;color:#4CAF50"></i> Tipos de Reembolso</h3>
+        <ul class="text-xs text-gray-500 leading-relaxed space-y-2">
+         <li><strong>Reduzir Prazo:</strong> Mantém a prestação mensal e reduz o número de meses. Ideal para quem quer livrar-se do empréstimo mais cedo e poupar mais juros a longo prazo.</li>
+         <li><strong>Reduzir Prestação:</strong> Mantém o prazo e diminui o valor mensal. Útil para quem precisa de mais folga no orçamento mensal.</li>
+         <li><strong>Liquidação Total:</strong> Paga todo o saldo devedor de uma vez. Ideal quando tem capital suficiente para encerrar o empréstimo.</li>
+        </ul>
+       </div>
+       <div class="card card-gold">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="star" style="width:16px;height:16px;color:#FFC107"></i> Melhores Práticas</h3>
+        <ul class="text-xs text-gray-500 leading-relaxed space-y-2">
+         <li><strong>Reembolse no início do empréstimo:</strong> Os juros são maiores nos primeiros meses (especialmente na Tabela Price). Antecipar cedo maximiza a poupança.</li>
+         <li><strong>Compare cenários:</strong> Use a funcionalidade de cenários para testar diferentes montantes e momentos de reembolso antes de decidir.</li>
+         <li><strong>Verifique a penalização:</strong> Consulte o contrato para confirmar a taxa de penalização aplicada pelo banco.</li>
+         <li><strong>Mantenha uma reserva de emergência:</strong> Não use todas as poupanças no reembolso. Mantenha pelo menos 3 a 6 meses de despesas como reserva.</li>
+         <li><strong>Considere o custo de oportunidade:</strong> Se a taxa de juro do empréstimo for inferior ao retorno de um investimento seguro, pode ser mais vantajoso investir.</li>
+        </ul>
+       </div>
+       <div class="card">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="book-open" style="width:16px;height:16px;color:#66CFF5"></i> Como Utilizar</h3>
+        <ol class="text-xs text-gray-500 leading-relaxed space-y-2 list-decimal pl-4">
+         <li>Preencha os dados do empréstimo (montante, taxa, prazo e sistema de amortização).</li>
+         <li>Configure o reembolso antecipado (mês, montante, tipo e penalização).</li>
+         <li>Analise os resultados nos cartões de resumo e na secção de comparação.</li>
+         <li>Consulte a tabela de amortização para ver o detalhe mês a mês.</li>
+         <li>Visualize os gráficos para uma análise visual completa.</li>
+         <li>Guarde cenários para comparar diferentes estratégias.</li>
+         <li>Use o painel de câmbio para converter valores para outras moedas CPLP.</li>
+         <li>Exporte em PDF ou imagem para partilhar ou arquivar.</li>
+        </ol>
+       </div>
+       <div class="card card-orange">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" style="width:16px;height:16px;color:#FF9800"></i> Aviso Legal</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">Este simulador é uma ferramenta educativa e informativa. Os resultados são aproximados e baseados nos parâmetros introduzidos. Para decisões financeiras, consulte sempre o seu banco ou consultor financeiro. As taxas e condições reais podem variar conforme a instituição e o país.</p>
+       </div>
+      </div>
+     </section>
+    </div>
+   </main><!-- Footer -->
+   <footer class="w-full bg-white border-t border-gray-200 py-3 px-4 text-center flex-shrink-0">
+    <p class="text-xs text-gray-400">IS Reembolso Antecipado · InvesteSuite · www.investesuite.com</p>
+   </footer><!-- Toast -->
+   <div id="toast" class="toast"></div><!-- Modal -->
+   <div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content" id="modal-body"></div>
+   </div>
+  </div>
+  <script>
+// ===================== STATE =====================
+let state = {
+  scenarios: [],
+  rates: {
+    USD: 0.0012, EUR: 0.0011, BRL: 0.006, CVE: 0.12,
+    MZN: 0.076, STN: 0.027, XOF: 0.72, MOP: 0.0097, TPE: 0.0012
+  },
+  lastCalc: null
+};
+
+const defaultRates = { ...state.rates };
+const rateNames = {
+  USD: 'Dólar Americano', EUR: 'Euro', BRL: 'Real Brasileiro',
+  CVE: 'Escudo Cabo-verdiano', MZN: 'Metical Moçambicano',
+  STN: 'Dobra São Tomé', XOF: 'Franco CFA', MOP: 'Pataca Macau', TPE: 'Dólar Timor-Leste'
+};
+
+// Charts
+let chartBalance, chartPayments, chartBreakdown, chartDonut;
+
+// ===================== PERSISTENCE =====================
+function saveState() {
+  try { localStorage.setItem('is_reembolso_state', JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('is_reembolso_state'));
+    if (s) {
+      state.scenarios = s.scenarios || [];
+      if (s.rates) state.rates = { ...defaultRates, ...s.rates };
+    }
+  } catch(e) {}
+}
+
+// ===================== UTILS =====================
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Kz';
+}
+function fmtPct(n) { return (n * 100).toFixed(2) + '%'; }
+function fmtN(n) { return Number(n).toLocaleString('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.className = 'toast toast-' + type + ' show';
+  t.innerHTML = msg;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function openModal(html) {
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
+  lucide.createIcons();
+}
+
+// ===================== TABS =====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('tab-' + tab);
+  if (sec) { sec.style.display = 'block'; sec.classList.add('fade-in'); }
+  const btn = document.querySelector(`[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
+  if (tab === 'cenarios') renderScenarios();
+  if (tab === 'cambio') { renderRates(); convertCurrency(); }
+  if (tab === 'amortizacao') renderAmortTable();
+  if (tab === 'graficos') setTimeout(() => renderCharts(), 100);
+}
+
+// ===================== LOAN CALC ENGINE =====================
+function calcAmortSchedule(principal, annualRate, months, type) {
+  const r = annualRate / 100 / 12;
+  const schedule = [];
+  let balance = principal;
+
+  if (type === 'price') {
+    const pmt = r > 0 ? principal * r * Math.pow(1+r, months) / (Math.pow(1+r, months) - 1) : principal / months;
+    for (let m = 1; m <= months; m++) {
+      const interest = balance * r;
+      const principalPay = pmt - interest;
+      balance -= principalPay;
+      if (balance < 0) balance = 0;
+      schedule.push({ month: m, payment: pmt, interest, principal: principalPay, balance });
+    }
+  } else {
+    const constPrincipal = principal / months;
+    for (let m = 1; m <= months; m++) {
+      const interest = balance * r;
+      const pmt = constPrincipal + interest;
+      balance -= constPrincipal;
+      if (balance < 0) balance = 0;
+      schedule.push({ month: m, payment: pmt, interest, principal: constPrincipal, balance });
+    }
+  }
+  return schedule;
+}
+
+function calcPrepayment(originalSchedule, prepayMonth, prepayAmount, prepayType, penaltyRate, principal, annualRate, totalMonths, loanType) {
+  const r = annualRate / 100 / 12;
+  let schedule = [];
+  let actualPrepay = prepayAmount;
+  let penaltyAmt = 0;
+
+  // Build schedule up to prepay month
+  for (let i = 0; i < Math.min(prepayMonth - 1, originalSchedule.length); i++) {
+    schedule.push({ ...originalSchedule[i] });
+  }
+
+  const balanceAtPrepay = schedule.length > 0 ? schedule[schedule.length - 1].balance : principal;
+  if (actualPrepay > balanceAtPrepay) actualPrepay = balanceAtPrepay;
+  penaltyAmt = actualPrepay * (penaltyRate / 100);
+
+  if (prepayType === 'full') {
+    actualPrepay = balanceAtPrepay;
+    penaltyAmt = actualPrepay * (penaltyRate / 100);
+    schedule.push({
+      month: prepayMonth, payment: actualPrepay + penaltyAmt,
+      interest: 0, principal: actualPrepay, balance: 0, isPrepay: true
+    });
+    return { schedule, penaltyAmt, actualPrepay, newTerm: prepayMonth, savings: 0 };
+  }
+
+  const newBalance = balanceAtPrepay - actualPrepay;
+
+  if (prepayType === 'reduce-term') {
+    // Keep same payment, reduce term
+    const origPmt = originalSchedule[0] ? originalSchedule[0].payment : 0;
+    let bal = newBalance;
+    let m = prepayMonth;
+    // Add prepay month entry
+    const intPrepay = balanceAtPrepay * r;
+    schedule.push({
+      month: m, payment: originalSchedule[prepayMonth-1] ? originalSchedule[prepayMonth-1].payment : origPmt,
+      interest: intPrepay, principal: (originalSchedule[prepayMonth-1] ? originalSchedule[prepayMonth-1].payment : origPmt) - intPrepay, balance: newBalance, isPrepay: true
+    });
+    m++;
+    while (bal > 0.01 && m <= totalMonths * 2) {
+      const interest = bal * r;
+      let prinPay = (loanType === 'price') ? origPmt - interest : origPmt - interest;
+      if (prinPay > bal) prinPay = bal;
+      const pmt = Math.min(origPmt, prinPay + interest);
+      bal -= prinPay;
+      if (bal < 0) bal = 0;
+      schedule.push({ month: m, payment: pmt, interest, principal: prinPay, balance: bal });
+      m++;
+    }
+  } else {
+    // Reduce payment, keep term
+    const remainMonths = totalMonths - prepayMonth + 1;
+    const newSchedule = calcAmortSchedule(newBalance, annualRate, remainMonths, loanType);
+    const intPrepay = balanceAtPrepay * r;
+    schedule.push({
+      month: prepayMonth, payment: newSchedule[0] ? newSchedule[0].payment : 0,
+      interest: intPrepay, principal: newBalance > 0 ? (newSchedule[0] ? newSchedule[0].principal : 0) : 0, balance: newBalance, isPrepay: true
+    });
+    for (let i = 1; i < newSchedule.length; i++) {
+      schedule.push({ ...newSchedule[i], month: prepayMonth + i });
+    }
+  }
+
+  const origTotal = originalSchedule.reduce((s, r) => s + r.payment, 0);
+  const newTotal = schedule.reduce((s, r) => s + r.payment, 0) + penaltyAmt;
+  const savings = origTotal - newTotal;
+
+  return { schedule, penaltyAmt, actualPrepay, newTerm: schedule.length, savings };
+}
+
+// ===================== MAIN CALCULATE =====================
+function calculate() {
+  const amount = parseFloat(document.getElementById('loan-amount').value) || 0;
+  const rate = parseFloat(document.getElementById('loan-rate').value) || 0;
+  const term = parseInt(document.getElementById('loan-term').value) || 1;
+  const type = document.getElementById('loan-type').value;
+  const prepayMonth = parseInt(document.getElementById('prepay-month').value) || 1;
+  const prepayAmount = parseFloat(document.getElementById('prepay-amount').value) || 0;
+  const prepayType = document.getElementById('prepay-type').value;
+  const penalty = parseFloat(document.getElementById('prepay-penalty').value) || 0;
+
+  if (amount <= 0 || term <= 0) return;
+
+  const original = calcAmortSchedule(amount, rate, term, type);
+  const prepay = calcPrepayment(original, prepayMonth, prepayAmount, prepayType, penalty, amount, rate, term, type);
+
+  const origTotalPaid = original.reduce((s, r) => s + r.payment, 0);
+  const origTotalInterest = original.reduce((s, r) => s + r.interest, 0);
+  const newTotalPaid = prepay.schedule.reduce((s, r) => s + r.payment, 0) + prepay.penaltyAmt;
+  const newTotalInterest = prepay.schedule.reduce((s, r) => s + r.interest, 0);
+  const interestSaved = origTotalInterest - newTotalInterest;
+
+  state.lastCalc = {
+    amount, rate, term, type, prepayMonth, prepayAmount, prepayType, penalty,
+    original, prepay, origTotalPaid, origTotalInterest, newTotalPaid, newTotalInterest,
+    interestSaved, penaltyAmt: prepay.penaltyAmt, actualPrepay: prepay.actualPrepay
+  };
+
+  renderResults();
+}
+
+// ===================== RENDER RESULTS =====================
+function renderResults() {
+  const c = state.lastCalc;
+  if (!c) return;
+
+  const origPmt = c.original[0] ? c.original[0].payment : 0;
+  const newPmt = c.prepay.schedule.length > c.prepayMonth ? c.prepay.schedule[c.prepayMonth].payment : origPmt;
+
+  const cards = [
+    { label: 'Prestação Original', value: fmt(origPmt), color: '#66CFF5', icon: 'banknote' },
+    { label: 'Total Juros Original', value: fmt(c.origTotalInterest), color: '#FF9800', icon: 'percent' },
+    { label: 'Juros Poupados', value: fmt(c.interestSaved), color: '#4CAF50', icon: 'trending-down' },
+    { label: 'Penalização', value: fmt(c.penaltyAmt), color: '#F44336', icon: 'alert-circle' },
+    { label: 'Total Original', value: fmt(c.origTotalPaid), color: '#66CFF5', icon: 'wallet' },
+    { label: 'Total c/ Reembolso', value: fmt(c.newTotalPaid), color: '#4CAF50', icon: 'wallet' },
+    { label: 'Prazo Original', value: c.term + ' meses', color: '#FF9800', icon: 'clock' },
+    { label: 'Novo Prazo', value: c.prepay.schedule.length + ' meses', color: '#4CAF50', icon: 'clock' }
+  ];
+
+  const container = document.getElementById('result-cards');
+  container.innerHTML = cards.map(cd => `
+    <div class="bg-white rounded-lg border border-gray-100 p-3" style="border-left:3px solid ${cd.color}">
+      <div class="flex items-center gap-2 mb-1">
+        <i data-lucide="${cd.icon}" style="width:14px;height:14px;color:${cd.color}"></i>
+        <span class="text-xs text-gray-400 font-medium">${cd.label}</span>
+      </div>
+      <p class="text-sm font-bold" style="color:${cd.color}">${cd.value}</p>
+    </div>
+  `).join('');
+
+  // Comparison
+  const comp = document.getElementById('comparison-content');
+  const poupanca = c.interestSaved - c.penaltyAmt;
+  comp.innerHTML = `
+    <div class="text-center">
+      <p class="text-xs text-gray-400 mb-1">Poupança Líquida</p>
+      <p class="text-lg font-bold" style="color:${poupanca>=0?'#4CAF50':'#F44336'}">${fmt(poupanca)}</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xs text-gray-400 mb-1">Meses Poupados</p>
+      <p class="text-lg font-bold" style="color:#66CFF5">${Math.max(0, c.term - c.prepay.schedule.length)}</p>
+    </div>
+    <div class="text-center">
+      <p class="text-xs text-gray-400 mb-1">Redução de Juros</p>
+      <p class="text-lg font-bold" style="color:#FFC107">${c.origTotalInterest > 0 ? ((c.interestSaved / c.origTotalInterest) * 100).toFixed(1) : 0}%</p>
+    </div>
+  `;
+  lucide.createIcons();
+}
+
+// ===================== AMORT TABLE =====================
+function renderAmortTable() {
+  const c = state.lastCalc;
+  if (!c) { document.getElementById('amort-table-wrap').innerHTML = '<p class="text-xs text-gray-400 text-center py-8">Simule um empréstimo primeiro.</p>'; return; }
+
+  const view = document.getElementById('amort-view').value;
+  const filter = (document.getElementById('global-search').value || '').toLowerCase();
+  let html = '<table><thead><tr><th>Mês</th>';
+
+  if (view === 'both') {
+    html += '<th>Prestação Orig.</th><th>Juros Orig.</th><th>Saldo Orig.</th><th>Prestação Reemb.</th><th>Juros Reemb.</th><th>Saldo Reemb.</th>';
+  } else {
+    html += '<th>Prestação</th><th>Capital</th><th>Juros</th><th>Saldo</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  const data = view === 'original' ? c.original : (view === 'prepaid' ? c.prepay.schedule : null);
+  const maxLen = view === 'both' ? Math.max(c.original.length, c.prepay.schedule.length) : (data ? data.length : 0);
+
+  for (let i = 0; i < maxLen; i++) {
+    if (view === 'both') {
+      const o = c.original[i];
+      const p = c.prepay.schedule[i];
+      const row = `${i+1} ${o?fmtN(o.payment):''} ${p?fmtN(p.payment):''}`;
+      if (filter && !row.toLowerCase().includes(filter)) continue;
+      const highlight = p && p.isPrepay ? 'background:#FFF8E1' : '';
+      html += `<tr style="${highlight}"><td>${i+1}</td>
+        <td>${o ? fmtN(o.payment) : '—'}</td><td>${o ? fmtN(o.interest) : '—'}</td><td>${o ? fmtN(o.balance) : '—'}</td>
+        <td>${p ? fmtN(p.payment) : '—'}</td><td>${p ? fmtN(p.interest) : '—'}</td><td>${p ? fmtN(p.balance) : '—'}</td></tr>`;
+    } else {
+      const r = data[i];
+      if (!r) continue;
+      const row = `${r.month} ${fmtN(r.payment)} ${fmtN(r.principal)} ${fmtN(r.interest)} ${fmtN(r.balance)}`;
+      if (filter && !row.toLowerCase().includes(filter)) continue;
+      const highlight = r.isPrepay ? 'background:#FFF8E1' : '';
+      html += `<tr style="${highlight}"><td>${r.month}</td><td>${fmtN(r.payment)}</td><td>${fmtN(r.principal)}</td><td>${fmtN(r.interest)}</td><td>${fmtN(r.balance)}</td></tr>`;
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('amort-table-wrap').innerHTML = html;
+}
+
+// ===================== CHARTS =====================
+function renderCharts() {
+  const c = state.lastCalc;
+  if (!c) return;
+
+  const labels = c.original.map((_, i) => i + 1);
+  const labelsP = c.prepay.schedule.map((_, i) => i + 1);
+
+  // Balance chart
+  if (chartBalance) chartBalance.destroy();
+  chartBalance = new Chart(document.getElementById('chartBalance'), {
+    type: 'line',
+    data: {
+      labels: labels.length >= labelsP.length ? labels : labelsP,
+      datasets: [
+        { label: 'Saldo Original', data: c.original.map(r => r.balance), borderColor: '#66CFF5', backgroundColor: 'rgba(30,136,229,.1)', fill: true, tension: .3, pointRadius: 0 },
+        { label: 'Saldo c/ Reembolso', data: c.prepay.schedule.map(r => r.balance), borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,.1)', fill: true, tension: .3, pointRadius: 0 }
+      ]
+    },
+    options: chartOpts('Kz')
+  });
+
+  // Payments chart
+  if (chartPayments) chartPayments.destroy();
+  chartPayments = new Chart(document.getElementById('chartPayments'), {
+    type: 'bar',
+    data: {
+      labels: labels.length >= labelsP.length ? labels : labelsP,
+      datasets: [
+        { label: 'Prestação Original', data: c.original.map(r => r.payment), backgroundColor: 'rgba(30,136,229,.6)', borderRadius: 2 },
+        { label: 'Prestação c/ Reembolso', data: c.prepay.schedule.map(r => r.payment), backgroundColor: 'rgba(76,175,80,.6)', borderRadius: 2 }
+      ]
+    },
+    options: chartOpts('Kz')
+  });
+
+  // Breakdown (stacked)
+  if (chartBreakdown) chartBreakdown.destroy();
+  chartBreakdown = new Chart(document.getElementById('chartBreakdown'), {
+    type: 'bar',
+    data: {
+      labels: labelsP,
+      datasets: [
+        { label: 'Capital', data: c.prepay.schedule.map(r => r.principal), backgroundColor: '#66CFF5', borderRadius: 2 },
+        { label: 'Juros', data: c.prepay.schedule.map(r => r.interest), backgroundColor: '#FFC107', borderRadius: 2 }
+      ]
+    },
+    options: { ...chartOpts('Kz'), scales: { x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } }, y: { stacked: true, ticks: { font: { size: 10 }, callback: v => (v/1000).toFixed(0) + 'k' }, grid: { color: '#f0f0f0' } } } }
+  });
+
+  // Donut
+  const totalCapital = c.amount;
+  const totalInterestPrepay = c.prepay.schedule.reduce((s, r) => s + r.interest, 0);
+  const totalPenalty = c.penaltyAmt;
+  const grandTotal = totalCapital + totalInterestPrepay + totalPenalty;
+  const pctCapital = ((totalCapital / grandTotal) * 100).toFixed(1);
+  const pctInterest = ((totalInterestPrepay / grandTotal) * 100).toFixed(1);
+  const pctPenalty = ((totalPenalty / grandTotal) * 100).toFixed(1);
+
+  if (chartDonut) chartDonut.destroy();
+  chartDonut = new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: [`Capital (${pctCapital}%)`, `Juros (${pctInterest}%)`, `Penalização (${pctPenalty}%)`],
+      datasets: [{
+        data: [totalCapital, totalInterestPrepay, totalPenalty],
+        backgroundColor: ['#66CFF5', '#FFC107', '#F44336'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Inter' }, padding: 12, usePointStyle: true } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed;
+              const pct = ((val / grandTotal) * 100).toFixed(1);
+              return ` ${ctx.label.split('(')[0].trim()}: ${fmtN(val)} Kz (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function chartOpts(unit) {
+  return {
+    responsive: true, maintainAspectRatio: true, interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { font: { size: 11, family: 'Inter' }, usePointStyle: true, padding: 10 } }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtN(ctx.parsed.y)} ${unit}` } } },
+    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 }, callback: v => (v/1000).toFixed(0) + 'k' }, grid: { color: '#f0f0f0' } } }
+  };
+}
+
+// Export individual chart as HD image
+function exportChart(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  // Create HD version
+  const ratio = 3;
+  const w = canvas.width * ratio;
+  const h = canvas.height * ratio;
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = w; tmpCanvas.height = h;
+  const ctx = tmpCanvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, 0, 0, w, h);
+  const link = document.createElement('a');
+  link.download = `IS_Reembolso_${canvasId}_HD.png`;
+  link.href = tmpCanvas.toDataURL('image/png', 1.0);
+  link.click();
+  showToast('Gráfico exportado em HD', 'success');
+}
+
+// ===================== SCENARIOS =====================
+function saveScenario() {
+  const c = state.lastCalc;
+  if (!c) { showToast('Simule primeiro para guardar', 'error'); return; }
+  const title = document.getElementById('sim-title').value.trim() || ('Cenário ' + (state.scenarios.length + 1));
+  const scenario = {
+    id: Date.now().toString(),
+    title,
+    date: new Date().toISOString(),
+    params: { amount: c.amount, rate: c.rate, term: c.term, type: c.type, prepayMonth: c.prepayMonth, prepayAmount: c.prepayAmount, prepayType: c.prepayType, penalty: c.penalty },
+    results: { origTotalPaid: c.origTotalPaid, origTotalInterest: c.origTotalInterest, newTotalPaid: c.newTotalPaid, newTotalInterest: c.newTotalInterest, interestSaved: c.interestSaved, penaltyAmt: c.penaltyAmt, newTerm: c.prepay.schedule.length }
+  };
+  state.scenarios.push(scenario);
+  saveState();
+  document.getElementById('sim-title').value = '';
+  showToast(`"${title}" guardado`, 'success');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenario-filter').value || '').toLowerCase();
+  const list = document.getElementById('scenarios-list');
+  const noEl = document.getElementById('no-scenarios');
+  const filtered = state.scenarios.filter(s => !filter || s.title.toLowerCase().includes(filter) || s.date.includes(filter));
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    noEl.style.display = 'block';
+    return;
+  }
+  noEl.style.display = 'none';
+
+  list.innerHTML = filtered.map(s => {
+    const p = s.params;
+    const r = s.results;
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `
+    <div class="card fade-in" data-sid="${s.id}">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-semibold text-gray-700">${s.title}</span>
+            <span class="badge badge-blue">${dateStr}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs text-gray-400 mt-2">
+            <span>Montante: <strong class="text-gray-600">${fmt(p.amount)}</strong></span>
+            <span>Taxa: <strong class="text-gray-600">${p.rate}%</strong></span>
+            <span>Prazo: <strong class="text-gray-600">${p.term}m</strong></span>
+            <span>Reembolso: <strong class="text-gray-600">${fmt(p.prepayAmount)}</strong> no mês ${p.prepayMonth}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs mt-2">
+            <span class="badge badge-green">Poupança: ${fmt(r.interestSaved - r.penaltyAmt)}</span>
+            <span class="badge badge-gold">Juros poupados: ${fmt(r.interestSaved)}</span>
+            <span class="badge badge-red">Penalização: ${fmt(r.penaltyAmt)}</span>
+          </div>
+        </div>
+        <div class="flex gap-1 export-hidden">
+          <button onclick="loadScenario('${s.id}')" class="btn btn-ghost btn-sm" title="Carregar"><i data-lucide="play" style="width:14px;height:14px"></i></button>
+          <button onclick="cloneScenario('${s.id}')" class="btn btn-ghost btn-sm" title="Clonar"><i data-lucide="copy" style="width:14px;height:14px"></i></button>
+          <button onclick="editScenarioTitle('${s.id}')" class="btn btn-ghost btn-sm" title="Editar"><i data-lucide="edit" style="width:14px;height:14px"></i></button>
+          <button onclick="confirmDeleteScenario('${s.id}')" class="btn btn-ghost btn-sm" title="Eliminar" style="color:#F44336"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id) {
+  const s = state.scenarios.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('loan-amount').value = s.params.amount;
+  document.getElementById('loan-rate').value = s.params.rate;
+  document.getElementById('loan-term').value = s.params.term;
+  document.getElementById('loan-type').value = s.params.type;
+  document.getElementById('prepay-month').value = s.params.prepayMonth;
+  document.getElementById('prepay-amount').value = s.params.prepayAmount;
+  document.getElementById('prepay-type').value = s.params.prepayType;
+  document.getElementById('prepay-penalty').value = s.params.penalty;
+  document.getElementById('sim-title').value = s.title;
+  calculate();
+  switchTab('simulador');
+  showToast(`"${s.title}" carregado`, 'info');
+}
+
+function cloneScenario(id) {
+  const s = state.scenarios.find(x => x.id === id);
+  if (!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = Date.now().toString();
+  clone.title = s.title + ' (cópia)';
+  clone.date = new Date().toISOString();
+  state.scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado', 'success');
+}
+
+function editScenarioTitle(id) {
+  const s = state.scenarios.find(x => x.id === id);
+  if (!s) return;
+  openModal(`
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Editar Cenário</h3>
+    <label class="text-xs text-gray-500 font-medium block mb-1" for="edit-title-input">Título</label>
+    <input id="edit-title-input" type="text" class="input-field mb-3" value="${s.title}">
+    <div class="flex gap-2 justify-end">
+      <button onclick="closeModal()" class="btn btn-outline btn-sm">Cancelar</button>
+      <button onclick="applyEditTitle('${id}')" class="btn btn-primary btn-sm">Guardar</button>
+    </div>
+  `);
+}
+
+function applyEditTitle(id) {
+  const s = state.scenarios.find(x => x.id === id);
+  if (!s) return;
+  s.title = document.getElementById('edit-title-input').value.trim() || s.title;
+  saveState();
+  closeModal();
+  renderScenarios();
+  showToast('Título atualizado', 'success');
+}
+
+function confirmDeleteScenario(id) {
+  const s = state.scenarios.find(x => x.id === id);
+  if (!s) return;
+  openModal(`
+    <h3 class="text-sm font-semibold text-gray-700 mb-2">Eliminar Cenário</h3>
+    <p class="text-xs text-gray-500 mb-4">Tem a certeza que deseja eliminar "<strong>${s.title}</strong>"? Esta ação é irreversível.</p>
+    <div class="flex gap-2 justify-end">
+      <button onclick="closeModal()" class="btn btn-outline btn-sm">Cancelar</button>
+      <button onclick="deleteScenario('${id}')" class="btn btn-danger btn-sm">Eliminar</button>
+    </div>
+  `);
+}
+
+function deleteScenario(id) {
+  state.scenarios = state.scenarios.filter(x => x.id !== id);
+  saveState();
+  closeModal();
+  renderScenarios();
+  showToast('Cenário eliminado', 'success');
+}
+
+function newScenario() {
+  document.getElementById('loan-amount').value = 5000000;
+  document.getElementById('loan-rate').value = 18;
+  document.getElementById('loan-term').value = 60;
+  document.getElementById('loan-type').value = 'price';
+  document.getElementById('prepay-month').value = 12;
+  document.getElementById('prepay-amount').value = 1000000;
+  document.getElementById('prepay-type').value = 'reduce-term';
+  document.getElementById('prepay-penalty').value = 0.5;
+  document.getElementById('sim-title').value = '';
+  calculate();
+  switchTab('simulador');
+  showToast('Novo cenário pronto', 'info');
+}
+
+// ===================== CURRENCY =====================
+function renderRates() {
+  const container = document.getElementById('rates-list');
+  container.innerHTML = Object.keys(state.rates).map(cur => `
+    <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+      <span class="text-xs font-semibold text-gray-600 w-10">${cur}</span>
+      <span class="text-xs text-gray-400 flex-1">${rateNames[cur]}</span>
+      <input type="number" class="input-field export-hidden" style="width:130px;font-size:12px;padding:4px 8px" 
+        value="${state.rates[cur]}" step="0.0001" min="0"
+        oninput="updateRate('${cur}', this.value)">
+      <span class="text-xs text-gray-500" style="width:100px;text-align:right">${fmtN(state.rates[cur])}</span>
+    </div>
+  `).join('');
+}
+
+function updateRate(cur, val) {
+  state.rates[cur] = parseFloat(val) || 0;
+  saveState();
+  convertCurrency();
+}
+
+function resetRates() {
+  state.rates = { ...defaultRates };
+  saveState();
+  renderRates();
+  convertCurrency();
+  showToast('Taxas repostas', 'info');
+}
+
+function convertCurrency() {
+  const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
+  const to = document.getElementById('convert-to').value;
+  const rate = state.rates[to] || 0;
+  const result = amount * rate;
+  document.getElementById('convert-result').textContent = fmtN(result) + ' ' + to;
+}
+
+// ===================== EXPORT / IMPORT =====================
+function exportJSON() {
+  const data = { version: 1, scenarios: state.scenarios, rates: state.rates, exportDate: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = 'IS_Reembolso_Antecipado_' + new Date().toISOString().slice(0,10) + '.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  showToast('Dados exportados em JSON', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.scenarios) state.scenarios = data.scenarios;
+      if (data.rates) state.rates = { ...defaultRates, ...data.rates };
+      saveState();
+      calculate();
+      showToast('Dados importados com sucesso', 'success');
+    } catch(err) {
+      showToast('Ficheiro inválido', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function exportAppImage() {
+  showToast('A gerar imagem...', 'info');
+  // Hide export-hidden elements
+  document.querySelectorAll('.export-hidden').forEach(el => el.style.display = 'none');
+  try {
+    const el = document.getElementById('app-root');
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: -window.scrollY, height: el.scrollHeight, windowHeight: el.scrollHeight });
+    const link = document.createElement('a');
+    link.download = 'IS_Reembolso_Antecipado.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Imagem exportada', 'success');
+  } catch(err) {
+    showToast('Erro ao exportar imagem', 'error');
+  }
+  document.querySelectorAll('.export-hidden').forEach(el => el.style.display = '');
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...', 'info');
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageW = 210, pageH = 297;
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = margin;
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const footerText = `Gerado por IS Reembolso Antecipado | ${dateStr} | www.investesuite.com`;
+
+    function addHeader() {
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageW, 18, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('IS Reembolso Antecipado', margin, 12);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Simulador de Reembolso Antecipado de Empréstimo', pageW - margin, 12, { align: 'right' });
+      y = 25;
+    }
+
+    function addFooter(pageNum, totalPages) {
+      pdf.setFillColor(248, 249, 250);
+      pdf.rect(0, pageH - 12, pageW, 12, 'F');
+      pdf.setTextColor(150, 150, 150);
+      pdf.setFontSize(7);
+      pdf.text(footerText, margin, pageH - 5);
+      pdf.text(`Página ${pageNum}`, pageW - margin, pageH - 5, { align: 'right' });
+    }
+
+    function checkPage(needed) {
+      if (y + needed > pageH - 20) {
+        addFooter(pdf.getNumberOfPages(), '');
+        pdf.addPage();
+        addHeader();
+      }
+    }
+
+    addHeader();
+
+    // Simulation data
+    const c = state.lastCalc;
+    if (c) {
+      pdf.setTextColor(50, 50, 50);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Dados do Empréstimo', margin, y); y += 6;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      const params = [
+        `Montante: ${fmt(c.amount)}`, `Taxa: ${c.rate}%`, `Prazo: ${c.term} meses`,
+        `Sistema: ${c.type === 'price' ? 'Tabela Price' : 'SAC'}`,
+        `Reembolso no mês ${c.prepayMonth}: ${fmt(c.prepayAmount)}`,
+        `Tipo: ${c.prepayType === 'reduce-term' ? 'Reduzir Prazo' : c.prepayType === 'reduce-payment' ? 'Reduzir Prestação' : 'Liquidação Total'}`,
+        `Penalização: ${c.penalty}%`
+      ];
+      params.forEach(p => { pdf.text(p, margin, y); y += 4.5; });
+      y += 4;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.text('Resultados', margin, y); y += 6;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      const results = [
+        `Total Original: ${fmt(c.origTotalPaid)}`, `Total c/ Reembolso: ${fmt(c.newTotalPaid)}`,
+        `Juros Originais: ${fmt(c.origTotalInterest)}`, `Juros Poupados: ${fmt(c.interestSaved)}`,
+        `Penalização: ${fmt(c.penaltyAmt)}`, `Poupança Líquida: ${fmt(c.interestSaved - c.penaltyAmt)}`,
+        `Prazo Original: ${c.term} meses`, `Novo Prazo: ${c.prepay.schedule.length} meses`
+      ];
+      results.forEach(r => { pdf.text(r, margin, y); y += 4.5; });
+      y += 6;
+
+      // Add charts as small images
+      const chartIds = ['chartBalance', 'chartPayments', 'chartBreakdown', 'chartDonut'];
+      const chartTitles = ['Evolução do Saldo Devedor', 'Prestações Mensais', 'Composição Capital vs Juros', 'Distribuição Total'];
+      for (let i = 0; i < chartIds.length; i++) {
+        const canvas = document.getElementById(chartIds[i]);
+        if (!canvas) continue;
+        checkPage(50);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.text(chartTitles[i], margin, y); y += 4;
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = contentW * 0.6;
+        const imgH = imgW * 0.5;
+        pdf.addImage(imgData, 'PNG', margin, y, imgW, imgH);
+        y += imgH + 8;
+      }
+
+      // Amort table (summary)
+      checkPage(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.text('Tabela de Amortização (resumo)', margin, y); y += 5;
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Mês', margin, y);
+      pdf.text('Prestação', margin + 20, y);
+      pdf.text('Capital', margin + 50, y);
+      pdf.text('Juros', margin + 80, y);
+      pdf.text('Saldo', margin + 110, y);
+      y += 4;
+      pdf.setFont('helvetica', 'normal');
+      const sched = c.prepay.schedule;
+      const step = Math.max(1, Math.floor(sched.length / 20));
+      for (let i = 0; i < sched.length; i += step) {
+        checkPage(5);
+        const r = sched[i];
+        pdf.text(String(r.month), margin, y);
+        pdf.text(fmtN(r.payment), margin + 20, y);
+        pdf.text(fmtN(r.principal), margin + 50, y);
+        pdf.text(fmtN(r.interest), margin + 80, y);
+        pdf.text(fmtN(r.balance), margin + 110, y);
+        y += 3.5;
+      }
+    }
+
+    // Add footers to all pages
+    const totalPages = pdf.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i);
+      addFooter(i, totalPages);
+    }
+
+    pdf.save('IS_Reembolso_Antecipado_' + new Date().toISOString().slice(0,10) + '.pdf');
+    showToast('PDF exportado', 'success');
+  } catch(err) {
+    showToast('Erro ao exportar PDF', 'error');
+    console.error(err);
+  }
+}
+
+// ===================== GLOBAL FILTER =====================
+document.getElementById('global-search').addEventListener('input', function() {
+  const active = document.querySelector('.tab-btn.active');
+  if (active) {
+    const tab = active.dataset.tab;
+    if (tab === 'amortizacao') renderAmortTable();
+    if (tab === 'cenarios') renderScenarios();
+  }
+});
+
+// ===================== ELEMENT SDK =====================
+const defaultConfig = {
+  app_title: 'IS Reembolso Antecipado',
+  app_description: 'Simulador de Reembolso Antecipado de Empréstimo CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+async function initApp() {
+  loadState();
+
+  // Set default date
+  const today = new Date();
+  document.getElementById('loan-start').value = today.toISOString().slice(0, 10);
+
+  await window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => {
+      document.getElementById('main-title').textContent = config.app_title || defaultConfig.app_title;
+      document.getElementById('main-desc').textContent = config.app_description || defaultConfig.app_description;
+
+      const bg = config.background_color || defaultConfig.background_color;
+      const surface = config.surface_color || defaultConfig.surface_color;
+      const text = config.text_color || defaultConfig.text_color;
+      const primary = config.primary_action_color || defaultConfig.primary_action_color;
+      const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+      const font = config.font_family || defaultConfig.font_family;
+      const fontSize = config.font_size || defaultConfig.font_size;
+
+      document.getElementById('app-root').style.background = bg;
+      document.querySelectorAll('.card, .chart-container').forEach(el => el.style.background = surface);
+      document.querySelectorAll('h1, h2, h3, p, span, td, th, label, li').forEach(el => {
+        if (!el.style.color || el.style.color === '') el.style.color = text;
+      });
+      document.querySelectorAll('.btn-primary').forEach(el => el.style.background = primary);
+      document.querySelectorAll('.btn-success').forEach(el => el.style.background = secondary);
+      document.querySelectorAll('.tab-btn.active').forEach(el => el.style.borderBottomColor = primary);
+
+      document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+      document.body.style.fontSize = `${fontSize}px`;
+      document.querySelectorAll('h1').forEach(el => el.style.fontSize = `${fontSize * 1.2}px`);
+      document.querySelectorAll('h2').forEach(el => el.style.fontSize = `${fontSize}px`);
+      document.querySelectorAll('.text-xs').forEach(el => el.style.fontSize = `${fontSize * 0.85}px`);
+    },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+
+  calculate();
+  lucide.createIcons();
+}
+
+initApp();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9df2f5d5a6bb0710',t:'MTc3Mzk5MTI4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

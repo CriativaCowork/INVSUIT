@@ -1,0 +1,1793 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explora - Whiteboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+    .canvas-grid {
+      background-image: 
+        radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    
+    .element-handle {
+      cursor: move;
+      user-select: none;
+    }
+    
+    .resize-handle {
+      width: 10px;
+      height: 10px;
+      background: #6366f1;
+      border-radius: 2px;
+      position: absolute;
+      cursor: nwse-resize;
+    }
+    
+    .sticky-note {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, transform 0.1s;
+    }
+    
+    .sticky-note:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+    }
+    
+    .sticky-note.dragging {
+      transform: rotate(2deg) scale(1.02);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+      z-index: 9999 !important;
+    }
+    
+    .toolbar-btn {
+      transition: all 0.15s ease;
+    }
+    
+    .toolbar-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .toolbar-btn.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .drawing-canvas {
+      touch-action: none;
+    }
+    
+    .shape-element {
+      transition: box-shadow 0.2s;
+    }
+    
+    .shape-element:hover {
+      box-shadow: 0 0 0 2px #6366f1;
+    }
+    
+    .timeline-item {
+      position: relative;
+    }
+    
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      background: #6366f1;
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      left: -15px;
+      top: 100%;
+      width: 2px;
+      height: calc(100% + 16px);
+      background: #e2e8f0;
+    }
+    
+    .timeline-item:last-child::after {
+      display: none;
+    }
+    
+    .laser-pointer {
+      width: 12px;
+      height: 12px;
+      background: #ef4444;
+      border-radius: 50%;
+      position: absolute;
+      pointer-events: none;
+      box-shadow: 0 0 20px 8px rgba(239, 68, 68, 0.4);
+      animation: pulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    
+    .template-card {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .vote-badge {
+      animation: bounceIn 0.3s ease;
+    }
+    
+    @keyframes bounceIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    .emoji-picker {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+    
+    .emoji-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    
+    .emoji-btn:hover {
+      background: #f1f5f9;
+      transform: scale(1.2);
+    }
+    
+    .toast {
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .modal-overlay {
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    
+    .color-swatch:hover {
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .color-swatch.selected {
+      box-shadow: 0 0 0 3px white, 0 0 0 5px #6366f1;
+    }
+    
+    .minimap {
+      position: fixed;
+      bottom: 80px;
+      right: 16px;
+      width: 160px;
+      height: 100px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      z-index: 100;
+    }
+    
+    .minimap-viewport {
+      position: absolute;
+      border: 2px solid #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      pointer-events: none;
+    }
+
+    .context-menu {
+      position: fixed;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      padding: 8px;
+      z-index: 10000;
+      min-width: 180px;
+    }
+
+    .context-menu-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #374151;
+      transition: background 0.15s;
+    }
+
+    .context-menu-item:hover {
+      background: #f3f4f6;
+    }
+
+    .context-menu-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 6px 0;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+    }
+
+    .table-cell {
+      min-width: 120px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 12px;
+    }
+
+    .table-header {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #374151;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full overflow-hidden bg-slate-50">
+  <div id="app" class="h-full flex flex-col"><!-- Top Navigation Bar -->
+   <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-50 flex-shrink-0">
+    <div class="flex items-center gap-4">
+     <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center" style="display: none;">
+       <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-lg font-semibold text-slate-800" style="display: none; display: none;">Explora</h1>
+       <p id="app-tagline" class="text-xs text-slate-500" style="display: none; display: none;">Brainstorm in real time</p>
+      </div>
+     </div>
+     <div class="h-6 w-px bg-slate-200"></div>
+     <div class="flex items-center gap-1"><button onclick="undo()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Undo">
+       <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+       </svg></button> <button onclick="redo()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Redo">
+       <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+       </svg></button>
+     </div>
+    </div>
+    <div class="flex items-center gap-3"><button onclick="openTemplates()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+      </svg> Templates </button> <button onclick="startVoting()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Vote </button> <button onclick="toggleTimer()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg><span id="timer-display">Timer</span> </button>
+     <div class="h-6 w-px bg-slate-200"></div><button onclick="exportBoard()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-lg transition-all shadow-sm hover:shadow-md">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg> Export </button>
+    </div>
+   </header>
+   <div class="flex flex-1 overflow-hidden"><!-- Left Toolbar -->
+    <aside class="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-4 gap-2 flex-shrink-0"><button onclick="setTool('select')" id="tool-select" class="toolbar-btn active w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Select (V)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+      </svg></button> <button onclick="setTool('pan')" id="tool-pan" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Pan (H)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+      </svg></button>
+     <div class="w-8 h-px bg-slate-200 my-1"></div><button onclick="setTool('sticky')" id="tool-sticky" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Sticky Note (S)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg></button> <button onclick="setTool('text')" id="tool-text" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Text (T)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg></button> <button onclick="setTool('draw')" id="tool-draw" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Draw (D)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg></button> <button onclick="setTool('eraser')" id="tool-eraser" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Eraser (E)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg></button>
+     <div class="w-8 h-px bg-slate-200 my-1"></div><button onclick="setTool('shape')" id="tool-shape" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Shapes (R)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+      </svg></button> <button onclick="setTool('line')" id="tool-line" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Line/Arrow (L)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg></button> <button onclick="setTool('connector')" id="tool-connector" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Connector (C)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg></button>
+     <div class="w-8 h-px bg-slate-200 my-1"></div><button onclick="setTool('laser')" id="tool-laser" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Laser Pointer (P)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-9 4-2 7-3-20z" />
+      </svg></button> <button onclick="addTable()" id="tool-table" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Table">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg></button> <button onclick="addTimeline()" id="tool-timeline" class="toolbar-btn w-11 h-11 flex items-center justify-center rounded-xl text-slate-600" title="Timeline">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg></button>
+     <div class="flex-1"></div><!-- Color picker at bottom -->
+     <div class="relative"><button onclick="toggleColorPicker()" id="color-picker-btn" class="w-11 h-11 rounded-xl border-2 border-slate-200 flex items-center justify-center overflow-hidden" title="Color">
+       <div id="current-color" class="w-7 h-7 rounded-lg bg-yellow-300"></div></button>
+      <div id="color-picker-panel" class="hidden absolute left-14 bottom-0 bg-white rounded-xl shadow-xl p-3 z-50 border border-slate-200">
+       <div class="grid grid-cols-4 gap-2">
+        <div class="color-swatch bg-yellow-300" onclick="selectColor('#fde047')"></div>
+        <div class="color-swatch bg-orange-300" onclick="selectColor('#fdba74')"></div>
+        <div class="color-swatch bg-pink-300" onclick="selectColor('#f9a8d4')"></div>
+        <div class="color-swatch bg-purple-300" onclick="selectColor('#d8b4fe')"></div>
+        <div class="color-swatch bg-blue-300" onclick="selectColor('#93c5fd')"></div>
+        <div class="color-swatch bg-cyan-300" onclick="selectColor('#67e8f9')"></div>
+        <div class="color-swatch bg-green-300" onclick="selectColor('#86efac')"></div>
+        <div class="color-swatch bg-lime-300" onclick="selectColor('#bef264')"></div>
+        <div class="color-swatch bg-slate-200" onclick="selectColor('#e2e8f0')"></div>
+        <div class="color-swatch bg-slate-400" onclick="selectColor('#94a3b8')"></div>
+        <div class="color-swatch bg-slate-600" onclick="selectColor('#475569')"></div>
+        <div class="color-swatch bg-slate-800" onclick="selectColor('#1e293b')"></div>
+       </div>
+      </div>
+     </div>
+    </aside><!-- Main Canvas Area -->
+    <main class="flex-1 relative overflow-hidden">
+     <div id="canvas-container" class="absolute inset-0 overflow-hidden cursor-crosshair">
+      <div id="canvas" class="canvas-grid absolute" style="width: 8000px; height: 8000px; transform-origin: 0 0;"><!-- Drawing layer -->
+       <svg id="drawing-layer" class="absolute inset-0 pointer-events-none" style="width: 8000px; height: 8000px;"><defs>
+         <marker id="arrowhead" markerwidth="10" markerheight="7" refx="9" refy="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+         </marker>
+        </defs>
+       </svg><!-- Elements container -->
+       <div id="elements-container" class="absolute inset-0"></div><!-- Laser pointer -->
+       <div id="laser-pointer" class="laser-pointer hidden"></div>
+      </div>
+     </div><!-- Zoom controls -->
+     <div class="absolute bottom-4 left-4 flex items-center gap-2 bg-white rounded-xl shadow-lg p-2 z-40"><button onclick="zoomOut()" class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
+       <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+       </svg></button> <span id="zoom-level" class="text-sm font-medium text-slate-600 w-12 text-center">100%</span> <button onclick="zoomIn()" class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
+       <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+       </svg></button>
+      <div class="w-px h-6 bg-slate-200"></div><button onclick="resetZoom()" class="px-2 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors text-xs font-medium text-slate-600"> Fit </button>
+     </div><!-- Minimap -->
+     <div id="minimap" class="minimap">
+      <div id="minimap-content" class="absolute inset-0 p-1" style="transform: scale(0.02); transform-origin: top left;"></div>
+      <div id="minimap-viewport" class="minimap-viewport"></div>
+     </div>
+    </main><!-- Right Panel (Properties/Comments) -->
+    <aside id="right-panel" class="hidden w-72 bg-white border-l border-slate-200 flex flex-col flex-shrink-0">
+     <div class="p-4 border-b border-slate-200">
+      <h3 id="panel-title" class="font-semibold text-slate-800">Properties</h3>
+     </div>
+     <div id="panel-content" class="flex-1 overflow-y-auto p-4"><!-- Dynamic content -->
+     </div>
+    </aside>
+   </div><!-- Bottom status bar -->
+   <footer class="bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+    <div class="flex items-center gap-4"><span id="element-count">0 elements</span> <span>•</span> <span id="canvas-position">0, 0</span>
+    </div>
+    <div class="flex items-center gap-2"><span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full"> <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Auto-saved </span>
+    </div>
+   </footer>
+  </div><!-- Templates Modal -->
+  <div id="templates-modal" class="hidden fixed inset-0 z-50">
+   <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeTemplates()"></div>
+   <div class="absolute inset-4 md:inset-12 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+     <div>
+      <h2 class="text-xl font-semibold text-slate-800">Templates</h2>
+      <p class="text-sm text-slate-500 mt-1">Start with a pre-built template to accelerate your workflow</p>
+     </div><button onclick="closeTemplates()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6">
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="template-card bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 border border-blue-200" onclick="loadTemplate('brainstorm')">
+       <div class="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Brainstorming</h3>
+       <p class="text-sm text-slate-600">Open brainstorm session with central idea and branches</p>
+      </div>
+      <div class="template-card bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 border border-green-200" onclick="loadTemplate('kanban')">
+       <div class="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Kanban Board</h3>
+       <p class="text-sm text-slate-600">Visual workflow with To Do, In Progress, Done columns</p>
+      </div>
+      <div class="template-card bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-6 border border-purple-200" onclick="loadTemplate('sprint')">
+       <div class="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Sprint Planning</h3>
+       <p class="text-sm text-slate-600">Agile sprint board with story points and velocity tracking</p>
+      </div>
+      <div class="template-card bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-6 border border-orange-200" onclick="loadTemplate('retrospective')">
+       <div class="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Retrospective</h3>
+       <p class="text-sm text-slate-600">What went well, what to improve, action items</p>
+      </div>
+      <div class="template-card bg-gradient-to-br from-pink-50 to-rose-100 rounded-xl p-6 border border-pink-200" onclick="loadTemplate('mindmap')">
+       <div class="w-12 h-12 rounded-xl bg-pink-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Mind Map</h3>
+       <p class="text-sm text-slate-600">Hierarchical idea mapping with branches</p>
+      </div>
+      <div class="template-card bg-gradient-to-br from-cyan-50 to-teal-100 rounded-xl p-6 border border-cyan-200" onclick="loadTemplate('timeline')">
+       <div class="w-12 h-12 rounded-xl bg-cyan-500 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+       </div>
+       <h3 class="font-semibold text-slate-800 mb-2">Project Timeline</h3>
+       <p class="text-sm text-slate-600">Milestones and deadlines visualization</p>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Context Menu -->
+  <div id="context-menu" class="context-menu hidden">
+   <div class="context-menu-item" onclick="duplicateElement()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg> Duplicate
+   </div>
+   <div class="context-menu-item" onclick="bringToFront()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+    </svg> Bring to Front
+   </div>
+   <div class="context-menu-item" onclick="sendToBack()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+    </svg> Send to Back
+   </div>
+   <div class="context-menu-divider"></div>
+   <div class="context-menu-item" onclick="addComment()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+    </svg> Add Comment
+   </div>
+   <div class="context-menu-item" onclick="addReaction()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg> Add Reaction
+   </div>
+   <div class="context-menu-divider"></div>
+   <div class="context-menu-item text-red-600" onclick="deleteElement()">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg> Delete
+   </div>
+  </div><!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div><!-- Voting Session Modal -->
+  <div id="voting-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+   <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeVoting()"></div>
+   <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-96 max-w-full mx-4">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">Start Voting Session</h3>
+    <div class="space-y-4">
+     <div><label class="block text-sm font-medium text-slate-700 mb-1" for="vote-duration">Duration (minutes)</label> <input type="number" id="vote-duration" value="5" min="1" max="60" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+     </div>
+     <div><label class="block text-sm font-medium text-slate-700 mb-1" for="vote-limit">Votes per person</label> <input type="number" id="vote-limit" value="3" min="1" max="10" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+     </div>
+     <div class="flex gap-3"><button onclick="closeVoting()" class="flex-1 px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button> <button onclick="beginVoting()" class="flex-1 px-4 py-2 text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors">Start</button>
+     </div>
+    </div>
+   </div>
+  </div><!-- Emoji Picker Popover -->
+  <div id="emoji-popover" class="hidden fixed bg-white rounded-xl shadow-xl p-3 z-50 border border-slate-200">
+   <div class="emoji-picker"><span class="emoji-btn" onclick="addEmojiReaction('👍')">👍</span> <span class="emoji-btn" onclick="addEmojiReaction('❤️')">❤️</span> <span class="emoji-btn" onclick="addEmojiReaction('🎉')">🎉</span> <span class="emoji-btn" onclick="addEmojiReaction('🚀')">🚀</span> <span class="emoji-btn" onclick="addEmojiReaction('🤔')">🤔</span> <span class="emoji-btn" onclick="addEmojiReaction('👀')">👀</span> <span class="emoji-btn" onclick="addEmojiReaction('🔥')">🔥</span> <span class="emoji-btn" onclick="addEmojiReaction('💡')">💡</span> <span class="emoji-btn" onclick="addEmojiReaction('✅')">✅</span> <span class="emoji-btn" onclick="addEmojiReaction('⚠️')">⚠️</span> <span class="emoji-btn" onclick="addEmojiReaction('❌')">❌</span> <span class="emoji-btn" onclick="addEmojiReaction('💬')">💬</span>
+   </div>
+  </div>
+  <script>
+    // ========== State Management ==========
+    let state = {
+      tool: 'select',
+      color: '#fde047',
+      zoom: 1,
+      pan: { x: 0, y: 0 },
+      elements: [],
+      selectedElement: null,
+      isDrawing: false,
+      isPanning: false,
+      drawingPath: [],
+      undoStack: [],
+      redoStack: [],
+      votingActive: false,
+      votesRemaining: 0,
+      timerRunning: false,
+      timerSeconds: 0,
+      shapeType: 'rectangle',
+      lineType: 'arrow',
+      maxZIndex: 1
+    };
+
+    // ========== Default Config ==========
+    const defaultConfig = {
+      app_title: 'Explora',
+      tagline: 'Brainstorm in real time',
+      background_color: '#f8fafc',
+      surface_color: '#ffffff',
+      text_color: '#1e293b',
+      primary_action_color: '#6366f1',
+      secondary_action_color: '#94a3b8'
+    };
+
+    // ========== Element SDK Integration ==========
+    async function initElementSDK() {
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+            document.getElementById('app-tagline').textContent = config.tagline || defaultConfig.tagline;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (v) => window.elementSdk.setConfig({ background_color: v })
+              },
+              {
+                get: () => config.surface_color || defaultConfig.surface_color,
+                set: (v) => window.elementSdk.setConfig({ surface_color: v })
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (v) => window.elementSdk.setConfig({ text_color: v })
+              },
+              {
+                get: () => config.primary_action_color || defaultConfig.primary_action_color,
+                set: (v) => window.elementSdk.setConfig({ primary_action_color: v })
+              },
+              {
+                get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+                set: (v) => window.elementSdk.setConfig({ secondary_action_color: v })
+              }
+            ],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title],
+            ['tagline', config.tagline || defaultConfig.tagline]
+          ])
+        });
+      }
+    }
+
+    // ========== Data SDK Integration ==========
+    const dataHandler = {
+      onDataChanged(data) {
+        state.elements = data;
+        renderAllElements();
+        updateElementCount();
+      }
+    };
+
+    async function initDataSDK() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          showToast('Failed to connect to data storage', 'error');
+        }
+      }
+    }
+
+    // ========== Tool Selection ==========
+    function setTool(tool) {
+      state.tool = tool;
+      document.querySelectorAll('.toolbar-btn').forEach(btn => btn.classList.remove('active'));
+      const toolBtn = document.getElementById(`tool-${tool}`);
+      if (toolBtn) toolBtn.classList.add('active');
+      
+      const canvas = document.getElementById('canvas-container');
+      canvas.style.cursor = {
+        'select': 'default',
+        'pan': 'grab',
+        'sticky': 'crosshair',
+        'text': 'text',
+        'draw': 'crosshair',
+        'eraser': 'crosshair',
+        'shape': 'crosshair',
+        'line': 'crosshair',
+        'connector': 'crosshair',
+        'laser': 'none'
+      }[tool] || 'default';
+      
+      if (tool !== 'laser') {
+        document.getElementById('laser-pointer').classList.add('hidden');
+      }
+    }
+
+    // ========== Color Selection ==========
+    function toggleColorPicker() {
+      document.getElementById('color-picker-panel').classList.toggle('hidden');
+    }
+
+    function selectColor(color) {
+      state.color = color;
+      document.getElementById('current-color').style.backgroundColor = color;
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      event.target.classList.add('selected');
+      toggleColorPicker();
+      
+      if (state.selectedElement) {
+        updateElementColor(state.selectedElement, color);
+      }
+    }
+
+    async function updateElementColor(elementId, color) {
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({ ...element, color });
+        if (!result.isOk) {
+          showToast('Failed to update color', 'error');
+        }
+      }
+    }
+
+    // ========== Canvas Interaction ==========
+    const canvasContainer = document.getElementById('canvas-container');
+    const canvas = document.getElementById('canvas');
+    let startPos = { x: 0, y: 0 };
+    let elementStartPos = { x: 0, y: 0 };
+
+    canvasContainer.addEventListener('mousedown', handleMouseDown);
+    canvasContainer.addEventListener('mousemove', handleMouseMove);
+    canvasContainer.addEventListener('mouseup', handleMouseUp);
+    canvasContainer.addEventListener('mouseleave', handleMouseUp);
+    canvasContainer.addEventListener('wheel', handleWheel, { passive: false });
+    canvasContainer.addEventListener('contextmenu', handleContextMenu);
+
+    function getCanvasPosition(e) {
+      const rect = canvasContainer.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left - state.pan.x) / state.zoom,
+        y: (e.clientY - rect.top - state.pan.y) / state.zoom
+      };
+    }
+
+    function handleMouseDown(e) {
+      if (e.button === 2) return;
+      
+      const pos = getCanvasPosition(e);
+      startPos = pos;
+      
+      hideContextMenu();
+      
+      if (state.tool === 'pan' || (e.button === 1) || (e.altKey)) {
+        state.isPanning = true;
+        canvasContainer.style.cursor = 'grabbing';
+        startPos = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y };
+        return;
+      }
+      
+      if (state.tool === 'sticky') {
+        createElement('sticky', pos.x, pos.y);
+      } else if (state.tool === 'text') {
+        createElement('text', pos.x, pos.y);
+      } else if (state.tool === 'shape') {
+        createElement('shape', pos.x, pos.y);
+      } else if (state.tool === 'draw') {
+        state.isDrawing = true;
+        state.drawingPath = [pos];
+      } else if (state.tool === 'line') {
+        state.isDrawing = true;
+        state.drawingPath = [pos];
+      }
+    }
+
+    function handleMouseMove(e) {
+      const pos = getCanvasPosition(e);
+      updatePositionDisplay(pos);
+      
+      if (state.tool === 'laser') {
+        const laser = document.getElementById('laser-pointer');
+        laser.classList.remove('hidden');
+        laser.style.left = `${pos.x - 6}px`;
+        laser.style.top = `${pos.y - 6}px`;
+      }
+      
+      if (state.isPanning) {
+        state.pan.x = e.clientX - startPos.x;
+        state.pan.y = e.clientY - startPos.y;
+        updateCanvasTransform();
+        return;
+      }
+      
+      if (state.isDrawing && state.tool === 'draw') {
+        state.drawingPath.push(pos);
+        drawTempPath();
+      }
+      
+      if (state.isDrawing && state.tool === 'line') {
+        drawTempLine(startPos, pos);
+      }
+    }
+
+    function handleMouseUp(e) {
+      if (state.isPanning) {
+        state.isPanning = false;
+        canvasContainer.style.cursor = state.tool === 'pan' ? 'grab' : 'default';
+        return;
+      }
+      
+      if (state.isDrawing && state.tool === 'draw' && state.drawingPath.length > 1) {
+        saveDrawing();
+      }
+      
+      if (state.isDrawing && state.tool === 'line') {
+        const pos = getCanvasPosition(e);
+        saveLine(startPos, pos);
+      }
+      
+      state.isDrawing = false;
+      state.drawingPath = [];
+      clearTempDrawing();
+    }
+
+    function handleWheel(e) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const newZoom = Math.max(0.1, Math.min(5, state.zoom * delta));
+      
+      const rect = canvasContainer.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      state.pan.x = mouseX - (mouseX - state.pan.x) * (newZoom / state.zoom);
+      state.pan.y = mouseY - (mouseY - state.pan.y) * (newZoom / state.zoom);
+      state.zoom = newZoom;
+      
+      updateCanvasTransform();
+      updateZoomDisplay();
+    }
+
+    function handleContextMenu(e) {
+      e.preventDefault();
+      const pos = getCanvasPosition(e);
+      const clickedElement = findElementAt(pos);
+      
+      if (clickedElement) {
+        state.selectedElement = clickedElement.__backendId;
+        showContextMenu(e.clientX, e.clientY);
+      }
+    }
+
+    // ========== Element Creation ==========
+    async function createElement(type, x, y) {
+      if (state.elements.length >= 999) {
+        showToast('Maximum element limit reached (999)', 'warning');
+        return;
+      }
+      
+      const newElement = {
+        type,
+        x: Math.round(x),
+        y: Math.round(y),
+        width: type === 'sticky' ? 200 : type === 'shape' ? 150 : 180,
+        height: type === 'sticky' ? 200 : type === 'shape' ? 100 : 40,
+        content: type === 'sticky' ? 'New note' : type === 'text' ? 'Text' : '',
+        color: state.color,
+        fontSize: 14,
+        zIndex: ++state.maxZIndex,
+        createdAt: new Date().toISOString(),
+        assignee: '',
+        status: 'pending',
+        votes: 0,
+        emoji: ''
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(newElement);
+        if (!result.isOk) {
+          showToast('Failed to create element', 'error');
+        }
+      }
+    }
+
+    // ========== Drawing Functions ==========
+    function drawTempPath() {
+      const svg = document.getElementById('drawing-layer');
+      let tempPath = svg.querySelector('#temp-path');
+      
+      if (!tempPath) {
+        tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tempPath.id = 'temp-path';
+        tempPath.setAttribute('stroke', state.color);
+        tempPath.setAttribute('stroke-width', '3');
+        tempPath.setAttribute('fill', 'none');
+        tempPath.setAttribute('stroke-linecap', 'round');
+        tempPath.setAttribute('stroke-linejoin', 'round');
+        svg.appendChild(tempPath);
+      }
+      
+      const d = state.drawingPath.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      tempPath.setAttribute('d', d);
+    }
+
+    function drawTempLine(start, end) {
+      const svg = document.getElementById('drawing-layer');
+      let tempLine = svg.querySelector('#temp-line');
+      
+      if (!tempLine) {
+        tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tempLine.id = 'temp-line';
+        tempLine.setAttribute('stroke', state.color);
+        tempLine.setAttribute('stroke-width', '2');
+        tempLine.setAttribute('marker-end', 'url(#arrowhead)');
+        svg.appendChild(tempLine);
+      }
+      
+      tempLine.setAttribute('x1', start.x);
+      tempLine.setAttribute('y1', start.y);
+      tempLine.setAttribute('x2', end.x);
+      tempLine.setAttribute('y2', end.y);
+    }
+
+    function clearTempDrawing() {
+      const svg = document.getElementById('drawing-layer');
+      const tempPath = svg.querySelector('#temp-path');
+      const tempLine = svg.querySelector('#temp-line');
+      if (tempPath) tempPath.remove();
+      if (tempLine) tempLine.remove();
+    }
+
+    async function saveDrawing() {
+      if (state.elements.length >= 999) {
+        showToast('Maximum element limit reached', 'warning');
+        return;
+      }
+      
+      const pathData = state.drawingPath.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      const bounds = getPathBounds(state.drawingPath);
+      
+      const newElement = {
+        type: 'drawing',
+        x: bounds.minX,
+        y: bounds.minY,
+        width: bounds.maxX - bounds.minX,
+        height: bounds.maxY - bounds.minY,
+        content: pathData,
+        color: state.color,
+        fontSize: 3,
+        zIndex: ++state.maxZIndex,
+        createdAt: new Date().toISOString(),
+        assignee: '',
+        status: '',
+        votes: 0,
+        emoji: ''
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(newElement);
+        if (!result.isOk) {
+          showToast('Failed to save drawing', 'error');
+        }
+      }
+    }
+
+    async function saveLine(start, end) {
+      if (state.elements.length >= 999) {
+        showToast('Maximum element limit reached', 'warning');
+        return;
+      }
+      
+      const newElement = {
+        type: 'line',
+        x: Math.min(start.x, end.x),
+        y: Math.min(start.y, end.y),
+        width: Math.abs(end.x - start.x),
+        height: Math.abs(end.y - start.y),
+        content: JSON.stringify({ start, end }),
+        color: state.color,
+        fontSize: 2,
+        zIndex: ++state.maxZIndex,
+        createdAt: new Date().toISOString(),
+        assignee: '',
+        status: '',
+        votes: 0,
+        emoji: ''
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(newElement);
+        if (!result.isOk) {
+          showToast('Failed to save line', 'error');
+        }
+      }
+    }
+
+    function getPathBounds(path) {
+      return {
+        minX: Math.min(...path.map(p => p.x)),
+        maxX: Math.max(...path.map(p => p.x)),
+        minY: Math.min(...path.map(p => p.y)),
+        maxY: Math.max(...path.map(p => p.y))
+      };
+    }
+
+    // ========== Element Rendering ==========
+    function renderAllElements() {
+      const container = document.getElementById('elements-container');
+      const svg = document.getElementById('drawing-layer');
+      
+      // Clear existing
+      container.innerHTML = '';
+      svg.querySelectorAll('.saved-drawing').forEach(el => el.remove());
+      
+      state.elements.forEach(element => {
+        if (element.type === 'drawing') {
+          renderDrawing(element, svg);
+        } else if (element.type === 'line') {
+          renderLine(element, svg);
+        } else {
+          renderElement(element, container);
+        }
+      });
+      
+      updateMinimap();
+    }
+
+    function renderElement(element, container) {
+      const div = document.createElement('div');
+      div.id = `element-${element.__backendId}`;
+      div.className = 'absolute element-handle';
+      div.style.cssText = `
+        left: ${element.x}px;
+        top: ${element.y}px;
+        width: ${element.width}px;
+        z-index: ${element.zIndex};
+      `;
+      
+      if (element.type === 'sticky') {
+        div.className += ' sticky-note rounded-lg';
+        div.style.backgroundColor = element.color;
+        div.style.minHeight = `${element.height}px`;
+        div.innerHTML = `
+          <div class="p-3 h-full flex flex-col">
+            <textarea 
+              class="flex-1 bg-transparent resize-none text-slate-800 text-sm leading-relaxed w-full"
+              placeholder="Type your note..."
+              onchange="updateElementContent('${element.__backendId}', this.value)"
+            >${element.content}</textarea>
+            ${element.votes > 0 ? `<div class="vote-badge absolute -top-2 -right-2 w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">${element.votes}</div>` : ''}
+            ${element.emoji ? `<div class="absolute -bottom-2 -right-2 text-lg">${element.emoji}</div>` : ''}
+          </div>
+        `;
+      } else if (element.type === 'text') {
+        div.innerHTML = `
+          <input 
+            type="text" 
+            class="w-full h-full px-2 py-1 bg-transparent text-slate-800 border-b-2 border-slate-300 focus:border-indigo-500"
+            style="font-size: ${element.fontSize}px;"
+            value="${element.content}"
+            onchange="updateElementContent('${element.__backendId}', this.value)"
+          >
+        `;
+      } else if (element.type === 'shape') {
+        div.className += ' shape-element rounded-lg border-2';
+        div.style.backgroundColor = element.color + '40';
+        div.style.borderColor = element.color;
+        div.style.height = `${element.height}px`;
+        div.innerHTML = `
+          <div class="p-2 h-full flex items-center justify-center">
+            <span class="text-slate-700 text-sm">${element.content || 'Shape'}</span>
+          </div>
+        `;
+      } else if (element.type === 'table') {
+        renderTable(element, div);
+      } else if (element.type === 'timeline') {
+        renderTimeline(element, div);
+      }
+      
+      div.addEventListener('mousedown', (e) => startDrag(e, element));
+      div.addEventListener('dblclick', () => selectElement(element.__backendId));
+      
+      container.appendChild(div);
+    }
+
+    function renderDrawing(element, svg) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.classList.add('saved-drawing');
+      path.setAttribute('d', element.content);
+      path.setAttribute('stroke', element.color);
+      path.setAttribute('stroke-width', element.fontSize);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+    }
+
+    function renderLine(element, svg) {
+      try {
+        const points = JSON.parse(element.content);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.classList.add('saved-drawing');
+        line.setAttribute('x1', points.start.x);
+        line.setAttribute('y1', points.start.y);
+        line.setAttribute('x2', points.end.x);
+        line.setAttribute('y2', points.end.y);
+        line.setAttribute('stroke', element.color);
+        line.setAttribute('stroke-width', element.fontSize);
+        line.setAttribute('marker-end', 'url(#arrowhead)');
+        svg.appendChild(line);
+      } catch (e) {
+        console.error('Failed to parse line data');
+      }
+    }
+
+    function renderTable(element, div) {
+      div.className += ' bg-white rounded-lg shadow-md overflow-hidden';
+      div.style.width = 'auto';
+      div.style.minWidth = '400px';
+      
+      const tableData = element.content ? JSON.parse(element.content) : {
+        headers: ['Task', 'Assignee', 'Status'],
+        rows: [['', '', '']]
+      };
+      
+      div.innerHTML = `
+        <table class="w-full">
+          <thead>
+            <tr>
+              ${tableData.headers.map(h => `<th class="table-cell table-header">${h}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${tableData.rows.map((row, i) => `
+              <tr>
+                ${row.map((cell, j) => `<td class="table-cell"><input type="text" value="${cell}" class="w-full bg-transparent" onchange="updateTableCell('${element.__backendId}', ${i}, ${j}, this.value)"></td>`).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <button onclick="addTableRow('${element.__backendId}')" class="w-full py-2 text-sm text-slate-500 hover:bg-slate-50 transition-colors">+ Add Row</button>
+      `;
+    }
+
+    function renderTimeline(element, div) {
+      div.className += ' bg-white rounded-lg shadow-md p-4';
+      div.style.width = '300px';
+      
+      const items = element.content ? JSON.parse(element.content) : [
+        { title: 'Milestone 1', date: 'Week 1', status: 'done' }
+      ];
+      
+      div.innerHTML = `
+        <h4 class="font-semibold text-slate-800 mb-4">Timeline</h4>
+        <div class="pl-6 space-y-4">
+          ${items.map((item, i) => `
+            <div class="timeline-item">
+              <input type="text" value="${item.title}" class="font-medium text-slate-800 bg-transparent w-full" placeholder="Milestone title">
+              <input type="text" value="${item.date}" class="text-sm text-slate-500 bg-transparent w-full" placeholder="Date">
+            </div>
+          `).join('')}
+        </div>
+        <button onclick="addTimelineItem('${element.__backendId}')" class="mt-4 w-full py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">+ Add Milestone</button>
+      `;
+    }
+
+    // ========== Drag & Drop ==========
+    let dragElement = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function startDrag(e, element) {
+      if (state.tool !== 'select') return;
+      
+      e.stopPropagation();
+      dragElement = element;
+      
+      const pos = getCanvasPosition(e);
+      dragOffset = {
+        x: pos.x - element.x,
+        y: pos.y - element.y
+      };
+      
+      const domElement = document.getElementById(`element-${element.__backendId}`);
+      if (domElement) domElement.classList.add('dragging');
+      
+      document.addEventListener('mousemove', handleDrag);
+      document.addEventListener('mouseup', endDrag);
+    }
+
+    function handleDrag(e) {
+      if (!dragElement) return;
+      
+      const pos = getCanvasPosition(e);
+      const newX = pos.x - dragOffset.x;
+      const newY = pos.y - dragOffset.y;
+      
+      const domElement = document.getElementById(`element-${dragElement.__backendId}`);
+      if (domElement) {
+        domElement.style.left = `${newX}px`;
+        domElement.style.top = `${newY}px`;
+      }
+    }
+
+    async function endDrag(e) {
+      if (!dragElement) return;
+      
+      const pos = getCanvasPosition(e);
+      const newX = Math.round(pos.x - dragOffset.x);
+      const newY = Math.round(pos.y - dragOffset.y);
+      
+      const domElement = document.getElementById(`element-${dragElement.__backendId}`);
+      if (domElement) domElement.classList.remove('dragging');
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update({
+          ...dragElement,
+          x: newX,
+          y: newY
+        });
+        if (!result.isOk) {
+          showToast('Failed to update position', 'error');
+        }
+      }
+      
+      dragElement = null;
+      document.removeEventListener('mousemove', handleDrag);
+      document.removeEventListener('mouseup', endDrag);
+    }
+
+    // ========== Element Actions ==========
+    async function updateElementContent(elementId, content) {
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({ ...element, content });
+        if (!result.isOk) {
+          showToast('Failed to update content', 'error');
+        }
+      }
+    }
+
+    function selectElement(elementId) {
+      state.selectedElement = elementId;
+      showPropertiesPanel(elementId);
+    }
+
+    async function deleteElement() {
+      if (!state.selectedElement) return;
+      
+      const element = state.elements.find(e => e.__backendId === state.selectedElement);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.delete(element);
+        if (result.isOk) {
+          showToast('Element deleted', 'success');
+        } else {
+          showToast('Failed to delete element', 'error');
+        }
+      }
+      
+      hideContextMenu();
+      state.selectedElement = null;
+    }
+
+    async function duplicateElement() {
+      if (!state.selectedElement) return;
+      
+      const element = state.elements.find(e => e.__backendId === state.selectedElement);
+      if (element && window.dataSdk) {
+        const { __backendId, ...rest } = element;
+        const result = await window.dataSdk.create({
+          ...rest,
+          x: element.x + 20,
+          y: element.y + 20,
+          zIndex: ++state.maxZIndex,
+          createdAt: new Date().toISOString()
+        });
+        if (!result.isOk) {
+          showToast('Failed to duplicate element', 'error');
+        }
+      }
+      
+      hideContextMenu();
+    }
+
+    async function bringToFront() {
+      if (!state.selectedElement) return;
+      
+      const element = state.elements.find(e => e.__backendId === state.selectedElement);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({
+          ...element,
+          zIndex: ++state.maxZIndex
+        });
+        if (!result.isOk) {
+          showToast('Failed to update layer', 'error');
+        }
+      }
+      
+      hideContextMenu();
+    }
+
+    async function sendToBack() {
+      if (!state.selectedElement) return;
+      
+      const element = state.elements.find(e => e.__backendId === state.selectedElement);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({
+          ...element,
+          zIndex: 0
+        });
+        if (!result.isOk) {
+          showToast('Failed to update layer', 'error');
+        }
+      }
+      
+      hideContextMenu();
+    }
+
+    // ========== Table Functions ==========
+    async function addTable() {
+      if (state.elements.length >= 999) {
+        showToast('Maximum element limit reached', 'warning');
+        return;
+      }
+      
+      const newElement = {
+        type: 'table',
+        x: 400 - state.pan.x / state.zoom,
+        y: 300 - state.pan.y / state.zoom,
+        width: 400,
+        height: 200,
+        content: JSON.stringify({
+          headers: ['Task', 'Assignee', 'Status'],
+          rows: [['New task', '', 'To Do']]
+        }),
+        color: '#ffffff',
+        fontSize: 14,
+        zIndex: ++state.maxZIndex,
+        createdAt: new Date().toISOString(),
+        assignee: '',
+        status: '',
+        votes: 0,
+        emoji: ''
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(newElement);
+        if (!result.isOk) {
+          showToast('Failed to create table', 'error');
+        }
+      }
+    }
+
+    async function updateTableCell(elementId, rowIndex, cellIndex, value) {
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const tableData = JSON.parse(element.content);
+        tableData.rows[rowIndex][cellIndex] = value;
+        const result = await window.dataSdk.update({
+          ...element,
+          content: JSON.stringify(tableData)
+        });
+        if (!result.isOk) {
+          showToast('Failed to update table', 'error');
+        }
+      }
+    }
+
+    async function addTableRow(elementId) {
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const tableData = JSON.parse(element.content);
+        tableData.rows.push(new Array(tableData.headers.length).fill(''));
+        const result = await window.dataSdk.update({
+          ...element,
+          content: JSON.stringify(tableData)
+        });
+        if (!result.isOk) {
+          showToast('Failed to add row', 'error');
+        }
+      }
+    }
+
+    // ========== Timeline Functions ==========
+    async function addTimeline() {
+      if (state.elements.length >= 999) {
+        showToast('Maximum element limit reached', 'warning');
+        return;
+      }
+      
+      const newElement = {
+        type: 'timeline',
+        x: 400 - state.pan.x / state.zoom,
+        y: 300 - state.pan.y / state.zoom,
+        width: 300,
+        height: 200,
+        content: JSON.stringify([
+          { title: 'Project Kickoff', date: 'Week 1', status: 'done' },
+          { title: 'Design Phase', date: 'Week 2-3', status: 'in-progress' },
+          { title: 'Development', date: 'Week 4-6', status: 'pending' }
+        ]),
+        color: '#ffffff',
+        fontSize: 14,
+        zIndex: ++state.maxZIndex,
+        createdAt: new Date().toISOString(),
+        assignee: '',
+        status: '',
+        votes: 0,
+        emoji: ''
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(newElement);
+        if (!result.isOk) {
+          showToast('Failed to create timeline', 'error');
+        }
+      }
+    }
+
+    // ========== Zoom & Pan ==========
+    function updateCanvasTransform() {
+      canvas.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px) scale(${state.zoom})`;
+      updateMinimap();
+    }
+
+    function updateZoomDisplay() {
+      document.getElementById('zoom-level').textContent = `${Math.round(state.zoom * 100)}%`;
+    }
+
+    function zoomIn() {
+      state.zoom = Math.min(5, state.zoom * 1.2);
+      updateCanvasTransform();
+      updateZoomDisplay();
+    }
+
+    function zoomOut() {
+      state.zoom = Math.max(0.1, state.zoom / 1.2);
+      updateCanvasTransform();
+      updateZoomDisplay();
+    }
+
+    function resetZoom() {
+      state.zoom = 1;
+      state.pan = { x: 0, y: 0 };
+      updateCanvasTransform();
+      updateZoomDisplay();
+    }
+
+    // ========== Minimap ==========
+    function updateMinimap() {
+      const viewport = document.getElementById('minimap-viewport');
+      const container = canvasContainer.getBoundingClientRect();
+      
+      const scale = 0.02;
+      const viewportWidth = (container.width / state.zoom) * scale;
+      const viewportHeight = (container.height / state.zoom) * scale;
+      const viewportX = (-state.pan.x / state.zoom) * scale;
+      const viewportY = (-state.pan.y / state.zoom) * scale;
+      
+      viewport.style.width = `${viewportWidth}px`;
+      viewport.style.height = `${viewportHeight}px`;
+      viewport.style.left = `${viewportX}px`;
+      viewport.style.top = `${viewportY}px`;
+    }
+
+    // ========== Context Menu ==========
+    function showContextMenu(x, y) {
+      const menu = document.getElementById('context-menu');
+      menu.classList.remove('hidden');
+      menu.style.left = `${x}px`;
+      menu.style.top = `${y}px`;
+    }
+
+    function hideContextMenu() {
+      document.getElementById('context-menu').classList.add('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#context-menu') && !e.target.closest('.context-menu-item')) {
+        hideContextMenu();
+      }
+    });
+
+    // ========== Properties Panel ==========
+    function showPropertiesPanel(elementId) {
+      const panel = document.getElementById('right-panel');
+      const content = document.getElementById('panel-content');
+      const element = state.elements.find(e => e.__backendId === elementId);
+      
+      if (!element) return;
+      
+      panel.classList.remove('hidden');
+      document.getElementById('panel-title').textContent = 'Properties';
+      
+      content.innerHTML = `
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+            <p class="text-sm text-slate-600 capitalize">${element.type}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Position</label>
+            <p class="text-sm text-slate-600">X: ${element.x}, Y: ${element.y}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1" for="prop-assignee">Assignee</label>
+            <input type="text" id="prop-assignee" value="${element.assignee || ''}" 
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              onchange="updateElementProperty('${elementId}', 'assignee', this.value)">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1" for="prop-status">Status</label>
+            <select id="prop-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              onchange="updateElementProperty('${elementId}', 'status', this.value)">
+              <option value="pending" ${element.status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="in-progress" ${element.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+              <option value="done" ${element.status === 'done' ? 'selected' : ''}>Done</option>
+            </select>
+          </div>
+          <div class="pt-2">
+            <button onclick="closePropertiesPanel()" class="w-full py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Close</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function closePropertiesPanel() {
+      document.getElementById('right-panel').classList.add('hidden');
+      state.selectedElement = null;
+    }
+
+    async function updateElementProperty(elementId, property, value) {
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({ ...element, [property]: value });
+        if (!result.isOk) {
+          showToast('Failed to update property', 'error');
+        }
+      }
+    }
+
+    // ========== Voting ==========
+    function startVoting() {
+      document.getElementById('voting-modal').classList.remove('hidden');
+    }
+
+    function closeVoting() {
+      document.getElementById('voting-modal').classList.add('hidden');
+    }
+
+    function beginVoting() {
+      const duration = parseInt(document.getElementById('vote-duration').value) || 5;
+      const limit = parseInt(document.getElementById('vote-limit').value) || 3;
+      
+      state.votingActive = true;
+      state.votesRemaining = limit;
+      state.timerSeconds = duration * 60;
+      state.timerRunning = true;
+      
+      closeVoting();
+      showToast(`Voting started! You have ${limit} votes and ${duration} minutes`, 'success');
+      updateTimerDisplay();
+      runTimer();
+    }
+
+    async function voteForElement(elementId) {
+      if (!state.votingActive || state.votesRemaining <= 0) {
+        showToast('No votes remaining', 'warning');
+        return;
+      }
+      
+      const element = state.elements.find(e => e.__backendId === elementId);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({
+          ...element,
+          votes: (element.votes || 0) + 1
+        });
+        if (result.isOk) {
+          state.votesRemaining--;
+          showToast(`Vote added! ${state.votesRemaining} votes remaining`, 'success');
+        }
+      }
+    }
+
+    // ========== Timer ==========
+    function toggleTimer() {
+      if (state.timerRunning) {
+        state.timerRunning = false;
+        showToast('Timer paused', 'info');
+      } else if (state.timerSeconds > 0) {
+        state.timerRunning = true;
+        runTimer();
+        showToast('Timer resumed', 'info');
+      } else {
+        state.timerSeconds = 300;
+        state.timerRunning = true;
+        runTimer();
+        showToast('5 minute timer started', 'info');
+      }
+    }
+
+    function runTimer() {
+      if (!state.timerRunning || state.timerSeconds <= 0) {
+        if (state.timerSeconds <= 0) {
+          state.timerRunning = false;
+          state.votingActive = false;
+          showToast('Time is up!', 'warning');
+        }
+        return;
+      }
+      
+      state.timerSeconds--;
+      updateTimerDisplay();
+      setTimeout(runTimer, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(state.timerSeconds / 60);
+      const secs = state.timerSeconds % 60;
+      document.getElementById('timer-display').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // ========== Comments & Reactions ==========
+    function addComment() {
+      if (!state.selectedElement) return;
+      showToast('Comment feature coming soon!', 'info');
+      hideContextMenu();
+    }
+
+    function addReaction() {
+      if (!state.selectedElement) return;
+      
+      const popover = document.getElementById('emoji-popover');
+      const menu = document.getElementById('context-menu');
+      const rect = menu.getBoundingClientRect();
+      
+      popover.classList.remove('hidden');
+      popover.style.left = `${rect.right + 8}px`;
+      popover.style.top = `${rect.top}px`;
+      
+      hideContextMenu();
+    }
+
+    async function addEmojiReaction(emoji) {
+      if (!state.selectedElement) return;
+      
+      const element = state.elements.find(e => e.__backendId === state.selectedElement);
+      if (element && window.dataSdk) {
+        const result = await window.dataSdk.update({
+          ...element,
+          emoji
+        });
+        if (result.isOk) {
+          showToast(`Reaction added: ${emoji}`, 'success');
+        }
+      }
+      
+      document.getElementById('emoji-popover').classList.add('hidden');
+      state.selectedElement = null;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#emoji-popover') && !e.target.closest('.emoji-btn')) {
+        document.getElementById('emoji-popover').classList.add('hidden');
+      }
+    });
+
+    // ========== Templates ==========
+    function openTemplates() {
+      document.getElementById('templates-modal').classList.remove('hidden');
+    }
+
+    function closeTemplates() {
+      document.getElementById('templates-modal').classList.add('hidden');
+    }
+
+    async function loadTemplate(type) {
+      closeTemplates();
+      
+      const templates = {
+        brainstorm: [
+          { type: 'sticky', x: 600, y: 400, content: '🎯 Main Idea', color: '#fde047' },
+          { type: 'sticky', x: 350, y: 250, content: 'Idea 1', color: '#93c5fd' },
+          { type: 'sticky', x: 850, y: 250, content: 'Idea 2', color: '#f9a8d4' },
+          { type: 'sticky', x: 350, y: 550, content: 'Idea 3', color: '#86efac' },
+          { type: 'sticky', x: 850, y: 550, content: 'Idea 4', color: '#d8b4fe' }
+        ],
+        kanban: [
+          { type: 'shape', x: 200, y: 150, content: '📋 TO DO', color: '#94a3b8', width: 250, height: 60 },
+          { type: 'shape', x: 500, y: 150, content: '🔄 IN PROGRESS', color: '#fbbf24', width: 250, height: 60 },
+          { type: 'shape', x: 800, y: 150, content: '✅ DONE', color: '#34d399', width: 250, height: 60 },
+          { type: 'sticky', x: 225, y: 250, content: 'Task 1', color: '#e2e8f0' },
+          { type: 'sticky', x: 525, y: 250, content: 'Task 2', color: '#fef3c7' },
+          { type: 'sticky', x: 825, y: 250, content: 'Task 3', color: '#d1fae5' }
+        ],
+        sprint: [
+          { type: 'shape', x: 150, y: 100, content: '🏃 Sprint Backlog', color: '#6366f1', width: 200, height: 50 },
+          { type: 'sticky', x: 150, y: 180, content: 'User Story 1\n[3 pts]', color: '#ddd6fe' },
+          { type: 'sticky', x: 150, y: 400, content: 'User Story 2\n[5 pts]', color: '#ddd6fe' },
+          { type: 'shape', x: 450, y: 100, content: '📊 Velocity: 21 pts', color: '#10b981', width: 200, height: 50 }
+        ],
+        retrospective: [
+          { type: 'shape', x: 150, y: 100, content: '😊 What Went Well', color: '#34d399', width: 250, height: 50 },
+          { type: 'shape', x: 450, y: 100, content: '🤔 What To Improve', color: '#fbbf24', width: 250, height: 50 },
+          { type: 'shape', x: 750, y: 100, content: '🎯 Action Items', color: '#f87171', width: 250, height: 50 },
+          { type: 'sticky', x: 175, y: 180, content: 'Great teamwork!', color: '#bbf7d0' },
+          { type: 'sticky', x: 475, y: 180, content: 'Better communication', color: '#fef3c7' },
+          { type: 'sticky', x: 775, y: 180, content: 'Daily standups', color: '#fecaca' }
+        ],
+        mindmap: [
+          { type: 'shape', x: 500, y: 350, content: '🧠 Central Topic', color: '#8b5cf6', width: 180, height: 80 },
+          { type: 'sticky', x: 250, y: 200, content: 'Branch 1', color: '#93c5fd' },
+          { type: 'sticky', x: 750, y: 200, content: 'Branch 2', color: '#f9a8d4' },
+          { type: 'sticky', x: 250, y: 500, content: 'Branch 3', color: '#86efac' },
+          { type: 'sticky', x: 750, y: 500, content: 'Branch 4', color: '#fdba74' }
+        ],
+        timeline: [
+          { type: 'timeline', x: 300, y: 200, content: JSON.stringify([
+            { title: 'Phase 1: Discovery', date: 'Week 1-2', status: 'done' },
+            { title: 'Phase 2: Design', date: 'Week 3-4', status: 'in-progress' },
+            { title: 'Phase 3: Development', date: 'Week 5-8', status: 'pending' },
+            { title: 'Phase 4: Launch', date: 'Week 9', status: 'pending' }
+          ])}
+        ]
+      };
+      
+      const templateElements = templates[type] || [];
+      
+      for (const el of templateElements) {
+        if (state.elements.length >= 999) {
+          showToast('Maximum element limit reached', 'warning');
+          break;
+        }
+        
+        if (window.dataSdk) {
+          await window.dataSdk.create({
+            type: el.type,
+            x: el.x,
+            y: el.y,
+            width: el.width || 200,
+            height: el.height || 200,
+            content: el.content,
+            color: el.color,
+            fontSize: 14,
+            zIndex: ++state.maxZIndex,
+            createdAt: new Date().toISOString(),
+            assignee: '',
+            status: 'pending',
+            votes: 0,
+            emoji: ''
+          });
+        }
+      }
+      
+      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} template loaded!`, 'success');
+    }
+
+    // ========== Export ==========
+    function exportBoard() {
+      const data = {
+        name: 'Explora Board Export',
+        exportedAt: new Date().toISOString(),
+        elements: state.elements
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `explora-board-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Board exported successfully!', 'success');
+    }
+
+    // ========== Undo/Redo ==========
+    function undo() {
+      showToast('Undo feature coming soon!', 'info');
+    }
+
+    function redo() {
+      showToast('Redo feature coming soon!', 'info');
+    }
+
+    // ========== Utilities ==========
+    function updatePositionDisplay(pos) {
+      document.getElementById('canvas-position').textContent = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
+    }
+
+    function updateElementCount() {
+      document.getElementById('element-count').textContent = `${state.elements.length} element${state.elements.length !== 1 ? 's' : ''}`;
+    }
+
+    function findElementAt(pos) {
+      return state.elements.find(el => {
+        return pos.x >= el.x && pos.x <= el.x + el.width &&
+               pos.y >= el.y && pos.y <= el.y + el.height;
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-amber-500',
+        info: 'bg-indigo-500'
+      };
+      
+      toast.className = `toast px-4 py-3 rounded-lg text-white text-sm shadow-lg ${colors[type]}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ========== Keyboard Shortcuts ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      
+      const shortcuts = {
+        'v': 'select',
+        'h': 'pan',
+        's': 'sticky',
+        't': 'text',
+        'd': 'draw',
+        'e': 'eraser',
+        'r': 'shape',
+        'l': 'line',
+        'c': 'connector',
+        'p': 'laser'
+      };
+      
+      if (shortcuts[e.key.toLowerCase()]) {
+        setTool(shortcuts[e.key.toLowerCase()]);
+      }
+      
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (state.selectedElement) {
+          deleteElement();
+        }
+      }
+      
+      if (e.key === 'Escape') {
+        hideContextMenu();
+        closePropertiesPanel();
+        document.getElementById('emoji-popover').classList.add('hidden');
+      }
+    });
+
+    // ========== Initialize ==========
+    async function init() {
+      await initElementSDK();
+      await initDataSDK();
+      setTool('select');
+      updateZoomDisplay();
+      updateMinimap();
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d1fd2b761c6c13d',t:'MTc3MTc3NzM1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Taxa de Esforço</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+* { font-family: 'Inter', sans-serif; }
+html, body { height: 100%; margin: 0; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F8F9FA; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+.tab-btn { transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+.tab-btn.active { border-bottom-color: #66CFF5; color: #66CFF5; background: rgba(30,136,229,0.06); }
+.tab-btn:hover:not(.active) { background: rgba(30,136,229,0.04); color: #66CFF5; }
+.card { background: #fff; border-radius: 8px; border: 1px solid #E0E0E0; transition: all 0.2s ease; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #66CFF5; }
+.card:hover { box-shadow: 0 4px 12px rgba(30,136,229,0.15); }
+.card-gold::before { background: #FFC107; }
+.card-green::before { background: #4CAF50; }
+.card-red::before { background: #F44336; }
+.card-orange::before { background: #FF9800; }
+.input-field { transition: all 0.2s ease; border: 1px solid #E0E0E0; border-radius: 6px; padding: 8px 12px; font-size: 14px; width: 100%; outline: none; background: #fff; }
+.input-field:focus { border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30,136,229,0.1); }
+.btn-primary { background: #66CFF5; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary:hover { background: #33BEF2; transform: translateY(-1px); }
+.btn-secondary { background: #F8F9FA; color: #555; border: 1px solid #E0E0E0; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-secondary:hover { background: #E0E0E0; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-danger { background: #F44336; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-danger:hover { background: #D32F2F; }
+.btn-success { background: #4CAF50; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-success:hover { background: #388E3C; }
+.btn-warning { background: #FF9800; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-warning:hover { background: #F57C00; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-green { background: #E8F5E9; color: #2E7D32; }
+.badge-orange { background: #FFF3E0; color: #E65100; }
+.badge-red { background: #FFEBEE; color: #C62828; }
+.badge-blue { background: #E0F4FD; color: #33BEF2; }
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 500; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-success { background: #4CAF50; }
+.toast-error { background: #F44336; }
+.toast-info { background: #66CFF5; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-content { background: #fff; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto; padding: 24px; transform: scale(0.95); transition: transform 0.2s ease; }
+.modal-overlay.active .modal-content { transform: scale(1); }
+.gauge-container { position: relative; width: 180px; height: 100px; margin: 0 auto; }
+.export-hide { transition: all 0.2s ease; }
+.scenario-card { transition: all 0.2s ease; }
+.scenario-card:hover { transform: translateY(-2px); }
+.chart-wrapper { position: relative; }
+.chart-export-btn { position: absolute; top: 8px; right: 8px; z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #E0E0E0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 4px; transition: all 0.2s ease; color: #666; }
+.chart-export-btn:hover { background: #66CFF5; color: #fff; border-color: #66CFF5; }
+select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+@media (max-width: 768px) {
+  .tabs-nav { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  .tabs-nav::-webkit-scrollbar { display: none; }
+}
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-[#F8F9FA]">
+  <div id="app-root" class="h-full w-full flex flex-col overflow-auto"><!-- Header -->
+   <header id="app-header" class="sticky top-0 z-50 bg-white border-b border-[#E0E0E0] px-4 py-3 flex items-center justify-between" style="min-height:60px;">
+    <div class="flex items-center gap-3">
+     <div class="w-9 h-9 rounded-lg bg-[#66CFF5] flex items-center justify-center" style="display: none;"><i data-lucide="calculator" style="width:20px;height:20px;color:#fff;"></i>
+     </div>
+     <div>
+      <h1 id="header-title" class="text-base font-bold text-gray-800 leading-tight" style="display: none; display: none;">IS Taxa de Esforço</h1>
+      <p id="header-desc" class="text-xs text-gray-400 leading-tight" style="display: none; display: none;">Calculadora de Taxa de Esforço Financeiro para a CPLP</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 export-hide"><button onclick="exportImage()" class="btn-secondary btn-sm" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px;"></i></button> <button onclick="exportPDF()" class="btn-secondary btn-sm" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px;"></i></button> <button onclick="exportJSON()" class="btn-secondary btn-sm" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px;"></i></button> <label class="btn-secondary btn-sm cursor-pointer" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px;"></i><input type="hidden"><input type="file" accept=".json" onchange="importJSON(event)" class="hidden"></label>
+    </div>
+   </header><!-- Tabs Navigation -->
+   <nav class="sticky bg-white border-b border-[#E0E0E0] z-40 tabs-nav" style="top:60px;">
+    <div class="flex"><button class="tab-btn active flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500" data-tab="simulador" onclick="switchTab('simulador')"> <i data-lucide="calculator" style="width:16px;height:16px;"></i> Simulador </button> <button class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500" data-tab="cenarios" onclick="switchTab('cenarios')"> <i data-lucide="layers" style="width:16px;height:16px;"></i> Cenários </button> <button class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500" data-tab="moedas" onclick="switchTab('moedas')"> <i data-lucide="coins" style="width:16px;height:16px;"></i> Moedas </button> <button class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500" data-tab="guia" onclick="switchTab('guia')"> <i data-lucide="book-open" style="width:16px;height:16px;"></i> Guia </button>
+    </div>
+   </nav><!-- Tab Content -->
+   <main class="flex-1 p-4 max-w-5xl mx-auto w-full"><!-- SIMULADOR TAB -->
+    <div id="tab-simulador" class="tab-content fade-in"><!-- Title Assignment -->
+     <div class="mb-4 export-hide"><input type="text" id="sim-title" class="input-field text-base font-semibold" placeholder="Nome da simulação (ex: Cenário Família 2025)" value="">
+     </div><!-- Income Section -->
+     <div class="card p-4 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="wallet" style="width:16px;height:16px;color:#4CAF50;"></i> Rendimentos Mensais</h3>
+      <div id="income-list"></div><button onclick="addIncome()" class="btn-secondary btn-sm mt-2 export-hide"><i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar Rendimento</button>
+     </div><!-- Expenses Section -->
+     <div class="card card-red p-4 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="credit-card" style="width:16px;height:16px;color:#F44336;"></i> Encargos Financeiros Mensais</h3>
+      <div id="expense-list"></div><button onclick="addExpense()" class="btn-secondary btn-sm mt-2 export-hide"><i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar Encargo</button>
+     </div><!-- Results -->
+     <div class="card card-gold p-4 mb-4" id="results-section">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3" style="width:16px;height:16px;color:#FFC107;"></i> Resultados</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+       <div class="bg-[#F8F9FA] rounded-lg p-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">Total Rendimentos</p>
+        <p id="total-income" class="text-lg font-bold text-[#4CAF50]">0 Kz</p>
+       </div>
+       <div class="bg-[#F8F9FA] rounded-lg p-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">Total Encargos</p>
+        <p id="total-expenses" class="text-lg font-bold text-[#F44336]">0 Kz</p>
+       </div>
+       <div class="bg-[#F8F9FA] rounded-lg p-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">Taxa de Esforço</p>
+        <p id="effort-rate" class="text-lg font-bold text-[#66CFF5]">0%</p>
+       </div>
+      </div><!-- Gauge -->
+      <div class="flex justify-center mb-4">
+       <div class="chart-wrapper"><button class="chart-export-btn export-hide" onclick="exportChartImage('gaugeCanvas')"><i data-lucide="image" style="width:12px;height:12px;"></i> HD</button>
+        <canvas id="gaugeCanvas" width="280" height="180"></canvas>
+       </div>
+      </div>
+      <div id="effort-message" class="text-center text-sm font-medium mb-4"></div><!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div class="chart-wrapper bg-[#F8F9FA] rounded-lg p-3"><button class="chart-export-btn export-hide" onclick="exportChartImage('doughnutChart')"><i data-lucide="image" style="width:12px;height:12px;"></i> HD</button>
+        <canvas id="doughnutChart" height="220"></canvas>
+       </div>
+       <div class="chart-wrapper bg-[#F8F9FA] rounded-lg p-3"><button class="chart-export-btn export-hide" onclick="exportChartImage('barChart')"><i data-lucide="image" style="width:12px;height:12px;"></i> HD</button>
+        <canvas id="barChart" height="220"></canvas>
+       </div>
+      </div>
+     </div><!-- Actions -->
+     <div class="flex flex-wrap gap-2 mb-4 export-hide"><button onclick="saveScenario()" class="btn-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Guardar Cenário</button> <button onclick="resetSimulator()" class="btn-danger"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Limpar</button>
+     </div>
+    </div><!-- CENÁRIOS TAB -->
+    <div id="tab-cenarios" class="tab-content hidden fade-in">
+     <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-semibold text-gray-800">Cenários Guardados</h2>
+      <div class="flex gap-2 export-hide"><input type="text" id="scenario-filter" class="input-field" style="width:200px;" placeholder="Filtrar cenários..." oninput="renderScenarios()"> <button onclick="createNewScenario()" class="btn-primary btn-sm"><i data-lucide="plus" style="width:14px;height:14px;"></i> Novo</button>
+      </div>
+     </div>
+     <div id="scenarios-list" class="space-y-3"></div>
+     <div id="no-scenarios" class="text-center py-12 text-gray-400"><i data-lucide="folder-open" style="width:48px;height:48px;margin:0 auto 12px;display:block;color:#E0E0E0;"></i>
+      <p class="text-sm">Nenhum cenário guardado</p>
+      <p class="text-xs mt-1">Crie uma simulação e guarde-a</p>
+     </div>
+    </div><!-- MOEDAS TAB -->
+    <div id="tab-moedas" class="tab-content hidden fade-in">
+     <div class="card p-4 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2"><i data-lucide="refresh-cw" style="width:16px;height:16px;color:#66CFF5;"></i> Taxas de Câmbio</h3>
+      <p class="text-xs text-gray-400 mb-4">Base: 1 Kwanza (AOA). Edite as taxas conforme necessário.</p>
+      <div id="currency-list" class="space-y-2"></div><button onclick="addCurrency()" class="btn-secondary btn-sm mt-3 export-hide"><i data-lucide="plus" style="width:14px;height:14px;"></i> Adicionar Moeda</button>
+     </div>
+     <div class="card p-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="calculator" style="width:16px;height:16px;color:#FF9800;"></i> Conversor Rápido</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+       <div><label class="text-xs text-gray-500 mb-1 block">Montante</label> <input type="number" id="conv-amount" class="input-field" value="1000" oninput="convertCurrency()">
+       </div>
+       <div><label class="text-xs text-gray-500 mb-1 block">De</label> <select id="conv-from" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+       <div><label class="text-xs text-gray-500 mb-1 block">Para</label> <select id="conv-to" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+      </div>
+      <div id="conv-result" class="mt-3 text-center text-lg font-bold text-[#66CFF5]"></div>
+     </div>
+    </div><!-- GUIA TAB -->
+    <div id="tab-guia" class="tab-content hidden fade-in">
+     <div class="card card-green p-5 mb-4">
+      <h3 class="text-base font-semibold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="info" style="width:18px;height:18px;color:#4CAF50;"></i> O que é a Taxa de Esforço?</h3>
+      <p class="text-sm text-gray-600 leading-relaxed mb-3">A <strong>taxa de esforço</strong> é um indicador financeiro que mede a percentagem do rendimento mensal líquido destinada ao pagamento de encargos financeiros (créditos, empréstimos, rendas, etc.).</p>
+      <div class="bg-[#F8F9FA] rounded-lg p-3 text-center mb-3">
+       <p class="text-xs text-gray-400 mb-1">Fórmula</p>
+       <p class="text-sm font-mono font-semibold text-[#66CFF5]">Taxa de Esforço = (Encargos ÷ Rendimentos) × 100</p>
+      </div>
+      <p class="text-sm text-gray-600">É amplamente utilizado na Europa e recomendado pelo Banco Central Europeu e instituições financeiras da CPLP.</p>
+     </div>
+     <div class="card p-5 mb-4">
+      <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="target" style="width:18px;height:18px;color:#66CFF5;"></i> Referências Europeias</h3>
+      <div class="space-y-2">
+       <div class="flex items-center gap-3 p-2 bg-[#E8F5E9] rounded-lg">
+        <span class="badge badge-green">≤ 30%</span><span class="text-sm text-gray-700">Saudável — Situação financeira confortável</span>
+       </div>
+       <div class="flex items-center gap-3 p-2 bg-[#FFF3E0] rounded-lg">
+        <span class="badge badge-orange">31–40%</span><span class="text-sm text-gray-700">Alerta — Risco moderado, atenção recomendada</span>
+       </div>
+       <div class="flex items-center gap-3 p-2 bg-[#FFEBEE] rounded-lg">
+        <span class="badge badge-red">&gt; 40%</span><span class="text-sm text-gray-700">Crítico — Sobre-endividamento provável</span>
+       </div>
+      </div>
+     </div>
+     <div class="card card-gold p-5 mb-4">
+      <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="lightbulb" style="width:18px;height:18px;color:#FFC107;"></i> Melhores Práticas</h3>
+      <ul class="space-y-2 text-sm text-gray-600">
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Mantenha a taxa de esforço abaixo dos 30% para conforto financeiro</li>
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Inclua todos os encargos recorrentes: crédito habitação, automóvel, pessoal, cartões</li>
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Considere rendimentos líquidos (após impostos e contribuições)</li>
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Simule diferentes cenários antes de contrair novos créditos</li>
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Reavalie periodicamente a sua taxa de esforço</li>
+       <li class="flex items-start gap-2"><i data-lucide="check-circle" style="width:16px;height:16px;color:#4CAF50;flex-shrink:0;margin-top:2px;"></i> Use o conversor de moedas para comparar valores entre países CPLP</li>
+      </ul>
+     </div>
+     <div class="card p-5">
+      <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="help-circle" style="width:18px;height:18px;color:#66CFF5;"></i> Como Usar</h3>
+      <ol class="space-y-2 text-sm text-gray-600 list-decimal list-inside">
+       <li>Aceda ao separador <strong>Simulador</strong> e dê um nome à sua simulação</li>
+       <li>Adicione todos os seus rendimentos mensais líquidos</li>
+       <li>Adicione todos os seus encargos financeiros mensais</li>
+       <li>Analise os resultados e gráficos gerados automaticamente</li>
+       <li>Guarde o cenário para consulta futura ou comparação</li>
+       <li>Use o separador <strong>Moedas</strong> para converter valores entre moedas CPLP</li>
+       <li>Exporte os seus dados em PDF, imagem ou JSON</li>
+      </ol>
+     </div>
+    </div>
+   </main><!-- Toast -->
+   <div id="toast" class="toast"></div><!-- Delete Confirmation Modal -->
+   <div id="delete-modal" class="modal-overlay">
+    <div class="modal-content text-center"><i data-lucide="alert-triangle" style="width:48px;height:48px;color:#F44336;margin:0 auto 12px;display:block;"></i>
+     <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirmar Eliminação</h3>
+     <p id="delete-modal-msg" class="text-sm text-gray-500 mb-4"></p>
+     <div class="flex gap-2 justify-center"><button onclick="closeDeleteModal()" class="btn-secondary">Cancelar</button> <button id="delete-modal-confirm" class="btn-danger">Eliminar</button>
+     </div>
+    </div>
+   </div><!-- Edit Scenario Modal -->
+   <div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+     <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="edit" style="width:18px;height:18px;color:#66CFF5;"></i> Editar Cenário</h3>
+     <div class="mb-3"><label class="text-xs text-gray-500 mb-1 block">Nome</label> <input type="text" id="edit-scenario-name" class="input-field">
+     </div>
+     <div class="flex gap-2 justify-end mt-4"><button onclick="closeEditModal()" class="btn-secondary">Cancelar</button> <button id="edit-modal-save" class="btn-primary">Guardar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ---- STATE ----
+let state = {
+  incomes: [{ id: genId(), label: 'Salário Líquido', amount: 0 }],
+  expenses: [{ id: genId(), label: 'Crédito Habitação', amount: 0 }],
+  scenarios: [],
+  currencies: [
+    { code: 'AOA', name: 'Kwanza (Angola)', rate: 1, editable: false },
+    { code: 'BRL', name: 'Real (Brasil)', rate: 0.006, editable: true },
+    { code: 'CVE', name: 'Escudo (Cabo Verde)', rate: 0.118, editable: true },
+    { code: 'XOF', name: 'Franco CFA (Guiné-Bissau)', rate: 0.716, editable: true },
+    { code: 'MZN', name: 'Metical (Moçambique)', rate: 0.076, editable: true },
+    { code: 'STN', name: 'Dobra (São Tomé)', rate: 0.027, editable: true },
+    { code: 'EUR', name: 'Euro (Portugal)', rate: 0.0011, editable: true },
+    { code: 'USD', name: 'Dólar (EUA)', rate: 0.0012, editable: true },
+    { code: 'MOP', name: 'Pataca (Macau)', rate: 0.0096, editable: true },
+    { code: 'TPL', name: 'Dólar (Timor-Leste)', rate: 0.0012, editable: true }
+  ],
+  selectedCurrency: 'AOA',
+  simTitle: ''
+};
+
+let charts = {};
+let deleteCallback = null;
+let editScenarioIdx = null;
+
+// ---- UTILS ----
+function genId() { return Math.random().toString(36).substr(2, 9); }
+function formatCurrency(v) {
+  const c = state.currencies.find(x => x.code === state.selectedCurrency) || state.currencies[0];
+  return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' ' + c.code;
+}
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.className = 'toast toast-' + type + ' show';
+  t.textContent = msg;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+function save() { localStorage.setItem('is_taxa_esforco', JSON.stringify(state)); }
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('is_taxa_esforco'));
+    if (d) {
+      state = { ...state, ...d };
+      if (!state.currencies || state.currencies.length === 0) {
+        state.currencies = [{ code: 'AOA', name: 'Kwanza (Angola)', rate: 1, editable: false }];
+      }
+    }
+  } catch(e) {}
+}
+
+// ---- TABS ----
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('tab-' + tab);
+  if (target) { target.classList.remove('hidden'); }
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  if (tab === 'cenarios') renderScenarios();
+  if (tab === 'moedas') { renderCurrencies(); updateConverterSelects(); }
+  lucide.createIcons();
+}
+
+// ---- INCOME / EXPENSE ----
+function renderIncomes() {
+  const c = document.getElementById('income-list');
+  c.innerHTML = '';
+  state.incomes.forEach((inc, i) => {
+    c.innerHTML += `<div class="flex items-center gap-2 mb-2" data-id="${inc.id}">
+      <input type="text" class="input-field flex-1 export-hide" value="${esc(inc.label)}" onchange="state.incomes[${i}].label=this.value;calculate();save();" placeholder="Descrição">
+      <span class="text-sm text-gray-600 font-medium hidden" data-export-label>${esc(inc.label)}: </span>
+      <input type="number" class="input-field" style="width:140px;" value="${inc.amount||''}" oninput="state.incomes[${i}].amount=parseFloat(this.value)||0;calculate();save();" placeholder="0.00">
+      <button onclick="removeIncome(${i})" class="text-gray-300 hover:text-[#F44336] transition export-hide" title="Remover"><i data-lucide="x-circle" style="width:18px;height:18px;"></i></button>
+    </div>`;
+  });
+  lucide.createIcons();
+}
+function addIncome() { state.incomes.push({ id: genId(), label: '', amount: 0 }); renderIncomes(); save(); }
+function removeIncome(i) { if (state.incomes.length > 1) { state.incomes.splice(i,1); renderIncomes(); calculate(); save(); } }
+
+function renderExpenses() {
+  const c = document.getElementById('expense-list');
+  c.innerHTML = '';
+  state.expenses.forEach((exp, i) => {
+    c.innerHTML += `<div class="flex items-center gap-2 mb-2" data-id="${exp.id}">
+      <input type="text" class="input-field flex-1 export-hide" value="${esc(exp.label)}" onchange="state.expenses[${i}].label=this.value;calculate();save();" placeholder="Descrição">
+      <span class="text-sm text-gray-600 font-medium hidden" data-export-label>${esc(exp.label)}: </span>
+      <input type="number" class="input-field" style="width:140px;" value="${exp.amount||''}" oninput="state.expenses[${i}].amount=parseFloat(this.value)||0;calculate();save();" placeholder="0.00">
+      <button onclick="removeExpense(${i})" class="text-gray-300 hover:text-[#F44336] transition export-hide" title="Remover"><i data-lucide="x-circle" style="width:18px;height:18px;"></i></button>
+    </div>`;
+  });
+  lucide.createIcons();
+}
+function addExpense() { state.expenses.push({ id: genId(), label: '', amount: 0 }); renderExpenses(); save(); }
+function removeExpense(i) { if (state.expenses.length > 1) { state.expenses.splice(i,1); renderExpenses(); calculate(); save(); } }
+
+function esc(s) { return String(s||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// ---- CALCULATE ----
+function calculate() {
+  const totalInc = state.incomes.reduce((s,x) => s + (x.amount||0), 0);
+  const totalExp = state.expenses.reduce((s,x) => s + (x.amount||0), 0);
+  const rate = totalInc > 0 ? (totalExp / totalInc * 100) : 0;
+
+  document.getElementById('total-income').textContent = formatCurrency(totalInc);
+  document.getElementById('total-expenses').textContent = formatCurrency(totalExp);
+  document.getElementById('effort-rate').textContent = rate.toFixed(1) + '%';
+
+  const msgEl = document.getElementById('effort-message');
+  if (totalInc === 0 && totalExp === 0) {
+    msgEl.innerHTML = '<span class="text-gray-400">Insira valores para ver o resultado</span>';
+  } else if (rate <= 30) {
+    msgEl.innerHTML = '<span class="badge badge-green"><i data-lucide="check-circle" style="width:12px;height:12px;"></i> Saudável</span><span class="ml-2 text-sm text-gray-600">Situação financeira confortável</span>';
+  } else if (rate <= 40) {
+    msgEl.innerHTML = '<span class="badge badge-orange"><i data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Alerta</span><span class="ml-2 text-sm text-gray-600">Risco moderado de sobre-endividamento</span>';
+  } else {
+    msgEl.innerHTML = '<span class="badge badge-red"><i data-lucide="alert-circle" style="width:12px;height:12px;"></i> Crítico</span><span class="ml-2 text-sm text-gray-600">Situação de sobre-endividamento</span>';
+  }
+
+  renderGauge(rate);
+  renderDoughnut(totalInc, totalExp);
+  renderBarChart();
+  lucide.createIcons();
+}
+
+// ---- GAUGE ----
+function renderGauge(rate) {
+  const canvas = document.getElementById('gaugeCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const cx = w/2, cy = h - 20, r = 80;
+  // Background arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 0);
+  ctx.lineWidth = 18;
+  ctx.strokeStyle = '#E0E0E0';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  // Color segments
+  const segments = [
+    { end: 30, color: '#4CAF50' },
+    { end: 40, color: '#FF9800' },
+    { end: 100, color: '#F44336' }
+  ];
+  let prev = 0;
+  segments.forEach(seg => {
+    const startAngle = Math.PI + (prev/100) * Math.PI;
+    const endAngle = Math.PI + (Math.min(seg.end, 100)/100) * Math.PI;
+    const actualEnd = Math.PI + (Math.min(rate, seg.end)/100) * Math.PI;
+    if (rate > prev) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, Math.min(actualEnd, endAngle));
+      ctx.lineWidth = 18;
+      ctx.strokeStyle = seg.color;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+    prev = seg.end;
+  });
+  // Needle
+  const clampedRate = Math.min(Math.max(rate, 0), 100);
+  const angle = Math.PI + (clampedRate/100) * Math.PI;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(angle) * (r - 25), cy + Math.sin(angle) * (r - 25));
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#333';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#333';
+  ctx.fill();
+  // Text
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 22px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText(clampedRate.toFixed(1) + '%', cx, cy - 20);
+  ctx.font = '11px Inter';
+  ctx.fillStyle = '#999';
+  ctx.fillText('Taxa de Esforço', cx, cy - 4);
+  // Labels
+  ctx.font = '10px Inter';
+  ctx.fillStyle = '#4CAF50';
+  ctx.textAlign = 'left';
+  ctx.fillText('0%', cx - r - 10, cy + 15);
+  ctx.fillStyle = '#F44336';
+  ctx.textAlign = 'right';
+  ctx.fillText('100%', cx + r + 12, cy + 15);
+}
+
+// ---- DOUGHNUT ----
+function renderDoughnut(totalInc, totalExp) {
+  const ctx = document.getElementById('doughnutChart').getContext('2d');
+  if (charts.doughnut) charts.doughnut.destroy();
+
+  const disponivel = Math.max(totalInc - totalExp, 0);
+  const expLabels = state.expenses.filter(e => e.amount > 0).map(e => e.label || 'Sem nome');
+  const expValues = state.expenses.filter(e => e.amount > 0).map(e => e.amount);
+  const total = disponivel + expValues.reduce((s,v) => s+v, 0);
+
+  const labels = [...expLabels, 'Disponível'];
+  const data = [...expValues, disponivel];
+  const colors = ['#F44336','#FF5722','#FF7043','#FF8A65','#FFAB91','#E57373','#EF9A9A','#FFCDD2'];
+  const bgColors = [...expValues.map((_,i) => colors[i % colors.length]), '#4CAF50'];
+
+  charts.doughnut = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Inter' }, padding: 8, usePointStyle: true, pointStyleWidth: 8 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const v = ctx.parsed;
+              const pct = total > 0 ? ((v/total)*100).toFixed(1) : '0.0';
+              return ctx.label + ': ' + formatCurrency(v) + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ---- BAR CHART ----
+function renderBarChart() {
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if (charts.bar) charts.bar.destroy();
+
+  const allItems = [
+    ...state.incomes.filter(x => x.amount > 0).map(x => ({ label: x.label || 'Rendimento', value: x.amount, color: '#4CAF50' })),
+    ...state.expenses.filter(x => x.amount > 0).map(x => ({ label: x.label || 'Encargo', value: -x.amount, color: '#F44336' }))
+  ];
+
+  charts.bar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allItems.map(x => x.label),
+      datasets: [{
+        data: allItems.map(x => x.value),
+        backgroundColor: allItems.map(x => x.color),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return formatCurrency(Math.abs(ctx.parsed.x)); }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#F0F0F0' }, ticks: { font: { size: 10, family: 'Inter' } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' } } }
+      }
+    }
+  });
+}
+
+// ---- CHART EXPORT ----
+function exportChartImage(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  // Create high-res copy
+  const scale = 2;
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = canvas.width * scale;
+  tmpCanvas.height = canvas.height * scale;
+  const tmpCtx = tmpCanvas.getContext('2d');
+  tmpCtx.scale(scale, scale);
+  tmpCtx.fillStyle = '#fff';
+  tmpCtx.fillRect(0, 0, canvas.width, canvas.height);
+  tmpCtx.drawImage(canvas, 0, 0);
+  const link = document.createElement('a');
+  link.download = canvasId + '_HD.png';
+  link.href = tmpCanvas.toDataURL('image/png', 1.0);
+  link.click();
+  showToast('Gráfico exportado em HD', 'success');
+}
+
+// ---- SCENARIOS ----
+function saveScenario() {
+  const title = document.getElementById('sim-title').value.trim();
+  const name = title || ('Cenário ' + (state.scenarios.length + 1));
+  const totalInc = state.incomes.reduce((s,x) => s + (x.amount||0), 0);
+  const totalExp = state.expenses.reduce((s,x) => s + (x.amount||0), 0);
+  const rate = totalInc > 0 ? (totalExp / totalInc * 100) : 0;
+
+  state.scenarios.push({
+    id: genId(),
+    name,
+    date: new Date().toISOString(),
+    incomes: JSON.parse(JSON.stringify(state.incomes)),
+    expenses: JSON.parse(JSON.stringify(state.expenses)),
+    currency: state.selectedCurrency,
+    totalIncome: totalInc,
+    totalExpenses: totalExp,
+    effortRate: rate
+  });
+  save();
+  showToast('Cenário "' + name + '" guardado', 'success');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenario-filter')?.value || '').toLowerCase();
+  const list = document.getElementById('scenarios-list');
+  const noEl = document.getElementById('no-scenarios');
+  const filtered = state.scenarios.filter(s => s.name.toLowerCase().includes(filter));
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    noEl.classList.remove('hidden');
+    return;
+  }
+  noEl.classList.add('hidden');
+  list.innerHTML = filtered.map((s, idx) => {
+    const realIdx = state.scenarios.indexOf(s);
+    const rateClass = s.effortRate <= 30 ? 'badge-green' : s.effortRate <= 40 ? 'badge-orange' : 'badge-red';
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `<div class="card scenario-card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h4 class="text-sm font-semibold text-gray-800">${esc(s.name)}</h4>
+          <p class="text-xs text-gray-400">${dateStr}</p>
+        </div>
+        <span class="badge ${rateClass}">${s.effortRate.toFixed(1)}%</span>
+      </div>
+      <div class="flex gap-4 text-xs text-gray-500 mb-3">
+        <span>Rend: ${formatCurrency(s.totalIncome)}</span>
+        <span>Enc: ${formatCurrency(s.totalExpenses)}</span>
+      </div>
+      <div class="flex gap-2 export-hide">
+        <button onclick="loadScenario(${realIdx})" class="btn-primary btn-sm"><i data-lucide="upload" style="width:12px;height:12px;"></i> Carregar</button>
+        <button onclick="cloneScenario(${realIdx})" class="btn-secondary btn-sm"><i data-lucide="copy" style="width:12px;height:12px;"></i> Clonar</button>
+        <button onclick="openEditModal(${realIdx})" class="btn-secondary btn-sm"><i data-lucide="edit" style="width:12px;height:12px;"></i> Editar</button>
+        <button onclick="confirmDeleteScenario(${realIdx})" class="btn-danger btn-sm"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(idx) {
+  const s = state.scenarios[idx];
+  if (!s) return;
+  state.incomes = JSON.parse(JSON.stringify(s.incomes));
+  state.expenses = JSON.parse(JSON.stringify(s.expenses));
+  document.getElementById('sim-title').value = s.name;
+  state.simTitle = s.name;
+  renderIncomes(); renderExpenses(); calculate(); save();
+  switchTab('simulador');
+  showToast('Cenário carregado', 'info');
+}
+
+function cloneScenario(idx) {
+  const s = state.scenarios[idx];
+  if (!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = genId();
+  clone.name = s.name + ' (cópia)';
+  clone.date = new Date().toISOString();
+  state.scenarios.push(clone);
+  save(); renderScenarios();
+  showToast('Cenário clonado', 'success');
+}
+
+function confirmDeleteScenario(idx) {
+  const s = state.scenarios[idx];
+  document.getElementById('delete-modal-msg').textContent = 'Eliminar "' + s.name + '"? Esta ação não pode ser desfeita.';
+  deleteCallback = () => { state.scenarios.splice(idx, 1); save(); renderScenarios(); showToast('Cenário eliminado', 'info'); };
+  document.getElementById('delete-modal-confirm').onclick = () => { deleteCallback(); closeDeleteModal(); };
+  document.getElementById('delete-modal').classList.add('active');
+}
+function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('active'); }
+
+function openEditModal(idx) {
+  editScenarioIdx = idx;
+  document.getElementById('edit-scenario-name').value = state.scenarios[idx].name;
+  document.getElementById('edit-modal').classList.add('active');
+}
+function closeEditModal() { document.getElementById('edit-modal').classList.remove('active'); }
+document.getElementById('edit-modal-save').onclick = () => {
+  if (editScenarioIdx !== null) {
+    state.scenarios[editScenarioIdx].name = document.getElementById('edit-scenario-name').value.trim() || state.scenarios[editScenarioIdx].name;
+    save(); renderScenarios(); closeEditModal();
+    showToast('Cenário atualizado', 'success');
+  }
+};
+
+function createNewScenario() {
+  state.incomes = [{ id: genId(), label: 'Salário Líquido', amount: 0 }];
+  state.expenses = [{ id: genId(), label: 'Crédito Habitação', amount: 0 }];
+  document.getElementById('sim-title').value = '';
+  renderIncomes(); renderExpenses(); calculate(); save();
+  switchTab('simulador');
+  showToast('Nova simulação criada', 'info');
+}
+
+function resetSimulator() {
+  state.incomes = [{ id: genId(), label: 'Salário Líquido', amount: 0 }];
+  state.expenses = [{ id: genId(), label: 'Crédito Habitação', amount: 0 }];
+  document.getElementById('sim-title').value = '';
+  renderIncomes(); renderExpenses(); calculate(); save();
+  showToast('Simulador limpo', 'info');
+}
+
+// ---- CURRENCIES ----
+function renderCurrencies() {
+  const c = document.getElementById('currency-list');
+  c.innerHTML = state.currencies.map((cur, i) => `
+    <div class="flex items-center gap-2 p-2 bg-[#F8F9FA] rounded-lg">
+      <span class="text-xs font-bold text-[#66CFF5] w-10">${esc(cur.code)}</span>
+      <span class="text-xs text-gray-600 flex-1">${esc(cur.name)}</span>
+      <input type="number" step="0.000001" class="input-field export-hide" style="width:120px;font-size:12px;" value="${cur.rate}" ${!cur.editable?'disabled':''} onchange="state.currencies[${i}].rate=parseFloat(this.value)||0;save();convertCurrency();">
+      ${cur.editable && i >= 10 ? `<button onclick="removeCurrency(${i})" class="text-gray-300 hover:text-[#F44336] transition export-hide"><i data-lucide="x-circle" style="width:16px;height:16px;"></i></button>` : ''}
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+function addCurrency() {
+  state.currencies.push({ code: 'NEW', name: 'Nova Moeda', rate: 1, editable: true });
+  renderCurrencies(); save();
+}
+function removeCurrency(i) { state.currencies.splice(i, 1); renderCurrencies(); updateConverterSelects(); save(); }
+
+function updateConverterSelects() {
+  const from = document.getElementById('conv-from');
+  const to = document.getElementById('conv-to');
+  const fv = from.value, tv = to.value;
+  const opts = state.currencies.map(c => `<option value="${c.code}">${c.code} - ${esc(c.name)}</option>`).join('');
+  from.innerHTML = opts;
+  to.innerHTML = opts;
+  from.value = fv || 'AOA';
+  to.value = tv || 'EUR';
+  convertCurrency();
+}
+
+function convertCurrency() {
+  const amt = parseFloat(document.getElementById('conv-amount').value) || 0;
+  const fromCode = document.getElementById('conv-from').value;
+  const toCode = document.getElementById('conv-to').value;
+  const fromCur = state.currencies.find(c => c.code === fromCode);
+  const toCur = state.currencies.find(c => c.code === toCode);
+  if (!fromCur || !toCur || fromCur.rate === 0) { document.getElementById('conv-result').textContent = '—'; return; }
+  const inKz = amt / fromCur.rate;
+  const result = inKz * toCur.rate;
+  document.getElementById('conv-result').textContent = amt.toFixed(2) + ' ' + fromCode + ' = ' + result.toFixed(4) + ' ' + toCode;
+}
+
+// ---- EXPORT / IMPORT ----
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = 'IS_Taxa_Esforco_' + new Date().toISOString().slice(0,10) + '.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  showToast('Dados exportados em JSON', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      state = { ...state, ...data };
+      save();
+      renderIncomes(); renderExpenses(); calculate();
+      renderScenarios(); renderCurrencies(); updateConverterSelects();
+      showToast('Dados importados com sucesso', 'success');
+    } catch(err) { showToast('Erro ao importar ficheiro', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportImage() {
+  // Hide export controls
+  document.querySelectorAll('.export-hide').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('[data-export-label]').forEach(el => el.classList.remove('hidden'));
+  const el = document.getElementById('app-root');
+  setTimeout(() => {
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: -window.scrollY, windowHeight: el.scrollHeight }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'IS_Taxa_Esforco_' + new Date().toISOString().slice(0,10) + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      document.querySelectorAll('.export-hide').forEach(el => el.style.display = '');
+      document.querySelectorAll('[data-export-label]').forEach(el => el.classList.add('hidden'));
+      showToast('Imagem exportada', 'success');
+    }).catch(() => {
+      document.querySelectorAll('.export-hide').forEach(el => el.style.display = '');
+      document.querySelectorAll('[data-export-label]').forEach(el => el.classList.add('hidden'));
+      showToast('Erro ao exportar imagem', 'error');
+    });
+  }, 100);
+}
+
+function getFormattedDate() {
+  const d = new Date();
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return d.getDate() + ' de ' + months[d.getMonth()] + ' de ' + d.getFullYear();
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pw = 210, ph = 297;
+  const margin = 15;
+  const cw = pw - margin * 2;
+  let y = 0;
+  const headerH = 18, footerH = 14;
+  let pageNum = 1;
+
+  function drawHeader() {
+    doc.setFillColor(30, 136, 229);
+    doc.rect(0, 0, pw, headerH, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('IS Taxa de Esforço', margin, 11);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Calculadora de Taxa de Esforço Financeiro', pw - margin, 11, { align: 'right' });
+  }
+
+  function drawFooter() {
+    const fy = ph - footerH;
+    doc.setDrawColor(224, 224, 224);
+    doc.line(margin, fy, pw - margin, fy);
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Gerado por IS Taxa de Esforço | ' + getFormattedDate() + ' | www.investesuite.com', margin, fy + 6);
+    doc.text('Página ' + pageNum, pw - margin, fy + 6, { align: 'right' });
+  }
+
+  function checkPage(needed) {
+    if (y + needed > ph - footerH - 5) {
+      drawFooter();
+      doc.addPage();
+      pageNum++;
+      drawHeader();
+      y = headerH + 8;
+    }
+  }
+
+  drawHeader();
+  y = headerH + 10;
+
+  // Title
+  const title = document.getElementById('sim-title').value.trim() || 'Simulação';
+  doc.setFontSize(14);
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, margin, y);
+  y += 8;
+
+  // Results
+  const totalInc = state.incomes.reduce((s,x) => s + (x.amount||0), 0);
+  const totalExp = state.expenses.reduce((s,x) => s + (x.amount||0), 0);
+  const rate = totalInc > 0 ? (totalExp / totalInc * 100) : 0;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(76, 175, 80);
+  doc.text('Taxa de Esforço: ' + rate.toFixed(1) + '%', margin, y);
+  y += 6;
+  doc.setTextColor(80, 80, 80);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Total Rendimentos: ' + formatCurrency(totalInc), margin, y); y += 5;
+  doc.text('Total Encargos: ' + formatCurrency(totalExp), margin, y); y += 5;
+  doc.text('Disponível: ' + formatCurrency(Math.max(totalInc - totalExp, 0)), margin, y); y += 8;
+
+  // Incomes table
+  checkPage(20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text('Rendimentos', margin, y); y += 5;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  state.incomes.forEach(inc => {
+    checkPage(6);
+    doc.setTextColor(80, 80, 80);
+    doc.text((inc.label || 'Rendimento'), margin + 2, y);
+    doc.text(formatCurrency(inc.amount || 0), margin + cw, y, { align: 'right' });
+    y += 5;
+  });
+  y += 4;
+
+  // Expenses table
+  checkPage(20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text('Encargos Financeiros', margin, y); y += 5;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  state.expenses.forEach(exp => {
+    checkPage(6);
+    doc.setTextColor(80, 80, 80);
+    doc.text((exp.label || 'Encargo'), margin + 2, y);
+    doc.text(formatCurrency(exp.amount || 0), margin + cw, y, { align: 'right' });
+    y += 5;
+  });
+  y += 6;
+
+  // Charts (small)
+  const chartIds = ['gaugeCanvas', 'doughnutChart', 'barChart'];
+  chartIds.forEach(id => {
+    checkPage(55);
+    const cvs = document.getElementById(id);
+    if (cvs) {
+      try {
+        const imgData = cvs.toDataURL('image/png');
+        const ratio = cvs.width / cvs.height;
+        const imgW = Math.min(80, cw * 0.45);
+        const imgH = imgW / ratio;
+        doc.addImage(imgData, 'PNG', margin, y, imgW, imgH);
+        y += imgH + 6;
+      } catch(e) {}
+    }
+  });
+
+  drawFooter();
+  doc.save('IS_Taxa_Esforco_' + new Date().toISOString().slice(0,10) + '.pdf');
+  showToast('PDF exportado', 'success');
+}
+
+// ---- ELEMENT SDK ----
+const defaultConfig = {
+  app_title: 'IS Taxa de Esforço',
+  app_description: 'Calculadora de Taxa de Esforço Financeiro para a CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  document.body.style.backgroundColor = bg;
+  document.querySelectorAll('.card').forEach(el => el.style.backgroundColor = surface);
+  document.querySelectorAll('h1,h2,h3,h4,p,span,li,label,td').forEach(el => { if(!el.closest('.badge') && !el.closest('.btn-primary') && !el.closest('.btn-danger') && !el.closest('.btn-success')) el.style.color = text; });
+  document.querySelectorAll('.btn-primary').forEach(el => el.style.backgroundColor = primary);
+  document.querySelectorAll('.btn-success, .badge-green').forEach(el => { if(el.classList.contains('btn-success')) el.style.backgroundColor = secondary; });
+
+  const fontStack = font + ', Inter, sans-serif';
+  document.body.style.fontFamily = fontStack;
+  document.body.style.fontSize = fontSize + 'px';
+
+  const titleEl = document.getElementById('header-title');
+  const descEl = document.getElementById('header-desc');
+  if (titleEl) titleEl.textContent = config.app_title || defaultConfig.app_title;
+  if (descEl) descEl.textContent = config.app_description || defaultConfig.app_description;
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+}
+
+// ---- INIT ----
+load();
+document.getElementById('sim-title').value = state.simTitle || '';
+document.getElementById('sim-title').addEventListener('input', function() { state.simTitle = this.value; save(); });
+renderIncomes();
+renderExpenses();
+calculate();
+updateConverterSelects();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddbd61000821b23',t:'MTc3Mzc0ODgxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

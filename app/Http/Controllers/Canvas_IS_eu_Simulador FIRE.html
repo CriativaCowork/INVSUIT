@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador FIRE</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#F8F9FA;color:#212529}
+.app-wrapper{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.header-fixed{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.tabs-fixed{position:sticky;top:0;z-index:45;background:#fff;border-bottom:1px solid #E0E0E0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.tabs-fixed::-webkit-scrollbar{height:3px}
+.tabs-fixed::-webkit-scrollbar-thumb{background:#E0E0E0;border-radius:3px}
+.tab-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;font-weight:500;color:#666;border-bottom:2px solid transparent;transition:all .2s ease;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5;background:#F0F7FF}
+.tab-btn.active{color:#66CFF5;border-bottom:2px solid #66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+.content-area{flex:1;overflow-y:auto;padding:16px 20px 80px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:12px;transition:all .2s ease;position:relative;border-left:3px solid #66CFF5}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,0.15)}
+.card-green{border-left-color:#4CAF50}
+.card-orange{border-left-color:#FF9800}
+.card-red{border-left-color:#F44336}
+.card-gold{border-left-color:#FFC107}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;border:none}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#F8F9FA;color:#333;border:1px solid #E0E0E0}
+.btn-secondary:hover{background:#E0E0E0}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-gold{background:#FFC107;color:#333}
+.btn-gold:hover{background:#FFA000}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s ease;background:#fff}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,0.15)}
+.label{display:block;font-size:12px;font-weight:500;color:#666;margin-bottom:4px}
+.select-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff;cursor:pointer}
+.select-field:focus{outline:none;border-color:#66CFF5}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-red{background:#FFEBEE;color:#F44336}
+.badge-orange{background:#FFF3E0;color:#FF9800}
+.badge-gold{background:#FFF8E1;color:#F57C00}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:10px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.chart-container{position:relative;width:100%;min-height:200px}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5;background:#fff;border:1px solid #E0E0E0;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;color:#666;transition:all .2s ease;display:flex;align-items:center;gap:3px}
+.chart-export-btn:hover{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.scenario-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:11px;background:#E0F4FD;color:#66CFF5;cursor:pointer;transition:all .2s ease}
+.scenario-tag:hover{background:#66CFF5;color:#fff}
+.fire-meter{height:12px;border-radius:6px;background:#E0E0E0;overflow:hidden;position:relative}
+.fire-meter-fill{height:100%;border-radius:6px;transition:width .5s ease;background:linear-gradient(90deg,#F44336,#FF9800,#FFC107,#4CAF50)}
+.editable-el{transition:all .2s ease}
+.number-result{font-size:28px;font-weight:700;color:#66CFF5;line-height:1.2}
+.number-sub{font-size:12px;color:#888;font-weight:400}
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.confirm-inline{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#FFF3E0;border-radius:6px;font-size:12px}
+.section-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-title i{width:18px;height:18px;color:#66CFF5}
+.export-hidden{/* marker class for export hiding */}
+.help-card{background:#F0F7FF;border:1px solid #BBDEFB;border-radius:8px;padding:14px;margin-bottom:10px;border-left:3px solid #66CFF5}
+.help-card h4{font-size:14px;font-weight:600;color:#66CFF5;margin-bottom:6px}
+.help-card p{font-size:13px;color:#555;line-height:1.6}
+.template-card{border:1px solid #E0E0E0;border-radius:8px;padding:14px;cursor:pointer;transition:all .2s ease;background:#fff}
+.template-card:hover{border-color:#66CFF5;box-shadow:0 2px 8px rgba(30,136,229,0.1)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi-card{background:#fff;border:1px solid #E0E0E0;border-radius:8px;padding:12px;text-align:center;border-top:3px solid #66CFF5}
+.kpi-card .kpi-value{font-size:20px;font-weight:700;color:#66CFF5}
+.kpi-card .kpi-label{font-size:11px;color:#888;margin-top:2px}
+.kpi-card.kpi-green{border-top-color:#4CAF50}
+.kpi-card.kpi-green .kpi-value{color:#4CAF50}
+.kpi-card.kpi-gold{border-top-color:#FFC107}
+.kpi-card.kpi-gold .kpi-value{color:#F57C00}
+.kpi-card.kpi-red{border-top-color:#F44336}
+.kpi-card.kpi-red .kpi-value{color:#F44336}
+.inline-edit-title{border:none;background:transparent;font-size:18px;font-weight:700;color:#212529;font-family:'Inter',sans-serif;width:100%;padding:2px 0}
+.inline-edit-title:focus{outline:none;border-bottom:2px solid #66CFF5}
+.tab-panel-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+</style>
+  <script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrapper" id="appWrapper"><!-- HEADER -->
+   <header class="header-fixed" id="appHeader">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+     <div>
+      <h1 id="mainTitle" style="display: none; display: none; font-size:18px;font-weight:700;color:#212529;display:flex;align-items:center;gap:8px"><span style="background:#66CFF5;color:#fff;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:600">IS</span> Simulador FIRE</h1>
+      <p id="mainDesc" style="display: none; display: none; font-size:12px;color:#888;margin-top:2px">Independência Financeira e Reforma Antecipada para a CPLP</p>
+     </div>
+     <div class="export-hidden" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i> JSON</button> <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"> <button class="btn btn-secondary btn-sm" onclick="exportAppImage()" title="Imagem"><i data-lucide="image" style="width:14px;height:14px"></i> IMG</button> <button class="btn btn-primary btn-sm" onclick="exportPDF()" title="PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i> PDF</button>
+     </div>
+    </div>
+   </header><!-- TABS -->
+   <nav class="tabs-fixed" id="tabsNav"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator"></i> Simulador</button> <button class="tab-btn" data-tab="resultados" onclick="switchTab('resultados')"><i data-lucide="bar-chart-3"></i> Resultados</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins"></i> Moedas</button> <button class="tab-btn" data-tab="guia" onclick="switchTab('guia')"><i data-lucide="book-open"></i> Guia</button>
+   </nav><!-- CONTENT -->
+   <div class="content-area" id="contentArea"><!-- TAB: SIMULADOR -->
+    <div class="tab-content active" id="tab-simulador">
+     <div class="filter-bar export-hidden"><input type="text" class="input-field" style="max-width:280px" placeholder="Filtrar campos..." id="filterSimulador" oninput="filterFields('simulador')"> <button class="btn btn-success btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i> Guardar Cenário</button> <button class="btn btn-gold btn-sm" onclick="runSimulation()"><i data-lucide="play" style="width:14px;height:14px"></i> Simular</button>
+     </div><!-- Title Assignment -->
+     <div class="card" data-filter="título nome simulação"><label class="label">Título da Simulação</label> <input type="text" class="input-field editable-el export-hidden" id="simTitle" placeholder="Ex: Plano FIRE 2030" value="" oninput="markDirty()"> <span id="simTitleDisplay" style="font-weight:600;font-size:15px;display:none"></span>
+     </div><!-- Personal Info -->
+     <div class="card" data-filter="idade atual reforma pessoal">
+      <div class="section-title">
+       <i data-lucide="user"></i> Dados Pessoais
+      </div>
+      <div class="grid-2">
+       <div><label class="label" for="age">Idade Atual</label> <input type="number" class="input-field" id="age" value="30" min="18" max="80" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="retireAge">Idade de Reforma Desejada</label> <input type="number" class="input-field" id="retireAge" value="50" min="25" max="80" oninput="markDirty()">
+       </div>
+      </div>
+     </div><!-- Financial -->
+     <div class="card card-green" data-filter="rendimento salário poupança investimento financeiro">
+      <div class="section-title">
+       <i data-lucide="wallet"></i> Dados Financeiros (AOA)
+      </div>
+      <div class="grid-2">
+       <div><label class="label" for="monthlyIncome">Rendimento Mensal Líquido</label> <input type="number" class="input-field" id="monthlyIncome" value="500000" min="0" step="10000" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="monthlyExpenses">Despesas Mensais</label> <input type="number" class="input-field" id="monthlyExpenses" value="300000" min="0" step="10000" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="currentSavings">Poupança Atual</label> <input type="number" class="input-field" id="currentSavings" value="2000000" min="0" step="100000" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="currentInvestments">Investimentos Atuais</label> <input type="number" class="input-field" id="currentInvestments" value="5000000" min="0" step="100000" oninput="markDirty()">
+       </div>
+      </div>
+     </div><!-- Investment Strategy -->
+     <div class="card card-gold" data-filter="retorno rendimento investimento estratégia juros inflação">
+      <div class="section-title">
+       <i data-lucide="trending-up"></i> Estratégia de Investimento
+      </div>
+      <div class="grid-3">
+       <div><label class="label" for="annualReturn">Retorno Anual Esperado (%)</label> <input type="number" class="input-field" id="annualReturn" value="8" min="0" max="30" step="0.5" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="inflationRate">Taxa de Inflação (%)</label> <input type="number" class="input-field" id="inflationRate" value="15" min="0" max="50" step="0.5" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="safeWithdraw">Taxa de Levantamento Seguro (%)</label> <input type="number" class="input-field" id="safeWithdraw" value="4" min="1" max="10" step="0.5" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="monthlySavingsRate">Taxa de Poupança Mensal (%)</label> <input type="number" class="input-field" id="monthlySavingsRate" value="40" min="0" max="100" step="1" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="incomeGrowth">Crescimento Salarial Anual (%)</label> <input type="number" class="input-field" id="incomeGrowth" value="5" min="0" max="30" step="0.5" oninput="markDirty()">
+       </div>
+       <div><label class="label" for="expenseGrowth">Crescimento Despesas Anual (%)</label> <input type="number" class="input-field" id="expenseGrowth" value="10" min="0" max="30" step="0.5" oninput="markDirty()">
+       </div>
+      </div>
+     </div><!-- FIRE Method -->
+     <div class="card card-orange" data-filter="método fire tipo lean fat coast barista">
+      <div class="section-title">
+       <i data-lucide="flame"></i> Tipo de FIRE
+      </div>
+      <div class="grid-2">
+       <div><label class="label" for="fireType">Método FIRE</label> <select class="select-field" id="fireType" onchange="markDirty()"> <option value="traditional">FIRE Tradicional (25x despesas)</option> <option value="lean">Lean FIRE (despesas mínimas)</option> <option value="fat">Fat FIRE (estilo confortável)</option> <option value="coast">Coast FIRE (parar de investir)</option> <option value="barista">Barista FIRE (renda parcial)</option> </select>
+       </div>
+       <div><label class="label" for="fireMultiplier">Multiplicador FIRE</label> <input type="number" class="input-field" id="fireMultiplier" value="25" min="10" max="40" step="1" oninput="markDirty()">
+       </div>
+      </div>
+      <div style="margin-top:8px"><label class="label" for="additionalIncome">Renda Adicional na Reforma (mensal AOA)</label> <input type="number" class="input-field" id="additionalIncome" value="0" min="0" step="10000" oninput="markDirty()"> <span style="font-size:11px;color:#888">Para Barista FIRE: trabalho a tempo parcial</span>
+      </div>
+     </div>
+     <div style="text-align:center;padding:12px 0" class="export-hidden"><button class="btn btn-primary" onclick="runSimulation()" style="padding:12px 32px;font-size:15px;font-weight:600"> <i data-lucide="zap" style="width:18px;height:18px"></i> Calcular FIRE </button>
+     </div>
+    </div><!-- TAB: RESULTADOS -->
+    <div class="tab-content" id="tab-resultados">
+     <div class="filter-bar export-hidden"><input type="text" class="input-field" style="max-width:280px" placeholder="Filtrar resultados..." id="filterResultados" oninput="filterFields('resultados')">
+     </div>
+     <div id="resultsEmpty" style="text-align:center;padding:40px;color:#999"><i data-lucide="bar-chart-3" style="width:48px;height:48px;color:#E0E0E0;margin:0 auto 12px;display:block"></i>
+      <p style="font-size:14px">Execute uma simulação para ver os resultados</p>
+     </div>
+     <div id="resultsContent" style="display:none"><!-- KPIs -->
+      <div class="kpi-grid" id="kpiGrid" data-filter="kpi indicadores resumo">
+      </div><!-- FIRE Progress -->
+      <div class="card" style="margin-top:12px" data-filter="progresso fire barra">
+       <div class="section-title">
+        <i data-lucide="target"></i> Progresso FIRE
+       </div>
+       <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:4px"><span>Atual</span> <span id="fireProgressPct">0%</span> <span>Meta</span>
+       </div>
+       <div class="fire-meter">
+        <div class="fire-meter-fill" id="fireMeterFill" style="width:0%"></div>
+       </div>
+       <p style="font-size:12px;color:#888;margin-top:6px" id="fireProgressText"></p>
+      </div><!-- Charts -->
+      <div class="grid-2" style="margin-top:12px">
+       <div class="card" data-filter="gráfico patrimônio evolução crescimento">
+        <div class="section-title">
+         <i data-lucide="trending-up"></i> Evolução do Património
+        </div>
+        <div class="chart-container"><button class="chart-export-btn export-hidden" onclick="exportChartImage('wealthChart')"><i data-lucide="image" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="wealthChart"></canvas>
+        </div>
+       </div>
+       <div class="card" data-filter="gráfico poupança investimento composição alocação">
+        <div class="section-title">
+         <i data-lucide="pie-chart"></i> Composição Atual
+        </div>
+        <div class="chart-container"><button class="chart-export-btn export-hidden" onclick="exportChartImage('compositionChart')"><i data-lucide="image" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="compositionChart"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="grid-2" style="margin-top:12px">
+       <div class="card" data-filter="gráfico receita despesa balanço mensal">
+        <div class="section-title">
+         <i data-lucide="bar-chart-3"></i> Receita vs Despesa Anual
+        </div>
+        <div class="chart-container"><button class="chart-export-btn export-hidden" onclick="exportChartImage('incomeExpenseChart')"><i data-lucide="image" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="incomeExpenseChart"></canvas>
+        </div>
+       </div>
+       <div class="card" data-filter="gráfico fire número meta anos">
+        <div class="section-title">
+         <i data-lucide="flame"></i> FIRE Number vs Património
+        </div>
+        <div class="chart-container"><button class="chart-export-btn export-hidden" onclick="exportChartImage('fireNumberChart')"><i data-lucide="image" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="fireNumberChart"></canvas>
+        </div>
+       </div>
+      </div><!-- Detailed Table -->
+      <div class="card" style="margin-top:12px" data-filter="tabela detalhe anual projeção">
+       <div class="section-title">
+        <i data-lucide="table"></i> Projeção Anual Detalhada
+       </div>
+       <div style="overflow-x:auto">
+        <table id="projectionTable" style="width:100%;border-collapse:collapse;font-size:12px">
+         <thead>
+          <tr style="background:#F8F9FA;border-bottom:2px solid #E0E0E0">
+           <th style="padding:8px;text-align:left">Ano</th>
+           <th style="padding:8px;text-align:left">Idade</th>
+           <th style="padding:8px;text-align:right">Rendimento</th>
+           <th style="padding:8px;text-align:right">Despesas</th>
+           <th style="padding:8px;text-align:right">Poupança</th>
+           <th style="padding:8px;text-align:right">Património</th>
+           <th style="padding:8px;text-align:right">FIRE Number</th>
+           <th style="padding:8px;text-align:center">Status</th>
+          </tr>
+         </thead>
+         <tbody id="projectionBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: CENÁRIOS -->
+    <div class="tab-content" id="tab-cenarios">
+     <div class="filter-bar export-hidden"><input type="text" class="input-field" style="max-width:280px" placeholder="Filtrar cenários..." id="filterCenarios" oninput="filterScenarios()"> <button class="btn btn-primary btn-sm" onclick="switchTab('simulador')"><i data-lucide="plus" style="width:14px;height:14px"></i> Novo Cenário</button>
+     </div>
+     <div id="scenariosEmpty" style="text-align:center;padding:40px;color:#999"><i data-lucide="layers" style="width:48px;height:48px;color:#E0E0E0;margin:0 auto 12px;display:block"></i>
+      <p style="font-size:14px">Nenhum cenário guardado ainda</p>
+     </div>
+     <div id="scenariosList"></div><!-- Templates -->
+     <div style="margin-top:24px">
+      <div class="section-title">
+       <i data-lucide="book-open"></i> Templates de Aprendizagem
+      </div>
+      <div class="grid-2" id="templatesGrid">
+       <div class="template-card" onclick="loadTemplate('conservative')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="badge badge-green">Conservador</span> <span style="font-size:12px;font-weight:600">Lean FIRE</span>
+        </div>
+        <p style="font-size:12px;color:#666">Despesas mínimas, retorno de 6%, alta taxa de poupança. Ideal para quem quer reforma cedo com estilo simples.</p>
+       </div>
+       <div class="template-card" onclick="loadTemplate('moderate')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="badge badge-blue">Moderado</span> <span style="font-size:12px;font-weight:600">FIRE Tradicional</span>
+        </div>
+        <p style="font-size:12px;color:#666">Equilíbrio entre poupança e conforto. Retorno de 8%, multiplicador 25x.</p>
+       </div>
+       <div class="template-card" onclick="loadTemplate('aggressive')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="badge badge-orange">Agressivo</span> <span style="font-size:12px;font-weight:600">Fat FIRE</span>
+        </div>
+        <p style="font-size:12px;color:#666">Estilo de vida confortável na reforma. Retorno de 10%, patrimônio elevado.</p>
+       </div>
+       <div class="template-card" onclick="loadTemplate('barista')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="badge badge-gold">Parcial</span> <span style="font-size:12px;font-weight:600">Barista FIRE</span>
+        </div>
+        <p style="font-size:12px;color:#666">Trabalho parcial após FIRE. Renda complementar com menor patrimônio necessário.</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: MOEDAS -->
+    <div class="tab-content" id="tab-moedas">
+     <div class="card">
+      <div class="section-title">
+       <i data-lucide="coins"></i> Taxas de Câmbio (Base: AOA)
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:12px">Configure as taxas de câmbio das moedas da CPLP e USD em relação ao Kwanza angolano.</p>
+      <div id="currencyList"></div>
+      <div class="export-hidden" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="addCurrency()"><i data-lucide="plus" style="width:14px;height:14px"></i> Adicionar Moeda</button> <button class="btn btn-secondary btn-sm" onclick="resetCurrencies()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Repor Padrão</button>
+      </div>
+     </div><!-- Currency Converter -->
+     <div class="card card-gold" style="margin-top:12px">
+      <div class="section-title">
+       <i data-lucide="repeat"></i> Conversor Rápido
+      </div>
+      <div class="grid-3">
+       <div><label class="label" for="convertAmount">Montante (AOA)</label> <input type="number" class="input-field" id="convertAmount" value="1000000" min="0" step="1000" oninput="convertCurrencies()">
+       </div>
+      </div>
+      <div id="conversionResults" style="margin-top:12px"></div>
+     </div>
+    </div><!-- TAB: GUIA -->
+    <div class="tab-content" id="tab-guia">
+     <div class="help-card">
+      <h4><i data-lucide="flame" style="width:16px;height:16px;display:inline"></i> O que é FIRE?</h4>
+      <p>FIRE significa <strong>Financial Independence, Retire Early</strong> (Independência Financeira e Reforma Antecipada). É um movimento que visa acumular património suficiente para viver dos rendimentos dos investimentos sem necessidade de trabalhar.</p>
+     </div>
+     <div class="help-card">
+      <h4><i data-lucide="calculator" style="width:16px;height:16px;display:inline"></i> Como usar o simulador</h4>
+      <p>1. Preencha os seus dados pessoais e financeiros no separador <strong>Simulador</strong>.<br>
+        2. Escolha o tipo de FIRE e ajuste os parâmetros.<br>
+        3. Clique em <strong>Calcular FIRE</strong> para ver os resultados.<br>
+        4. Guarde cenários diferentes para comparar estratégias.<br>
+        5. Use o separador <strong>Moedas</strong> para converter valores.</p>
+     </div>
+     <div class="help-card">
+      <h4><i data-lucide="layers" style="width:16px;height:16px;display:inline"></i> Tipos de FIRE</h4>
+      <p><strong>FIRE Tradicional:</strong> Acumular 25x as despesas anuais. Levantamento de 4% ao ano.<br><strong>Lean FIRE:</strong> Versão minimalista com despesas reduzidas ao mínimo.<br><strong>Fat FIRE:</strong> Versão confortável com patrimônio maior para manter estilo de vida elevado.<br><strong>Coast FIRE:</strong> Parar de investir ativamente e deixar os juros compostos trabalharem.<br><strong>Barista FIRE:</strong> Semi-reforma com trabalho parcial para complementar rendimentos.</p>
+     </div>
+     <div class="help-card">
+      <h4><i data-lucide="shield" style="width:16px;height:16px;display:inline"></i> Regra dos 4%</h4>
+      <p>A regra dos 4% sugere que pode retirar 4% do seu portfolio anualmente sem esgotar o capital durante 30+ anos. Isto significa que precisa de 25x as suas despesas anuais. Em economias com alta inflação (como Angola), considere taxas mais conservadoras (3-3.5%).</p>
+     </div>
+     <div class="help-card">
+      <h4><i data-lucide="target" style="width:16px;height:16px;display:inline"></i> Melhores Práticas</h4>
+      <p>• <strong>Comece cedo:</strong> O tempo é o maior aliado dos juros compostos.<br>
+        • <strong>Aumente a taxa de poupança:</strong> Cada 1% extra faz diferença significativa.<br>
+        • <strong>Diversifique:</strong> Não coloque todo o dinheiro num só investimento.<br>
+        • <strong>Considere a inflação:</strong> Em países da CPLP a inflação pode ser elevada.<br>
+        • <strong>Reveja regularmente:</strong> Atualize a simulação com dados reais pelo menos trimestralmente.<br>
+        • <strong>Fundo de emergência:</strong> Mantenha 6-12 meses de despesas antes de investir agressivamente.</p>
+     </div>
+     <div class="help-card">
+      <h4><i data-lucide="globe" style="width:16px;height:16px;display:inline"></i> FIRE na CPLP</h4>
+      <p>O movimento FIRE tem desafios específicos nos países lusófonos:<br>
+        • <strong>Inflação elevada:</strong> Angola e Moçambique têm inflação de 2 dígitos. Use retornos reais (retorno - inflação).<br>
+        • <strong>Mercados menos desenvolvidos:</strong> Considere investimentos internacionais via ETFs.<br>
+        • <strong>Volatilidade cambial:</strong> Diversifique em moedas fortes (USD, EUR).<br>
+        • <strong>Portugal e Brasil:</strong> Mercados mais acessíveis com mais opções de investimento.</p>
+     </div>
+    </div>
+   </div><!-- end content-area --> <!-- Toast -->
+   <div class="toast" id="toast"></div><!-- Modal -->
+   <div class="modal-overlay" id="modal">
+    <div class="modal-box" id="modalContent"></div>
+   </div>
+  </div><!-- end app-wrapper -->
+  <script>
+// ========== STATE ==========
+let state = {
+  scenarios: [],
+  currencies: [],
+  lastSimulation: null,
+  currentConfig: {}
+};
+let charts = {};
+let isDirty = false;
+
+// Default currencies CPLP + USD
+const DEFAULT_CURRENCIES = [
+  {code:'USD',name:'Dólar Americano',rate:0.0012,flag:'🇺🇸'},
+  {code:'EUR',name:'Euro',rate:0.0011,flag:'🇪🇺'},
+  {code:'BRL',name:'Real Brasileiro',rate:0.006,flag:'🇧🇷'},
+  {code:'CVE',name:'Escudo Cabo-verdiano',rate:0.12,flag:'🇨🇻'},
+  {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:0.72,flag:'🇬🇼'},
+  {code:'MZN',name:'Metical Moçambicano',rate:0.077,flag:'🇲🇿'},
+  {code:'STN',name:'Dobra (São Tomé)',rate:0.027,flag:'🇸🇹'},
+  {code:'MOP',name:'Pataca de Macau',rate:0.0097,flag:'🇲🇴'},
+  {code:'TPE',name:'Dólar Timorense (USD)',rate:0.0012,flag:'🇹🇱'}
+];
+
+// ========== INIT ==========
+function init() {
+  loadState();
+  renderCurrencies();
+  convertCurrencies();
+  renderScenarios();
+  lucide.createIcons();
+}
+
+// ========== LOCAL STORAGE ==========
+function saveState() {
+  try {
+    localStorage.setItem('is_fire_state', JSON.stringify(state));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const saved = localStorage.getItem('is_fire_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+    if (!state.currencies || state.currencies.length === 0) {
+      state.currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+    }
+  } catch(e) {
+    state.currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+  }
+}
+
+// ========== TABS ==========
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tabId);
+  if (tabEl) tabEl.classList.add('active');
+  const btn = document.querySelector(`[data-tab="${tabId}"]`);
+  if (btn) btn.classList.add('active');
+}
+
+// ========== FILTER ==========
+function filterFields(tabName) {
+  const input = document.getElementById('filter' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+  if (!input) return;
+  const query = input.value.toLowerCase();
+  const tab = document.getElementById('tab-' + tabName);
+  tab.querySelectorAll('.card[data-filter]').forEach(card => {
+    const filterText = (card.getAttribute('data-filter') || '').toLowerCase();
+    const content = card.textContent.toLowerCase();
+    card.style.display = (filterText.includes(query) || content.includes(query) || !query) ? '' : 'none';
+  });
+}
+
+function filterScenarios() {
+  const query = (document.getElementById('filterCenarios')?.value || '').toLowerCase();
+  document.querySelectorAll('#scenariosList .card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(query) || !query ? '' : 'none';
+  });
+}
+
+// ========== FORMAT ==========
+function fmt(n) {
+  if (n == null || isNaN(n)) return '0';
+  return new Intl.NumberFormat('pt-AO', {maximumFractionDigits: 0}).format(n);
+}
+function fmtCur(n) {
+  return fmt(n) + ' AOA';
+}
+function fmtPct(n) {
+  return (n || 0).toFixed(1) + '%';
+}
+
+// ========== SIMULATION ==========
+function markDirty() { isDirty = true; }
+
+function getInputs() {
+  return {
+    title: document.getElementById('simTitle')?.value || '',
+    age: parseInt(document.getElementById('age')?.value) || 30,
+    retireAge: parseInt(document.getElementById('retireAge')?.value) || 50,
+    monthlyIncome: parseFloat(document.getElementById('monthlyIncome')?.value) || 0,
+    monthlyExpenses: parseFloat(document.getElementById('monthlyExpenses')?.value) || 0,
+    currentSavings: parseFloat(document.getElementById('currentSavings')?.value) || 0,
+    currentInvestments: parseFloat(document.getElementById('currentInvestments')?.value) || 0,
+    annualReturn: parseFloat(document.getElementById('annualReturn')?.value) || 8,
+    inflationRate: parseFloat(document.getElementById('inflationRate')?.value) || 15,
+    safeWithdraw: parseFloat(document.getElementById('safeWithdraw')?.value) || 4,
+    monthlySavingsRate: parseFloat(document.getElementById('monthlySavingsRate')?.value) || 40,
+    incomeGrowth: parseFloat(document.getElementById('incomeGrowth')?.value) || 5,
+    expenseGrowth: parseFloat(document.getElementById('expenseGrowth')?.value) || 10,
+    fireType: document.getElementById('fireType')?.value || 'traditional',
+    fireMultiplier: parseFloat(document.getElementById('fireMultiplier')?.value) || 25,
+    additionalIncome: parseFloat(document.getElementById('additionalIncome')?.value) || 0
+  };
+}
+
+function setInputs(data) {
+  if (!data) return;
+  Object.keys(data).forEach(key => {
+    const el = document.getElementById(key === 'title' ? 'simTitle' : key);
+    if (el) el.value = data[key] ?? el.value;
+  });
+}
+
+function runSimulation() {
+  const inp = getInputs();
+  const years = inp.retireAge - inp.age;
+  if (years <= 0) { showToast('A idade de reforma deve ser maior que a idade atual', 'error'); return; }
+
+  const annualExpenses = inp.monthlyExpenses * 12;
+  const fireNumber = annualExpenses * inp.fireMultiplier;
+  const realReturn = ((1 + inp.annualReturn/100) / (1 + inp.inflationRate/100) - 1);
+
+  let patrimony = inp.currentSavings + inp.currentInvestments;
+  let income = inp.monthlyIncome;
+  let expenses = inp.monthlyExpenses;
+  let projection = [];
+  let fireReached = false;
+  let fireYear = null;
+
+  for (let y = 0; y <= years + 10; y++) {
+    const yearAge = inp.age + y;
+    const annualIncome = income * 12;
+    const annualExp = expenses * 12;
+    const savings = (income - expenses) * 12;
+    const currentFireNumber = annualExp * inp.fireMultiplier;
+
+    if (y > 0) {
+      patrimony = patrimony * (1 + inp.annualReturn/100) + Math.max(0, savings);
+      income *= (1 + inp.incomeGrowth/100);
+      expenses *= (1 + inp.expenseGrowth/100);
+    }
+
+    const isFire = patrimony >= currentFireNumber;
+    if (isFire && !fireReached) { fireReached = true; fireYear = y; }
+
+    projection.push({
+      year: y,
+      age: yearAge,
+      annualIncome: annualIncome,
+      annualExpenses: annualExp,
+      annualSavings: savings,
+      patrimony: patrimony,
+      fireNumber: currentFireNumber,
+      isFire: isFire
+    });
+  }
+
+  const result = {
+    inputs: inp,
+    projection,
+    fireNumber,
+    fireReached,
+    fireYear,
+    fireAge: fireReached ? inp.age + fireYear : null,
+    yearsToFire: fireYear,
+    realReturn,
+    currentPatrimony: inp.currentSavings + inp.currentInvestments,
+    savingsRate: inp.monthlyIncome > 0 ? ((inp.monthlyIncome - inp.monthlyExpenses) / inp.monthlyIncome * 100) : 0,
+    monthlyPassiveIncome: patrimony * (inp.safeWithdraw/100) / 12
+  };
+
+  state.lastSimulation = result;
+  saveState();
+  renderResults(result);
+  switchTab('resultados');
+  showToast('Simulação concluída com sucesso!', 'success');
+}
+
+// ========== RENDER RESULTS ==========
+function renderResults(result) {
+  document.getElementById('resultsEmpty').style.display = 'none';
+  document.getElementById('resultsContent').style.display = 'block';
+
+  const p = result.projection;
+  const last = p[p.length - 1];
+  const progressPct = Math.min(100, (result.currentPatrimony / result.fireNumber) * 100);
+
+  // KPIs
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-value">${fmtCur(result.fireNumber)}</div><div class="kpi-label">FIRE Number</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-value">${result.fireReached ? result.fireAge + ' anos' : 'N/A'}</div><div class="kpi-label">Idade FIRE</div></div>
+    <div class="kpi-card kpi-gold"><div class="kpi-value">${result.fireReached ? result.yearsToFire + ' anos' : '∞'}</div><div class="kpi-label">Anos até FIRE</div></div>
+    <div class="kpi-card"><div class="kpi-value">${fmtPct(result.savingsRate)}</div><div class="kpi-label">Taxa de Poupança</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-value">${fmtCur(result.monthlyPassiveIncome)}</div><div class="kpi-label">Renda Passiva/Mês</div></div>
+    <div class="kpi-card ${result.realReturn >= 0 ? '' : 'kpi-red'}"><div class="kpi-value">${fmtPct(result.realReturn * 100)}</div><div class="kpi-label">Retorno Real</div></div>
+  `;
+
+  // Fire Meter
+  document.getElementById('fireMeterFill').style.width = progressPct + '%';
+  document.getElementById('fireProgressPct').textContent = progressPct.toFixed(1) + '%';
+  document.getElementById('fireProgressText').textContent = result.fireReached
+    ? `Parabéns! Pode atingir FIRE aos ${result.fireAge} anos (em ${result.yearsToFire} anos).`
+    : `Ainda faltam ${fmtCur(result.fireNumber - result.currentPatrimony)} para atingir o FIRE Number.`;
+
+  // Projection Table
+  const tbody = document.getElementById('projectionBody');
+  tbody.innerHTML = p.map(r => `
+    <tr style="border-bottom:1px solid #F0F0F0;${r.isFire ? 'background:#E8F5E9' : ''}">
+      <td style="padding:6px 8px">${r.year}</td>
+      <td style="padding:6px 8px">${r.age}</td>
+      <td style="padding:6px 8px;text-align:right">${fmt(r.annualIncome)}</td>
+      <td style="padding:6px 8px;text-align:right">${fmt(r.annualExpenses)}</td>
+      <td style="padding:6px 8px;text-align:right;color:${r.annualSavings >= 0 ? '#4CAF50' : '#F44336'}">${fmt(r.annualSavings)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600">${fmt(r.patrimony)}</td>
+      <td style="padding:6px 8px;text-align:right">${fmt(r.fireNumber)}</td>
+      <td style="padding:6px 8px;text-align:center">${r.isFire ? '<span class="badge badge-green">FIRE</span>' : '<span class="badge badge-orange">A caminho</span>'}</td>
+    </tr>
+  `).join('');
+
+  renderCharts(result);
+  lucide.createIcons();
+}
+
+// ========== CHARTS ==========
+function destroyChart(name) {
+  if (charts[name]) { charts[name].destroy(); charts[name] = null; }
+}
+
+function renderCharts(result) {
+  const p = result.projection;
+  const labels = p.map(r => r.age);
+
+  // Wealth Chart
+  destroyChart('wealthChart');
+  const wCtx = document.getElementById('wealthChart').getContext('2d');
+  charts['wealthChart'] = new Chart(wCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Património',
+        data: p.map(r => r.patrimony),
+        borderColor: '#66CFF5',
+        backgroundColor: 'rgba(30,136,229,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: true, position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } },
+      scales: {
+        y: { ticks: { callback: v => fmt(v), font: { family: 'Inter', size: 10 } } },
+        x: { ticks: { font: { family: 'Inter', size: 10 } } }
+      }
+    }
+  });
+
+  // Composition Donut
+  destroyChart('compositionChart');
+  const cCtx = document.getElementById('compositionChart').getContext('2d');
+  const totalComp = result.inputs.currentSavings + result.inputs.currentInvestments;
+  const savPct = totalComp > 0 ? (result.inputs.currentSavings / totalComp * 100) : 50;
+  const invPct = totalComp > 0 ? (result.inputs.currentInvestments / totalComp * 100) : 50;
+  charts['compositionChart'] = new Chart(cCtx, {
+    type: 'doughnut',
+    data: {
+      labels: [`Poupança (${savPct.toFixed(1)}%)`, `Investimentos (${invPct.toFixed(1)}%)`],
+      datasets: [{
+        data: [result.inputs.currentSavings, result.inputs.currentInvestments],
+        backgroundColor: ['#FFC107', '#66CFF5'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
+        tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + fmtCur(ctx.raw); } } }
+      }
+    }
+  });
+
+  // Income vs Expense Bar
+  destroyChart('incomeExpenseChart');
+  const ieCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+  const barData = p.filter((_, i) => i % 2 === 0 || i === p.length - 1);
+  charts['incomeExpenseChart'] = new Chart(ieCtx, {
+    type: 'bar',
+    data: {
+      labels: barData.map(r => r.age),
+      datasets: [
+        { label: 'Receita', data: barData.map(r => r.annualIncome), backgroundColor: '#4CAF50' },
+        { label: 'Despesas', data: barData.map(r => r.annualExpenses), backgroundColor: '#F44336' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } },
+      scales: {
+        y: { ticks: { callback: v => fmt(v), font: { family: 'Inter', size: 10 } } },
+        x: { ticks: { font: { family: 'Inter', size: 10 } } }
+      }
+    }
+  });
+
+  // FIRE Number vs Patrimony
+  destroyChart('fireNumberChart');
+  const fnCtx = document.getElementById('fireNumberChart').getContext('2d');
+  charts['fireNumberChart'] = new Chart(fnCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Património', data: p.map(r => r.patrimony), borderColor: '#66CFF5', tension: 0.3, pointRadius: 2 },
+        { label: 'FIRE Number', data: p.map(r => r.fireNumber), borderColor: '#F44336', borderDash: [5, 5], tension: 0.3, pointRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } },
+      scales: {
+        y: { ticks: { callback: v => fmt(v), font: { family: 'Inter', size: 10 } } },
+        x: { ticks: { font: { family: 'Inter', size: 10 } } }
+      }
+    }
+  });
+}
+
+// ========== CHART EXPORT HD ==========
+function exportChartImage(chartId) {
+  const chart = charts[chartId];
+  if (!chart) return;
+  const canvas = document.getElementById(chartId);
+  // Create HD canvas
+  const scale = 3;
+  const hdCanvas = document.createElement('canvas');
+  hdCanvas.width = canvas.width * scale;
+  hdCanvas.height = canvas.height * scale;
+  const ctx = hdCanvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+  hdCanvas.toBlob(function(blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `IS_FIRE_${chartId}_HD.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+  showToast('Gráfico HD exportado!', 'success');
+}
+
+// ========== SCENARIOS ==========
+function saveScenario() {
+  const inp = getInputs();
+  const count = state.scenarios.length + 1;
+  const scenario = {
+    id: Date.now().toString(),
+    name: inp.title || ('Cenário ' + count),
+    inputs: inp,
+    createdAt: new Date().toISOString(),
+    results: state.lastSimulation
+  };
+  state.scenarios.push(scenario);
+  saveState();
+  renderScenarios();
+  showToast('Cenário "' + scenario.name + '" guardado!', 'success');
+}
+
+function renderScenarios() {
+  const list = document.getElementById('scenariosList');
+  const empty = document.getElementById('scenariosEmpty');
+  if (state.scenarios.length === 0) {
+    empty.style.display = '';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = state.scenarios.map((s, i) => `
+    <div class="card" data-filter="${s.name}" style="cursor:default">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:600;font-size:14px">${escHtml(s.name)}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${new Date(s.createdAt).toLocaleDateString('pt-PT', {day:'2-digit',month:'long',year:'numeric'})}</div>
+          <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+            <span class="badge badge-blue">${s.inputs.fireType || 'traditional'}</span>
+            <span class="badge badge-green">${fmtPct(s.inputs.monthlySavingsRate)} poupança</span>
+            ${s.results?.fireReached ? '<span class="badge badge-green">FIRE: ' + s.results.fireAge + ' anos</span>' : '<span class="badge badge-orange">FIRE não atingido</span>'}
+          </div>
+        </div>
+        <div class="export-hidden" style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-xs" onclick="loadScenario(${i})" title="Carregar"><i data-lucide="upload" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-secondary btn-xs" onclick="cloneScenario(${i})" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-gold btn-xs" onclick="editScenarioName(${i})" title="Editar"><i data-lucide="edit" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-danger btn-xs" onclick="confirmDeleteScenario(${i})" title="Eliminar" id="delBtn${i}"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        </div>
+      </div>
+      <div id="confirmDel${i}" style="display:none" class="confirm-inline">
+        <span>Eliminar este cenário?</span>
+        <button class="btn btn-danger btn-xs" onclick="deleteScenario(${i})">Sim</button>
+        <button class="btn btn-secondary btn-xs" onclick="cancelDeleteScenario(${i})">Não</button>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(i) {
+  const s = state.scenarios[i];
+  if (!s) return;
+  setInputs(s.inputs);
+  if (s.results) { state.lastSimulation = s.results; renderResults(s.results); }
+  switchTab('simulador');
+  showToast('Cenário "' + s.name + '" carregado!', 'info');
+}
+
+function cloneScenario(i) {
+  const s = state.scenarios[i];
+  if (!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = Date.now().toString();
+  clone.name = s.name + ' (cópia)';
+  clone.createdAt = new Date().toISOString();
+  state.scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado!', 'success');
+}
+
+function editScenarioName(i) {
+  const s = state.scenarios[i];
+  if (!s) return;
+  showModal(`
+    <h3 style="font-weight:600;margin-bottom:12px">Editar Nome do Cenário</h3>
+    <input type="text" class="input-field" id="editScenarioInput" value="${escHtml(s.name)}">
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="hideModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveScenarioName(${i})">Guardar</button>
+    </div>
+  `);
+}
+
+function saveScenarioName(i) {
+  const name = document.getElementById('editScenarioInput')?.value;
+  if (name) { state.scenarios[i].name = name; saveState(); renderScenarios(); }
+  hideModal();
+  showToast('Nome atualizado!', 'success');
+}
+
+function confirmDeleteScenario(i) {
+  document.getElementById('confirmDel' + i).style.display = 'flex';
+}
+function cancelDeleteScenario(i) {
+  document.getElementById('confirmDel' + i).style.display = 'none';
+}
+function deleteScenario(i) {
+  state.scenarios.splice(i, 1);
+  saveState();
+  renderScenarios();
+  showToast('Cenário eliminado', 'error');
+}
+
+// ========== TEMPLATES ==========
+function loadTemplate(type) {
+  const templates = {
+    conservative: { title:'Lean FIRE Conservador', age:28, retireAge:45, monthlyIncome:400000, monthlyExpenses:150000, currentSavings:1000000, currentInvestments:3000000, annualReturn:6, inflationRate:15, safeWithdraw:3.5, monthlySavingsRate:62, incomeGrowth:4, expenseGrowth:8, fireType:'lean', fireMultiplier:28, additionalIncome:0 },
+    moderate: { title:'FIRE Tradicional Moderado', age:30, retireAge:50, monthlyIncome:500000, monthlyExpenses:300000, currentSavings:2000000, currentInvestments:5000000, annualReturn:8, inflationRate:15, safeWithdraw:4, monthlySavingsRate:40, incomeGrowth:5, expenseGrowth:10, fireType:'traditional', fireMultiplier:25, additionalIncome:0 },
+    aggressive: { title:'Fat FIRE Agressivo', age:25, retireAge:45, monthlyIncome:800000, monthlyExpenses:400000, currentSavings:500000, currentInvestments:2000000, annualReturn:10, inflationRate:12, safeWithdraw:3, monthlySavingsRate:50, incomeGrowth:7, expenseGrowth:8, fireType:'fat', fireMultiplier:30, additionalIncome:0 },
+    barista: { title:'Barista FIRE Parcial', age:30, retireAge:42, monthlyIncome:600000, monthlyExpenses:350000, currentSavings:1500000, currentInvestments:4000000, annualReturn:7, inflationRate:14, safeWithdraw:4, monthlySavingsRate:42, incomeGrowth:5, expenseGrowth:9, fireType:'barista', fireMultiplier:20, additionalIncome:150000 }
+  };
+  const t = templates[type];
+  if (!t) return;
+  setInputs(t);
+  switchTab('simulador');
+  showToast('Template "' + t.title + '" carregado!', 'info');
+}
+
+// ========== CURRENCIES ==========
+function renderCurrencies() {
+  const list = document.getElementById('currencyList');
+  list.innerHTML = state.currencies.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #F0F0F0;flex-wrap:wrap" data-currency="${i}">
+      <span style="font-size:20px">${c.flag}</span>
+      <div style="flex:1;min-width:120px">
+        <div style="font-weight:600;font-size:13px">${escHtml(c.code)}</div>
+        <div style="font-size:11px;color:#888">${escHtml(c.name)}</div>
+      </div>
+      <div class="export-hidden" style="display:flex;align-items:center;gap:4px">
+        <span style="font-size:12px;color:#666">1 AOA =</span>
+        <input type="number" class="input-field" style="width:100px;padding:4px 8px;font-size:12px" value="${c.rate}" step="0.0001" min="0" onchange="updateCurrencyRate(${i}, this.value)">
+        <span style="font-size:12px;color:#666">${escHtml(c.code)}</span>
+        <button class="btn btn-danger btn-xs" onclick="removeCurrency(${i})" title="Remover">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateCurrencyRate(i, val) {
+  state.currencies[i].rate = parseFloat(val) || 0;
+  saveState();
+  convertCurrencies();
+}
+
+function removeCurrency(i) {
+  state.currencies.splice(i, 1);
+  saveState();
+  renderCurrencies();
+  convertCurrencies();
+  showToast('Moeda removida', 'info');
+}
+
+function addCurrency() {
+  showModal(`
+    <h3 style="font-weight:600;margin-bottom:12px">Adicionar Moeda</h3>
+    <div class="grid-2">
+      <div><label class="label" for="newCurCode">Código</label><input type="text" class="input-field" id="newCurCode" placeholder="Ex: GBP" maxlength="4"></div>
+      <div><label class="label" for="newCurName">Nome</label><input type="text" class="input-field" id="newCurName" placeholder="Ex: Libra Esterlina"></div>
+      <div><label class="label" for="newCurRate">Taxa (1 AOA = ?)</label><input type="number" class="input-field" id="newCurRate" value="0.001" step="0.0001" min="0"></div>
+      <div><label class="label" for="newCurFlag">Emoji Bandeira</label><input type="text" class="input-field" id="newCurFlag" placeholder="🏳️" maxlength="4"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="hideModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCurrency()">Adicionar</button>
+    </div>
+  `);
+}
+
+function saveCurrency() {
+  const code = document.getElementById('newCurCode')?.value.toUpperCase();
+  const name = document.getElementById('newCurName')?.value;
+  const rate = parseFloat(document.getElementById('newCurRate')?.value) || 0;
+  const flag = document.getElementById('newCurFlag')?.value || '🏳️';
+  if (!code || !name) { showToast('Preencha todos os campos', 'error'); return; }
+  state.currencies.push({ code, name, rate, flag });
+  saveState();
+  renderCurrencies();
+  convertCurrencies();
+  hideModal();
+  showToast('Moeda adicionada!', 'success');
+}
+
+function resetCurrencies() {
+  state.currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+  saveState();
+  renderCurrencies();
+  convertCurrencies();
+  showToast('Moedas repostas ao padrão', 'info');
+}
+
+function convertCurrencies() {
+  const amount = parseFloat(document.getElementById('convertAmount')?.value) || 0;
+  const container = document.getElementById('conversionResults');
+  container.innerHTML = state.currencies.map(c => {
+    const converted = amount * c.rate;
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F0F0F0;font-size:13px">
+      <span>${c.flag} ${c.code}</span>
+      <span style="font-weight:600">${converted.toLocaleString('pt-AO', {maximumFractionDigits:2})} ${c.code}</span>
+    </div>`;
+  }).join('');
+}
+
+// ========== EXPORT JSON ==========
+function exportJSON() {
+  const data = {
+    app: 'IS Simulador FIRE',
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    state: state
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'IS_Simulador_FIRE_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Dados exportados em JSON!', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.state) {
+        state = { ...state, ...data.state };
+        saveState();
+        renderCurrencies();
+        convertCurrencies();
+        renderScenarios();
+        if (state.lastSimulation) renderResults(state.lastSimulation);
+        showToast('Dados importados com sucesso!', 'success');
+      } else {
+        showToast('Ficheiro inválido', 'error');
+      }
+    } catch(err) {
+      showToast('Erro ao importar ficheiro', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ========== EXPORT IMAGE ==========
+function exportAppImage() {
+  showToast('A gerar imagem...', 'info');
+  const wrapper = document.getElementById('appWrapper');
+  // Hide editable elements
+  const hidden = wrapper.querySelectorAll('.export-hidden');
+  hidden.forEach(el => el.style.display = 'none');
+
+  // Show title text for display
+  const titleInput = document.getElementById('simTitle');
+  const titleDisplay = document.getElementById('simTitleDisplay');
+  if (titleInput && titleDisplay) {
+    titleDisplay.textContent = titleInput.value || 'Simulação FIRE';
+    titleDisplay.style.display = 'block';
+    titleInput.style.display = 'none';
+  }
+
+  setTimeout(() => {
+    html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: -window.scrollY, height: wrapper.scrollHeight, windowHeight: wrapper.scrollHeight }).then(canvas => {
+      canvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'IS_Simulador_FIRE.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      // Restore
+      hidden.forEach(el => el.style.display = '');
+      if (titleInput && titleDisplay) { titleDisplay.style.display = 'none'; titleInput.style.display = ''; }
+      showToast('Imagem exportada!', 'success');
+    }).catch(() => {
+      hidden.forEach(el => el.style.display = '');
+      if (titleInput && titleDisplay) { titleDisplay.style.display = 'none'; titleInput.style.display = ''; }
+      showToast('Erro ao gerar imagem', 'error');
+    });
+  }, 200);
+}
+
+// ========== EXPORT PDF ==========
+function exportPDF() {
+  showToast('A gerar PDF...', 'info');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageW = 210;
+  const pageH = 297;
+  const margin = 15;
+  const contentW = pageW - margin * 2;
+  let y = 0;
+  let pageNum = 1;
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  function addHeader() {
+    doc.setFillColor(30, 136, 229);
+    doc.rect(0, 0, pageW, 18, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('IS Simulador FIRE', margin, 12);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(dateStr, pageW - margin, 12, { align: 'right' });
+    y = 24;
+  }
+
+  function addFooter() {
+    doc.setTextColor(150);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    const footerText = `Gerado por IS Simulador FIRE | ${dateStr} | www.investesuite.com`;
+    doc.text(footerText, margin, pageH - 8);
+    doc.text('Página ' + pageNum, pageW - margin, pageH - 8, { align: 'right' });
+  }
+
+  function newPage() {
+    addFooter();
+    doc.addPage();
+    pageNum++;
+    addHeader();
+  }
+
+  function checkSpace(needed) {
+    if (y + needed > pageH - 20) newPage();
+  }
+
+  addHeader();
+
+  // Title
+  const sim = state.lastSimulation;
+  doc.setTextColor(33, 37, 41);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  const simTitle = sim?.inputs?.title || 'Simulação FIRE';
+  doc.text(simTitle, margin, y);
+  y += 8;
+
+  if (sim) {
+    // KPIs
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 136, 229);
+    doc.text('Indicadores Principais', margin, y);
+    y += 6;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(66);
+    const kpis = [
+      ['FIRE Number', fmtCur(sim.fireNumber)],
+      ['Idade FIRE', sim.fireReached ? sim.fireAge + ' anos' : 'N/A'],
+      ['Anos até FIRE', sim.fireReached ? sim.yearsToFire + ' anos' : 'N/A'],
+      ['Taxa de Poupança', fmtPct(sim.savingsRate)],
+      ['Renda Passiva/Mês', fmtCur(sim.monthlyPassiveIncome)],
+      ['Retorno Real', fmtPct(sim.realReturn * 100)]
+    ];
+    kpis.forEach(([label, value]) => {
+      checkSpace(5);
+      doc.text(label + ':', margin, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(value, margin + 50, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+    });
+    y += 4;
+
+    // Inputs summary
+    checkSpace(30);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 136, 229);
+    doc.text('Parâmetros da Simulação', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(66);
+    const params = [
+      ['Idade', sim.inputs.age + ' → ' + sim.inputs.retireAge + ' anos'],
+      ['Rendimento Mensal', fmtCur(sim.inputs.monthlyIncome)],
+      ['Despesas Mensais', fmtCur(sim.inputs.monthlyExpenses)],
+      ['Retorno Anual', fmtPct(sim.inputs.annualReturn)],
+      ['Inflação', fmtPct(sim.inputs.inflationRate)],
+      ['Tipo FIRE', sim.inputs.fireType],
+      ['Multiplicador', sim.inputs.fireMultiplier + 'x']
+    ];
+    params.forEach(([label, value]) => {
+      checkSpace(5);
+      doc.text(label + ':', margin, y);
+      doc.text(value, margin + 50, y);
+      y += 5;
+    });
+    y += 6;
+
+    // Charts - small size
+    const chartIds = ['wealthChart', 'compositionChart', 'incomeExpenseChart', 'fireNumberChart'];
+    const chartTitles = ['Evolução do Património', 'Composição Atual', 'Receita vs Despesa', 'FIRE Number vs Património'];
+
+    for (let ci = 0; ci < chartIds.length; ci++) {
+      const canvas = document.getElementById(chartIds[ci]);
+      if (!canvas) continue;
+      checkSpace(55);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 136, 229);
+      doc.text(chartTitles[ci], margin, y);
+      y += 4;
+      try {
+        const imgData = canvas.toDataURL('image/png');
+        const chartW = 80;
+        const chartH = 45;
+        doc.addImage(imgData, 'PNG', margin, y, chartW, chartH);
+        y += chartH + 6;
+      } catch(e) { y += 4; }
+    }
+
+    // Table
+    if (sim.projection && sim.projection.length > 0) {
+      checkSpace(20);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 136, 229);
+      doc.text('Projeção Anual', margin, y);
+      y += 6;
+
+      doc.setFontSize(7);
+      doc.setTextColor(100);
+      const cols = ['Ano','Idade','Rendimento','Despesas','Património','FIRE Nr','Status'];
+      const colW = contentW / cols.length;
+      cols.forEach((c, i) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(c, margin + i * colW, y);
+      });
+      y += 4;
+      doc.setDrawColor(200);
+      doc.line(margin, y - 1, pageW - margin, y - 1);
+
+      doc.setFont('helvetica', 'normal');
+      sim.projection.forEach(r => {
+        checkSpace(5);
+        const row = [r.year+'', r.age+'', fmt(r.annualIncome), fmt(r.annualExpenses), fmt(r.patrimony), fmt(r.fireNumber), r.isFire ? 'FIRE' : '-'];
+        if (r.isFire) doc.setTextColor(76, 175, 80); else doc.setTextColor(66);
+        row.forEach((val, i) => doc.text(val, margin + i * colW, y));
+        y += 4;
+      });
+    }
+  } else {
+    doc.setTextColor(150);
+    doc.setFontSize(10);
+    doc.text('Nenhuma simulação disponível. Execute uma simulação primeiro.', margin, y);
+  }
+
+  addFooter();
+  doc.save('IS_Simulador_FIRE_' + today.toISOString().slice(0,10) + '.pdf');
+  showToast('PDF exportado!', 'success');
+}
+
+// ========== MODAL ==========
+function showModal(content) {
+  document.getElementById('modalContent').innerHTML = content;
+  document.getElementById('modal').classList.add('show');
+}
+function hideModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) hideModal();
+});
+
+// ========== TOAST ==========
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + (type || 'info') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ========== UTILS ==========
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// ========== ELEMENT SDK ==========
+const defaultConfig = {
+  app_title: 'Simulador FIRE',
+  app_description: 'Independência Financeira e Reforma Antecipada para a CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#212529',
+  primary_color: '#66CFF5',
+  secondary_color: '#E0E0E0',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_color || defaultConfig.primary_color;
+  const secondary = config.secondary_color || defaultConfig.secondary_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  document.body.style.background = bg;
+  document.body.style.color = text;
+  document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+
+  const wrapper = document.getElementById('appWrapper');
+  if (wrapper) wrapper.style.background = bg;
+
+  // Header
+  const header = document.getElementById('appHeader');
+  if (header) { header.style.background = surface; header.style.borderColor = secondary; }
+
+  // Tabs
+  const tabs = document.getElementById('tabsNav');
+  if (tabs) { tabs.style.background = surface; tabs.style.borderColor = secondary; }
+
+  // Cards
+  document.querySelectorAll('.card').forEach(c => {
+    c.style.background = surface;
+    c.style.borderColor = secondary;
+    c.style.color = text;
+  });
+
+  // Primary buttons
+  document.querySelectorAll('.btn-primary').forEach(b => { b.style.background = primary; });
+
+  // Active tab
+  document.querySelectorAll('.tab-btn.active').forEach(t => { t.style.color = primary; t.style.borderBottomColor = primary; });
+
+  // Titles
+  const mainT = document.getElementById('mainTitle');
+  if (mainT) {
+    mainT.style.color = text;
+    mainT.style.fontFamily = `${font}, Inter, sans-serif`;
+    mainT.style.fontSize = `${fontSize * 1.3}px`;
+    const badge = mainT.querySelector('span');
+    if (badge) badge.style.background = primary;
+    // Update text from config
+    const textNodes = mainT.childNodes;
+    for (let i = 0; i < textNodes.length; i++) {
+      if (textNodes[i].nodeType === 3 && textNodes[i].textContent.trim()) {
+        textNodes[i].textContent = ' ' + (config.app_title || defaultConfig.app_title);
+        break;
+      }
+    }
+  }
+
+  const descEl = document.getElementById('mainDesc');
+  if (descEl) {
+    descEl.textContent = config.app_description || defaultConfig.app_description;
+    descEl.style.fontSize = `${fontSize * 0.85}px`;
+  }
+
+  // Section titles
+  document.querySelectorAll('.section-title').forEach(s => {
+    s.style.fontSize = `${fontSize * 1.07}px`;
+    s.style.fontFamily = `${font}, Inter, sans-serif`;
+  });
+
+  // Labels
+  document.querySelectorAll('.label').forEach(l => {
+    l.style.fontSize = `${fontSize * 0.85}px`;
+    l.style.fontFamily = `${font}, Inter, sans-serif`;
+  });
+
+  // Inputs
+  document.querySelectorAll('.input-field, .select-field').forEach(el => {
+    el.style.fontSize = `${fontSize * 0.93}px`;
+    el.style.fontFamily = `${font}, Inter, sans-serif`;
+    el.style.borderColor = secondary;
+  });
+
+  // KPI cards
+  document.querySelectorAll('.kpi-card').forEach(c => {
+    c.style.background = surface;
+    c.style.borderColor = secondary;
+  });
+
+  // Help cards
+  document.querySelectorAll('.help-card').forEach(c => {
+    c.style.fontFamily = `${font}, Inter, sans-serif`;
+  });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: v => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_color || defaultConfig.primary_color, set: v => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+        { get: () => config.secondary_color || defaultConfig.secondary_color, set: v => { config.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: v => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: v => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+}
+
+// ========== BOOT ==========
+init();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddc1905951a1b23',t:'MTc3Mzc1MTU1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

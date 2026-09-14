@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matrizes Ações Estratégicas</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      border-left: 4px solid #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .card:hover { 
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    }
+    .btn-primary {
+      background: #66CFF5;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-secondary {
+      background: #F8F9FA;
+      color: #424242;
+      border: 1px solid #E0E0E0;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .tab-active { 
+      border-bottom: 2px solid #66CFF5; 
+      color: #66CFF5;
+      font-weight: 600;
+    }
+    .input-field {
+      border: 1px solid #E0E0E0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .chart-container {
+      position: relative;
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .export-btn-chart {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #F8F9FA;
+      border: 1px solid #E0E0E0;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+    .export-btn-chart:hover { background: #E0E0E0; }
+    .hide-on-export { }
+    .exporting .hide-on-export { display: none !important; }
+    select.input-field { cursor: pointer; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+     <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+       <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+       </svg>
+       <h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Matrizes Ações Estratégicas</h1>
+      </div>
+      <div class="flex items-center gap-2 hide-on-export"><button onclick="exportJSON()" class="btn-secondary flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+        </svg> Exportar JSON </button> <button onclick="document.getElementById('importInput').click()" class="btn-secondary flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg> Importar JSON </button> <input type="file" id="importInput" accept=".json" onchange="importJSON(event)" class="hidden"> <button onclick="exportImage()" class="btn-secondary flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg> Exportar Imagem </button> <button onclick="exportPDF()" class="btn-primary flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg> Exportar PDF </button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex gap-1 overflow-x-auto hide-on-export"><button onclick="switchTab('simulator')" id="tab-simulator" class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap tab-active"> Simulador </button> <button onclick="switchTab('scenarios')" id="tab-scenarios" class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap"> Cenários Salvos </button> <button onclick="switchTab('currency')" id="tab-currency" class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap"> Taxas de Câmbio </button> <button onclick="switchTab('help')" id="tab-help" class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 whitespace-nowrap"> Guia de Utilização </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Simulator Tab -->
+    <div id="content-simulator" class="tab-content"><!-- Title and Quick Actions -->
+     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div class="flex-1 min-w-64"><label class="block text-sm font-medium text-gray-700 mb-1">Título do Cenário</label> <input type="text" id="scenarioTitle" class="input-field hide-on-export" placeholder="Novo Cenário" value="Novo Cenário"> <span id="scenarioTitleDisplay" class="hidden text-lg font-semibold text-gray-800"></span>
+      </div>
+      <div class="flex gap-2 hide-on-export"><button onclick="saveScenario()" class="btn-primary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+        </svg> Guardar Cenário </button> <button onclick="resetSimulator()" class="btn-secondary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg> Novo </button>
+      </div>
+     </div><!-- Filter -->
+     <div class="card p-4 mb-6 hide-on-export">
+      <div class="flex flex-wrap items-center gap-4">
+       <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+        </svg><span class="text-sm font-medium text-gray-700">Filtrar:</span>
+       </div><input type="text" id="filterInput" class="input-field flex-1 max-w-xs" placeholder="Pesquisar ações..." oninput="filterActions()"> <select id="filterCategory" class="input-field max-w-xs" onchange="filterActions()"> <option value="">Todas as Categorias</option> <option value="marketing">Marketing</option> <option value="financeiro">Financeiro</option> <option value="operacional">Operacional</option> <option value="recursos_humanos">Recursos Humanos</option> <option value="tecnologia">Tecnologia</option> </select>
+      </div>
+     </div><!-- Actions Matrix -->
+     <div class="card p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-lg font-semibold text-gray-800">Matriz de Ações Estratégicas</h2><button onclick="addAction()" class="btn-primary flex items-center gap-2 text-sm hide-on-export">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg> Adicionar Ação </button>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="border-b border-gray-200">
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Ação</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Categoria</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Investimento (AOA)</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Retorno Esperado</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Prazo</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Risco</th>
+          <th class="text-left py-3 px-2 font-semibold text-gray-700">Prioridade</th>
+          <th class="text-center py-3 px-2 font-semibold text-gray-700 hide-on-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="actionsTable"><!-- Dynamic content -->
+        </tbody>
+       </table>
+      </div>
+      <div id="noActionsMsg" class="text-center py-8 text-gray-500 hidden">
+       <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+       </svg>
+       <p>Nenhuma ação adicionada. Clique em "Adicionar Ação" para começar.</p>
+      </div>
+     </div><!-- Summary Cards -->
+     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-4">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">Investimento Total</p>
+         <p id="totalInvestment" class="text-lg font-bold text-gray-800">0 AOA</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+         </svg>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">Retorno Estimado</p>
+         <p id="totalReturn" class="text-lg font-bold text-green-600">0 AOA</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+         </svg>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">ROI Médio</p>
+         <p id="avgROI" class="text-lg font-bold text-yellow-600">0%</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+         <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122" />
+         </svg>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">Total de Ações</p>
+         <p id="totalActions" class="text-lg font-bold text-purple-600">0</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts Section -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><!-- Investment by Category -->
+      <div class="chart-container card"><button onclick="exportChartImage('categoryChart', 'investimento-categoria')" class="export-btn-chart hide-on-export" title="Exportar gráfico HD">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg></button>
+       <h3 class="text-md font-semibold text-gray-800 mb-4">Investimento por Categoria</h3>
+       <canvas id="categoryChart" height="200"></canvas>
+      </div><!-- Risk vs Return -->
+      <div class="chart-container card"><button onclick="exportChartImage('riskReturnChart', 'risco-retorno')" class="export-btn-chart hide-on-export" title="Exportar gráfico HD">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg></button>
+       <h3 class="text-md font-semibold text-gray-800 mb-4">Análise Risco vs Retorno</h3>
+       <canvas id="riskReturnChart" height="200"></canvas>
+      </div><!-- Priority Distribution -->
+      <div class="chart-container card"><button onclick="exportChartImage('priorityChart', 'distribuicao-prioridade')" class="export-btn-chart hide-on-export" title="Exportar gráfico HD">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg></button>
+       <h3 class="text-md font-semibold text-gray-800 mb-4">Distribuição por Prioridade</h3>
+       <canvas id="priorityChart" height="200"></canvas>
+      </div><!-- Timeline -->
+      <div class="chart-container card"><button onclick="exportChartImage('timelineChart', 'linha-temporal')" class="export-btn-chart hide-on-export" title="Exportar gráfico HD">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg></button>
+       <h3 class="text-md font-semibold text-gray-800 mb-4">Investimento por Prazo</h3>
+       <canvas id="timelineChart" height="200"></canvas>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="content-scenarios" class="tab-content hidden">
+     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <h2 class="text-xl font-bold text-gray-800">Cenários Salvos</h2>
+      <div class="flex gap-2 hide-on-export"><input type="text" id="scenarioFilter" class="input-field max-w-xs" placeholder="Filtrar cenários..." oninput="filterScenarios()">
+      </div>
+     </div><!-- Templates Section -->
+     <div class="card p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-all" onclick="loadTemplate('startup')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+          </svg>
+         </div>
+         <h4 class="font-semibold text-blue-800">Startup Tech</h4>
+        </div>
+        <p class="text-sm text-blue-700">Plano estratégico para startups de tecnologia com foco em crescimento rápido.</p>
+       </div>
+       <div class="bg-green-50 border border-green-200 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition-all" onclick="loadTemplate('retail')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+          </svg>
+         </div>
+         <h4 class="font-semibold text-green-800">Comércio Retalho</h4>
+        </div>
+        <p class="text-sm text-green-700">Estratégias para expansão de negócios de retalho e vendas.</p>
+       </div>
+       <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 cursor-pointer hover:bg-purple-100 transition-all" onclick="loadTemplate('service')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+          </svg>
+         </div>
+         <h4 class="font-semibold text-purple-800">Prestação Serviços</h4>
+        </div>
+        <p class="text-sm text-purple-700">Modelo para empresas de serviços e consultoria.</p>
+       </div>
+      </div>
+     </div><!-- Saved Scenarios List -->
+     <div class="card p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Os Meus Cenários</h3>
+      <div id="scenariosList" class="space-y-3"><!-- Dynamic content -->
+      </div>
+      <div id="noScenariosMsg" class="text-center py-8 text-gray-500">
+       <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+       </svg>
+       <p>Nenhum cenário guardado. Crie um no simulador e guarde-o aqui.</p>
+      </div>
+     </div>
+    </div><!-- Currency Tab -->
+    <div id="content-currency" class="tab-content hidden">
+     <div class="card p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-xl font-bold text-gray-800">Taxas de Câmbio CPLP + USD</h2><span class="text-sm text-gray-500">Base: AOA (Kwanza Angolano)</span>
+      </div>
+      <p class="text-sm text-gray-600 mb-4">Configure as taxas de câmbio para converter valores entre moedas da CPLP e USD.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="currencyRates"><!-- Dynamic content -->
+      </div>
+      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+       <h4 class="font-semibold text-blue-800 mb-2">Conversor Rápido</h4>
+       <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-48"><label class="block text-sm font-medium text-gray-700 mb-1">Valor em AOA</label> <input type="number" id="convertAmount" class="input-field" value="1000000" oninput="convertCurrency()">
+        </div>
+        <div class="flex-1 min-w-48"><label class="block text-sm font-medium text-gray-700 mb-1">Converter para</label> <select id="convertTo" class="input-field" onchange="convertCurrency()"> <option value="BRL">BRL - Real Brasileiro</option> <option value="CVE">CVE - Escudo Cabo-verdiano</option> <option value="XOF">XOF - Franco CFA (Guiné-Bissau)</option> <option value="MZN">MZN - Metical Moçambicano</option> <option value="EUR">EUR - Euro (Portugal)</option> <option value="STN">STN - Dobra São-tomense</option> <option value="USD">USD - Dólar Americano</option> </select>
+        </div>
+        <div class="flex-1 min-w-48"><label class="block text-sm font-medium text-gray-700 mb-1">Resultado</label>
+         <div id="conversionResult" class="input-field bg-gray-100 font-semibold text-blue-600">
+          0.00
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Help Tab -->
+    <div id="content-help" class="tab-content hidden">
+     <div class="card p-6 mb-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Guia de Utilização</h2>
+      <div class="space-y-6">
+       <div class="border-l-4 border-blue-500 pl-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">O que é o IS Matrizes Ações Estratégicas?</h3>
+        <p class="text-gray-600">Este simulador permite planear e analisar ações estratégicas para o seu negócio ou organização. Através de uma matriz interativa, pode visualizar investimentos, retornos esperados, riscos e prioridades de cada ação.</p>
+       </div>
+       <div class="border-l-4 border-green-500 pl-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Como Utilizar</h3>
+        <ol class="list-decimal list-inside text-gray-600 space-y-2">
+         <li><strong>Adicionar Ações:</strong> Clique em "Adicionar Ação" para criar uma nova entrada na matriz.</li>
+         <li><strong>Preencher Dados:</strong> Defina o nome, categoria, investimento, retorno esperado, prazo, risco e prioridade.</li>
+         <li><strong>Analisar Gráficos:</strong> Os gráficos atualizam automaticamente para mostrar a distribuição dos seus dados.</li>
+         <li><strong>Guardar Cenários:</strong> Utilize o botão "Guardar Cenário" para salvar configurações para comparação futura.</li>
+         <li><strong>Exportar:</strong> Exporte os seus dados em JSON, imagem ou PDF para partilha ou arquivo.</li>
+        </ol>
+       </div>
+       <div class="border-l-4 border-yellow-500 pl-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Melhores Práticas</h3>
+        <ul class="list-disc list-inside text-gray-600 space-y-2">
+         <li><strong>Seja Realista:</strong> Utilize estimativas baseadas em dados reais de mercado.</li>
+         <li><strong>Diversifique:</strong> Não concentre todo o investimento numa única categoria.</li>
+         <li><strong>Considere o Risco:</strong> Ações de alto retorno geralmente têm maior risco associado.</li>
+         <li><strong>Atualize Regularmente:</strong> Reveja e ajuste os cenários conforme o mercado evolui.</li>
+         <li><strong>Compare Cenários:</strong> Crie múltiplos cenários para avaliar diferentes estratégias.</li>
+         <li><strong>Utilize Templates:</strong> Os templates de aprendizagem servem como ponto de partida para diferentes tipos de negócio.</li>
+        </ul>
+       </div>
+       <div class="border-l-4 border-purple-500 pl-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Glossário</h3>
+        <dl class="text-gray-600 space-y-2">
+         <dt class="font-semibold">
+          ROI (Retorno sobre Investimento)
+         </dt>
+         <dd class="ml-4">
+          Métrica que indica a rentabilidade de um investimento, calculada como (Retorno - Investimento) / Investimento × 100.
+         </dd>
+         <dt class="font-semibold">
+          Risco
+         </dt>
+         <dd class="ml-4">
+          Probabilidade de o resultado diferir do esperado. Classificado como Baixo, Médio ou Alto.
+         </dd>
+         <dt class="font-semibold">
+          Prioridade
+         </dt>
+         <dd class="ml-4">
+          Ordem de importância da ação no plano estratégico (Crítica, Alta, Média, Baixa).
+         </dd>
+        </dl>
+       </div>
+       <div class="border-l-4 border-red-500 pl-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Suporte à CPLP</h3>
+        <p class="text-gray-600">Este simulador foi desenvolvido especialmente para a Comunidade dos Países de Língua Portuguesa, utilizando o Kwanza Angolano (AOA) como moeda base, com suporte para conversão para todas as moedas da CPLP e USD.</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Action Modal -->
+  <div id="actionModal" class="modal-overlay hidden">
+   <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-screen overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+     <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Adicionar Ação</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <form id="actionForm" onsubmit="submitAction(event)"><input type="hidden" id="actionId">
+     <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome da Ação *</label> <input type="text" id="actionName" class="input-field" required placeholder="Ex: Campanha Marketing Digital">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Categoria *</label> <select id="actionCategory" class="input-field" required> <option value="">Selecionar categoria</option> <option value="marketing">Marketing</option> <option value="financeiro">Financeiro</option> <option value="operacional">Operacional</option> <option value="recursos_humanos">Recursos Humanos</option> <option value="tecnologia">Tecnologia</option> </select>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Investimento (AOA) *</label> <input type="number" id="actionInvestment" class="input-field" required min="0" placeholder="0">
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Retorno Esperado (AOA) *</label> <input type="number" id="actionReturn" class="input-field" required min="0" placeholder="0">
+       </div>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Prazo *</label> <select id="actionTimeline" class="input-field" required> <option value="">Selecionar prazo</option> <option value="curto">Curto Prazo (0-3 meses)</option> <option value="medio">Médio Prazo (3-12 meses)</option> <option value="longo">Longo Prazo (12+ meses)</option> </select>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Risco *</label> <select id="actionRisk" class="input-field" required> <option value="">Selecionar risco</option> <option value="baixo">Baixo</option> <option value="medio">Médio</option> <option value="alto">Alto</option> </select>
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Prioridade *</label> <select id="actionPriority" class="input-field" required> <option value="">Selecionar prioridade</option> <option value="critica">Crítica</option> <option value="alta">Alta</option> <option value="media">Média</option> <option value="baixa">Baixa</option> </select>
+       </div>
+      </div>
+     </div>
+     <div class="flex gap-3 mt-6"><button type="button" onclick="closeModal()" class="btn-secondary flex-1">Cancelar</button> <button type="submit" class="btn-primary flex-1">Guardar</button>
+     </div>
+    </form>
+   </div>
+  </div><!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay hidden">
+   <div class="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
+    <div class="text-center">
+     <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+     </div>
+     <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirmar Eliminação</h3>
+     <p id="deleteMessage" class="text-gray-600 mb-6">Tem a certeza que deseja eliminar este item?</p>
+     <div class="flex gap-3"><button onclick="closeDeleteModal()" class="btn-secondary flex-1">Cancelar</button> <button onclick="confirmDelete()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium flex-1 transition-all">Eliminar</button>
+     </div>
+    </div>
+   </div>
+  </div><!-- Toast Container -->
+  <div id="toastContainer"></div>
+  <script>
+    // App State
+    let actions = [];
+    let scenarios = [];
+    let currentEditIndex = null;
+    let deleteTarget = null;
+    let deleteType = null;
+    let charts = {};
+    
+    // Currency Rates (AOA as base)
+    let currencyRates = {
+      BRL: { name: 'Real Brasileiro', rate: 0.006, symbol: 'R$' },
+      CVE: { name: 'Escudo Cabo-verdiano', rate: 0.12, symbol: '$' },
+      XOF: { name: 'Franco CFA', rate: 0.73, symbol: 'CFA' },
+      MZN: { name: 'Metical Moçambicano', rate: 0.076, symbol: 'MT' },
+      EUR: { name: 'Euro', rate: 0.0011, symbol: '€' },
+      STN: { name: 'Dobra São-tomense', rate: 0.027, symbol: 'Db' },
+      USD: { name: 'Dólar Americano', rate: 0.0012, symbol: '$' }
+    };
+
+    // Default Config
+    const defaultConfig = {
+      app_title: 'IS Matrizes Ações Estratégicas',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#424242',
+      accent_color: '#FFC107',
+      font_family: 'Inter',
+      font_size: 16
+    };
+
+    // Initialize SDKs
+    async function initApp() {
+      // Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.primary_color || defaultConfig.primary_color,
+                set: (v) => window.elementSdk.setConfig({ primary_color: v })
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (v) => window.elementSdk.setConfig({ font_family: v })
+            },
+            fontSizeable: {
+              get: () => config.font_size || defaultConfig.font_size,
+              set: (v) => window.elementSdk.setConfig({ font_size: v })
+            }
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+
+      // Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init({
+          onDataChanged: (data) => {
+            // Process saved data
+            scenarios = data.filter(d => d.type === 'scenario').map(d => ({
+              ...d,
+              data: JSON.parse(d.data || '{}')
+            }));
+            
+            const ratesData = data.find(d => d.type === 'currency_rates');
+            if (ratesData) {
+              currencyRates = { ...currencyRates, ...JSON.parse(ratesData.data || '{}') };
+            }
+            
+            renderScenariosList();
+            renderCurrencyRates();
+          }
+        });
+        
+        if (!result.isOk) {
+          console.error('Failed to initialize Data SDK');
+        }
+      }
+
+      // Initialize Charts
+      initCharts();
+      renderActionsTable();
+      renderCurrencyRates();
+      updateSummary();
+    }
+
+    // Tab Navigation
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+      
+      document.getElementById(`content-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('tab-active');
+    }
+
+    // Action Modal
+    function addAction() {
+      currentEditIndex = null;
+      document.getElementById('modalTitle').textContent = 'Adicionar Ação';
+      document.getElementById('actionForm').reset();
+      document.getElementById('actionModal').classList.remove('hidden');
+    }
+
+    function editAction(index) {
+      currentEditIndex = index;
+      const action = actions[index];
+      document.getElementById('modalTitle').textContent = 'Editar Ação';
+      document.getElementById('actionName').value = action.name;
+      document.getElementById('actionCategory').value = action.category;
+      document.getElementById('actionInvestment').value = action.investment;
+      document.getElementById('actionReturn').value = action.returnExpected;
+      document.getElementById('actionTimeline').value = action.timeline;
+      document.getElementById('actionRisk').value = action.risk;
+      document.getElementById('actionPriority').value = action.priority;
+      document.getElementById('actionModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('actionModal').classList.add('hidden');
+    }
+
+    function submitAction(event) {
+      event.preventDefault();
+      
+      const action = {
+        id: currentEditIndex !== null ? actions[currentEditIndex].id : Date.now().toString(),
+        name: document.getElementById('actionName').value,
+        category: document.getElementById('actionCategory').value,
+        investment: parseFloat(document.getElementById('actionInvestment').value) || 0,
+        returnExpected: parseFloat(document.getElementById('actionReturn').value) || 0,
+        timeline: document.getElementById('actionTimeline').value,
+        risk: document.getElementById('actionRisk').value,
+        priority: document.getElementById('actionPriority').value
+      };
+
+      if (currentEditIndex !== null) {
+        actions[currentEditIndex] = action;
+        showToast('Ação atualizada com sucesso!', 'success');
+      } else {
+        actions.push(action);
+        showToast('Ação adicionada com sucesso!', 'success');
+      }
+
+      closeModal();
+      renderActionsTable();
+      updateCharts();
+      updateSummary();
+    }
+
+    function deleteAction(index) {
+      deleteTarget = index;
+      deleteType = 'action';
+      document.getElementById('deleteMessage').textContent = `Tem a certeza que deseja eliminar a ação "${actions[index].name}"?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.add('hidden');
+      deleteTarget = null;
+      deleteType = null;
+    }
+
+    async function confirmDelete() {
+      if (deleteType === 'action' && deleteTarget !== null) {
+        actions.splice(deleteTarget, 1);
+        renderActionsTable();
+        updateCharts();
+        updateSummary();
+        showToast('Ação eliminada com sucesso!', 'success');
+      } else if (deleteType === 'scenario' && deleteTarget !== null) {
+        const scenario = scenarios[deleteTarget];
+        if (window.dataSdk && scenario.__backendId) {
+          const result = await window.dataSdk.delete(scenario);
+          if (result.isOk) {
+            showToast('Cenário eliminado com sucesso!', 'success');
+          } else {
+            showToast('Erro ao eliminar cenário.', 'error');
+          }
+        }
+      }
+      closeDeleteModal();
+    }
+
+    // Render Actions Table
+    function renderActionsTable() {
+      const table = document.getElementById('actionsTable');
+      const noMsg = document.getElementById('noActionsMsg');
+      const filterText = document.getElementById('filterInput').value.toLowerCase();
+      const filterCat = document.getElementById('filterCategory').value;
+
+      const filtered = actions.filter(a => {
+        const matchText = a.name.toLowerCase().includes(filterText);
+        const matchCat = !filterCat || a.category === filterCat;
+        return matchText && matchCat;
+      });
+
+      if (filtered.length === 0) {
+        table.innerHTML = '';
+        noMsg.classList.remove('hidden');
+        return;
+      }
+
+      noMsg.classList.add('hidden');
+      
+      const categoryLabels = {
+        marketing: 'Marketing',
+        financeiro: 'Financeiro',
+        operacional: 'Operacional',
+        recursos_humanos: 'Recursos Humanos',
+        tecnologia: 'Tecnologia'
+      };
+
+      const riskColors = {
+        baixo: 'bg-green-100 text-green-800',
+        medio: 'bg-yellow-100 text-yellow-800',
+        alto: 'bg-red-100 text-red-800'
+      };
+
+      const priorityColors = {
+        critica: 'bg-red-100 text-red-800',
+        alta: 'bg-orange-100 text-orange-800',
+        media: 'bg-blue-100 text-blue-800',
+        baixa: 'bg-gray-100 text-gray-800'
+      };
+
+      const timelineLabels = {
+        curto: 'Curto',
+        medio: 'Médio',
+        longo: 'Longo'
+      };
+
+      table.innerHTML = filtered.map((action, idx) => {
+        const realIndex = actions.indexOf(action);
+        return `
+          <tr class="border-b border-gray-100 hover:bg-gray-50 transition-all">
+            <td class="py-3 px-2 font-medium text-gray-800">${action.name}</td>
+            <td class="py-3 px-2 text-gray-600">${categoryLabels[action.category] || action.category}</td>
+            <td class="py-3 px-2 text-gray-600">${formatCurrency(action.investment)}</td>
+            <td class="py-3 px-2 text-green-600 font-medium">${formatCurrency(action.returnExpected)}</td>
+            <td class="py-3 px-2 text-gray-600">${timelineLabels[action.timeline] || action.timeline}</td>
+            <td class="py-3 px-2"><span class="px-2 py-1 rounded-full text-xs font-medium ${riskColors[action.risk]}">${capitalizeFirst(action.risk)}</span></td>
+            <td class="py-3 px-2"><span class="px-2 py-1 rounded-full text-xs font-medium ${priorityColors[action.priority]}">${capitalizeFirst(action.priority)}</span></td>
+            <td class="py-3 px-2 text-center hide-on-export">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="editAction(${realIndex})" class="text-blue-500 hover:text-blue-700 transition-all" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                </button>
+                <button onclick="deleteAction(${realIndex})" class="text-red-500 hover:text-red-700 transition-all" title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterActions() {
+      renderActionsTable();
+    }
+
+    // Update Summary
+    function updateSummary() {
+      const totalInvestment = actions.reduce((sum, a) => sum + a.investment, 0);
+      const totalReturn = actions.reduce((sum, a) => sum + a.returnExpected, 0);
+      const avgROI = totalInvestment > 0 ? ((totalReturn - totalInvestment) / totalInvestment * 100) : 0;
+
+      document.getElementById('totalInvestment').textContent = formatCurrency(totalInvestment);
+      document.getElementById('totalReturn').textContent = formatCurrency(totalReturn);
+      document.getElementById('avgROI').textContent = avgROI.toFixed(1) + '%';
+      document.getElementById('totalActions').textContent = actions.length;
+    }
+
+    // Charts
+    function initCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Inter', size: 11 } }
+          }
+        }
+      };
+
+      // Category Chart
+      charts.category = new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{
+            data: [],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#F44336', '#9C27B0']
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Risk Return Chart
+      charts.riskReturn = new Chart(document.getElementById('riskReturnChart'), {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Ações',
+            data: [],
+            backgroundColor: '#66CFF5',
+            pointRadius: 8
+          }]
+        },
+        options: {
+          ...chartOptions,
+          scales: {
+            x: { title: { display: true, text: 'Risco' } },
+            y: { title: { display: true, text: 'Retorno (%)' } }
+          }
+        }
+      });
+
+      // Priority Chart
+      charts.priority = new Chart(document.getElementById('priorityChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Crítica', 'Alta', 'Média', 'Baixa'],
+          datasets: [{
+            label: 'Número de Ações',
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#F44336', '#FF9800', '#66CFF5', '#9E9E9E']
+          }]
+        },
+        options: {
+          ...chartOptions,
+          indexAxis: 'y'
+        }
+      });
+
+      // Timeline Chart
+      charts.timeline = new Chart(document.getElementById('timelineChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Curto Prazo', 'Médio Prazo', 'Longo Prazo'],
+          datasets: [{
+            label: 'Investimento (AOA)',
+            data: [0, 0, 0],
+            backgroundColor: ['#4CAF50', '#FFC107', '#66CFF5']
+          }]
+        },
+        options: chartOptions
+      });
+    }
+
+    function updateCharts() {
+      // Category Chart
+      const categoryData = {};
+      const categoryLabels = {
+        marketing: 'Marketing',
+        financeiro: 'Financeiro',
+        operacional: 'Operacional',
+        recursos_humanos: 'RH',
+        tecnologia: 'Tecnologia'
+      };
+      
+      actions.forEach(a => {
+        categoryData[a.category] = (categoryData[a.category] || 0) + a.investment;
+      });
+
+      charts.category.data.labels = Object.keys(categoryData).map(k => categoryLabels[k] || k);
+      charts.category.data.datasets[0].data = Object.values(categoryData);
+      charts.category.update();
+
+      // Risk Return Chart
+      const riskValues = { baixo: 1, medio: 2, alto: 3 };
+      charts.riskReturn.data.datasets[0].data = actions.map(a => ({
+        x: riskValues[a.risk] || 1,
+        y: a.investment > 0 ? ((a.returnExpected - a.investment) / a.investment * 100) : 0
+      }));
+      charts.riskReturn.update();
+
+      // Priority Chart
+      const priorityCount = { critica: 0, alta: 0, media: 0, baixa: 0 };
+      actions.forEach(a => priorityCount[a.priority]++);
+      charts.priority.data.datasets[0].data = [
+        priorityCount.critica,
+        priorityCount.alta,
+        priorityCount.media,
+        priorityCount.baixa
+      ];
+      charts.priority.update();
+
+      // Timeline Chart
+      const timelineData = { curto: 0, medio: 0, longo: 0 };
+      actions.forEach(a => timelineData[a.timeline] += a.investment);
+      charts.timeline.data.datasets[0].data = [
+        timelineData.curto,
+        timelineData.medio,
+        timelineData.longo
+      ];
+      charts.timeline.update();
+    }
+
+    // Scenarios
+    async function saveScenario() {
+      const title = document.getElementById('scenarioTitle').value || `Cenário ${scenarios.length + 1}`;
+      
+      if (actions.length === 0) {
+        showToast('Adicione pelo menos uma ação antes de guardar.', 'warning');
+        return;
+      }
+
+      if (scenarios.length >= 999) {
+        showToast('Limite máximo de cenários atingido (999).', 'error');
+        return;
+      }
+
+      const scenarioData = {
+        type: 'scenario',
+        name: title,
+        data: JSON.stringify({
+          actions: actions,
+          currencyRates: currencyRates
+        }),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(scenarioData);
+        if (result.isOk) {
+          showToast(`Cenário "${title}" guardado com sucesso!`, 'success');
+          document.getElementById('scenarioTitle').value = `Cenário ${scenarios.length + 2}`;
+        } else {
+          showToast('Erro ao guardar cenário.', 'error');
+        }
+      }
+    }
+
+    function renderScenariosList() {
+      const list = document.getElementById('scenariosList');
+      const noMsg = document.getElementById('noScenariosMsg');
+      const filterText = document.getElementById('scenarioFilter')?.value?.toLowerCase() || '';
+
+      const filtered = scenarios.filter(s => 
+        s.name.toLowerCase().includes(filterText)
+      );
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        noMsg.classList.remove('hidden');
+        return;
+      }
+
+      noMsg.classList.add('hidden');
+
+      list.innerHTML = filtered.map((scenario, idx) => {
+        const realIndex = scenarios.indexOf(scenario);
+        const data = scenario.data || {};
+        const actionsCount = data.actions?.length || 0;
+        const totalInvestment = data.actions?.reduce((sum, a) => sum + (a.investment || 0), 0) || 0;
+        
+        return `
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-800">${scenario.name}</h4>
+                <p class="text-sm text-gray-500">${actionsCount} ações · ${formatCurrency(totalInvestment)}</p>
+                <p class="text-xs text-gray-400 mt-1">Criado em ${formatDate(scenario.createdAt)}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="loadScenario(${realIndex})" class="btn-primary text-sm py-1 px-3">Carregar</button>
+                <button onclick="cloneScenario(${realIndex})" class="btn-secondary text-sm py-1 px-3" title="Clonar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/></svg>
+                </button>
+                <button onclick="deleteScenario(${realIndex})" class="text-red-500 hover:text-red-700 p-1" title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterScenarios() {
+      renderScenariosList();
+    }
+
+    function loadScenario(index) {
+      const scenario = scenarios[index];
+      const data = scenario.data || {};
+      
+      actions = data.actions || [];
+      if (data.currencyRates) {
+        currencyRates = { ...currencyRates, ...data.currencyRates };
+      }
+      
+      document.getElementById('scenarioTitle').value = scenario.name;
+      renderActionsTable();
+      updateCharts();
+      updateSummary();
+      renderCurrencyRates();
+      
+      switchTab('simulator');
+      showToast(`Cenário "${scenario.name}" carregado!`, 'success');
+    }
+
+    async function cloneScenario(index) {
+      const scenario = scenarios[index];
+      
+      if (scenarios.length >= 999) {
+        showToast('Limite máximo de cenários atingido (999).', 'error');
+        return;
+      }
+
+      const clonedData = {
+        type: 'scenario',
+        name: `${scenario.name} (Cópia)`,
+        data: scenario.data ? JSON.stringify(scenario.data) : '{}',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(clonedData);
+        if (result.isOk) {
+          showToast('Cenário clonado com sucesso!', 'success');
+        } else {
+          showToast('Erro ao clonar cenário.', 'error');
+        }
+      }
+    }
+
+    function deleteScenario(index) {
+      deleteTarget = index;
+      deleteType = 'scenario';
+      document.getElementById('deleteMessage').textContent = `Tem a certeza que deseja eliminar o cenário "${scenarios[index].name}"?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    // Templates
+    function loadTemplate(type) {
+      const templates = {
+        startup: {
+          name: 'Template Startup Tech',
+          actions: [
+            { id: '1', name: 'Desenvolvimento MVP', category: 'tecnologia', investment: 5000000, returnExpected: 15000000, timeline: 'curto', risk: 'alto', priority: 'critica' },
+            { id: '2', name: 'Marketing Digital', category: 'marketing', investment: 2000000, returnExpected: 6000000, timeline: 'medio', risk: 'medio', priority: 'alta' },
+            { id: '3', name: 'Contratação Equipa', category: 'recursos_humanos', investment: 8000000, returnExpected: 20000000, timeline: 'medio', risk: 'baixo', priority: 'alta' }
+          ]
+        },
+        retail: {
+          name: 'Template Comércio Retalho',
+          actions: [
+            { id: '1', name: 'Renovação Loja', category: 'operacional', investment: 10000000, returnExpected: 18000000, timeline: 'curto', risk: 'baixo', priority: 'alta' },
+            { id: '2', name: 'Stock Inicial', category: 'financeiro', investment: 15000000, returnExpected: 25000000, timeline: 'curto', risk: 'medio', priority: 'critica' },
+            { id: '3', name: 'Publicidade Local', category: 'marketing', investment: 3000000, returnExpected: 9000000, timeline: 'curto', risk: 'baixo', priority: 'media' }
+          ]
+        },
+        service: {
+          name: 'Template Prestação Serviços',
+          actions: [
+            { id: '1', name: 'Website Profissional', category: 'tecnologia', investment: 2000000, returnExpected: 8000000, timeline: 'curto', risk: 'baixo', priority: 'alta' },
+            { id: '2', name: 'Certificações', category: 'recursos_humanos', investment: 3000000, returnExpected: 10000000, timeline: 'medio', risk: 'baixo', priority: 'media' },
+            { id: '3', name: 'Networking Empresarial', category: 'marketing', investment: 1000000, returnExpected: 5000000, timeline: 'longo', risk: 'medio', priority: 'media' }
+          ]
+        }
+      };
+
+      const template = templates[type];
+      if (template) {
+        actions = [...template.actions];
+        document.getElementById('scenarioTitle').value = template.name;
+        renderActionsTable();
+        updateCharts();
+        updateSummary();
+        switchTab('simulator');
+        showToast(`Template "${template.name}" carregado!`, 'success');
+      }
+    }
+
+    function resetSimulator() {
+      actions = [];
+      document.getElementById('scenarioTitle').value = `Cenário ${scenarios.length + 1}`;
+      renderActionsTable();
+      updateCharts();
+      updateSummary();
+      showToast('Simulador reiniciado!', 'success');
+    }
+
+    // Currency
+    function renderCurrencyRates() {
+      const container = document.getElementById('currencyRates');
+      container.innerHTML = Object.entries(currencyRates).map(([code, data]) => `
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-gray-800">${code}</span>
+            <span class="text-sm text-gray-500">${data.symbol}</span>
+          </div>
+          <p class="text-xs text-gray-500 mb-2">${data.name}</p>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">1 AOA =</span>
+            <input type="number" step="0.0001" value="${data.rate}" 
+              onchange="updateRate('${code}', this.value)"
+              class="input-field text-sm py-1 px-2 w-24">
+            <span class="text-xs text-gray-500">${code}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      convertCurrency();
+    }
+
+    async function updateRate(code, value) {
+      currencyRates[code].rate = parseFloat(value) || 0;
+      convertCurrency();
+      
+      // Save to Data SDK
+      if (window.dataSdk) {
+        const existingRates = scenarios.find(s => s.type === 'currency_rates');
+        if (existingRates && existingRates.__backendId) {
+          await window.dataSdk.update({
+            ...existingRates,
+            data: JSON.stringify(currencyRates),
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          await window.dataSdk.create({
+            type: 'currency_rates',
+            name: 'Currency Rates',
+            data: JSON.stringify(currencyRates),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convertAmount')?.value) || 0;
+      const toCurrency = document.getElementById('convertTo')?.value || 'USD';
+      const rate = currencyRates[toCurrency]?.rate || 1;
+      const result = amount * rate;
+      
+      const resultEl = document.getElementById('conversionResult');
+      if (resultEl) {
+        resultEl.textContent = `${currencyRates[toCurrency]?.symbol || ''} ${result.toLocaleString('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+    }
+
+    // Export Functions
+    function exportJSON() {
+      const data = {
+        title: document.getElementById('scenarioTitle').value,
+        actions: actions,
+        currencyRates: currencyRates,
+        exportedAt: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `estrategia-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados em JSON!', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.actions) actions = data.actions;
+          if (data.currencyRates) currencyRates = { ...currencyRates, ...data.currencyRates };
+          if (data.title) document.getElementById('scenarioTitle').value = data.title;
+          
+          renderActionsTable();
+          updateCharts();
+          updateSummary();
+          renderCurrencyRates();
+          showToast('Dados importados com sucesso!', 'success');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro JSON.', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportImage() {
+      const app = document.getElementById('app');
+      app.classList.add('exporting');
+      
+      // Show title display instead of input
+      const titleInput = document.getElementById('scenarioTitle');
+      const titleDisplay = document.getElementById('scenarioTitleDisplay');
+      titleDisplay.textContent = titleInput.value;
+      titleDisplay.classList.remove('hidden');
+      
+      try {
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `estrategia-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (err) {
+        showToast('Erro ao exportar imagem.', 'error');
+      } finally {
+        app.classList.remove('exporting');
+        titleDisplay.classList.add('hidden');
+      }
+    }
+
+    async function exportChartImage(chartId, filename) {
+      const chartContainer = document.getElementById(chartId).parentElement;
+      
+      try {
+        const canvas = await html2canvas(chartContainer, {
+          scale: 3,
+          backgroundColor: '#FFFFFF',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `${filename}-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Gráfico exportado em HD!', 'success');
+      } catch (err) {
+        showToast('Erro ao exportar gráfico.', 'error');
+      }
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 30;
+
+      // Header
+      const addHeader = (pageNum) => {
+        pdf.setFillColor(30, 136, 229);
+        pdf.rect(0, 0, pageWidth, 20, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('IS Matrizes Ações Estratégicas', margin, 13);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(new Date().toLocaleDateString('pt-AO'), pageWidth - margin, 13, { align: 'right' });
+      };
+
+      // Footer
+      const addFooter = (pageNum, totalPages) => {
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFontSize(8);
+        pdf.text('IS Matrizes Ações Estratégicas - Simulador de Planeamento Estratégico', margin, pageHeight - 6);
+        pdf.text(`Página ${pageNum}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
+      };
+
+      addHeader(1);
+      
+      // Title
+      pdf.setTextColor(50, 50, 50);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(document.getElementById('scenarioTitle').value || 'Cenário', margin, yPos);
+      yPos += 15;
+
+      // Summary
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total de Ações: ${actions.length}`, margin, yPos);
+      yPos += 6;
+      const totalInv = actions.reduce((s, a) => s + a.investment, 0);
+      const totalRet = actions.reduce((s, a) => s + a.returnExpected, 0);
+      pdf.text(`Investimento Total: ${formatCurrency(totalInv)}`, margin, yPos);
+      yPos += 6;
+      pdf.text(`Retorno Esperado: ${formatCurrency(totalRet)}`, margin, yPos);
+      yPos += 6;
+      const roi = totalInv > 0 ? ((totalRet - totalInv) / totalInv * 100).toFixed(1) : 0;
+      pdf.text(`ROI Médio: ${roi}%`, margin, yPos);
+      yPos += 15;
+
+      // Actions Table
+      if (actions.length > 0) {
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Ações Estratégicas', margin, yPos);
+        yPos += 8;
+
+        const categoryLabels = {
+          marketing: 'Marketing', financeiro: 'Financeiro', operacional: 'Operacional',
+          recursos_humanos: 'RH', tecnologia: 'Tecnologia'
+        };
+
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(margin, yPos - 4, pageWidth - 2 * margin, 7, 'F');
+        pdf.text('Ação', margin + 2, yPos);
+        pdf.text('Categoria', margin + 50, yPos);
+        pdf.text('Investimento', margin + 85, yPos);
+        pdf.text('Retorno', margin + 115, yPos);
+        pdf.text('Risco', margin + 145, yPos);
+        yPos += 8;
+
+        pdf.setFont('helvetica', 'normal');
+        actions.forEach((action, idx) => {
+          if (yPos > pageHeight - 30) {
+            addFooter(pdf.internal.getNumberOfPages(), 0);
+            pdf.addPage();
+            addHeader(pdf.internal.getNumberOfPages());
+            yPos = 30;
+          }
+          
+          pdf.text(action.name.substring(0, 25), margin + 2, yPos);
+          pdf.text(categoryLabels[action.category] || action.category, margin + 50, yPos);
+          pdf.text(formatCurrencyShort(action.investment), margin + 85, yPos);
+          pdf.text(formatCurrencyShort(action.returnExpected), margin + 115, yPos);
+          pdf.text(capitalizeFirst(action.risk), margin + 145, yPos);
+          yPos += 6;
+        });
+      }
+
+      // Charts
+      yPos += 10;
+      if (yPos > pageHeight - 80) {
+        addFooter(pdf.internal.getNumberOfPages(), 0);
+        pdf.addPage();
+        addHeader(pdf.internal.getNumberOfPages());
+        yPos = 30;
+      }
+
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Gráficos de Análise', margin, yPos);
+      yPos += 10;
+
+      // Add charts as small images
+      const chartIds = ['categoryChart', 'priorityChart', 'timelineChart', 'riskReturnChart'];
+      const chartWidth = 80;
+      const chartHeight = 50;
+      let xPos = margin;
+
+      for (let i = 0; i < chartIds.length; i++) {
+        const chartCanvas = document.getElementById(chartIds[i]);
+        if (chartCanvas) {
+          try {
+            const imgData = chartCanvas.toDataURL('image/png');
+            
+            if (i === 2) {
+              yPos += chartHeight + 10;
+              xPos = margin;
+            }
+            
+            if (yPos + chartHeight > pageHeight - 20) {
+              addFooter(pdf.internal.getNumberOfPages(), 0);
+              pdf.addPage();
+              addHeader(pdf.internal.getNumberOfPages());
+              yPos = 30;
+              xPos = margin;
+            }
+            
+            pdf.addImage(imgData, 'PNG', xPos, yPos, chartWidth, chartHeight);
+            xPos += chartWidth + 10;
+          } catch (err) {
+            console.error('Error adding chart to PDF:', err);
+          }
+        }
+      }
+
+      // Final footer
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        addFooter(i, totalPages);
+      }
+
+      pdf.save(`estrategia-${Date.now()}.pdf`);
+      showToast('PDF exportado com sucesso!', 'success');
+    }
+
+    // Utility Functions
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value) + ' AOA';
+    }
+
+    function formatCurrencyShort(value) {
+      if (value >= 1000000) {
+        return (value / 1000000).toFixed(1) + 'M';
+      } else if (value >= 1000) {
+        return (value / 1000).toFixed(0) + 'K';
+      }
+      return value.toString();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      return new Date(dateStr).toLocaleDateString('pt-AO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    function capitalizeFirst(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function showToast(message, type = 'info') {
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]}`;
+      toast.textContent = message;
+      document.getElementById('toastContainer').appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Initialize
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d3f8a3c538d06e3',t:'MTc3MjEwOTkzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

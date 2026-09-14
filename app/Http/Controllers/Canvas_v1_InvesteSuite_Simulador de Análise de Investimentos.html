@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Análise de Investimentos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    .toast {
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .card-hover {
+      transition: all 0.2s ease;
+    }
+    .card-hover:hover {
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    .btn-primary {
+      background: #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background: #33BEF2;
+    }
+    .dark {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --text-primary: #e8e8e8;
+      --text-secondary: #b0b0b0;
+      --border-color: #2a2a4a;
+    }
+    .dark body, .dark .bg-gray-50 { background: var(--bg-primary) !important; }
+    .dark .bg-white { background: var(--bg-card) !important; }
+    .dark .text-gray-800, .dark .text-gray-900 { color: var(--text-primary) !important; }
+    .dark .text-gray-600, .dark .text-gray-500 { color: var(--text-secondary) !important; }
+    .dark .border-gray-200 { border-color: var(--border-color) !important; }
+    .dark input, .dark select { 
+      background: var(--bg-secondary) !important; 
+      color: var(--text-primary) !important;
+      border-color: var(--border-color) !important;
+    }
+    .indicator-positive { color: #4CAF50; }
+    .indicator-negative { color: #F44336; }
+    .indicator-warning { color: #FF9800; }
+    .tab-active {
+      border-bottom: 2px solid #66CFF5;
+      color: #66CFF5;
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    .dark .scrollbar-thin::-webkit-scrollbar-track { background: #2a2a4a; }
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #4a4a6a; }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full bg-gray-50 text-gray-800">
+  <div id="app" class="h-full overflow-auto scrollbar-thin"><!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div><!-- Header -->
+   <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+     <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+       <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="app-title" class="text-lg font-bold text-gray-900" style="display: none; display: none;">Simulador de Análise de Investimentos</h1>
+        <p id="app-subtitle" class="text-xs text-gray-500" style="display: none; display: none;">Avaliação de Viabilidade Financeira - CPLP</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-2"><button id="dark-mode-toggle" class="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-all" title="Modo Escuro">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg></button> <select id="currency-select" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white"> <option value="AOA">🇦🇴 AOA - Kwanza</option> <option value="BRL">🇧🇷 BRL - Real</option> <option value="EUR">🇵🇹 EUR - Euro</option> <option value="MZN">🇲🇿 MZN - Metical</option> <option value="STN">🇸🇹 STN - Dobra</option> <option value="CVE">🇨🇻 CVE - Escudo</option> </select>
+      </div>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex gap-1 overflow-x-auto"><button class="tab-btn tab-active px-4 py-3 text-sm font-medium whitespace-nowrap" data-tab="simulator">
+       <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Simulador </button> <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 whitespace-nowrap" data-tab="scenarios">
+       <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+       </svg> Cenários </button> <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 whitespace-nowrap" data-tab="education">
+       <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Educação </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Simulator Tab -->
+    <div id="tab-simulator" class="tab-content">
+     <div class="grid lg:grid-cols-2 gap-6"><!-- Input Panel -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Dados do Projeto</h2><button id="load-example-btn" class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg> Carregar Exemplo </button>
+       </div>
+       <form id="investment-form" class="space-y-4">
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Investimento Inicial</label>
+         <div class="relative"><span id="currency-symbol" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kz</span> <input type="text" id="investimento-inicial" class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="500.000" required>
+         </div>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-600 mb-1">Fluxo de Caixa Mensal Esperado</label>
+         <div class="relative"><span class="currency-prefix absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kz</span> <input type="text" id="fluxo-caixa-mensal" class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="50.000" required>
+         </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Período (anos)</label> <input type="number" id="periodo-anos" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="5" min="1" max="50" required>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Taxa de Desconto (% a.a.)</label> <input type="number" id="taxa-desconto" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="10" step="0.1" required>
+         </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Crescimento Anual (%)</label> <input type="number" id="crescimento-anual" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="3" step="0.1" required>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Valor Residual</label>
+          <div class="relative"><span class="currency-prefix absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kz</span> <input type="text" id="valor-residual" class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm" placeholder="100.000">
+          </div>
+         </div>
+        </div>
+        <div class="flex gap-3 pt-2"><button type="submit" class="flex-1 btn-primary text-white py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg> Calcular </button> <button type="button" id="save-scenario-btn" class="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg> Salvar </button>
+        </div>
+       </form>
+      </div><!-- Results Panel -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Resultados da Análise</h2>
+        <div class="flex gap-2"><button id="export-pdf-btn" class="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all" title="Exportar PDF">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg></button> <button id="export-image-btn" class="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all" title="Exportar Imagem">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+       </div>
+       <div id="results-container" class="space-y-3">
+        <div class="text-center py-12 text-gray-400">
+         <svg class="w-16 h-16 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg>
+         <p class="text-sm">Preencha os dados e clique em "Calcular"</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts Section -->
+     <div id="charts-section" class="mt-6 grid md:grid-cols-2 gap-6 hidden">
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <h3 class="text-sm font-semibold text-gray-900 mb-4">Fluxo de Caixa Acumulado</h3>
+       <div class="h-64">
+        <canvas id="cash-flow-chart"></canvas>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <h3 class="text-sm font-semibold text-gray-900 mb-4">Composição do Retorno</h3>
+       <div class="h-64">
+        <canvas id="composition-chart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="tab-scenarios" class="tab-content hidden">
+     <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+       <h2 class="text-lg font-semibold text-gray-900">Cenários Salvos</h2>
+       <div class="flex gap-2"><button id="export-json-btn" class="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+         </svg> Exportar JSON </button> <label class="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 cursor-pointer">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+         </svg> Importar JSON <input type="file" id="import-json-input" accept=".json" class="hidden"> </label>
+       </div>
+      </div>
+      <div id="scenarios-list" class="space-y-3">
+       <div class="text-center py-12 text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <p class="text-sm">Nenhum cenário salvo ainda</p>
+        <p class="text-xs mt-1">Salve simulações para comparar diferentes projetos</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Education Tab -->
+    <div id="tab-education" class="tab-content hidden">
+     <div class="space-y-6"><!-- About -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Sobre o Simulador</h2>
+       <p class="text-sm text-gray-600 leading-relaxed">Este simulador foi desenvolvido para ajudar empreendedores, gestores e investidores da Comunidade dos Países de Língua Portuguesa (CPLP) a avaliar a viabilidade financeira de projetos e investimentos. Utilizando indicadores consagrados como VPL, TIR, Payback e ROI, você pode tomar decisões mais informadas e estratégicas.</p>
+       <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <p class="text-sm text-blue-800 italic">💡 "Escolha projetos que não só gerem lucro, mas também sustentem seu futuro e o da sua comunidade."</p>
+       </div>
+      </div><!-- Concepts -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Conceitos-Chave</h2>
+       <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-lg">
+         <h3 class="font-semibold text-gray-900 text-sm mb-2">VPL - Valor Presente Líquido</h3>
+         <p class="text-xs text-gray-600">Soma de todos os fluxos de caixa futuros, descontados a valor presente. <span class="text-green-600 font-medium">VPL &gt; 0 = Projeto Viável</span></p>
+         <div class="mt-2 p-2 bg-white rounded text-xs font-mono text-gray-700">
+          VPL = Σ FC/(1+i)ⁿ - I₀
+         </div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+         <h3 class="font-semibold text-gray-900 text-sm mb-2">TIR - Taxa Interna de Retorno</h3>
+         <p class="text-xs text-gray-600">Taxa de desconto que torna o VPL igual a zero. <span class="text-green-600 font-medium">TIR &gt; TMA = Atrativo</span></p>
+         <div class="mt-2 p-2 bg-white rounded text-xs font-mono text-gray-700">
+          VPL = 0 quando i = TIR
+         </div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+         <h3 class="font-semibold text-gray-900 text-sm mb-2">Payback</h3>
+         <p class="text-xs text-gray-600"><strong>Simples:</strong> Tempo para recuperar o investimento sem considerar o valor do dinheiro no tempo.<br><strong>Descontado:</strong> Considera o valor presente dos fluxos.</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg">
+         <h3 class="font-semibold text-gray-900 text-sm mb-2">IL - Índice de Lucratividade</h3>
+         <p class="text-xs text-gray-600">Relação entre o valor presente dos fluxos e o investimento inicial. <span class="text-green-600 font-medium">IL &gt; 1 = Viável</span></p>
+         <div class="mt-2 p-2 bg-white rounded text-xs font-mono text-gray-700">
+          IL = VP dos Fluxos / I₀
+         </div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-lg md:col-span-2">
+         <h3 class="font-semibold text-gray-900 text-sm mb-2">ROI - Retorno sobre Investimento</h3>
+         <p class="text-xs text-gray-600">Percentual de retorno total em relação ao investimento inicial.</p>
+         <div class="mt-2 p-2 bg-white rounded text-xs font-mono text-gray-700">
+          ROI = [(Ganho Total - Investimento) / Investimento] × 100%
+         </div>
+        </div>
+       </div>
+      </div><!-- Country Examples -->
+      <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+       <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Exemplos por País</h2>
+       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"><button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="AO">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇦🇴</span> <span class="font-semibold text-gray-900 text-sm">Angola</span>
+         </div><p class="text-xs text-gray-600">Loja de materiais de construção em Luanda</p><p class="text-xs text-blue-600 mt-1">Investimento: 5.000.000 AOA</p></button> <button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="BR">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇧🇷</span> <span class="font-semibold text-gray-900 text-sm">Brasil</span>
+         </div><p class="text-xs text-gray-600">Franquia de açaí em São Paulo</p><p class="text-xs text-blue-600 mt-1">Investimento: 150.000 BRL</p></button> <button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="PT">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇵🇹</span> <span class="font-semibold text-gray-900 text-sm">Portugal</span>
+         </div><p class="text-xs text-gray-600">Restaurante de comida portuguesa em Lisboa</p><p class="text-xs text-blue-600 mt-1">Investimento: 80.000 EUR</p></button> <button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="MZ">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇲🇿</span> <span class="font-semibold text-gray-900 text-sm">Moçambique</span>
+         </div><p class="text-xs text-gray-600">Serviço de transporte em Maputo</p><p class="text-xs text-blue-600 mt-1">Investimento: 2.500.000 MZN</p></button> <button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="CV">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇨🇻</span> <span class="font-semibold text-gray-900 text-sm">Cabo Verde</span>
+         </div><p class="text-xs text-gray-600">Pousada turística em Sal</p><p class="text-xs text-blue-600 mt-1">Investimento: 8.000.000 CVE</p></button> <button class="example-btn p-4 bg-gray-50 rounded-lg text-left hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200" data-country="ST">
+         <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🇸🇹</span> <span class="font-semibold text-gray-900 text-sm">São Tomé</span>
+         </div><p class="text-xs text-gray-600">Produção de cacau orgânico</p><p class="text-xs text-blue-600 mt-1">Investimento: 500.000 STN</p></button>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-white border-t border-gray-200 mt-8 py-4">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+     <p class="text-xs text-gray-500">Simulador de Análise de Investimentos • Desenvolvido para a comunidade CPLP</p>
+    </div>
+   </footer>
+  </div>
+  <script>
+    // App State
+    let currentCurrency = 'AOA';
+    let savedScenarios = [];
+    let cashFlowChart = null;
+    let compositionChart = null;
+    let lastCalculation = null;
+    let isDarkMode = false;
+
+    // Default Config
+    const defaultConfig = {
+      app_title: 'Simulador de Análise de Investimentos',
+      subtitle: 'Avaliação de Viabilidade Financeira - CPLP'
+    };
+
+    // Currency configurations
+    const currencyConfig = {
+      AOA: { symbol: 'Kz', locale: 'pt-AO', name: 'Kwanza' },
+      BRL: { symbol: 'R$', locale: 'pt-BR', name: 'Real' },
+      EUR: { symbol: '€', locale: 'pt-PT', name: 'Euro' },
+      MZN: { symbol: 'MT', locale: 'pt-MZ', name: 'Metical' },
+      STN: { symbol: 'Db', locale: 'pt-ST', name: 'Dobra' },
+      CVE: { symbol: '$', locale: 'pt-CV', name: 'Escudo' }
+    };
+
+    // Country examples
+    const countryExamples = {
+      AO: { currency: 'AOA', investimento: 5000000, fluxo: 500000, periodo: 5, taxa: 12, crescimento: 5, residual: 1000000 },
+      BR: { currency: 'BRL', investimento: 150000, fluxo: 15000, periodo: 5, taxa: 14, crescimento: 4, residual: 30000 },
+      PT: { currency: 'EUR', investimento: 80000, fluxo: 8000, periodo: 5, taxa: 8, crescimento: 2, residual: 15000 },
+      MZ: { currency: 'MZN', investimento: 2500000, fluxo: 250000, periodo: 5, taxa: 15, crescimento: 6, residual: 500000 },
+      CV: { currency: 'CVE', investimento: 8000000, fluxo: 800000, periodo: 5, taxa: 10, crescimento: 3, residual: 1500000 },
+      ST: { currency: 'STN', investimento: 500000, fluxo: 50000, periodo: 5, taxa: 11, crescimento: 4, residual: 100000 }
+    };
+
+    // Format currency
+    function formatCurrency(value, currency = currentCurrency) {
+      const config = currencyConfig[currency];
+      try {
+        return new Intl.NumberFormat(config.locale, {
+          style: 'currency',
+          currency: currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      } catch {
+        return `${config.symbol} ${value.toLocaleString('pt-BR')}`;
+      }
+    }
+
+    // Format number with locale
+    function formatNumber(value) {
+      return value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    }
+
+    // Parse locale number
+    function parseLocaleNumber(str) {
+      if (!str) return 0;
+      return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+      
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg text-sm flex items-center gap-2`;
+      toast.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' :
+            type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+        ${message}
+      `;
+      
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Calculate VPL
+    function calculateVPL(investimento, fluxosAnuais, taxaDesconto, valorResidual) {
+      let vpl = -investimento;
+      const taxa = taxaDesconto / 100;
+      
+      fluxosAnuais.forEach((fluxo, index) => {
+        vpl += fluxo / Math.pow(1 + taxa, index + 1);
+      });
+      
+      vpl += valorResidual / Math.pow(1 + taxa, fluxosAnuais.length);
+      return vpl;
+    }
+
+    // Calculate TIR using Newton-Raphson method
+    function calculateTIR(investimento, fluxosAnuais, valorResidual) {
+      let tir = 0.1;
+      const maxIterations = 100;
+      const tolerance = 0.0001;
+      
+      for (let i = 0; i < maxIterations; i++) {
+        let vpl = -investimento;
+        let derivada = 0;
+        
+        fluxosAnuais.forEach((fluxo, index) => {
+          const n = index + 1;
+          vpl += fluxo / Math.pow(1 + tir, n);
+          derivada -= n * fluxo / Math.pow(1 + tir, n + 1);
+        });
+        
+        const nFinal = fluxosAnuais.length;
+        vpl += valorResidual / Math.pow(1 + tir, nFinal);
+        derivada -= nFinal * valorResidual / Math.pow(1 + tir, nFinal + 1);
+        
+        if (Math.abs(derivada) < tolerance) break;
+        
+        const novoTir = tir - vpl / derivada;
+        if (Math.abs(novoTir - tir) < tolerance) {
+          tir = novoTir;
+          break;
+        }
+        tir = novoTir;
+      }
+      
+      return Math.max(0, Math.min(tir * 100, 999));
+    }
+
+    // Calculate Payback Simples
+    function calculatePaybackSimples(investimento, fluxosAnuais) {
+      let acumulado = 0;
+      for (let i = 0; i < fluxosAnuais.length; i++) {
+        acumulado += fluxosAnuais[i];
+        if (acumulado >= investimento) {
+          const anterior = acumulado - fluxosAnuais[i];
+          const fração = (investimento - anterior) / fluxosAnuais[i];
+          return i + fração;
+        }
+      }
+      return fluxosAnuais.length;
+    }
+
+    // Calculate Payback Descontado
+    function calculatePaybackDescontado(investimento, fluxosAnuais, taxaDesconto) {
+      let acumulado = 0;
+      const taxa = taxaDesconto / 100;
+      
+      for (let i = 0; i < fluxosAnuais.length; i++) {
+        const fluxoDescontado = fluxosAnuais[i] / Math.pow(1 + taxa, i + 1);
+        acumulado += fluxoDescontado;
+        if (acumulado >= investimento) {
+          const anterior = acumulado - fluxoDescontado;
+          const fração = (investimento - anterior) / fluxoDescontado;
+          return i + fração;
+        }
+      }
+      return fluxosAnuais.length;
+    }
+
+    // Main calculation function
+    function calculateInvestment(data) {
+      const { investimento, fluxoMensal, periodo, taxaDesconto, crescimento, valorResidual } = data;
+      
+      // Generate annual cash flows with growth
+      const fluxosAnuais = [];
+      let fluxoAnual = fluxoMensal * 12;
+      
+      for (let i = 0; i < periodo; i++) {
+        fluxosAnuais.push(fluxoAnual);
+        fluxoAnual *= (1 + crescimento / 100);
+      }
+      
+      // Calculate indicators
+      const vpl = calculateVPL(investimento, fluxosAnuais, taxaDesconto, valorResidual);
+      const tir = calculateTIR(investimento, fluxosAnuais, valorResidual);
+      const paybackSimples = calculatePaybackSimples(investimento, fluxosAnuais);
+      const paybackDescontado = calculatePaybackDescontado(investimento, fluxosAnuais, taxaDesconto);
+      
+      // Calculate IL
+      const vpFluxos = fluxosAnuais.reduce((sum, fluxo, i) => {
+        return sum + fluxo / Math.pow(1 + taxaDesconto / 100, i + 1);
+      }, 0) + valorResidual / Math.pow(1 + taxaDesconto / 100, periodo);
+      const il = vpFluxos / investimento;
+      
+      // Calculate ROI
+      const ganhoTotal = fluxosAnuais.reduce((sum, f) => sum + f, 0) + valorResidual;
+      const roi = ((ganhoTotal - investimento) / investimento) * 100;
+      
+      // Generate accumulated cash flows for chart
+      const fluxosAcumulados = [];
+      let acumulado = -investimento;
+      fluxosAcumulados.push(acumulado);
+      
+      for (let i = 0; i < fluxosAnuais.length; i++) {
+        acumulado += fluxosAnuais[i];
+        fluxosAcumulados.push(acumulado);
+      }
+      acumulado += valorResidual;
+      fluxosAcumulados[fluxosAcumulados.length - 1] = acumulado;
+      
+      return {
+        vpl,
+        tir,
+        paybackSimples,
+        paybackDescontado,
+        il,
+        roi,
+        fluxosAnuais,
+        fluxosAcumulados,
+        vpFluxos,
+        investimento,
+        valorResidual,
+        taxaDesconto
+      };
+    }
+
+    // Render results
+    function renderResults(results) {
+      const container = document.getElementById('results-container');
+      const chartsSection = document.getElementById('charts-section');
+      
+      const vplStatus = results.vpl > 0;
+      const tirStatus = results.tir > results.taxaDesconto;
+      const ilStatus = results.il > 1;
+      
+      container.innerHTML = `
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-4 rounded-lg ${vplStatus ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}">
+            <div class="text-xs text-gray-500 mb-1">VPL</div>
+            <div class="text-lg font-bold ${vplStatus ? 'text-green-700' : 'text-red-700'}">${formatCurrency(results.vpl)}</div>
+            <div class="text-xs mt-1 ${vplStatus ? 'text-green-600' : 'text-red-600'}">${vplStatus ? '✓ Projeto VIÁVEL' : '✗ Projeto INVIÁVEL'}</div>
+          </div>
+          
+          <div class="p-4 rounded-lg ${tirStatus ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
+            <div class="text-xs text-gray-500 mb-1">TIR</div>
+            <div class="text-lg font-bold ${tirStatus ? 'text-green-700' : 'text-yellow-700'}">${formatNumber(results.tir)}%</div>
+            <div class="text-xs mt-1 ${tirStatus ? 'text-green-600' : 'text-yellow-600'}">${tirStatus ? `✓ TIR > TMA (${results.taxaDesconto}%)` : `⚠ TIR < TMA (${results.taxaDesconto}%)`}</div>
+          </div>
+          
+          <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+            <div class="text-xs text-gray-500 mb-1">Payback Simples</div>
+            <div class="text-lg font-bold text-blue-700">${formatNumber(results.paybackSimples)} anos</div>
+          </div>
+          
+          <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+            <div class="text-xs text-gray-500 mb-1">Payback Descontado</div>
+            <div class="text-lg font-bold text-blue-700">${formatNumber(results.paybackDescontado)} anos</div>
+          </div>
+          
+          <div class="p-4 rounded-lg ${ilStatus ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}">
+            <div class="text-xs text-gray-500 mb-1">Índice de Lucratividade</div>
+            <div class="text-lg font-bold ${ilStatus ? 'text-green-700' : 'text-red-700'}">${formatNumber(results.il)}</div>
+            <div class="text-xs mt-1 ${ilStatus ? 'text-green-600' : 'text-red-600'}">${ilStatus ? '✓ IL > 1 → Viável' : '✗ IL < 1 → Inviável'}</div>
+          </div>
+          
+          <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
+            <div class="text-xs text-gray-500 mb-1">ROI Total</div>
+            <div class="text-lg font-bold text-purple-700">${formatNumber(results.roi)}%</div>
+          </div>
+        </div>
+        
+        <div class="mt-4 p-4 rounded-lg ${vplStatus && tirStatus && ilStatus ? 'bg-green-100 border border-green-300' : 'bg-yellow-100 border border-yellow-300'}">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 ${vplStatus && tirStatus && ilStatus ? 'text-green-600' : 'text-yellow-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ${vplStatus && tirStatus && ilStatus ? 
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' :
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'}
+            </svg>
+            <span class="font-semibold ${vplStatus && tirStatus && ilStatus ? 'text-green-800' : 'text-yellow-800'}">
+              ${vplStatus && tirStatus && ilStatus ? 'Projeto Recomendado!' : 'Projeto Requer Análise Adicional'}
+            </span>
+          </div>
+          <p class="text-xs mt-2 ${vplStatus && tirStatus && ilStatus ? 'text-green-700' : 'text-yellow-700'}">
+            ${vplStatus && tirStatus && ilStatus ? 
+              'Todos os indicadores financeiros estão positivos. O investimento apresenta boa viabilidade.' :
+              'Alguns indicadores não atingiram os padrões ideais. Considere revisar as premissas do projeto.'}
+          </p>
+        </div>
+      `;
+      
+      chartsSection.classList.remove('hidden');
+      updateCharts(results);
+    }
+
+    // Update charts
+    function updateCharts(results) {
+      const labels = ['Início', ...Array.from({length: results.fluxosAnuais.length}, (_, i) => `Ano ${i + 1}`)];
+      
+      // Cash Flow Chart
+      const ctxCashFlow = document.getElementById('cash-flow-chart').getContext('2d');
+      
+      if (cashFlowChart) cashFlowChart.destroy();
+      
+      cashFlowChart = new Chart(ctxCashFlow, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Fluxo Acumulado',
+            data: results.fluxosAcumulados,
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: results.fluxosAcumulados.map(v => v >= 0 ? '#4CAF50' : '#F44336'),
+            pointBorderColor: results.fluxosAcumulados.map(v => v >= 0 ? '#4CAF50' : '#F44336'),
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => formatCurrency(context.raw)
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (value) => formatCurrency(value)
+              },
+              grid: { color: isDarkMode ? '#2a2a4a' : '#e5e7eb' }
+            },
+            x: {
+              grid: { color: isDarkMode ? '#2a2a4a' : '#e5e7eb' }
+            }
+          }
+        }
+      });
+      
+      // Composition Chart
+      const ctxComposition = document.getElementById('composition-chart').getContext('2d');
+      
+      if (compositionChart) compositionChart.destroy();
+      
+      const totalFluxos = results.fluxosAnuais.reduce((a, b) => a + b, 0);
+      
+      compositionChart = new Chart(ctxComposition, {
+        type: 'doughnut',
+        data: {
+          labels: ['Investimento Inicial', 'Fluxos de Caixa', 'Valor Residual'],
+          datasets: [{
+            data: [results.investimento, totalFluxos, results.valorResidual],
+            backgroundColor: ['#F44336', '#4CAF50', '#FFC107'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { 
+                boxWidth: 12,
+                padding: 15,
+                color: isDarkMode ? '#e8e8e8' : '#374151'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.label}: ${formatCurrency(context.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Get form data
+    function getFormData() {
+      return {
+        investimento: parseLocaleNumber(document.getElementById('investimento-inicial').value),
+        fluxoMensal: parseLocaleNumber(document.getElementById('fluxo-caixa-mensal').value),
+        periodo: parseInt(document.getElementById('periodo-anos').value) || 0,
+        taxaDesconto: parseFloat(document.getElementById('taxa-desconto').value) || 0,
+        crescimento: parseFloat(document.getElementById('crescimento-anual').value) || 0,
+        valorResidual: parseLocaleNumber(document.getElementById('valor-residual').value) || 0
+      };
+    }
+
+    // Set form data
+    function setFormData(data) {
+      document.getElementById('investimento-inicial').value = formatNumber(data.investimento);
+      document.getElementById('fluxo-caixa-mensal').value = formatNumber(data.fluxoMensal);
+      document.getElementById('periodo-anos').value = data.periodo;
+      document.getElementById('taxa-desconto').value = data.taxaDesconto;
+      document.getElementById('crescimento-anual').value = data.crescimento;
+      document.getElementById('valor-residual').value = formatNumber(data.valorResidual);
+    }
+
+    // Save to localStorage
+    function saveToLocalStorage() {
+      const data = getFormData();
+      localStorage.setItem('investmentSimulator_lastInputs', JSON.stringify({
+        ...data,
+        currency: currentCurrency
+      }));
+    }
+
+    // Load from localStorage
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('investmentSimulator_lastInputs');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.currency) {
+          currentCurrency = data.currency;
+          document.getElementById('currency-select').value = currentCurrency;
+          updateCurrencySymbols();
+        }
+        setFormData({
+          investimento: data.investimento || 0,
+          fluxoMensal: data.fluxoMensal || 0,
+          periodo: data.periodo || 5,
+          taxaDesconto: data.taxaDesconto || 10,
+          crescimento: data.crescimento || 3,
+          valorResidual: data.valorResidual || 0
+        });
+      }
+    }
+
+    // Update currency symbols
+    function updateCurrencySymbols() {
+      const config = currencyConfig[currentCurrency];
+      document.getElementById('currency-symbol').textContent = config.symbol;
+      document.querySelectorAll('.currency-prefix').forEach(el => {
+        el.textContent = config.symbol;
+      });
+    }
+
+    // Render scenarios list
+    function renderScenariosList() {
+      const container = document.getElementById('scenarios-list');
+      
+      if (savedScenarios.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-400">
+            <svg class="w-16 h-16 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <p class="text-sm">Nenhum cenário salvo ainda</p>
+            <p class="text-xs mt-1">Salve simulações para comparar diferentes projetos</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = savedScenarios.map((scenario, index) => `
+        <div class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-all" data-id="${scenario.__backendId}">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <input type="text" class="scenario-name-input font-semibold text-gray-900 text-sm bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-1" value="${scenario.name}" data-id="${scenario.__backendId}">
+              <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${scenario.currency}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="load-scenario-btn p-1.5 rounded hover:bg-blue-50 text-blue-500" data-id="${scenario.__backendId}" title="Carregar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+              </button>
+              <button class="delete-scenario-btn p-1.5 rounded hover:bg-red-50 text-red-500" data-id="${scenario.__backendId}" title="Excluir">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs text-gray-600">
+            <div>Investimento: <span class="font-medium">${formatCurrency(scenario.investimento_inicial, scenario.currency)}</span></div>
+            <div>Período: <span class="font-medium">${scenario.periodo_anos} anos</span></div>
+            <div>Taxa: <span class="font-medium">${scenario.taxa_desconto}%</span></div>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add event listeners
+      container.querySelectorAll('.scenario-name-input').forEach(input => {
+        input.addEventListener('blur', async (e) => {
+          const id = e.target.dataset.id;
+          const newName = e.target.value.trim();
+          if (newName) {
+            const scenario = savedScenarios.find(s => s.__backendId === id);
+            if (scenario && scenario.name !== newName) {
+              scenario.name = newName;
+              const result = await window.dataSdk.update(scenario);
+              if (result.isOk) {
+                showToast('Nome atualizado!', 'success');
+              }
+            }
+          }
+        });
+        
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') e.target.blur();
+        });
+      });
+      
+      container.querySelectorAll('.load-scenario-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadScenario(btn.dataset.id));
+      });
+      
+      container.querySelectorAll('.delete-scenario-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const card = btn.closest('[data-id]');
+          
+          // Create inline confirmation
+          const actions = btn.parentElement;
+          actions.innerHTML = `
+            <span class="text-xs text-red-600 mr-2">Excluir?</span>
+            <button class="confirm-delete-btn p-1.5 rounded bg-red-500 text-white text-xs" data-id="${id}">Sim</button>
+            <button class="cancel-delete-btn p-1.5 rounded bg-gray-200 text-gray-700 text-xs ml-1">Não</button>
+          `;
+          
+          actions.querySelector('.confirm-delete-btn').addEventListener('click', () => deleteScenario(id));
+          actions.querySelector('.cancel-delete-btn').addEventListener('click', () => renderScenariosList());
+        });
+      });
+    }
+
+    // Load scenario
+    function loadScenario(id) {
+      const scenario = savedScenarios.find(s => s.__backendId === id);
+      if (scenario) {
+        currentCurrency = scenario.currency;
+        document.getElementById('currency-select').value = currentCurrency;
+        updateCurrencySymbols();
+        
+        setFormData({
+          investimento: scenario.investimento_inicial,
+          fluxoMensal: scenario.fluxo_caixa_mensal,
+          periodo: scenario.periodo_anos,
+          taxaDesconto: scenario.taxa_desconto,
+          crescimento: scenario.crescimento_anual,
+          valorResidual: scenario.valor_residual
+        });
+        
+        // Switch to simulator tab
+        switchTab('simulator');
+        showToast(`Cenário "${scenario.name}" carregado!`, 'success');
+      }
+    }
+
+    // Delete scenario
+    async function deleteScenario(id) {
+      const scenario = savedScenarios.find(s => s.__backendId === id);
+      if (scenario) {
+        const result = await window.dataSdk.delete(scenario);
+        if (result.isOk) {
+          showToast('Cenário excluído!', 'success');
+        } else {
+          showToast('Erro ao excluir cenário', 'error');
+        }
+      }
+    }
+
+    // Save scenario
+    async function saveScenario() {
+      const data = getFormData();
+      
+      if (!data.investimento || !data.fluxoMensal || !data.periodo) {
+        showToast('Preencha os dados antes de salvar', 'warning');
+        return;
+      }
+      
+      if (savedScenarios.length >= 999) {
+        showToast('Limite máximo de cenários atingido (999)', 'warning');
+        return;
+      }
+      
+      const scenarioNumber = savedScenarios.length + 1;
+      const scenario = {
+        name: `Cenário ${scenarioNumber}`,
+        currency: currentCurrency,
+        investimento_inicial: data.investimento,
+        fluxo_caixa_mensal: data.fluxoMensal,
+        periodo_anos: data.periodo,
+        taxa_desconto: data.taxaDesconto,
+        crescimento_anual: data.crescimento,
+        valor_residual: data.valorResidual,
+        created_at: new Date().toISOString()
+      };
+      
+      const result = await window.dataSdk.create(scenario);
+      if (result.isOk) {
+        showToast('Cenário salvo com sucesso!', 'success');
+      } else {
+        showToast('Erro ao salvar cenário', 'error');
+      }
+    }
+
+    // Export JSON
+    function exportJSON() {
+      if (savedScenarios.length === 0) {
+        showToast('Nenhum cenário para exportar', 'warning');
+        return;
+      }
+      
+      const exportData = savedScenarios.map(s => ({
+        name: s.name,
+        currency: s.currency,
+        investimento_inicial: s.investimento_inicial,
+        fluxo_caixa_mensal: s.fluxo_caixa_mensal,
+        periodo_anos: s.periodo_anos,
+        taxa_desconto: s.taxa_desconto,
+        crescimento_anual: s.crescimento_anual,
+        valor_residual: s.valor_residual
+      }));
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cenarios_investimento_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Cenários exportados!', 'success');
+    }
+
+    // Import JSON
+    async function importJSON(file) {
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        if (!Array.isArray(data)) {
+          showToast('Formato de arquivo inválido', 'error');
+          return;
+        }
+        
+        let imported = 0;
+        for (const item of data) {
+          if (savedScenarios.length >= 999) break;
+          
+          const scenario = {
+            name: item.name || `Cenário Importado ${imported + 1}`,
+            currency: item.currency || 'AOA',
+            investimento_inicial: item.investimento_inicial || 0,
+            fluxo_caixa_mensal: item.fluxo_caixa_mensal || 0,
+            periodo_anos: item.periodo_anos || 5,
+            taxa_desconto: item.taxa_desconto || 10,
+            crescimento_anual: item.crescimento_anual || 3,
+            valor_residual: item.valor_residual || 0,
+            created_at: new Date().toISOString()
+          };
+          
+          const result = await window.dataSdk.create(scenario);
+          if (result.isOk) imported++;
+        }
+        
+        showToast(`${imported} cenário(s) importado(s)!`, 'success');
+      } catch (error) {
+        showToast('Erro ao importar arquivo', 'error');
+      }
+    }
+
+    // Export PDF
+    async function exportPDF() {
+      if (!lastCalculation) {
+        showToast('Faça uma simulação primeiro', 'warning');
+        return;
+      }
+      
+      showToast('Gerando PDF...', 'info');
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Header
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Simulador de Análise de Investimentos', pageWidth / 2, 15, { align: 'center' });
+      
+      // Content
+      pdf.setTextColor(0, 0, 0);
+      let y = 40;
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resultados da Análise', 15, y);
+      y += 10;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      
+      const results = [
+        ['VPL (Valor Presente Líquido)', formatCurrency(lastCalculation.vpl), lastCalculation.vpl > 0 ? 'Viável' : 'Inviável'],
+        ['TIR (Taxa Interna de Retorno)', `${formatNumber(lastCalculation.tir)}%`, lastCalculation.tir > lastCalculation.taxaDesconto ? 'Atrativo' : 'Abaixo da TMA'],
+        ['Payback Simples', `${formatNumber(lastCalculation.paybackSimples)} anos`, ''],
+        ['Payback Descontado', `${formatNumber(lastCalculation.paybackDescontado)} anos`, ''],
+        ['Índice de Lucratividade', formatNumber(lastCalculation.il), lastCalculation.il > 1 ? 'Viável' : 'Inviável'],
+        ['ROI Total', `${formatNumber(lastCalculation.roi)}%`, '']
+      ];
+      
+      results.forEach(([label, value, status]) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label + ':', 15, y);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(value, 80, y);
+        if (status) {
+          pdf.setTextColor(status.includes('Viável') || status.includes('Atrativo') ? 76 : 244, status.includes('Viável') || status.includes('Atrativo') ? 175 : 67, status.includes('Viável') || status.includes('Atrativo') ? 80 : 54);
+          pdf.text(`(${status})`, 130, y);
+          pdf.setTextColor(0, 0, 0);
+        }
+        y += 8;
+      });
+      
+      // Add chart as small image
+      y += 10;
+      try {
+        const chartCanvas = document.getElementById('cash-flow-chart');
+        const chartImage = chartCanvas.toDataURL('image/png');
+        pdf.text('Fluxo de Caixa Acumulado:', 15, y);
+        y += 5;
+        pdf.addImage(chartImage, 'PNG', 15, y, 80, 50);
+      } catch (e) {
+        console.log('Chart export failed');
+      }
+      
+      // Footer
+      const addFooter = (pageNum) => {
+        pdf.setFillColor(245, 245, 245);
+        pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Simulador de Análise de Investimentos - CPLP', 15, pageHeight - 7);
+        pdf.text(`Página ${pageNum}`, pageWidth - 25, pageHeight - 7);
+      };
+      
+      addFooter(1);
+      
+      pdf.save(`analise_investimento_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado!', 'success');
+    }
+
+    // Export Image
+    async function exportImage() {
+      const resultsContainer = document.getElementById('results-container');
+      
+      if (resultsContainer.querySelector('.text-center.py-12')) {
+        showToast('Faça uma simulação primeiro', 'warning');
+        return;
+      }
+      
+      showToast('Gerando imagem...', 'info');
+      
+      try {
+        const canvas = await html2canvas(resultsContainer, {
+          backgroundColor: '#ffffff',
+          scale: 2
+        });
+        
+        const link = document.createElement('a');
+        link.download = `resultados_investimento_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada!', 'success');
+      } catch (error) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+    }
+
+    // Switch tab
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active', 'text-blue-500');
+        btn.classList.add('text-gray-500');
+      });
+      
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('tab-active');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.remove('text-gray-500');
+      
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    }
+
+    // Toggle dark mode
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      localStorage.setItem('investmentSimulator_darkMode', isDarkMode);
+      
+      if (lastCalculation) {
+        updateCharts(lastCalculation);
+      }
+    }
+
+    // Load example
+    function loadExample(country) {
+      const example = countryExamples[country];
+      if (example) {
+        currentCurrency = example.currency;
+        document.getElementById('currency-select').value = currentCurrency;
+        updateCurrencySymbols();
+        
+        setFormData({
+          investimento: example.investimento,
+          fluxoMensal: example.fluxo,
+          periodo: example.periodo,
+          taxaDesconto: example.taxa,
+          crescimento: example.crescimento,
+          valorResidual: example.residual
+        });
+        
+        switchTab('simulator');
+        showToast('Exemplo carregado!', 'success');
+      }
+    }
+
+    // Data Handler for SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        savedScenarios = data;
+        renderScenariosList();
+      }
+    };
+
+    // Element SDK handler
+    async function onConfigChange(config) {
+      const title = config.app_title || defaultConfig.app_title;
+      const subtitle = config.subtitle || defaultConfig.subtitle;
+      
+      document.getElementById('app-title').textContent = title;
+      document.getElementById('app-subtitle').textContent = subtitle;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['app_title', config.app_title || defaultConfig.app_title],
+        ['subtitle', config.subtitle || defaultConfig.subtitle]
+      ]);
+    }
+
+    // Initialize
+    async function init() {
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities,
+          mapToEditPanelValues
+        });
+      }
+      
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error('Failed to initialize data SDK');
+        }
+      }
+      
+      // Load saved settings
+      const savedDarkMode = localStorage.getItem('investmentSimulator_darkMode');
+      if (savedDarkMode === 'true') {
+        isDarkMode = true;
+        document.documentElement.classList.add('dark');
+      }
+      
+      loadFromLocalStorage();
+      updateCurrencySymbols();
+      
+      // Event Listeners
+      document.getElementById('investment-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const data = getFormData();
+        
+        if (!data.investimento || !data.fluxoMensal || !data.periodo || !data.taxaDesconto) {
+          showToast('Preencha todos os campos obrigatórios', 'warning');
+          return;
+        }
+        
+        lastCalculation = calculateInvestment(data);
+        renderResults(lastCalculation);
+        saveToLocalStorage();
+        showToast('Cálculo realizado com sucesso!', 'success');
+      });
+      
+      document.getElementById('currency-select').addEventListener('change', (e) => {
+        currentCurrency = e.target.value;
+        updateCurrencySymbols();
+        saveToLocalStorage();
+        
+        if (lastCalculation) {
+          renderResults(lastCalculation);
+        }
+      });
+      
+      document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+      document.getElementById('save-scenario-btn').addEventListener('click', saveScenario);
+      document.getElementById('export-pdf-btn').addEventListener('click', exportPDF);
+      document.getElementById('export-image-btn').addEventListener('click', exportImage);
+      document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+      document.getElementById('import-json-input').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          importJSON(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      
+      document.getElementById('load-example-btn').addEventListener('click', () => {
+        loadExample('AO');
+      });
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+      
+      document.querySelectorAll('.example-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadExample(btn.dataset.country));
+      });
+    }
+    
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bb5c7914785c13d',t:'MTc2Nzk4MTA1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1973 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Avaliação de Empresas CPLP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    .tab-btn {
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      color: #66CFF5;
+      border-bottom: 2px solid #66CFF5;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    }
+    .btn-primary {
+      background: #66CFF5;
+      color: white;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background: #33BEF2;
+    }
+    .btn-secondary {
+      background: #F8F9FA;
+      color: #424242;
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: #E0E0E0;
+    }
+    .input-field {
+      border: 1px solid #E0E0E0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-success { background: #4CAF50; }
+    .toast-error { background: #F44336; }
+    .toast-warning { background: #FF9800; }
+    .toast-info { background: #66CFF5; }
+    .currency-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: 1px solid #E0E0E0;
+      background: #F8F9FA;
+      color: #616161;
+    }
+    .currency-btn.active {
+      background: #66CFF5;
+      color: white;
+      border-color: #66CFF5;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .accordion-content.open {
+      max-height: 2000px;
+    }
+    .scenario-card {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .scenario-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F8F9FA;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #BDBDBD;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9E9E9E;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+     <div class="flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-3">
+       <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+       <div>
+        <h1 id="app-title" class="text-lg font-bold text-gray-800" style="display: none; display: none;">Simulador de Avaliação de Empresas</h1>
+        <p class="text-xs text-gray-500" style="display: none;">Comunidade CPLP</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-2"><button onclick="openCurrencyModal()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg><span id="current-currency-display">AOA</span> </button> <button onclick="openInfoModal()" class="btn-secondary p-2 rounded-lg">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg></button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 overflow-x-auto">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex gap-1 min-w-max"><button onclick="switchTab('simulador')" class="tab-btn active px-4 py-3 text-sm font-medium text-gray-500 flex items-center gap-2" data-tab="simulador">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Simulador </button> <button onclick="switchTab('cenarios')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 flex items-center gap-2" data-tab="cenarios">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+       </svg> Cenários </button> <button onclick="switchTab('graficos')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 flex items-center gap-2" data-tab="graficos">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+       </svg> Gráficos </button> <button onclick="switchTab('educacao')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 flex items-center gap-2" data-tab="educacao">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Educação </button> <button onclick="switchTab('sobre')" class="tab-btn px-4 py-3 text-sm font-medium text-gray-500 flex items-center gap-2" data-tab="sobre">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Sobre </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Tab: Simulador -->
+    <div id="tab-simulador" class="tab-content">
+     <div class="grid lg:grid-cols-2 gap-6"><!-- Input Section -->
+      <div class="space-y-4">
+       <div class="card p-4">
+        <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+         </svg> Dados da Empresa</h2>
+        <div class="space-y-3">
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label> <input type="text" id="company-name" class="input-field" placeholder="Ex: Empresa ABC, Lda" onchange="saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Setor de Atividade</label> <select id="sector" class="input-field" onchange="saveToLocalStorage()"> <option value="">Selecione...</option> <option value="tecnologia">Tecnologia</option> <option value="comercio">Comércio</option> <option value="industria">Indústria</option> <option value="servicos">Serviços</option> <option value="agricultura">Agricultura</option> <option value="construcao">Construção</option> <option value="saude">Saúde</option> <option value="educacao">Educação</option> <option value="financeiro">Financeiro</option> <option value="outro">Outro</option> </select>
+         </div>
+        </div>
+       </div>
+       <div class="card p-4">
+        <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg> Dados Financeiros</h2>
+        <div class="space-y-3">
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Receita Anual <span id="currency-label-1" class="text-blue-500">(AOA)</span></label> <input type="number" id="revenue" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">EBITDA <span id="currency-label-2" class="text-blue-500">(AOA)</span></label> <input type="number" id="ebitda" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+          <p class="text-xs text-gray-500 mt-1">Lucro antes de juros, impostos, depreciação e amortização</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Lucro Líquido <span id="currency-label-3" class="text-blue-500">(AOA)</span></label> <input type="number" id="net-profit" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Patrimônio Líquido <span id="currency-label-4" class="text-blue-500">(AOA)</span></label> <input type="number" id="equity" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Dívida Total <span id="currency-label-5" class="text-blue-500">(AOA)</span></label> <input type="number" id="debt" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Caixa e Equivalentes <span id="currency-label-6" class="text-blue-500">(AOA)</span></label> <input type="number" id="cash" class="input-field" placeholder="0" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+        </div>
+       </div>
+       <div class="card p-4">
+        <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+         </svg> Parâmetros de Avaliação</h2>
+        <div class="space-y-3">
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Múltiplo de Receita (P/S)</label> <input type="number" id="ps-multiple" class="input-field" value="2" step="0.1" onchange="calculateAll(); saveToLocalStorage()">
+          <p class="text-xs text-gray-500 mt-1">Típico: 0.5x - 5x dependendo do setor</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Múltiplo EBITDA (EV/EBITDA)</label> <input type="number" id="ebitda-multiple" class="input-field" value="8" step="0.1" onchange="calculateAll(); saveToLocalStorage()">
+          <p class="text-xs text-gray-500 mt-1">Típico: 5x - 15x dependendo do setor</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Múltiplo de Lucro (P/E)</label> <input type="number" id="pe-multiple" class="input-field" value="15" step="0.1" onchange="calculateAll(); saveToLocalStorage()">
+          <p class="text-xs text-gray-500 mt-1">Típico: 10x - 25x dependendo do crescimento</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Taxa de Desconto (WACC) %</label> <input type="number" id="discount-rate" class="input-field" value="12" step="0.5" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Taxa de Crescimento Perpétuo %</label> <input type="number" id="growth-rate" class="input-field" value="3" step="0.5" onchange="calculateAll(); saveToLocalStorage()">
+         </div>
+        </div>
+       </div>
+       <div class="flex gap-2 flex-wrap"><button onclick="calculateAll()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg> Calcular </button> <button onclick="saveScenario()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário </button> <button onclick="clearForm()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+         </svg> Limpar </button>
+       </div>
+      </div><!-- Results Section -->
+      <div class="space-y-4">
+       <div class="card p-4 bg-gradient-to-br from-blue-50 to-white">
+        <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg> Resultados da Avaliação</h2>
+        <div class="space-y-4">
+         <div class="p-4 bg-white rounded-lg border border-blue-200">
+          <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Valor Médio Estimado</span> <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Recomendado</span>
+          </div>
+          <p id="avg-value" class="text-2xl font-bold text-blue-600">0 AOA</p>
+         </div>
+         <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-white rounded-lg border">
+           <p class="text-xs text-gray-500 mb-1">Método Receitas (P/S)</p>
+           <p id="ps-value" class="text-lg font-semibold text-gray-800">0 AOA</p>
+          </div>
+          <div class="p-3 bg-white rounded-lg border">
+           <p class="text-xs text-gray-500 mb-1">Método EBITDA</p>
+           <p id="ebitda-value" class="text-lg font-semibold text-gray-800">0 AOA</p>
+          </div>
+          <div class="p-3 bg-white rounded-lg border">
+           <p class="text-xs text-gray-500 mb-1">Método P/E</p>
+           <p id="pe-value" class="text-lg font-semibold text-gray-800">0 AOA</p>
+          </div>
+          <div class="p-3 bg-white rounded-lg border">
+           <p class="text-xs text-gray-500 mb-1">Valor Patrimonial</p>
+           <p id="book-value" class="text-lg font-semibold text-gray-800">0 AOA</p>
+          </div>
+         </div>
+         <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+          <p class="text-xs text-gray-500 mb-1">Método DCF (Fluxo de Caixa Descontado)</p>
+          <p id="dcf-value" class="text-lg font-semibold text-yellow-700">0 AOA</p>
+         </div>
+         <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+          <p class="text-xs text-gray-500 mb-1">Enterprise Value (EV)</p>
+          <p id="ev-value" class="text-lg font-semibold text-green-700">0 AOA</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-4">
+        <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg> Indicadores Financeiros</h3>
+        <div class="grid grid-cols-2 gap-3">
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <p class="text-xs text-gray-500">Margem EBITDA</p>
+          <p id="ebitda-margin" class="text-lg font-semibold">0%</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <p class="text-xs text-gray-500">Margem Líquida</p>
+          <p id="net-margin" class="text-lg font-semibold">0%</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <p class="text-xs text-gray-500">ROE</p>
+          <p id="roe" class="text-lg font-semibold">0%</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <p class="text-xs text-gray-500">Dívida/EBITDA</p>
+          <p id="debt-ebitda" class="text-lg font-semibold">0x</p>
+         </div>
+        </div>
+       </div>
+       <div class="flex gap-2 flex-wrap"><button onclick="exportPDF()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg> Exportar PDF </button> <button onclick="exportImage()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> Exportar Imagem </button>
+       </div>
+      </div>
+     </div>
+    </div><!-- Tab: Cenários -->
+    <div id="tab-cenarios" class="tab-content hidden">
+     <div class="mb-6">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+       <h2 class="text-xl font-bold text-gray-800">Cenários Salvos</h2>
+       <div class="flex gap-2"><button onclick="exportAllScenarios()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+         </svg> Exportar JSON </button> <label class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2 cursor-pointer">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+         </svg> Importar JSON <input type="file" accept=".json" class="hidden" onchange="importScenarios(event)"> </label>
+       </div>
+      </div>
+      <p class="text-gray-600 text-sm mb-4">Guarde até 10 cenários de simulação para comparação e análise.</p>
+     </div>
+     <div id="scenarios-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"><!-- Scenarios will be rendered here -->
+     </div>
+     <div class="card p-4">
+      <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Cenários de Exemplo para Aprendizagem</h3>
+      <p class="text-sm text-gray-600 mb-4">Carregue um dos cenários pré-configurados para entender como funciona a avaliação de empresas.</p>
+      <div class="grid sm:grid-cols-2 gap-3"><button onclick="loadExampleScenario('startup')" class="scenario-card p-4 bg-purple-50 rounded-lg border border-purple-200 text-left"> <h4 class="font-semibold text-purple-700">🚀 Startup de Tecnologia</h4><p class="text-xs text-gray-600 mt-1">Empresa em fase de crescimento, alta receita, EBITDA negativo</p></button> <button onclick="loadExampleScenario('pme')" class="scenario-card p-4 bg-green-50 rounded-lg border border-green-200 text-left"> <h4 class="font-semibold text-green-700">🏢 PME Estabelecida</h4><p class="text-xs text-gray-600 mt-1">Empresa madura, fluxo de caixa estável, crescimento moderado</p></button> <button onclick="loadExampleScenario('industria')" class="scenario-card p-4 bg-orange-50 rounded-lg border border-orange-200 text-left"> <h4 class="font-semibold text-orange-700">🏭 Indústria Tradicional</h4><p class="text-xs text-gray-600 mt-1">Alto patrimônio, margens baixas, ativos significativos</p></button> <button onclick="loadExampleScenario('servicos')" class="scenario-card p-4 bg-blue-50 rounded-lg border border-blue-200 text-left"> <h4 class="font-semibold text-blue-700">💼 Empresa de Serviços</h4><p class="text-xs text-gray-600 mt-1">Baixo capital, altas margens, dependente de pessoas</p></button> <button onclick="loadExampleScenario('comercio')" class="scenario-card p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-left"> <h4 class="font-semibold text-yellow-700">🛒 Comércio Varejista</h4><p class="text-xs text-gray-600 mt-1">Alto volume de vendas, margens reduzidas, estoque relevante</p></button> <button onclick="loadExampleScenario('agricultura')" class="scenario-card p-4 bg-lime-50 rounded-lg border border-lime-200 text-left"> <h4 class="font-semibold text-lime-700">🌾 Agronegócio</h4><p class="text-xs text-gray-600 mt-1">Sazonalidade, ativos rurais, commodities</p></button> <button onclick="loadExampleScenario('saude')" class="scenario-card p-4 bg-red-50 rounded-lg border border-red-200 text-left"> <h4 class="font-semibold text-red-700">🏥 Clínica de Saúde</h4><p class="text-xs text-gray-600 mt-1">Serviços essenciais, equipamentos especializados</p></button> <button onclick="loadExampleScenario('construcao')" class="scenario-card p-4 bg-stone-50 rounded-lg border border-stone-200 text-left"> <h4 class="font-semibold text-stone-700">🏗️ Construtora</h4><p class="text-xs text-gray-600 mt-1">Projetos de longo prazo, alto endividamento típico</p></button> <button onclick="loadExampleScenario('fintech')" class="scenario-card p-4 bg-cyan-50 rounded-lg border border-cyan-200 text-left"> <h4 class="font-semibold text-cyan-700">💳 Fintech</h4><p class="text-xs text-gray-600 mt-1">Crescimento exponencial, modelo de assinatura</p></button> <button onclick="loadExampleScenario('energia')" class="scenario-card p-4 bg-amber-50 rounded-lg border border-amber-200 text-left"> <h4 class="font-semibold text-amber-700">⚡ Energia Renovável</h4><p class="text-xs text-gray-600 mt-1">Alto investimento inicial, receitas previsíveis</p></button>
+      </div>
+     </div>
+    </div><!-- Tab: Gráficos -->
+    <div id="tab-graficos" class="tab-content hidden">
+     <div class="grid lg:grid-cols-2 gap-6">
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4">Comparação de Métodos de Avaliação</h3>
+       <div style="height: 300px;">
+        <canvas id="valuation-chart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4">Distribuição por Método</h3>
+       <div style="height: 300px;">
+        <canvas id="distribution-chart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4">Indicadores Financeiros</h3>
+       <div style="height: 300px;">
+        <canvas id="indicators-chart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4">Estrutura de Capital</h3>
+       <div style="height: 300px;">
+        <canvas id="capital-chart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- Tab: Educação -->
+    <div id="tab-educacao" class="tab-content hidden">
+     <div class="space-y-4"><!-- Accordion: O que é Avaliação de Empresas -->
+      <div class="card"><button onclick="toggleAccordion('acc-intro')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">📚</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">O que é Avaliação de Empresas?</h3>
+          <p class="text-sm text-gray-500">Conceitos fundamentais e importância</p>
+         </div>
+        </div>
+        <svg id="acc-intro-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-intro" class="accordion-content">
+        <div class="px-4 pb-4 space-y-3 text-sm text-gray-600">
+         <p>A <strong>avaliação de empresas</strong> (ou valuation) é o processo de determinar o valor económico de um negócio. Este valor pode ser utilizado em diversas situações:</p>
+         <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Compra e venda de empresas:</strong> Negociações de M&amp;A (fusões e aquisições)</li>
+          <li><strong>Captação de investimento:</strong> Definir quanto equity entregar por capital recebido</li>
+          <li><strong>Planejamento estratégico:</strong> Medir criação de valor ao longo do tempo</li>
+          <li><strong>Disputas legais:</strong> Partilha de bens, divórcio societário</li>
+          <li><strong>IPO:</strong> Definir preço de ações para abertura de capital</li>
+         </ul>
+         <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p class="text-blue-700"><strong>💡 Dica:</strong> O valor de uma empresa é sempre subjetivo e depende de perspetivas e premissas. Diferentes métodos podem gerar resultados distintos.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Accordion: Métodos de Avaliação -->
+      <div class="card"><button onclick="toggleAccordion('acc-methods')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">🔢</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">Métodos de Avaliação</h3>
+          <p class="text-sm text-gray-500">P/S, EV/EBITDA, P/E, DCF e Valor Patrimonial</p>
+         </div>
+        </div>
+        <svg id="acc-methods-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-methods" class="accordion-content">
+        <div class="px-4 pb-4 space-y-4 text-sm text-gray-600">
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">1. Múltiplo de Receitas (P/S - Price to Sales)</h4>
+          <p class="mb-2">Avalia a empresa com base nas suas vendas totais.</p>
+          <div class="p-2 bg-white rounded border font-mono text-xs">
+           Valor = Receita × Múltiplo P/S
+          </div>
+          <p class="mt-2 text-gray-500">Ideal para: empresas em crescimento, startups sem lucro, comparação setorial.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">2. Múltiplo EBITDA (EV/EBITDA)</h4>
+          <p class="mb-2">Avalia o valor empresarial com base na capacidade de geração de caixa operacional.</p>
+          <div class="p-2 bg-white rounded border font-mono text-xs">
+           EV = EBITDA × Múltiplo<br>
+            Equity Value = EV - Dívida + Caixa
+          </div>
+          <p class="mt-2 text-gray-500">Ideal para: empresas maduras, comparação entre empresas com diferentes estruturas de capital.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">3. Múltiplo de Lucro (P/E - Price to Earnings)</h4>
+          <p class="mb-2">Avalia a empresa com base no seu lucro líquido.</p>
+          <div class="p-2 bg-white rounded border font-mono text-xs">
+           Valor = Lucro Líquido × Múltiplo P/E
+          </div>
+          <p class="mt-2 text-gray-500">Ideal para: empresas lucrativas e estáveis, comparação com ações cotadas.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">4. Fluxo de Caixa Descontado (DCF)</h4>
+          <p class="mb-2">Avalia a empresa pelo valor presente dos fluxos de caixa futuros.</p>
+          <div class="p-2 bg-white rounded border font-mono text-xs">
+           Valor = Σ(FCF / (1+r)^n) + Valor Terminal<br>
+            Valor Terminal = FCF × (1+g) / (r-g)
+          </div>
+          <p class="mt-2 text-gray-500">Ideal para: análise aprofundada, empresas com fluxos previsíveis.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">5. Valor Patrimonial (Book Value)</h4>
+          <p class="mb-2">Avalia a empresa pelo seu patrimônio contábil.</p>
+          <div class="p-2 bg-white rounded border font-mono text-xs">
+           Valor = Patrimônio Líquido (Ativos - Passivos)
+          </div>
+          <p class="mt-2 text-gray-500">Ideal para: empresas com muitos ativos tangíveis, liquidação, setor bancário.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Accordion: Fontes de Financiamento -->
+      <div class="card"><button onclick="toggleAccordion('acc-financing')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">💰</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">Fontes de Financiamento</h3>
+          <p class="text-sm text-gray-500">De onde pode vir o capital para a empresa</p>
+         </div>
+        </div>
+        <svg id="acc-financing-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-financing" class="accordion-content">
+        <div class="px-4 pb-4 space-y-4 text-sm text-gray-600">
+         <div class="grid sm:grid-cols-2 gap-3">
+          <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
+           <h4 class="font-semibold text-purple-700 flex items-center gap-2"><span>👤</span> Capital Próprio</h4>
+           <p class="text-xs mt-2">Recursos pessoais do empreendedor ou sócios. Não gera dívida, mas dilui participação.</p>
+          </div>
+          <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+           <h4 class="font-semibold text-green-700 flex items-center gap-2"><span>🤝</span> Investidores/Parceiros</h4>
+           <p class="text-xs mt-2">Business angels, venture capital, private equity. Trazem capital e experiência em troca de participação.</p>
+          </div>
+          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+           <h4 class="font-semibold text-blue-700 flex items-center gap-2"><span>🏦</span> Financiamento Bancário</h4>
+           <p class="text-xs mt-2">Empréstimos, linhas de crédito, leasing. Exige garantias e pagamento de juros.</p>
+          </div>
+          <div class="p-3 bg-orange-50 rounded-lg border border-orange-200">
+           <h4 class="font-semibold text-orange-700 flex items-center gap-2"><span>🏛️</span> Apoio do Estado</h4>
+           <p class="text-xs mt-2">Subsídios, incentivos fiscais, programas de desenvolvimento. Especialmente para setores estratégicos.</p>
+          </div>
+          <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+           <h4 class="font-semibold text-yellow-700 flex items-center gap-2"><span>🌐</span> Crowdfunding</h4>
+           <p class="text-xs mt-2">Financiamento coletivo através de plataformas online. Pode ser por recompensa, empréstimo ou equity.</p>
+          </div>
+          <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+           <h4 class="font-semibold text-red-700 flex items-center gap-2"><span>📜</span> Emissão de Títulos</h4>
+           <p class="text-xs mt-2">Debêntures, obrigações. Para empresas maiores com acesso ao mercado de capitais.</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- Accordion: Indicadores Financeiros -->
+      <div class="card"><button onclick="toggleAccordion('acc-indicators')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">📊</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">Indicadores Financeiros</h3>
+          <p class="text-sm text-gray-500">ROE, margens, endividamento e outros</p>
+         </div>
+        </div>
+        <svg id="acc-indicators-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-indicators" class="accordion-content">
+        <div class="px-4 pb-4 space-y-3 text-sm text-gray-600">
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold">Margem EBITDA</h4>
+          <div class="p-2 bg-white rounded border font-mono text-xs my-2">
+           Margem EBITDA = (EBITDA / Receita) × 100%
+          </div>
+          <p class="text-xs">Indica a eficiência operacional antes de juros, impostos e depreciação.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold">Margem Líquida</h4>
+          <div class="p-2 bg-white rounded border font-mono text-xs my-2">
+           Margem Líquida = (Lucro Líquido / Receita) × 100%
+          </div>
+          <p class="text-xs">Quanto de cada unidade monetária de vendas se converte em lucro.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold">ROE (Return on Equity)</h4>
+          <div class="p-2 bg-white rounded border font-mono text-xs my-2">
+           ROE = (Lucro Líquido / Patrimônio Líquido) × 100%
+          </div>
+          <p class="text-xs">Retorno sobre o capital dos acionistas. Mede eficiência na geração de valor.</p>
+         </div>
+         <div class="p-3 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold">Dívida/EBITDA</h4>
+          <div class="p-2 bg-white rounded border font-mono text-xs my-2">
+           Dívida/EBITDA = Dívida Total / EBITDA
+          </div>
+          <p class="text-xs">Indica quantos anos seriam necessários para pagar a dívida com o EBITDA atual.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Accordion: Dicas Práticas -->
+      <div class="card"><button onclick="toggleAccordion('acc-tips')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">💡</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">Dicas de Educação Financeira</h3>
+          <p class="text-sm text-gray-500">Orientações práticas para empresários</p>
+         </div>
+        </div>
+        <svg id="acc-tips-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-tips" class="accordion-content">
+        <div class="px-4 pb-4 space-y-3 text-sm text-gray-600">
+         <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <p><strong>✓ Mantenha registos financeiros organizados:</strong> Demonstrações financeiras atualizadas valorizam a empresa.</p>
+         </div>
+         <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <p><strong>✓ Diversifique receitas:</strong> Empresas com múltiplas fontes de receita são menos arriscadas.</p>
+         </div>
+         <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <p><strong>✓ Controle o endividamento:</strong> Uma relação Dívida/EBITDA acima de 3x pode ser preocupante.</p>
+         </div>
+         <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <p><strong>✓ Invista em crescimento sustentável:</strong> Crescimento sem rentabilidade destrói valor.</p>
+         </div>
+         <div class="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+          <p><strong>⚠ Cuidado com múltiplos irrealistas:</strong> Compare sempre com empresas similares do setor.</p>
+         </div>
+         <div class="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+          <p><strong>⚠ Considere o contexto económico:</strong> Taxas de juro e inflação afetam a avaliação.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Accordion: Glossário -->
+      <div class="card"><button onclick="toggleAccordion('acc-glossary')" class="w-full p-4 flex items-center justify-between text-left">
+        <div class="flex items-center gap-3"><span class="text-2xl">📖</span>
+         <div>
+          <h3 class="font-semibold text-gray-800">Glossário de Termos</h3>
+          <p class="text-sm text-gray-500">Definições dos principais conceitos</p>
+         </div>
+        </div>
+        <svg id="acc-glossary-icon" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="acc-glossary" class="accordion-content">
+        <div class="px-4 pb-4 space-y-2 text-sm text-gray-600">
+         <div class="p-2 border-b">
+          <strong>EBITDA:</strong> Earnings Before Interest, Taxes, Depreciation and Amortization. Lucro operacional antes de juros, impostos, depreciação e amortização.
+         </div>
+         <div class="p-2 border-b">
+          <strong>Enterprise Value (EV):</strong> Valor total da empresa incluindo dívida e excluindo caixa.
+         </div>
+         <div class="p-2 border-b">
+          <strong>Equity Value:</strong> Valor pertencente aos acionistas após dedução de dívidas.
+         </div>
+         <div class="p-2 border-b">
+          <strong>DCF:</strong> Discounted Cash Flow. Método de avaliação por fluxos de caixa descontados.
+         </div>
+         <div class="p-2 border-b">
+          <strong>WACC:</strong> Weighted Average Cost of Capital. Custo médio ponderado do capital.
+         </div>
+         <div class="p-2 border-b">
+          <strong>Múltiplo:</strong> Fator aplicado a uma métrica financeira para estimar valor.
+         </div>
+         <div class="p-2 border-b">
+          <strong>Valor Terminal:</strong> Valor presente dos fluxos de caixa após o período de projeção.
+         </div>
+         <div class="p-2">
+          <strong>Due Diligence:</strong> Processo de investigação e auditoria antes de uma transação.
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Tab: Sobre -->
+    <div id="tab-sobre" class="tab-content hidden">
+     <div class="max-w-3xl mx-auto space-y-6">
+      <div class="card p-6">
+       <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Sobre o Simulador</h2>
+       <p class="text-gray-600 mb-4">O <strong>Simulador de Avaliação de Empresas CPLP</strong> é uma ferramenta educativa e prática desenvolvida para a comunidade de língua portuguesa. O seu objetivo é democratizar o acesso ao conhecimento sobre valuation, permitindo que empreendedores, investidores, estudantes e profissionais estimem o valor de mercado de empresas.</p>
+       <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 class="font-semibold text-blue-700 mb-2">🎯 Principais Funcionalidades</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+         <li>• 5 métodos de avaliação: P/S, EV/EBITDA, P/E, DCF e Valor Patrimonial</li>
+         <li>• Suporte a 7 moedas da CPLP + USD</li>
+         <li>• Gráficos dinâmicos em tempo real</li>
+         <li>• Guarda até 10 cenários de simulação</li>
+         <li>• Exportação em PDF, imagem e JSON</li>
+         <li>• 10 cenários de exemplo para aprendizagem</li>
+         <li>• Conteúdo educativo completo</li>
+        </ul>
+       </div>
+      </div>
+      <div class="card p-6">
+       <h2 class="text-xl font-bold text-gray-800 mb-4">🌍 Países CPLP Suportados</h2>
+       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇦🇴</span>
+         <p class="text-sm font-medium mt-1">Angola</p>
+         <p class="text-xs text-gray-500">AOA</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇧🇷</span>
+         <p class="text-sm font-medium mt-1">Brasil</p>
+         <p class="text-xs text-gray-500">BRL</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇨🇻</span>
+         <p class="text-sm font-medium mt-1">Cabo Verde</p>
+         <p class="text-xs text-gray-500">CVE</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇲🇿</span>
+         <p class="text-sm font-medium mt-1">Moçambique</p>
+         <p class="text-xs text-gray-500">MZN</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇵🇹</span>
+         <p class="text-sm font-medium mt-1">Portugal</p>
+         <p class="text-xs text-gray-500">EUR</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇸🇹</span>
+         <p class="text-sm font-medium mt-1">São Tomé</p>
+         <p class="text-xs text-gray-500">STN</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇹🇱</span>
+         <p class="text-sm font-medium mt-1">Timor-Leste</p>
+         <p class="text-xs text-gray-500">USD</p>
+        </div>
+        <div class="text-center p-3 bg-gray-50 rounded-lg"><span class="text-2xl">🇬🇼</span>
+         <p class="text-sm font-medium mt-1">Guiné-Bissau</p>
+         <p class="text-xs text-gray-500">XOF</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-6">
+       <h2 class="text-xl font-bold text-gray-800 mb-4">⚠️ Aviso Legal</h2>
+       <p class="text-sm text-gray-600">Este simulador é uma ferramenta educativa e não constitui aconselhamento financeiro, jurídico ou fiscal. Os resultados apresentados são estimativas baseadas nos dados introduzidos e nos métodos de avaliação selecionados. Para decisões de investimento ou transações reais, consulte sempre profissionais qualificados (contabilistas, auditores, consultores financeiros e advogados).</p>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Currency Modal -->
+  <div id="currency-modal" class="modal-overlay hidden">
+   <div class="modal-content">
+    <div class="flex items-center justify-between mb-4">
+     <h3 class="text-lg font-bold text-gray-800">Configurações de Moeda</h3><button onclick="closeCurrencyModal()" class="p-1 hover:bg-gray-100 rounded">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="space-y-4">
+     <div><label class="block text-sm font-medium text-gray-700 mb-2">Moeda Principal</label>
+      <div class="flex flex-wrap gap-2" id="currency-buttons"><!-- Currency buttons will be rendered here -->
+      </div>
+     </div>
+     <div class="pt-4 border-t"><label class="block text-sm font-medium text-gray-700 mb-2">Taxas de Câmbio (relativo ao Kwanza)</label>
+      <p class="text-xs text-gray-500 mb-3">Ajuste manualmente as taxas de conversão</p>
+      <div class="grid grid-cols-2 gap-3" id="exchange-rates-inputs"><!-- Exchange rate inputs will be rendered here -->
+      </div>
+     </div>
+     <div class="pt-4 border-t"><label class="block text-sm font-medium text-gray-700 mb-2">Formato de Número</label>
+      <div class="grid grid-cols-2 gap-3">
+       <div><label class="text-xs text-gray-500">Casas Decimais</label> <select id="decimal-places" class="input-field mt-1" onchange="updateNumberFormat()"> <option value="0">0</option> <option value="2" selected>2</option> <option value="3">3</option> </select>
+       </div>
+       <div><label class="text-xs text-gray-500">Separador Decimal</label> <select id="decimal-separator" class="input-field mt-1" onchange="updateNumberFormat()"> <option value=",">Vírgula (,)</option> <option value=".">Ponto (.)</option> </select>
+       </div>
+      </div>
+     </div>
+     <div class="pt-4 border-t"><label class="block text-sm font-medium text-gray-700 mb-2">Símbolo da Moeda</label> <input type="text" id="currency-symbol-override" class="input-field" placeholder="Deixe vazio para usar o padrão" onchange="updateNumberFormat()">
+      <p class="text-xs text-gray-500 mt-1">Personalize o símbolo da moeda se necessário</p>
+     </div>
+    </div>
+    <div class="mt-6 flex justify-end"><button onclick="closeCurrencyModal()" class="btn-primary px-4 py-2 rounded-lg">Confirmar</button>
+    </div>
+   </div>
+  </div><!-- Info Modal -->
+  <div id="info-modal" class="modal-overlay hidden">
+   <div class="modal-content">
+    <div class="flex items-center justify-between mb-4">
+     <h3 class="text-lg font-bold text-gray-800">Informações</h3><button onclick="closeInfoModal()" class="p-1 hover:bg-gray-100 rounded">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="space-y-3 text-sm text-gray-600">
+     <p>👋 <strong>Bem-vindo ao Simulador de Avaliação de Empresas!</strong></p>
+     <p>Este simulador ajuda-o a estimar o valor de uma empresa utilizando diferentes métodos de avaliação reconhecidos internacionalmente.</p>
+     <p><strong>Como usar:</strong></p>
+     <ol class="list-decimal pl-5 space-y-1">
+      <li>Introduza os dados financeiros da empresa</li>
+      <li>Ajuste os parâmetros de avaliação conforme o setor</li>
+      <li>Clique em "Calcular" para ver os resultados</li>
+      <li>Guarde cenários para comparação futura</li>
+      <li>Exporte relatórios em PDF ou imagem</li>
+     </ol>
+     <p class="text-blue-600">💡 Explore a aba "Educação" para aprender mais sobre cada método!</p>
+    </div>
+    <div class="mt-4 flex justify-end"><button onclick="closeInfoModal()" class="btn-primary px-4 py-2 rounded-lg">Entendido</button>
+    </div>
+   </div>
+  </div><!-- Edit Scenario Modal -->
+  <div id="edit-scenario-modal" class="modal-overlay hidden">
+   <div class="modal-content">
+    <div class="flex items-center justify-between mb-4">
+     <h3 class="text-lg font-bold text-gray-800">Editar Cenário</h3><button onclick="closeEditScenarioModal()" class="p-1 hover:bg-gray-100 rounded">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="space-y-3">
+     <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cenário</label> <input type="text" id="edit-scenario-name" class="input-field" placeholder="Ex: Cenário Otimista">
+     </div>
+    </div>
+    <div class="mt-4 flex justify-end gap-2"><button onclick="closeEditScenarioModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button> <button onclick="confirmEditScenario()" class="btn-primary px-4 py-2 rounded-lg">Guardar</button>
+    </div>
+   </div>
+  </div><!-- Toast Container -->
+  <div id="toast-container"></div>
+  <script>
+    // ==================== Configuration ====================
+    const defaultConfig = {
+      app_title: "Simulador de Avaliação de Empresas",
+      primary_color: "#66CFF5",
+      secondary_color: "#F8F9FA",
+      text_color: "#424242",
+      accent_color: "#FFC107",
+      font_family: "Inter"
+    };
+
+    let config = { ...defaultConfig };
+
+    // Currency configuration
+    const currencies = {
+      AOA: { symbol: 'Kz', name: 'Kwanza', locale: 'pt-AO', flag: '🇦🇴' },
+      BRL: { symbol: 'R$', name: 'Real', locale: 'pt-BR', flag: '🇧🇷' },
+      EUR: { symbol: '€', name: 'Euro', locale: 'pt-PT', flag: '🇵🇹' },
+      MZN: { symbol: 'MT', name: 'Metical', locale: 'pt-MZ', flag: '🇲🇿' },
+      STN: { symbol: 'Db', name: 'Dobra', locale: 'pt-ST', flag: '🇸🇹' },
+      CVE: { symbol: '$', name: 'Escudo', locale: 'pt-CV', flag: '🇨🇻' },
+      USD: { symbol: '$', name: 'Dólar', locale: 'en-US', flag: '🇺🇸' },
+      XOF: { symbol: 'CFA', name: 'Franco CFA', locale: 'fr-GW', flag: '🇬🇼' }
+    };
+
+    // Default exchange rates (1 AOA = X currency)
+    let exchangeRates = {
+      AOA: 1,
+      BRL: 0.006,
+      EUR: 0.001,
+      MZN: 0.077,
+      STN: 0.027,
+      CVE: 0.121,
+      USD: 0.0012,
+      XOF: 0.72
+    };
+
+    let currentCurrency = 'AOA';
+    let decimalPlaces = 2;
+    let decimalSeparator = ',';
+    let customSymbol = '';
+
+    // Scenarios storage
+    let scenarios = [];
+    let editingScenarioIndex = -1;
+
+    // Charts
+    let valuationChart = null;
+    let distributionChart = null;
+    let indicatorsChart = null;
+    let capitalChart = null;
+
+    // Current calculation results
+    let currentResults = {
+      psValue: 0,
+      ebitdaValue: 0,
+      peValue: 0,
+      dcfValue: 0,
+      bookValue: 0,
+      evValue: 0,
+      avgValue: 0,
+      ebitdaMargin: 0,
+      netMargin: 0,
+      roe: 0,
+      debtEbitda: 0
+    };
+
+    // ==================== Initialization ====================
+    function init() {
+      loadFromLocalStorage();
+      renderCurrencyButtons();
+      renderExchangeRatesInputs();
+      renderScenariosList();
+      initCharts();
+      calculateAll();
+      updateCurrencyLabels();
+    }
+
+    // ==================== Element SDK Integration ====================
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["app_title", config.app_title || defaultConfig.app_title]
+        ])
+      });
+    }
+
+    // ==================== Tab Navigation ====================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      if (tabName === 'graficos') {
+        setTimeout(() => updateCharts(), 100);
+      }
+    }
+
+    // ==================== Currency Functions ====================
+    function openCurrencyModal() {
+      document.getElementById('currency-modal').classList.remove('hidden');
+    }
+
+    function closeCurrencyModal() {
+      document.getElementById('currency-modal').classList.add('hidden');
+      calculateAll();
+      saveToLocalStorage();
+    }
+
+    function renderCurrencyButtons() {
+      const container = document.getElementById('currency-buttons');
+      container.innerHTML = Object.entries(currencies).map(([code, data]) => `
+        <button onclick="selectCurrency('${code}')" 
+                class="currency-btn ${currentCurrency === code ? 'active' : ''}" 
+                data-currency="${code}">
+          ${data.flag} ${code}
+        </button>
+      `).join('');
+    }
+
+    function renderExchangeRatesInputs() {
+      const container = document.getElementById('exchange-rates-inputs');
+      container.innerHTML = Object.entries(currencies)
+        .filter(([code]) => code !== 'AOA')
+        .map(([code, data]) => `
+          <div>
+            <label class="text-xs text-gray-500">${data.flag} 1 AOA = ${code}</label>
+            <input type="number" step="0.0001" value="${exchangeRates[code]}" 
+                   class="input-field mt-1" 
+                   onchange="updateExchangeRate('${code}', this.value)">
+          </div>
+        `).join('');
+    }
+
+    function selectCurrency(code) {
+      currentCurrency = code;
+      document.querySelectorAll('.currency-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.currency === code);
+      });
+      document.getElementById('current-currency-display').textContent = code;
+      updateCurrencyLabels();
+      calculateAll();
+      saveToLocalStorage();
+    }
+
+    function updateExchangeRate(code, value) {
+      exchangeRates[code] = parseFloat(value) || 0;
+      saveToLocalStorage();
+    }
+
+    function updateNumberFormat() {
+      decimalPlaces = parseInt(document.getElementById('decimal-places').value);
+      decimalSeparator = document.getElementById('decimal-separator').value;
+      customSymbol = document.getElementById('currency-symbol-override').value;
+      calculateAll();
+      saveToLocalStorage();
+    }
+
+    function updateCurrencyLabels() {
+      for (let i = 1; i <= 6; i++) {
+        const label = document.getElementById(`currency-label-${i}`);
+        if (label) label.textContent = `(${currentCurrency})`;
+      }
+    }
+
+    function formatCurrency(value) {
+      const rate = exchangeRates[currentCurrency] || 1;
+      const convertedValue = value * rate;
+      
+      const symbol = customSymbol || currencies[currentCurrency].symbol;
+      
+      let formatted = convertedValue.toFixed(decimalPlaces);
+      
+      if (decimalSeparator === ',') {
+        formatted = formatted.replace('.', ',');
+        formatted = formatted.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      } else {
+        formatted = formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+      
+      return `${formatted} ${symbol}`;
+    }
+
+    // ==================== Calculation Functions ====================
+    function getInputValue(id) {
+      return parseFloat(document.getElementById(id).value) || 0;
+    }
+
+    function calculateAll() {
+      const revenue = getInputValue('revenue');
+      const ebitda = getInputValue('ebitda');
+      const netProfit = getInputValue('net-profit');
+      const equity = getInputValue('equity');
+      const debt = getInputValue('debt');
+      const cash = getInputValue('cash');
+      const psMultiple = getInputValue('ps-multiple');
+      const ebitdaMultiple = getInputValue('ebitda-multiple');
+      const peMultiple = getInputValue('pe-multiple');
+      const discountRate = getInputValue('discount-rate') / 100;
+      const growthRate = getInputValue('growth-rate') / 100;
+
+      // P/S Valuation
+      const psValue = revenue * psMultiple;
+
+      // EV/EBITDA Valuation
+      const ev = ebitda * ebitdaMultiple;
+      const ebitdaEquityValue = ev - debt + cash;
+
+      // P/E Valuation
+      const peValue = netProfit * peMultiple;
+
+      // Book Value
+      const bookValue = equity;
+
+      // DCF Simplified (using EBITDA as proxy for FCF)
+      let dcfValue = 0;
+      if (discountRate > growthRate && ebitda > 0) {
+        const fcf = ebitda * 0.7; // Simplified: 70% of EBITDA as FCF
+        let presentValueSum = 0;
+        for (let year = 1; year <= 5; year++) {
+          const projectedFCF = fcf * Math.pow(1 + growthRate, year);
+          presentValueSum += projectedFCF / Math.pow(1 + discountRate, year);
+        }
+        const terminalValue = (fcf * Math.pow(1 + growthRate, 6)) / (discountRate - growthRate);
+        const presentTerminalValue = terminalValue / Math.pow(1 + discountRate, 5);
+        dcfValue = presentValueSum + presentTerminalValue - debt + cash;
+      }
+
+      // Enterprise Value
+      const evValue = ev;
+
+      // Calculate average (excluding zeros and negatives)
+      const values = [psValue, ebitdaEquityValue, peValue, dcfValue].filter(v => v > 0);
+      const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+
+      // Financial Indicators
+      const ebitdaMargin = revenue > 0 ? (ebitda / revenue) * 100 : 0;
+      const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+      const roe = equity > 0 ? (netProfit / equity) * 100 : 0;
+      const debtEbitda = ebitda > 0 ? debt / ebitda : 0;
+
+      // Store results
+      currentResults = {
+        psValue,
+        ebitdaValue: ebitdaEquityValue,
+        peValue,
+        dcfValue,
+        bookValue,
+        evValue,
+        avgValue,
+        ebitdaMargin,
+        netMargin,
+        roe,
+        debtEbitda
+      };
+
+      // Update UI
+      document.getElementById('ps-value').textContent = formatCurrency(psValue);
+      document.getElementById('ebitda-value').textContent = formatCurrency(ebitdaEquityValue);
+      document.getElementById('pe-value').textContent = formatCurrency(peValue);
+      document.getElementById('dcf-value').textContent = formatCurrency(dcfValue);
+      document.getElementById('book-value').textContent = formatCurrency(bookValue);
+      document.getElementById('ev-value').textContent = formatCurrency(evValue);
+      document.getElementById('avg-value').textContent = formatCurrency(avgValue);
+
+      document.getElementById('ebitda-margin').textContent = ebitdaMargin.toFixed(1) + '%';
+      document.getElementById('net-margin').textContent = netMargin.toFixed(1) + '%';
+      document.getElementById('roe').textContent = roe.toFixed(1) + '%';
+      document.getElementById('debt-ebitda').textContent = debtEbitda.toFixed(2) + 'x';
+
+      updateCharts();
+    }
+
+    // ==================== Charts ====================
+    function initCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: { family: 'Inter', size: 11 },
+              padding: 15
+            }
+          }
+        }
+      };
+
+      // Valuation Chart
+      const valuationCtx = document.getElementById('valuation-chart').getContext('2d');
+      valuationChart = new Chart(valuationCtx, {
+        type: 'bar',
+        data: {
+          labels: ['P/S', 'EV/EBITDA', 'P/E', 'DCF', 'Patrimonial'],
+          datasets: [{
+            label: 'Valor (' + currentCurrency + ')',
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FF9800', '#9C27B0', '#607D8B']
+          }]
+        },
+        options: {
+          ...chartOptions,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return formatCurrency(value);
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Distribution Chart
+      const distributionCtx = document.getElementById('distribution-chart').getContext('2d');
+      distributionChart = new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['P/S', 'EV/EBITDA', 'P/E', 'DCF', 'Patrimonial'],
+          datasets: [{
+            data: [20, 20, 20, 20, 20],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FF9800', '#9C27B0', '#607D8B']
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Indicators Chart
+      const indicatorsCtx = document.getElementById('indicators-chart').getContext('2d');
+      indicatorsChart = new Chart(indicatorsCtx, {
+        type: 'radar',
+        data: {
+          labels: ['Margem EBITDA', 'Margem Líquida', 'ROE', 'Saúde Financeira'],
+          datasets: [{
+            label: 'Indicadores (%)',
+            data: [0, 0, 0, 0],
+            backgroundColor: 'rgba(30, 136, 229, 0.2)',
+            borderColor: '#66CFF5',
+            pointBackgroundColor: '#66CFF5'
+          }]
+        },
+        options: {
+          ...chartOptions,
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }
+      });
+
+      // Capital Chart
+      const capitalCtx = document.getElementById('capital-chart').getContext('2d');
+      capitalChart = new Chart(capitalCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Patrimônio', 'Dívida', 'Caixa'],
+          datasets: [{
+            data: [33, 33, 34],
+            backgroundColor: ['#4CAF50', '#F44336', '#2196F3']
+          }]
+        },
+        options: chartOptions
+      });
+    }
+
+    function updateCharts() {
+      if (!valuationChart) return;
+
+      const rate = exchangeRates[currentCurrency] || 1;
+
+      // Update valuation chart
+      valuationChart.data.datasets[0].data = [
+        currentResults.psValue * rate,
+        currentResults.ebitdaValue * rate,
+        currentResults.peValue * rate,
+        currentResults.dcfValue * rate,
+        currentResults.bookValue * rate
+      ];
+      valuationChart.data.datasets[0].label = 'Valor (' + currentCurrency + ')';
+      valuationChart.update();
+
+      // Update distribution chart
+      const total = currentResults.psValue + currentResults.ebitdaValue + 
+                    currentResults.peValue + currentResults.dcfValue + currentResults.bookValue;
+      if (total > 0) {
+        distributionChart.data.datasets[0].data = [
+          (currentResults.psValue / total) * 100,
+          (currentResults.ebitdaValue / total) * 100,
+          (currentResults.peValue / total) * 100,
+          (currentResults.dcfValue / total) * 100,
+          (currentResults.bookValue / total) * 100
+        ];
+      }
+      distributionChart.update();
+
+      // Update indicators chart
+      const healthScore = Math.max(0, 100 - (currentResults.debtEbitda * 20));
+      indicatorsChart.data.datasets[0].data = [
+        Math.min(100, Math.abs(currentResults.ebitdaMargin)),
+        Math.min(100, Math.abs(currentResults.netMargin)),
+        Math.min(100, Math.abs(currentResults.roe)),
+        healthScore
+      ];
+      indicatorsChart.update();
+
+      // Update capital chart
+      const equity = getInputValue('equity');
+      const debt = getInputValue('debt');
+      const cash = getInputValue('cash');
+      const capitalTotal = equity + debt + cash;
+      if (capitalTotal > 0) {
+        capitalChart.data.datasets[0].data = [
+          (equity / capitalTotal) * 100,
+          (debt / capitalTotal) * 100,
+          (cash / capitalTotal) * 100
+        ];
+      }
+      capitalChart.update();
+    }
+
+    // ==================== Scenarios Management ====================
+    function saveScenario() {
+      if (scenarios.length >= 10) {
+        showToast('Limite de 10 cenários atingido. Elimine um cenário para guardar outro.', 'warning');
+        return;
+      }
+
+      const scenarioNumber = scenarios.length + 1;
+      const scenario = {
+        id: Date.now(),
+        name: `Cenário ${scenarioNumber}`,
+        createdAt: new Date().toISOString(),
+        data: {
+          companyName: document.getElementById('company-name').value,
+          sector: document.getElementById('sector').value,
+          revenue: getInputValue('revenue'),
+          ebitda: getInputValue('ebitda'),
+          netProfit: getInputValue('net-profit'),
+          equity: getInputValue('equity'),
+          debt: getInputValue('debt'),
+          cash: getInputValue('cash'),
+          psMultiple: getInputValue('ps-multiple'),
+          ebitdaMultiple: getInputValue('ebitda-multiple'),
+          peMultiple: getInputValue('pe-multiple'),
+          discountRate: getInputValue('discount-rate'),
+          growthRate: getInputValue('growth-rate')
+        },
+        results: { ...currentResults },
+        currency: currentCurrency
+      };
+
+      scenarios.push(scenario);
+      saveToLocalStorage();
+      renderScenariosList();
+      showToast('Cenário guardado com sucesso! 🎉', 'success');
+    }
+
+    function loadScenario(index) {
+      const scenario = scenarios[index];
+      if (!scenario) return;
+
+      document.getElementById('company-name').value = scenario.data.companyName || '';
+      document.getElementById('sector').value = scenario.data.sector || '';
+      document.getElementById('revenue').value = scenario.data.revenue || 0;
+      document.getElementById('ebitda').value = scenario.data.ebitda || 0;
+      document.getElementById('net-profit').value = scenario.data.netProfit || 0;
+      document.getElementById('equity').value = scenario.data.equity || 0;
+      document.getElementById('debt').value = scenario.data.debt || 0;
+      document.getElementById('cash').value = scenario.data.cash || 0;
+      document.getElementById('ps-multiple').value = scenario.data.psMultiple || 2;
+      document.getElementById('ebitda-multiple').value = scenario.data.ebitdaMultiple || 8;
+      document.getElementById('pe-multiple').value = scenario.data.peMultiple || 15;
+      document.getElementById('discount-rate').value = scenario.data.discountRate || 12;
+      document.getElementById('growth-rate').value = scenario.data.growthRate || 3;
+
+      if (scenario.currency) {
+        selectCurrency(scenario.currency);
+      }
+
+      calculateAll();
+      switchTab('simulador');
+      showToast(`Cenário "${scenario.name}" carregado!`, 'info');
+    }
+
+    function deleteScenario(index) {
+      const scenario = scenarios[index];
+      // Replace confirm with inline confirmation
+      const card = document.querySelector(`[data-scenario-index="${index}"]`);
+      if (card) {
+        const deleteBtn = card.querySelector('.delete-btn');
+        if (deleteBtn.dataset.confirming === 'true') {
+          scenarios.splice(index, 1);
+          saveToLocalStorage();
+          renderScenariosList();
+          showToast('Cenário eliminado.', 'info');
+        } else {
+          deleteBtn.dataset.confirming = 'true';
+          deleteBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Confirmar
+          `;
+          deleteBtn.classList.remove('text-gray-400', 'hover:text-red-500');
+          deleteBtn.classList.add('text-red-500', 'bg-red-50');
+          
+          setTimeout(() => {
+            if (deleteBtn.dataset.confirming === 'true') {
+              deleteBtn.dataset.confirming = 'false';
+              deleteBtn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              `;
+              deleteBtn.classList.add('text-gray-400', 'hover:text-red-500');
+              deleteBtn.classList.remove('text-red-500', 'bg-red-50');
+            }
+          }, 3000);
+        }
+      }
+    }
+
+    function editScenarioName(index) {
+      editingScenarioIndex = index;
+      document.getElementById('edit-scenario-name').value = scenarios[index].name;
+      document.getElementById('edit-scenario-modal').classList.remove('hidden');
+    }
+
+    function closeEditScenarioModal() {
+      document.getElementById('edit-scenario-modal').classList.add('hidden');
+      editingScenarioIndex = -1;
+    }
+
+    function confirmEditScenario() {
+      if (editingScenarioIndex >= 0) {
+        const newName = document.getElementById('edit-scenario-name').value.trim();
+        if (newName) {
+          scenarios[editingScenarioIndex].name = newName;
+          saveToLocalStorage();
+          renderScenariosList();
+          showToast('Nome do cenário atualizado!', 'success');
+        }
+      }
+      closeEditScenarioModal();
+    }
+
+    function renderScenariosList() {
+      const container = document.getElementById('scenarios-list');
+      
+      if (scenarios.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <p>Ainda não tem cenários guardados.</p>
+            <p class="text-sm mt-1">Utilize o simulador e clique em "Guardar Cenário".</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = scenarios.map((scenario, index) => `
+        <div class="card p-4" data-scenario-index="${index}">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h4 class="font-semibold text-gray-800">${scenario.name}</h4>
+              <p class="text-xs text-gray-500">${scenario.data.companyName || 'Sem nome'}</p>
+            </div>
+            <div class="flex gap-1">
+              <button onclick="editScenarioName(${index})" class="p-1 text-gray-400 hover:text-blue-500 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+              </button>
+              <button onclick="deleteScenario(${index})" class="delete-btn p-1 text-gray-400 hover:text-red-500 transition-colors rounded" data-confirming="false">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="text-sm text-gray-600 mb-3">
+            <p class="font-medium text-blue-600">${formatCurrency(scenario.results.avgValue / (exchangeRates[scenario.currency] || 1))}</p>
+            <p class="text-xs text-gray-400 mt-1">Criado: ${new Date(scenario.createdAt).toLocaleDateString('pt-PT')}</p>
+          </div>
+          <button onclick="loadScenario(${index})" class="w-full btn-primary py-2 rounded-lg text-sm">
+            Carregar Cenário
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // ==================== Example Scenarios ====================
+    const exampleScenarios = {
+      startup: {
+        companyName: 'TechStart Angola',
+        sector: 'tecnologia',
+        revenue: 500000000,
+        ebitda: -50000000,
+        netProfit: -100000000,
+        equity: 200000000,
+        debt: 50000000,
+        cash: 150000000,
+        psMultiple: 4,
+        ebitdaMultiple: 15,
+        peMultiple: 25,
+        discountRate: 18,
+        growthRate: 5
+      },
+      pme: {
+        companyName: 'Comércio Luanda, Lda',
+        sector: 'comercio',
+        revenue: 2000000000,
+        ebitda: 300000000,
+        netProfit: 150000000,
+        equity: 800000000,
+        debt: 400000000,
+        cash: 100000000,
+        psMultiple: 1.5,
+        ebitdaMultiple: 6,
+        peMultiple: 12,
+        discountRate: 12,
+        growthRate: 3
+      },
+      industria: {
+        companyName: 'Indústria Metalúrgica SA',
+        sector: 'industria',
+        revenue: 5000000000,
+        ebitda: 500000000,
+        netProfit: 200000000,
+        equity: 3000000000,
+        debt: 1500000000,
+        cash: 200000000,
+        psMultiple: 0.8,
+        ebitdaMultiple: 5,
+        peMultiple: 10,
+        discountRate: 10,
+        growthRate: 2
+      },
+      servicos: {
+        companyName: 'Consultoria Premium',
+        sector: 'servicos',
+        revenue: 300000000,
+        ebitda: 90000000,
+        netProfit: 60000000,
+        equity: 100000000,
+        debt: 20000000,
+        cash: 50000000,
+        psMultiple: 2.5,
+        ebitdaMultiple: 8,
+        peMultiple: 15,
+        discountRate: 14,
+        growthRate: 4
+      },
+      comercio: {
+        companyName: 'Supermercado Grande',
+        sector: 'comercio',
+        revenue: 10000000000,
+        ebitda: 400000000,
+        netProfit: 150000000,
+        equity: 1200000000,
+        debt: 800000000,
+        cash: 300000000,
+        psMultiple: 0.5,
+        ebitdaMultiple: 7,
+        peMultiple: 12,
+        discountRate: 11,
+        growthRate: 2
+      },
+      agricultura: {
+        companyName: 'Fazenda Agro-Pecuária',
+        sector: 'agricultura',
+        revenue: 1500000000,
+        ebitda: 300000000,
+        netProfit: 120000000,
+        equity: 2500000000,
+        debt: 600000000,
+        cash: 80000000,
+        psMultiple: 1.2,
+        ebitdaMultiple: 6,
+        peMultiple: 10,
+        discountRate: 12,
+        growthRate: 2
+      },
+      saude: {
+        companyName: 'Clínica Saúde Total',
+        sector: 'saude',
+        revenue: 800000000,
+        ebitda: 160000000,
+        netProfit: 80000000,
+        equity: 500000000,
+        debt: 200000000,
+        cash: 100000000,
+        psMultiple: 2,
+        ebitdaMultiple: 8,
+        peMultiple: 14,
+        discountRate: 13,
+        growthRate: 4
+      },
+      construcao: {
+        companyName: 'Construtora Horizonte',
+        sector: 'construcao',
+        revenue: 3000000000,
+        ebitda: 300000000,
+        netProfit: 100000000,
+        equity: 1000000000,
+        debt: 1200000000,
+        cash: 150000000,
+        psMultiple: 0.6,
+        ebitdaMultiple: 5,
+        peMultiple: 8,
+        discountRate: 14,
+        growthRate: 2
+      },
+      fintech: {
+        companyName: 'PayAngola Fintech',
+        sector: 'financeiro',
+        revenue: 200000000,
+        ebitda: 20000000,
+        netProfit: 5000000,
+        equity: 150000000,
+        debt: 30000000,
+        cash: 80000000,
+        psMultiple: 5,
+        ebitdaMultiple: 20,
+        peMultiple: 30,
+        discountRate: 20,
+        growthRate: 6
+      },
+      energia: {
+        companyName: 'Solar Angola Energy',
+        sector: 'outro',
+        revenue: 600000000,
+        ebitda: 200000000,
+        netProfit: 80000000,
+        equity: 1500000000,
+        debt: 800000000,
+        cash: 50000000,
+        psMultiple: 3,
+        ebitdaMultiple: 10,
+        peMultiple: 15,
+        discountRate: 10,
+        growthRate: 3
+      }
+    };
+
+    function loadExampleScenario(type) {
+      const example = exampleScenarios[type];
+      if (!example) return;
+
+      document.getElementById('company-name').value = example.companyName;
+      document.getElementById('sector').value = example.sector;
+      document.getElementById('revenue').value = example.revenue;
+      document.getElementById('ebitda').value = example.ebitda;
+      document.getElementById('net-profit').value = example.netProfit;
+      document.getElementById('equity').value = example.equity;
+      document.getElementById('debt').value = example.debt;
+      document.getElementById('cash').value = example.cash;
+      document.getElementById('ps-multiple').value = example.psMultiple;
+      document.getElementById('ebitda-multiple').value = example.ebitdaMultiple;
+      document.getElementById('pe-multiple').value = example.peMultiple;
+      document.getElementById('discount-rate').value = example.discountRate;
+      document.getElementById('growth-rate').value = example.growthRate;
+
+      calculateAll();
+      switchTab('simulador');
+      showToast(`Cenário de exemplo "${example.companyName}" carregado! 📚`, 'info');
+    }
+
+    // ==================== Export/Import Functions ====================
+    function exportAllScenarios() {
+      if (scenarios.length === 0) {
+        showToast('Não há cenários para exportar.', 'warning');
+        return;
+      }
+
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        scenarios: scenarios,
+        settings: {
+          currency: currentCurrency,
+          exchangeRates: exchangeRates,
+          decimalPlaces: decimalPlaces,
+          decimalSeparator: decimalSeparator
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `avaliacoes_empresas_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Cenários exportados com sucesso!', 'success');
+    }
+
+    function importScenarios(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (data.scenarios && Array.isArray(data.scenarios)) {
+            const availableSlots = 10 - scenarios.length;
+            const scenariosToImport = data.scenarios.slice(0, availableSlots);
+            
+            scenarios = [...scenarios, ...scenariosToImport];
+            
+            if (data.settings) {
+              if (data.settings.exchangeRates) {
+                exchangeRates = { ...exchangeRates, ...data.settings.exchangeRates };
+              }
+            }
+            
+            saveToLocalStorage();
+            renderScenariosList();
+            renderExchangeRatesInputs();
+            showToast(`${scenariosToImport.length} cenário(s) importado(s)!`, 'success');
+          } else {
+            showToast('Formato de ficheiro inválido.', 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao ler o ficheiro.', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      let currentY = 25;
+
+      // Header function
+      function addHeader(pageNum) {
+        doc.setFillColor(30, 136, 229);
+        doc.rect(0, 0, pageWidth, 15, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Simulador de Avaliação de Empresas CPLP', margin, 10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin, 10, { align: 'right' });
+      }
+
+      // Footer function
+      function addFooter(pageNum, totalPages) {
+        doc.setFillColor(248, 249, 250);
+        doc.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('Simulador de Avaliação de Empresas CPLP', margin, pageHeight - 5);
+        doc.text(`Página ${pageNum} de ${totalPages}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+      }
+
+      // Add first page header
+      addHeader(1);
+      
+      // Title
+      doc.setTextColor(30, 136, 229);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Relatório de Avaliação de Empresa', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 15;
+
+      // Company info
+      const companyName = document.getElementById('company-name').value || 'Empresa não identificada';
+      const sector = document.getElementById('sector').value || 'Não especificado';
+      
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companyName, margin, currentY);
+      currentY += 6;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Setor: ${sector} | Moeda: ${currentCurrency}`, margin, currentY);
+      currentY += 12;
+
+      // Main result
+      doc.setFillColor(240, 248, 255);
+      doc.roundedRect(margin, currentY, pageWidth - 2 * margin, 25, 3, 3, 'F');
+      doc.setTextColor(30, 136, 229);
+      doc.setFontSize(10);
+      doc.text('Valor Médio Estimado', margin + 5, currentY + 8);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatCurrency(currentResults.avgValue), margin + 5, currentY + 18);
+      currentY += 32;
+
+      // Valuation methods
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Métodos de Avaliação', margin, currentY);
+      currentY += 8;
+
+      const methods = [
+        { name: 'Múltiplo de Receitas (P/S)', value: currentResults.psValue },
+        { name: 'Múltiplo EBITDA (EV/EBITDA)', value: currentResults.ebitdaValue },
+        { name: 'Múltiplo de Lucro (P/E)', value: currentResults.peValue },
+        { name: 'Fluxo de Caixa Descontado (DCF)', value: currentResults.dcfValue },
+        { name: 'Valor Patrimonial', value: currentResults.bookValue }
+      ];
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      methods.forEach((method, index) => {
+        const bgColor = index % 2 === 0 ? [248, 249, 250] : [255, 255, 255];
+        doc.setFillColor(...bgColor);
+        doc.rect(margin, currentY, pageWidth - 2 * margin, 8, 'F');
+        doc.setTextColor(60, 60, 60);
+        doc.text(method.name, margin + 3, currentY + 5);
+        doc.text(formatCurrency(method.value), pageWidth - margin - 3, currentY + 5, { align: 'right' });
+        currentY += 8;
+      });
+      currentY += 10;
+
+      // Financial indicators
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Indicadores Financeiros', margin, currentY);
+      currentY += 8;
+
+      const indicators = [
+        { name: 'Margem EBITDA', value: currentResults.ebitdaMargin.toFixed(1) + '%' },
+        { name: 'Margem Líquida', value: currentResults.netMargin.toFixed(1) + '%' },
+        { name: 'ROE (Retorno sobre Patrimônio)', value: currentResults.roe.toFixed(1) + '%' },
+        { name: 'Dívida/EBITDA', value: currentResults.debtEbitda.toFixed(2) + 'x' }
+      ];
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      indicators.forEach((indicator, index) => {
+        const bgColor = index % 2 === 0 ? [248, 249, 250] : [255, 255, 255];
+        doc.setFillColor(...bgColor);
+        doc.rect(margin, currentY, pageWidth - 2 * margin, 8, 'F');
+        doc.setTextColor(60, 60, 60);
+        doc.text(indicator.name, margin + 3, currentY + 5);
+        doc.text(indicator.value, pageWidth - margin - 3, currentY + 5, { align: 'right' });
+        currentY += 8;
+      });
+      currentY += 10;
+
+      // Add charts (small size)
+      if (currentY > pageHeight - 80) {
+        doc.addPage();
+        addHeader(2);
+        currentY = 25;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Gráficos', margin, currentY);
+      currentY += 8;
+
+      // Capture charts
+      const charts = ['valuation-chart', 'distribution-chart'];
+      const chartWidth = (pageWidth - 3 * margin) / 2;
+      const chartHeight = 45;
+
+      for (let i = 0; i < charts.length; i++) {
+        const canvas = document.getElementById(charts[i]);
+        if (canvas) {
+          try {
+            const imgData = canvas.toDataURL('image/png');
+            const xPos = margin + (i * (chartWidth + margin));
+            doc.addImage(imgData, 'PNG', xPos, currentY, chartWidth, chartHeight);
+          } catch (e) {
+            console.log('Error capturing chart:', e);
+          }
+        }
+      }
+      currentY += chartHeight + 15;
+
+      // Input data
+      if (currentY > pageHeight - 60) {
+        doc.addPage();
+        addHeader(2);
+        currentY = 25;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Dados de Entrada', margin, currentY);
+      currentY += 8;
+
+      const inputData = [
+        { name: 'Receita Anual', value: formatCurrency(getInputValue('revenue')) },
+        { name: 'EBITDA', value: formatCurrency(getInputValue('ebitda')) },
+        { name: 'Lucro Líquido', value: formatCurrency(getInputValue('net-profit')) },
+        { name: 'Patrimônio Líquido', value: formatCurrency(getInputValue('equity')) },
+        { name: 'Dívida Total', value: formatCurrency(getInputValue('debt')) },
+        { name: 'Caixa', value: formatCurrency(getInputValue('cash')) }
+      ];
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      inputData.forEach((item, index) => {
+        const bgColor = index % 2 === 0 ? [248, 249, 250] : [255, 255, 255];
+        doc.setFillColor(...bgColor);
+        doc.rect(margin, currentY, pageWidth - 2 * margin, 8, 'F');
+        doc.setTextColor(60, 60, 60);
+        doc.text(item.name, margin + 3, currentY + 5);
+        doc.text(item.value, pageWidth - margin - 3, currentY + 5, { align: 'right' });
+        currentY += 8;
+      });
+
+      // Add footers to all pages
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        addFooter(i, totalPages);
+      }
+
+      // Save
+      doc.save(`avaliacao_${companyName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado com sucesso!', 'success');
+    }
+
+    async function exportImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      const resultsSection = document.querySelector('#tab-simulador .lg\\:grid > div:last-child');
+      
+      try {
+        const canvas = await html2canvas(resultsSection, {
+          backgroundColor: '#ffffff',
+          scale: 2
+        });
+        
+        const link = document.createElement('a');
+        link.download = `avaliacao_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (err) {
+        showToast('Erro ao exportar imagem.', 'error');
+      }
+    }
+
+    // ==================== Local Storage ====================
+    function saveToLocalStorage() {
+      const data = {
+        scenarios: scenarios,
+        currentInputs: {
+          companyName: document.getElementById('company-name').value,
+          sector: document.getElementById('sector').value,
+          revenue: getInputValue('revenue'),
+          ebitda: getInputValue('ebitda'),
+          netProfit: getInputValue('net-profit'),
+          equity: getInputValue('equity'),
+          debt: getInputValue('debt'),
+          cash: getInputValue('cash'),
+          psMultiple: getInputValue('ps-multiple'),
+          ebitdaMultiple: getInputValue('ebitda-multiple'),
+          peMultiple: getInputValue('pe-multiple'),
+          discountRate: getInputValue('discount-rate'),
+          growthRate: getInputValue('growth-rate')
+        },
+        settings: {
+          currency: currentCurrency,
+          exchangeRates: exchangeRates,
+          decimalPlaces: decimalPlaces,
+          decimalSeparator: decimalSeparator,
+          customSymbol: customSymbol
+        }
+      };
+      
+      try {
+        localStorage.setItem('valuation_simulator_cplp', JSON.stringify(data));
+      } catch (e) {
+        console.log('LocalStorage not available');
+      }
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('valuation_simulator_cplp');
+        if (saved) {
+          const data = JSON.parse(saved);
+          
+          if (data.scenarios) {
+            scenarios = data.scenarios;
+          }
+          
+          if (data.currentInputs) {
+            document.getElementById('company-name').value = data.currentInputs.companyName || '';
+            document.getElementById('sector').value = data.currentInputs.sector || '';
+            document.getElementById('revenue').value = data.currentInputs.revenue || 0;
+            document.getElementById('ebitda').value = data.currentInputs.ebitda || 0;
+            document.getElementById('net-profit').value = data.currentInputs.netProfit || 0;
+            document.getElementById('equity').value = data.currentInputs.equity || 0;
+            document.getElementById('debt').value = data.currentInputs.debt || 0;
+            document.getElementById('cash').value = data.currentInputs.cash || 0;
+            document.getElementById('ps-multiple').value = data.currentInputs.psMultiple || 2;
+            document.getElementById('ebitda-multiple').value = data.currentInputs.ebitdaMultiple || 8;
+            document.getElementById('pe-multiple').value = data.currentInputs.peMultiple || 15;
+            document.getElementById('discount-rate').value = data.currentInputs.discountRate || 12;
+            document.getElementById('growth-rate').value = data.currentInputs.growthRate || 3;
+          }
+          
+          if (data.settings) {
+            currentCurrency = data.settings.currency || 'AOA';
+            exchangeRates = { ...exchangeRates, ...data.settings.exchangeRates };
+            decimalPlaces = data.settings.decimalPlaces ?? 2;
+            decimalSeparator = data.settings.decimalSeparator || ',';
+            customSymbol = data.settings.customSymbol || '';
+            
+            document.getElementById('decimal-places').value = decimalPlaces;
+            document.getElementById('decimal-separator').value = decimalSeparator;
+            document.getElementById('currency-symbol-override').value = customSymbol;
+            document.getElementById('current-currency-display').textContent = currentCurrency;
+          }
+        }
+      } catch (e) {
+        console.log('Error loading from localStorage');
+      }
+    }
+
+    // ==================== Utility Functions ====================
+    function clearForm() {
+      document.getElementById('company-name').value = '';
+      document.getElementById('sector').value = '';
+      document.getElementById('revenue').value = 0;
+      document.getElementById('ebitda').value = 0;
+      document.getElementById('net-profit').value = 0;
+      document.getElementById('equity').value = 0;
+      document.getElementById('debt').value = 0;
+      document.getElementById('cash').value = 0;
+      document.getElementById('ps-multiple').value = 2;
+      document.getElementById('ebitda-multiple').value = 8;
+      document.getElementById('pe-multiple').value = 15;
+      document.getElementById('discount-rate').value = 12;
+      document.getElementById('growth-rate').value = 3;
+      
+      calculateAll();
+      saveToLocalStorage();
+      showToast('Formulário limpo!', 'info');
+    }
+
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      
+      content.classList.toggle('open');
+      icon.classList.toggle('rotate-180');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function openInfoModal() {
+      document.getElementById('info-modal').classList.remove('hidden');
+    }
+
+    function closeInfoModal() {
+      document.getElementById('info-modal').classList.add('hidden');
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bd3463986721b23',t:'MTc2ODI5MDMyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

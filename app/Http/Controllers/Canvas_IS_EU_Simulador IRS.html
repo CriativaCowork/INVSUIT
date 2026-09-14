@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador IRS</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#aaa}
+
+.header-fixed{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px}
+.tabs-fixed{position:sticky;top:60px;z-index:99;background:#fff;border-bottom:1px solid #E0E0E0;overflow-x:auto;white-space:nowrap}
+.tab-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;font-weight:500;color:#666;border-bottom:2px solid transparent;transition:all .2s ease;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:12px;transition:all .2s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#66CFF5;border-radius:8px 0 0 8px}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-green::before{background:#4CAF50}
+.card-orange::before{background:#FF9800}
+.card-red::before{background:#F44336}
+.card-gold::before{background:#FFC107}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;border:1px solid #E0E0E0;background:#fff;color:#555}
+.btn:hover{background:#f0f0f0}
+.btn-primary{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff;border-color:#4CAF50}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff;border-color:#F44336}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff;border-color:#FF9800}
+.btn-warning:hover{background:#F57C00}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s ease;background:#fff}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+select.input-field{cursor:pointer}
+
+label.field-label{display:block;font-size:12px;font-weight:500;color:#666;margin-bottom:4px}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-box{background:#fff;border-radius:10px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+
+.chart-wrapper{position:relative}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:10}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-red{background:#FFEBEE;color:#F44336}
+
+.scenario-card{cursor:pointer;transition:all .2s ease}
+.scenario-card:hover{transform:translateY(-2px)}
+.scenario-card.selected{border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,.2)}
+
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.export-hidden{/* elements to hide on export */}
+
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F8F9FA;padding:8px 12px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #E0E0E0}
+td{padding:8px 12px;border-bottom:1px solid #f0f0f0}
+tr:hover td{background:#FAFAFA}
+
+.progress-bar{height:6px;background:#E0E0E0;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-root" class="h-full overflow-auto w-full"><!-- HEADER -->
+   <header class="header-fixed" id="app-header">
+    <div class="flex items-center justify-between">
+     <div>
+      <h1 id="main-title" class="text-lg font-bold text-gray-800 flex items-center gap-2" style="display: none; display: none;"><span style="color:#66CFF5"><i data-lucide="calculator" style="width:22px;height:22px"></i></span> <span id="title-text">IS Simulador IRS</span></h1>
+      <p id="desc-text" class="text-xs text-gray-500 mt-1" style="display: none;">Simulador de Imposto de Rendimento para cidadãos CPLP</p>
+     </div>
+     <div class="flex items-center gap-2"><button class="btn btn-sm export-hidden" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn btn-sm export-hidden" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button> <button class="btn btn-sm export-hidden" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn btn-sm export-hidden" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+     </div>
+    </div>
+   </header><!-- TABS -->
+   <nav class="tabs-fixed" id="tab-nav"><button class="tab-btn active" data-tab="simulador"><i data-lucide="calculator"></i> Simulador</button> <button class="tab-btn" data-tab="resultados"><i data-lucide="bar-chart-2"></i> Resultados</button> <button class="tab-btn" data-tab="cenarios"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="cambio"><i data-lucide="banknote"></i> Câmbio</button> <button class="tab-btn" data-tab="ajuda"><i data-lucide="help-circle"></i> Ajuda</button>
+   </nav><!-- CONTENT -->
+   <main class="p-4 max-w-6xl mx-auto w-full" id="main-content"><!-- FILTER BAR -->
+    <div class="mb-3 flex items-center gap-2 export-hidden">
+     <div class="flex-1 relative"><i data-lucide="search" style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#999"></i> <input type="text" id="globalFilter" class="input-field" style="padding-left:32px" placeholder="Filtrar dados..." oninput="applyGlobalFilter()">
+     </div>
+    </div><!-- TAB: SIMULADOR -->
+    <div class="tab-content active" id="tab-simulador">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><!-- Dados Pessoais -->
+      <div class="card fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="user" style="width:16px;height:16px;color:#66CFF5"></i> Dados Pessoais</h3>
+       <div class="space-y-3">
+        <div><label class="field-label" for="simTitle">Título da Simulação</label> <input type="text" id="simTitle" class="input-field" placeholder="Ex: Simulação Anual 2024" value="">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+         <div><label class="field-label" for="estadoCivil">Estado Civil</label> <select id="estadoCivil" class="input-field"> <option value="solteiro">Solteiro</option> <option value="casado_1">Casado (1 titular)</option> <option value="casado_2">Casado (2 titulares)</option> </select>
+         </div>
+         <div><label class="field-label" for="dependentes">Dependentes</label> <input type="number" id="dependentes" class="input-field" min="0" value="0">
+         </div>
+        </div>
+        <div><label class="field-label" for="paisResidencia">País de Residência</label> <select id="paisResidencia" class="input-field"> <option value="AO">Angola</option> <option value="BR">Brasil</option> <option value="CV">Cabo Verde</option> <option value="GQ">Guiné Equatorial</option> <option value="GW">Guiné-Bissau</option> <option value="MZ">Moçambique</option> <option value="PT" selected>Portugal</option> <option value="ST">São Tomé e Príncipe</option> <option value="TL">Timor-Leste</option> </select>
+        </div>
+       </div>
+      </div><!-- Rendimentos -->
+      <div class="card card-green fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="trending-up" style="width:16px;height:16px;color:#4CAF50"></i> Rendimentos Anuais</h3>
+       <div class="space-y-3">
+        <div><label class="field-label" for="rendBruto">Rendimento Bruto Anual (Kz)</label> <input type="number" id="rendBruto" class="input-field" min="0" step="1000" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="rendOutros">Outros Rendimentos (Kz)</label> <input type="number" id="rendOutros" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="rendCapital">Rendimentos de Capital (Kz)</label> <input type="number" id="rendCapital" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="rendPredial">Rendimentos Prediais (Kz)</label> <input type="number" id="rendPredial" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+       </div>
+      </div><!-- Deduções -->
+      <div class="card card-orange fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="minus-circle" style="width:16px;height:16px;color:#FF9800"></i> Deduções</h3>
+       <div class="space-y-3">
+        <div><label class="field-label" for="dedSaude">Saúde (Kz)</label> <input type="number" id="dedSaude" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="dedEducacao">Educação (Kz)</label> <input type="number" id="dedEducacao" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="dedHabitacao">Habitação (Kz)</label> <input type="number" id="dedHabitacao" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="dedPensao">Pensão de Alimentos (Kz)</label> <input type="number" id="dedPensao" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="dedOutras">Outras Deduções (Kz)</label> <input type="number" id="dedOutras" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+       </div>
+      </div><!-- Retenção -->
+      <div class="card card-red fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="shield" style="width:16px;height:16px;color:#F44336"></i> Retenção na Fonte</h3>
+       <div class="space-y-3">
+        <div><label class="field-label" for="retencaoMensal">Retenção Mensal (Kz)</label> <input type="number" id="retencaoMensal" class="input-field" min="0" step="100" value="0" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="mesesRetencao">Meses de Retenção</label> <input type="number" id="mesesRetencao" class="input-field" min="1" max="14" value="12" oninput="calcularEmTempoReal()">
+        </div>
+        <div><label class="field-label" for="segSocial">Segurança Social (% mensal)</label> <input type="number" id="segSocial" class="input-field" min="0" max="100" step="0.1" value="3" oninput="calcularEmTempoReal()">
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="mt-4 flex gap-2 flex-wrap export-hidden"><button class="btn btn-primary" onclick="guardarCenario()"><i data-lucide="save" style="width:14px;height:14px"></i> Guardar Cenário</button> <button class="btn" onclick="limparFormulario()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Limpar</button>
+     </div><!-- Resumo Rápido -->
+     <div class="mt-4" id="resumoRapido">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="zap" style="width:16px;height:16px;color:#FFC107"></i> Resumo Rápido</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="resumoCards"></div>
+     </div>
+    </div><!-- TAB: RESULTADOS -->
+    <div class="tab-content" id="tab-resultados">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="pie-chart" style="width:16px;height:16px;color:#66CFF5"></i> Distribuição de Rendimentos</h3>
+       <div class="chart-wrapper"><button class="btn btn-xs chart-export-btn export-hidden" onclick="exportChartImage('chartRendimentos')" title="Exportar gráfico HD"><i data-lucide="image" style="width:12px;height:12px"></i></button>
+        <canvas id="chartRendimentos" height="260"></canvas>
+       </div>
+      </div>
+      <div class="card card-green fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-2" style="width:16px;height:16px;color:#4CAF50"></i> Imposto por Escalão</h3>
+       <div class="chart-wrapper"><button class="btn btn-xs chart-export-btn export-hidden" onclick="exportChartImage('chartEscaloes')" title="Exportar gráfico HD"><i data-lucide="image" style="width:12px;height:12px"></i></button>
+        <canvas id="chartEscaloes" height="260"></canvas>
+       </div>
+      </div>
+      <div class="card card-orange fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="git-branch" style="width:16px;height:16px;color:#FF9800"></i> Deduções Detalhadas</h3>
+       <div class="chart-wrapper"><button class="btn btn-xs chart-export-btn export-hidden" onclick="exportChartImage('chartDeducoes')" title="Exportar gráfico HD"><i data-lucide="image" style="width:12px;height:12px"></i></button>
+        <canvas id="chartDeducoes" height="260"></canvas>
+       </div>
+      </div>
+      <div class="card card-gold fade-in">
+       <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="target" style="width:16px;height:16px;color:#FFC107"></i> Resultado Final</h3>
+       <div class="chart-wrapper"><button class="btn btn-xs chart-export-btn export-hidden" onclick="exportChartImage('chartFinal')" title="Exportar gráfico HD"><i data-lucide="image" style="width:12px;height:12px"></i></button>
+        <canvas id="chartFinal" height="260"></canvas>
+       </div>
+      </div>
+     </div><!-- Tabela detalhada -->
+     <div class="card mt-4 fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="table" style="width:16px;height:16px;color:#66CFF5"></i> Tabela de Escalões</h3>
+      <div class="overflow-x-auto">
+       <table id="tabelaEscaloes">
+        <thead>
+         <tr>
+          <th>Escalão</th>
+          <th>Limite (Kz)</th>
+          <th>Taxa</th>
+          <th>Valor Tributável (Kz)</th>
+          <th>Imposto (Kz)</th>
+         </tr>
+        </thead>
+        <tbody id="tbodyEscaloes"></tbody>
+       </table>
+      </div>
+     </div><!-- Resumo textual -->
+     <div class="card card-green mt-4 fade-in" id="resumoTextual">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="file-text" style="width:16px;height:16px;color:#4CAF50"></i> Resumo Detalhado</h3>
+      <div id="resumoTexto" class="text-sm text-gray-600 space-y-2"></div>
+     </div>
+    </div><!-- TAB: CENÁRIOS -->
+    <div class="tab-content" id="tab-cenarios">
+     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h3 class="font-semibold text-sm text-gray-700 flex items-center gap-2"><i data-lucide="layers" style="width:16px;height:16px;color:#66CFF5"></i> Cenários Guardados</h3>
+      <div class="flex gap-2 export-hidden"><input type="text" id="filterCenarios" class="input-field" style="width:200px" placeholder="Filtrar cenários..." oninput="renderCenarios()"> <button class="btn btn-primary btn-sm" onclick="novoCenarioDoZero()"><i data-lucide="plus" style="width:14px;height:14px"></i> Novo</button>
+      </div>
+     </div>
+     <div id="cenariosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+     <div id="cenariosEmpty" class="text-center py-8 text-gray-400 text-sm" style="display:none"><i data-lucide="inbox" style="width:40px;height:40px;margin:0 auto 8px;display:block;color:#ddd"></i> Nenhum cenário guardado
+     </div><!-- Templates de Aprendizagem -->
+     <div class="mt-6">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="book-open" style="width:16px;height:16px;color:#FFC107"></i> Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="templatesGrid"></div>
+     </div>
+    </div><!-- TAB: CÂMBIO -->
+    <div class="tab-content" id="tab-cambio">
+     <div class="card fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="banknote" style="width:16px;height:16px;color:#66CFF5"></i> Taxas de Câmbio (Base: Kz)</h3>
+      <p class="text-xs text-gray-400 mb-3">Edite as taxas de conversão para moedas CPLP e USD</p>
+      <div class="overflow-x-auto">
+       <table id="tabelaCambio">
+        <thead>
+         <tr>
+          <th>Moeda</th>
+          <th>Código</th>
+          <th>Taxa (1 Kz =)</th>
+          <th class="export-hidden">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="tbodyCambio"></tbody>
+       </table>
+      </div>
+     </div><!-- Conversor Rápido -->
+     <div class="card card-green mt-4 fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="repeat" style="width:16px;height:16px;color:#4CAF50"></i> Conversor Rápido</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+       <div><label class="field-label" for="convValor">Valor (Kz)</label> <input type="number" id="convValor" class="input-field" value="1000000" oninput="converterMoeda()">
+       </div>
+       <div><label class="field-label" for="convMoeda">Para Moeda</label> <select id="convMoeda" class="input-field" onchange="converterMoeda()"></select>
+       </div>
+       <div><label class="field-label">Resultado</label>
+        <div id="convResultado" class="input-field bg-gray-50 text-gray-700 font-semibold">
+         —
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: AJUDA -->
+    <div class="tab-content" id="tab-ajuda">
+     <div class="card fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="help-circle" style="width:16px;height:16px;color:#66CFF5"></i> Como Utilizar</h3>
+      <div class="text-sm text-gray-600 space-y-3" id="ajudaConteudo">
+       <div class="card card-green">
+        <h4 class="font-semibold text-gray-700 mb-1">1. Preencha os seus dados</h4>
+        <p>No separador Simulador, insira o seu rendimento bruto anual, outros rendimentos, deduções e retenções mensais. Os cálculos atualizam em tempo real.</p>
+       </div>
+       <div class="card card-orange">
+        <h4 class="font-semibold text-gray-700 mb-1">2. Analise os resultados</h4>
+        <p>Visite o separador Resultados para ver gráficos detalhados da distribuição dos seus rendimentos, impostos por escalão e deduções aplicadas.</p>
+       </div>
+       <div class="card">
+        <h4 class="font-semibold text-gray-700 mb-1">3. Compare cenários</h4>
+        <p>Guarde diferentes simulações para comparar cenários. Pode clonar, editar ou criar cenários do zero. Use templates de aprendizagem para explorar casos comuns.</p>
+       </div>
+       <div class="card card-gold">
+        <h4 class="font-semibold text-gray-700 mb-1">4. Câmbio CPLP</h4>
+        <p>Converta valores entre moedas da CPLP. Edite as taxas de câmbio manualmente para refletir valores atuais.</p>
+       </div>
+       <div class="card card-red">
+        <h4 class="font-semibold text-gray-700 mb-1">5. Exportações</h4>
+        <p>Exporte os seus dados em JSON (para backup/importação), imagem HD ou PDF profissional com cabeçalho e paginação.</p>
+       </div>
+      </div>
+     </div>
+     <div class="card card-gold mt-4 fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="star" style="width:16px;height:16px;color:#FFC107"></i> Melhores Práticas</h3>
+      <div class="text-sm text-gray-600 space-y-2">
+       <p>• <strong>Organize deduções:</strong> Guarde todos os comprovativos de despesas de saúde, educação e habitação.</p>
+       <p>• <strong>Simule antes de declarar:</strong> Use o simulador para prever o imposto antes da entrega oficial.</p>
+       <p>• <strong>Compare cenários:</strong> Simule diferentes valores para otimizar a sua declaração.</p>
+       <p>• <strong>Atualize câmbio:</strong> Se recebe rendimentos noutras moedas CPLP, mantenha as taxas atualizadas.</p>
+       <p>• <strong>Exporte regularmente:</strong> Faça backup dos seus cenários em JSON para não perder dados.</p>
+       <p>• <strong>Consulte um profissional:</strong> Este simulador é uma ferramenta indicativa. Consulte um contabilista para a declaração oficial.</p>
+      </div>
+     </div>
+     <div class="card mt-4 fade-in">
+      <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i data-lucide="info" style="width:16px;height:16px;color:#66CFF5"></i> Sobre a Importância</h3>
+      <div class="text-sm text-gray-600 space-y-2">
+       <p>O Imposto sobre o Rendimento das Pessoas Singulares (IRS/IRPF/IRT) é uma das principais fontes de receita dos Estados e incide diretamente sobre os rendimentos dos cidadãos.</p>
+       <p>Compreender como funciona o sistema de escalões, deduções e retenções na fonte é essencial para uma boa gestão financeira pessoal e para evitar surpresas na altura da liquidação.</p>
+       <p>Nos países da CPLP, cada nação tem o seu próprio regime fiscal, mas os princípios base são semelhantes: tributação progressiva, deduções por despesas e dependentes, e retenção na fonte ao longo do ano.</p>
+      </div>
+     </div>
+    </div>
+   </main><!-- TOAST -->
+   <div id="toast" class="toast"></div><!-- MODAL (Editar cenário) -->
+   <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-700" id="modalTitle">Editar Cenário</h3><button class="btn btn-xs export-hidden" onclick="fecharModal()"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+     </div>
+     <div id="modalBody"></div>
+    </div>
+   </div><!-- CONFIRM MODAL -->
+   <div class="modal-overlay" id="confirmOverlay">
+    <div class="modal-box" style="max-width:360px">
+     <p class="text-sm text-gray-700 mb-4" id="confirmText">Tem a certeza?</p>
+     <div class="flex gap-2 justify-end"><button class="btn btn-sm" onclick="fecharConfirm()">Cancelar</button> <button class="btn btn-danger btn-sm" id="confirmBtn" onclick="">Confirmar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ===== STATE =====
+let state = {
+  cenarios: [],
+  cambio: [
+    {moeda:'Real Brasileiro',codigo:'BRL',taxa:0.0064},
+    {moeda:'Escudo Cabo-verdiano',codigo:'CVE',taxa:0.1195},
+    {moeda:'Franco CFA (GQ/GW)',codigo:'XOF',taxa:0.7107},
+    {moeda:'Metical Moçambicano',codigo:'MZN',taxa:0.0766},
+    {moeda:'Euro (Portugal)',codigo:'EUR',taxa:0.0011},
+    {moeda:'Dobra (STP)',codigo:'STN',taxa:0.0268},
+    {moeda:'Dólar Americano',codigo:'USD',taxa:0.0012},
+    {moeda:'Dólar Timor-Leste',codigo:'USD_TL',taxa:0.0012}
+  ],
+  currentCalc: null
+};
+
+const ESCALOES = [
+  {limite:70000,taxa:0},
+  {limite:100000,taxa:0.10},
+  {limite:150000,taxa:0.13},
+  {limite:200000,taxa:0.16},
+  {limite:300000,taxa:0.18},
+  {limite:500000,taxa:0.19},
+  {limite:1000000,taxa:0.20},
+  {limite:1500000,taxa:0.21},
+  {limite:2000000,taxa:0.22},
+  {limite:2500000,taxa:0.23},
+  {limite:5000000,taxa:0.24},
+  {limite:10000000,taxa:0.245},
+  {limite:Infinity,taxa:0.25}
+];
+
+const TEMPLATES = [
+  {nome:'Trabalhador Solteiro',desc:'Rendimento médio, sem dependentes',dados:{estadoCivil:'solteiro',dependentes:0,paisResidencia:'AO',rendBruto:3600000,rendOutros:0,rendCapital:0,rendPredial:0,dedSaude:120000,dedEducacao:0,dedHabitacao:200000,dedPensao:0,dedOutras:0,retencaoMensal:45000,mesesRetencao:12,segSocial:3}},
+  {nome:'Casal com Filhos',desc:'2 titulares, 2 dependentes, rendimento alto',dados:{estadoCivil:'casado_2',dependentes:2,paisResidencia:'AO',rendBruto:7200000,rendOutros:240000,rendCapital:0,rendPredial:0,dedSaude:300000,dedEducacao:480000,dedHabitacao:360000,dedPensao:0,dedOutras:0,retencaoMensal:95000,mesesRetencao:12,segSocial:3}},
+  {nome:'Investidor CPLP',desc:'Rendimentos de capital e prediais',dados:{estadoCivil:'solteiro',dependentes:0,paisResidencia:'AO',rendBruto:2400000,rendOutros:0,rendCapital:1200000,rendPredial:960000,dedSaude:60000,dedEducacao:0,dedHabitacao:0,dedPensao:0,dedOutras:0,retencaoMensal:30000,mesesRetencao:12,segSocial:3}}
+];
+
+// Charts
+let chartRendimentos, chartEscaloes, chartDeducoes, chartFinal;
+
+// ===== PERSISTENCE =====
+function saveState(){
+  try{localStorage.setItem('is_simulador_irs',JSON.stringify(state))}catch(e){}
+}
+function loadState(){
+  try{
+    const d=localStorage.getItem('is_simulador_irs');
+    if(d){const p=JSON.parse(d);state.cenarios=p.cenarios||[];if(p.cambio&&p.cambio.length)state.cambio=p.cambio;}
+  }catch(e){}
+}
+
+// ===== TABS =====
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='resultados')updateCharts();
+    if(btn.dataset.tab==='cenarios')renderCenarios();
+    if(btn.dataset.tab==='cambio')renderCambio();
+  });
+});
+
+// ===== CÁLCULO =====
+function getFormData(){
+  return {
+    simTitle:document.getElementById('simTitle').value||'',
+    estadoCivil:document.getElementById('estadoCivil').value,
+    dependentes:parseInt(document.getElementById('dependentes').value)||0,
+    paisResidencia:document.getElementById('paisResidencia').value,
+    rendBruto:parseFloat(document.getElementById('rendBruto').value)||0,
+    rendOutros:parseFloat(document.getElementById('rendOutros').value)||0,
+    rendCapital:parseFloat(document.getElementById('rendCapital').value)||0,
+    rendPredial:parseFloat(document.getElementById('rendPredial').value)||0,
+    dedSaude:parseFloat(document.getElementById('dedSaude').value)||0,
+    dedEducacao:parseFloat(document.getElementById('dedEducacao').value)||0,
+    dedHabitacao:parseFloat(document.getElementById('dedHabitacao').value)||0,
+    dedPensao:parseFloat(document.getElementById('dedPensao').value)||0,
+    dedOutras:parseFloat(document.getElementById('dedOutras').value)||0,
+    retencaoMensal:parseFloat(document.getElementById('retencaoMensal').value)||0,
+    mesesRetencao:parseInt(document.getElementById('mesesRetencao').value)||12,
+    segSocial:parseFloat(document.getElementById('segSocial').value)||3
+  };
+}
+
+function setFormData(d){
+  document.getElementById('simTitle').value=d.simTitle||'';
+  document.getElementById('estadoCivil').value=d.estadoCivil||'solteiro';
+  document.getElementById('dependentes').value=d.dependentes||0;
+  document.getElementById('paisResidencia').value=d.paisResidencia||'AO';
+  document.getElementById('rendBruto').value=d.rendBruto||0;
+  document.getElementById('rendOutros').value=d.rendOutros||0;
+  document.getElementById('rendCapital').value=d.rendCapital||0;
+  document.getElementById('rendPredial').value=d.rendPredial||0;
+  document.getElementById('dedSaude').value=d.dedSaude||0;
+  document.getElementById('dedEducacao').value=d.dedEducacao||0;
+  document.getElementById('dedHabitacao').value=d.dedHabitacao||0;
+  document.getElementById('dedPensao').value=d.dedPensao||0;
+  document.getElementById('dedOutras').value=d.dedOutras||0;
+  document.getElementById('retencaoMensal').value=d.retencaoMensal||0;
+  document.getElementById('mesesRetencao').value=d.mesesRetencao||12;
+  document.getElementById('segSocial').value=d.segSocial||3;
+  calcularEmTempoReal();
+}
+
+function calcular(dados){
+  const rendTotal=dados.rendBruto+dados.rendOutros+dados.rendCapital+dados.rendPredial;
+  const segSocialAnual=(dados.rendBruto*(dados.segSocial/100));
+  const dedDependentes=dados.dependentes*50000;
+  const totalDeducoes=dados.dedSaude+dados.dedEducacao+dados.dedHabitacao+dados.dedPensao+dados.dedOutras+dedDependentes+segSocialAnual;
+  const rendColetavel=Math.max(0,rendTotal-totalDeducoes);
+
+  // Factor casado 2 titulares
+  let rendParaEscaloes=rendColetavel;
+  if(dados.estadoCivil==='casado_2')rendParaEscaloes=rendColetavel/2;
+
+  // Calcular imposto por escalões
+  let impostoEscaloes=[];
+  let restante=rendParaEscaloes;
+  let prevLimite=0;
+  for(let i=0;i<ESCALOES.length;i++){
+    const esc=ESCALOES[i];
+    const faixa=Math.min(restante,esc.limite-prevLimite);
+    if(faixa<=0){impostoEscaloes.push({escalao:i+1,limite:esc.limite,taxa:esc.taxa,valor:0,imposto:0});prevLimite=esc.limite;continue;}
+    const imp=faixa*esc.taxa;
+    impostoEscaloes.push({escalao:i+1,limite:esc.limite,taxa:esc.taxa,valor:faixa,imposto:imp});
+    restante-=faixa;
+    prevLimite=esc.limite;
+    if(restante<=0)break;
+  }
+
+  let impostoTotal=impostoEscaloes.reduce((s,e)=>s+e.imposto,0);
+  if(dados.estadoCivil==='casado_2')impostoTotal*=2;
+
+  const retencaoTotal=dados.retencaoMensal*dados.mesesRetencao;
+  const saldo=retencaoTotal-impostoTotal;
+  const taxaEfetiva=rendTotal>0?(impostoTotal/rendTotal*100):0;
+  const rendLiquido=rendTotal-impostoTotal;
+
+  return {
+    rendTotal,segSocialAnual,dedDependentes,totalDeducoes,rendColetavel,
+    impostoEscaloes,impostoTotal,retencaoTotal,saldo,taxaEfetiva,rendLiquido,
+    deducoes:{saude:dados.dedSaude,educacao:dados.dedEducacao,habitacao:dados.dedHabitacao,pensao:dados.dedPensao,outras:dados.dedOutras,dependentes:dedDependentes,segSocial:segSocialAnual}
+  };
+}
+
+function calcularEmTempoReal(){
+  const dados=getFormData();
+  state.currentCalc=calcular(dados);
+  renderResumoRapido();
+}
+
+function fmtKz(v){return new Intl.NumberFormat('pt-AO',{minimumFractionDigits:0,maximumFractionDigits:0}).format(v)+' Kz';}
+function fmtPct(v){return v.toFixed(1)+'%';}
+
+function renderResumoRapido(){
+  const c=state.currentCalc;
+  if(!c)return;
+  const cards=[
+    {label:'Rendimento Total',value:fmtKz(c.rendTotal),color:'#66CFF5'},
+    {label:'Total Deduções',value:fmtKz(c.totalDeducoes),color:'#FF9800'},
+    {label:'Imposto Apurado',value:fmtKz(c.impostoTotal),color:'#F44336'},
+    {label:'Saldo (Reemb/Pagar)',value:fmtKz(c.saldo),color:c.saldo>=0?'#4CAF50':'#F44336'}
+  ];
+  const container=document.getElementById('resumoCards');
+  container.innerHTML=cards.map(cd=>`
+    <div class="card fade-in" style="padding:12px">
+      <div class="text-xs text-gray-500 mb-1">${cd.label}</div>
+      <div class="font-bold text-sm" style="color:${cd.color}">${cd.value}</div>
+    </div>
+  `).join('');
+}
+
+// ===== CHARTS =====
+function updateCharts(){
+  const c=state.currentCalc;
+  if(!c)return;
+  const dados=getFormData();
+
+  // Destroy old
+  [chartRendimentos,chartEscaloes,chartDeducoes,chartFinal].forEach(ch=>{if(ch)ch.destroy()});
+
+  // Rendimentos Donut
+  const rendLabels=['Trabalho','Outros','Capital','Predial'];
+  const rendValues=[dados.rendBruto,dados.rendOutros,dados.rendCapital,dados.rendPredial];
+  const rendTotal=rendValues.reduce((a,b)=>a+b,0);
+  chartRendimentos=new Chart(document.getElementById('chartRendimentos'),{
+    type:'doughnut',
+    data:{labels:rendLabels,datasets:[{data:rendValues,backgroundColor:['#66CFF5','#4CAF50','#FFC107','#FF9800'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:11}}},tooltip:{callbacks:{label:function(ctx){const v=ctx.parsed;const pct=rendTotal>0?(v/rendTotal*100).toFixed(1):0;return ctx.label+': '+fmtKz(v)+' ('+pct+'%)';}}}}}
+  });
+
+  // Escalões Bar
+  const escLabels=c.impostoEscaloes.filter(e=>e.valor>0).map(e=>'Esc. '+e.escalao+' ('+fmtPct(e.taxa*100)+')');
+  const escValues=c.impostoEscaloes.filter(e=>e.valor>0).map(e=>e.imposto);
+  chartEscaloes=new Chart(document.getElementById('chartEscaloes'),{
+    type:'bar',
+    data:{labels:escLabels,datasets:[{label:'Imposto (Kz)',data:escValues,backgroundColor:'#66CFF5',borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return fmtKz(ctx.parsed.y);}}}},scales:{y:{ticks:{callback:v=>fmtKz(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}}
+  });
+
+  // Deduções Donut
+  const dedLabels=['Saúde','Educação','Habitação','Pensão','Outras','Dependentes','Seg. Social'];
+  const dedValues=[c.deducoes.saude,c.deducoes.educacao,c.deducoes.habitacao,c.deducoes.pensao,c.deducoes.outras,c.deducoes.dependentes,c.deducoes.segSocial];
+  const dedTotal=dedValues.reduce((a,b)=>a+b,0);
+  chartDeducoes=new Chart(document.getElementById('chartDeducoes'),{
+    type:'doughnut',
+    data:{labels:dedLabels,datasets:[{data:dedValues,backgroundColor:['#F44336','#66CFF5','#FF9800','#9C27B0','#607D8B','#4CAF50','#FFC107'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:11}}},tooltip:{callbacks:{label:function(ctx){const v=ctx.parsed;const pct=dedTotal>0?(v/dedTotal*100).toFixed(1):0;return ctx.label+': '+fmtKz(v)+' ('+pct+'%)';}}}}}
+  });
+
+  // Resultado Final Bar
+  chartFinal=new Chart(document.getElementById('chartFinal'),{
+    type:'bar',
+    data:{labels:['Rendimento Bruto','Deduções','Imposto','Rendimento Líquido','Retenção','Saldo'],datasets:[{label:'Kz',data:[c.rendTotal,c.totalDeducoes,c.impostoTotal,c.rendLiquido,c.retencaoTotal,c.saldo],backgroundColor:['#66CFF5','#FF9800','#F44336','#4CAF50','#9C27B0',c.saldo>=0?'#4CAF50':'#F44336'],borderRadius:4}]},
+    options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return fmtKz(ctx.parsed.x);}}}},scales:{x:{ticks:{callback:v=>fmtKz(v)},grid:{color:'#f0f0f0'}},y:{grid:{display:false}}}}
+  });
+
+  // Tabela escalões
+  const tbody=document.getElementById('tbodyEscaloes');
+  tbody.innerHTML=c.impostoEscaloes.map(e=>`
+    <tr>
+      <td>${e.escalao}</td>
+      <td>${e.limite===Infinity?'Sem limite':fmtKz(e.limite)}</td>
+      <td>${fmtPct(e.taxa*100)}</td>
+      <td>${fmtKz(e.valor)}</td>
+      <td>${fmtKz(e.imposto)}</td>
+    </tr>
+  `).join('');
+
+  // Resumo textual
+  const rt=document.getElementById('resumoTexto');
+  rt.innerHTML=`
+    <p><strong>Rendimento Total:</strong> ${fmtKz(c.rendTotal)}</p>
+    <p><strong>Total Deduções:</strong> ${fmtKz(c.totalDeducoes)} (inclui ${fmtKz(c.segSocialAnual)} Seg. Social + ${fmtKz(c.dedDependentes)} por dependentes)</p>
+    <p><strong>Rendimento Coletável:</strong> ${fmtKz(c.rendColetavel)}</p>
+    <p><strong>Imposto Apurado:</strong> ${fmtKz(c.impostoTotal)}</p>
+    <p><strong>Taxa Efetiva:</strong> ${fmtPct(c.taxaEfetiva)}</p>
+    <p><strong>Retenção na Fonte (anual):</strong> ${fmtKz(c.retencaoTotal)}</p>
+    <p><strong>Saldo:</strong> <span style="color:${c.saldo>=0?'#4CAF50':'#F44336'};font-weight:600">${fmtKz(c.saldo)}</span> ${c.saldo>=0?'(a receber)':'(a pagar)'}</p>
+    <p><strong>Rendimento Líquido:</strong> ${fmtKz(c.rendLiquido)}</p>
+  `;
+}
+
+// ===== CENÁRIOS =====
+function guardarCenario(){
+  const dados=getFormData();
+  const num=state.cenarios.length+1;
+  const cenario={
+    id:Date.now(),
+    nome:dados.simTitle||('Cenário '+num),
+    dados:dados,
+    calc:calcular(dados),
+    dataCriacao:new Date().toISOString()
+  };
+  state.cenarios.push(cenario);
+  saveState();
+  showToast('Cenário guardado com sucesso!','success');
+}
+
+function renderCenarios(){
+  const filter=(document.getElementById('filterCenarios').value||'').toLowerCase();
+  const filtered=state.cenarios.filter(c=>c.nome.toLowerCase().includes(filter));
+  const grid=document.getElementById('cenariosGrid');
+  const empty=document.getElementById('cenariosEmpty');
+
+  if(filtered.length===0){
+    grid.innerHTML='';
+    empty.style.display='block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display='none';
+
+  grid.innerHTML=filtered.map(c=>{
+    const d=new Date(c.dataCriacao);
+    const dateStr=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});
+    return `
+    <div class="card scenario-card fade-in" data-id="${c.id}">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-semibold text-sm text-gray-700">${escHtml(c.nome)}</span>
+        <span class="badge badge-blue">${dateStr}</span>
+      </div>
+      <div class="text-xs text-gray-500 space-y-1 mb-3">
+        <p>Rendimento: ${fmtKz(c.calc.rendTotal)}</p>
+        <p>Imposto: ${fmtKz(c.calc.impostoTotal)}</p>
+        <p>Saldo: <span style="color:${c.calc.saldo>=0?'#4CAF50':'#F44336'}">${fmtKz(c.calc.saldo)}</span></p>
+      </div>
+      <div class="flex gap-1 flex-wrap export-hidden">
+        <button class="btn btn-xs btn-primary" onclick="carregarCenario(${c.id})"><i data-lucide="upload" style="width:12px;height:12px"></i> Carregar</button>
+        <button class="btn btn-xs" onclick="clonarCenario(${c.id})"><i data-lucide="copy" style="width:12px;height:12px"></i> Clonar</button>
+        <button class="btn btn-xs" onclick="editarCenarioModal(${c.id})"><i data-lucide="edit" style="width:12px;height:12px"></i> Editar</button>
+        <button class="btn btn-xs btn-danger" onclick="confirmarEliminar(${c.id})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function carregarCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);
+  if(!c)return;
+  setFormData(c.dados);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-tab="simulador"]').classList.add('active');
+  document.getElementById('tab-simulador').classList.add('active');
+  showToast('Cenário carregado!','info');
+}
+
+function clonarCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);
+  if(!c)return;
+  const clone={...c,id:Date.now(),nome:c.nome+' (Cópia)',dataCriacao:new Date().toISOString()};
+  clone.dados={...c.dados};
+  clone.calc={...c.calc};
+  state.cenarios.push(clone);
+  saveState();
+  renderCenarios();
+  showToast('Cenário clonado!','success');
+}
+
+function editarCenarioModal(id){
+  const c=state.cenarios.find(x=>x.id===id);
+  if(!c)return;
+  document.getElementById('modalTitle').textContent='Editar Cenário';
+  document.getElementById('modalBody').innerHTML=`
+    <div class="space-y-3">
+      <div><label class="field-label">Nome</label><input type="text" id="editNome" class="input-field" value="${escHtml(c.nome)}"></div>
+      <div><label class="field-label">Rendimento Bruto (Kz)</label><input type="number" id="editRendBruto" class="input-field" value="${c.dados.rendBruto}"></div>
+      <div><label class="field-label">Retenção Mensal (Kz)</label><input type="number" id="editRetMensal" class="input-field" value="${c.dados.retencaoMensal}"></div>
+      <div class="flex gap-2 justify-end mt-4">
+        <button class="btn btn-sm" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarEdicaoCenario(${id})">Guardar</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('show');
+  lucide.createIcons();
+}
+
+function salvarEdicaoCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);
+  if(!c)return;
+  c.nome=document.getElementById('editNome').value||c.nome;
+  c.dados.rendBruto=parseFloat(document.getElementById('editRendBruto').value)||0;
+  c.dados.retencaoMensal=parseFloat(document.getElementById('editRetMensal').value)||0;
+  c.calc=calcular(c.dados);
+  saveState();
+  fecharModal();
+  renderCenarios();
+  showToast('Cenário atualizado!','success');
+}
+
+let pendingDeleteId=null;
+function confirmarEliminar(id){
+  pendingDeleteId=id;
+  document.getElementById('confirmText').textContent='Tem a certeza que deseja eliminar este cenário?';
+  document.getElementById('confirmBtn').onclick=()=>{eliminarCenario();fecharConfirm();};
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function eliminarCenario(){
+  if(pendingDeleteId===null)return;
+  state.cenarios=state.cenarios.filter(c=>c.id!==pendingDeleteId);
+  pendingDeleteId=null;
+  saveState();
+  renderCenarios();
+  showToast('Cenário eliminado','error');
+}
+
+function novoCenarioDoZero(){
+  limparFormulario();
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-tab="simulador"]').classList.add('active');
+  document.getElementById('tab-simulador').classList.add('active');
+  showToast('Novo cenário pronto para preencher','info');
+}
+
+function limparFormulario(){
+  ['simTitle','rendBruto','rendOutros','rendCapital','rendPredial','dedSaude','dedEducacao','dedHabitacao','dedPensao','dedOutras','retencaoMensal'].forEach(id=>{
+    document.getElementById(id).value=id==='simTitle'?'':'0';
+  });
+  document.getElementById('mesesRetencao').value='12';
+  document.getElementById('segSocial').value='3';
+  document.getElementById('dependentes').value='0';
+  calcularEmTempoReal();
+}
+
+// Templates
+function renderTemplates(){
+  const grid=document.getElementById('templatesGrid');
+  grid.innerHTML=TEMPLATES.map((t,i)=>`
+    <div class="card card-gold scenario-card fade-in">
+      <div class="flex items-center gap-2 mb-2">
+        <i data-lucide="book-open" style="width:14px;height:14px;color:#FFC107"></i>
+        <span class="font-semibold text-sm text-gray-700">${t.nome}</span>
+      </div>
+      <p class="text-xs text-gray-500 mb-3">${t.desc}</p>
+      <button class="btn btn-xs btn-warning export-hidden" onclick="carregarTemplate(${i})"><i data-lucide="play" style="width:12px;height:12px"></i> Usar Template</button>
+    </div>
+  `).join('');
+}
+
+function carregarTemplate(i){
+  setFormData(TEMPLATES[i].dados);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-tab="simulador"]').classList.add('active');
+  document.getElementById('tab-simulador').classList.add('active');
+  showToast('Template carregado!','info');
+}
+
+// ===== CÂMBIO =====
+function renderCambio(){
+  const tbody=document.getElementById('tbodyCambio');
+  tbody.innerHTML=state.cambio.map((c,i)=>`
+    <tr>
+      <td>${escHtml(c.moeda)}</td>
+      <td><span class="badge badge-blue">${c.codigo}</span></td>
+      <td><input type="number" class="input-field export-hidden" style="width:120px;display:inline-block" step="0.0001" value="${c.taxa}" onchange="updateTaxa(${i},this.value)"><span class="export-only" style="display:none">${c.taxa}</span></td>
+      <td class="export-hidden"><button class="btn btn-xs" onclick="resetTaxa(${i})"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i></button></td>
+    </tr>
+  `).join('');
+
+  const sel=document.getElementById('convMoeda');
+  sel.innerHTML=state.cambio.map(c=>`<option value="${c.codigo}">${c.moeda} (${c.codigo})</option>`).join('');
+
+  converterMoeda();
+  lucide.createIcons();
+}
+
+function updateTaxa(i,v){
+  state.cambio[i].taxa=parseFloat(v)||0;
+  saveState();
+  converterMoeda();
+}
+
+function resetTaxa(i){
+  const defaults=[0.0064,0.1195,0.7107,0.0766,0.0011,0.0268,0.0012,0.0012];
+  state.cambio[i].taxa=defaults[i]||0;
+  saveState();
+  renderCambio();
+}
+
+function converterMoeda(){
+  const val=parseFloat(document.getElementById('convValor').value)||0;
+  const cod=document.getElementById('convMoeda').value;
+  const moeda=state.cambio.find(c=>c.codigo===cod);
+  if(!moeda){document.getElementById('convResultado').textContent='—';return;}
+  const result=val*moeda.taxa;
+  document.getElementById('convResultado').textContent=result.toLocaleString('pt-AO',{minimumFractionDigits:2,maximumFractionDigits:4})+' '+cod;
+}
+
+// ===== EXPORT / IMPORT =====
+function exportJSON(){
+  const data={cenarios:state.cenarios,cambio:state.cambio,currentData:getFormData(),exportDate:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='IS_Simulador_IRS_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('JSON exportado!','success');
+}
+
+function importJSON(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.cenarios)state.cenarios=data.cenarios;
+      if(data.cambio)state.cambio=data.cambio;
+      if(data.currentData)setFormData(data.currentData);
+      saveState();
+      renderCenarios();
+      renderCambio();
+      showToast('Dados importados com sucesso!','success');
+    }catch(err){
+      showToast('Erro ao importar ficheiro','error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+async function exportAppImage(){
+  hideExportElements(true);
+  await new Promise(r=>setTimeout(r,200));
+  try{
+    const el=document.getElementById('app-root');
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#F8F9FA',scrollY:-window.scrollY});
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');
+    a.download='IS_Simulador_IRS_'+new Date().toISOString().slice(0,10)+'.png';
+    a.click();
+    showToast('Imagem exportada!','success');
+  }catch(err){showToast('Erro na exportação','error');}
+  hideExportElements(false);
+}
+
+async function exportChartImage(canvasId){
+  const chartCanvas=document.getElementById(canvasId);
+  if(!chartCanvas)return;
+  try{
+    const a=document.createElement('a');
+    a.href=chartCanvas.toDataURL('image/png',1.0);
+    a.download=canvasId+'_HD_'+new Date().toISOString().slice(0,10)+'.png';
+    a.click();
+    showToast('Gráfico exportado em HD!','success');
+  }catch(err){showToast('Erro na exportação','error');}
+}
+
+async function exportPDF(){
+  hideExportElements(true);
+  await new Promise(r=>setTimeout(r,200));
+  try{
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const margin=15;
+    const contentW=pageW-margin*2;
+    let yPos=margin;
+
+    const hoje=new Date();
+    const dataExtenso=hoje.toLocaleDateString('pt-PT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const appName='IS Simulador IRS';
+
+    function addHeader(){
+      pdf.setFontSize(10);pdf.setTextColor(30,136,229);
+      pdf.text(appName,margin,10);
+      pdf.setTextColor(150);pdf.setFontSize(7);
+      pdf.text('Gerado por '+appName+' | '+dataExtenso+' | www.investesuite.com',margin,pageH-5);
+      pdf.text('Pág. '+pdf.internal.getNumberOfPages(),pageW-margin,pageH-5,{align:'right'});
+      yPos=20;
+    }
+
+    addHeader();
+
+    // Title
+    pdf.setFontSize(14);pdf.setTextColor(33);
+    pdf.text('Relatório de Simulação IRS',margin,yPos);yPos+=8;
+    pdf.setFontSize(8);pdf.setTextColor(100);
+    pdf.text('Data: '+dataExtenso,margin,yPos);yPos+=10;
+
+    // Resumo
+    const c=state.currentCalc;
+    if(c){
+      pdf.setFontSize(10);pdf.setTextColor(33);
+      pdf.text('Resumo',margin,yPos);yPos+=6;
+      pdf.setFontSize(8);pdf.setTextColor(80);
+      const lines=[
+        'Rendimento Total: '+fmtKz(c.rendTotal),
+        'Total Deduções: '+fmtKz(c.totalDeducoes),
+        'Rendimento Coletável: '+fmtKz(c.rendColetavel),
+        'Imposto Apurado: '+fmtKz(c.impostoTotal),
+        'Taxa Efetiva: '+fmtPct(c.taxaEfetiva),
+        'Retenção Anual: '+fmtKz(c.retencaoTotal),
+        'Saldo: '+fmtKz(c.saldo)+(c.saldo>=0?' (a receber)':' (a pagar)'),
+        'Rendimento Líquido: '+fmtKz(c.rendLiquido)
+      ];
+      lines.forEach(l=>{pdf.text(l,margin,yPos);yPos+=5;});
+      yPos+=5;
+
+      // Escalões table
+      if(yPos>pageH-50){pdf.addPage();addHeader();}
+      pdf.setFontSize(10);pdf.setTextColor(33);
+      pdf.text('Tabela de Escalões',margin,yPos);yPos+=6;
+      pdf.setFontSize(7);pdf.setTextColor(80);
+      c.impostoEscaloes.forEach(e=>{
+        if(yPos>pageH-20){pdf.addPage();addHeader();}
+        pdf.text(`Escalão ${e.escalao}: Taxa ${fmtPct(e.taxa*100)} | Tributável: ${fmtKz(e.valor)} | Imposto: ${fmtKz(e.imposto)}`,margin,yPos);
+        yPos+=4;
+      });
+      yPos+=5;
+
+      // Charts (small)
+      const chartIds=['chartRendimentos','chartEscaloes','chartDeducoes','chartFinal'];
+      const chartTitles=['Distribuição de Rendimentos','Imposto por Escalão','Deduções Detalhadas','Resultado Final'];
+      for(let i=0;i<chartIds.length;i++){
+        if(yPos>pageH-60){pdf.addPage();addHeader();}
+        const cv=document.getElementById(chartIds[i]);
+        if(cv){
+          pdf.setFontSize(9);pdf.setTextColor(33);
+          pdf.text(chartTitles[i],margin,yPos);yPos+=4;
+          const imgData=cv.toDataURL('image/png');
+          const chartW=70;const chartH=45;
+          pdf.addImage(imgData,'PNG',margin,yPos,chartW,chartH);
+          yPos+=chartH+8;
+        }
+      }
+    }
+
+    pdf.save('IS_Simulador_IRS_'+new Date().toISOString().slice(0,10)+'.pdf');
+    showToast('PDF exportado!','success');
+  }catch(err){console.error(err);showToast('Erro na exportação PDF','error');}
+  hideExportElements(false);
+}
+
+function hideExportElements(hide){
+  document.querySelectorAll('.export-hidden').forEach(el=>{
+    el.style.display=hide?'none':'';
+  });
+}
+
+// ===== FILTER =====
+function applyGlobalFilter(){
+  const q=(document.getElementById('globalFilter').value||'').toLowerCase();
+  const activeTab=document.querySelector('.tab-content.active');
+  if(!activeTab)return;
+  activeTab.querySelectorAll('.card').forEach(card=>{
+    const text=card.textContent.toLowerCase();
+    card.style.display=text.includes(q)?'':'none';
+  });
+}
+
+// ===== UTILS =====
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.className='toast toast-'+type;
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function fecharModal(){document.getElementById('modalOverlay').classList.remove('show');}
+function fecharConfirm(){document.getElementById('confirmOverlay').classList.remove('show');pendingDeleteId=null;}
+
+// ===== ELEMENT SDK =====
+const defaultConfig={
+  app_title:'IS Simulador IRS',
+  app_description:'Simulador de Imposto de Rendimento para cidadãos CPLP',
+  background_color:'#F8F9FA',
+  surface_color:'#FFFFFF',
+  text_color:'#333333',
+  primary_action_color:'#66CFF5',
+  secondary_action_color:'#4CAF50',
+  font_family:'Inter',
+  font_size:13
+};
+
+function applyConfig(config){
+  const bg=config.background_color||defaultConfig.background_color;
+  const sf=config.surface_color||defaultConfig.surface_color;
+  const tx=config.text_color||defaultConfig.text_color;
+  const pa=config.primary_action_color||defaultConfig.primary_action_color;
+  const sa=config.secondary_action_color||defaultConfig.secondary_action_color;
+  const ff=config.font_family||defaultConfig.font_family;
+  const fs=config.font_size||defaultConfig.font_size;
+
+  document.body.style.background=bg;
+  document.body.style.color=tx;
+  document.body.style.fontFamily=ff+', Inter, sans-serif';
+  document.body.style.fontSize=fs+'px';
+
+  document.querySelectorAll('.card').forEach(c=>{c.style.backgroundColor=sf;});
+  document.querySelectorAll('.header-fixed').forEach(h=>{h.style.backgroundColor=sf;});
+  document.querySelectorAll('.tabs-fixed').forEach(t=>{t.style.backgroundColor=sf;});
+
+  document.querySelectorAll('.btn-primary').forEach(b=>{b.style.backgroundColor=pa;b.style.borderColor=pa;});
+  document.querySelectorAll('.btn-success').forEach(b=>{b.style.backgroundColor=sa;b.style.borderColor=sa;});
+
+  const titleEl=document.getElementById('title-text');
+  const descEl=document.getElementById('desc-text');
+  if(titleEl)titleEl.textContent=config.app_title||defaultConfig.app_title;
+  if(descEl)descEl.textContent=config.app_description||defaultConfig.app_description;
+
+  document.querySelectorAll('h1,h2,h3,h4').forEach(h=>{h.style.fontFamily=ff+', Inter, sans-serif';});
+}
+
+if(window.elementSdk){
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange:async(config)=>{applyConfig(config);},
+    mapToCapabilities:(config)=>({
+      recolorables:[
+        {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+        {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+        {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+        {get:()=>config.primary_action_color||defaultConfig.primary_action_color,set:v=>{config.primary_action_color=v;window.elementSdk.setConfig({primary_action_color:v})}},
+        {get:()=>config.secondary_action_color||defaultConfig.secondary_action_color,set:v=>{config.secondary_action_color=v;window.elementSdk.setConfig({secondary_action_color:v})}}
+      ],
+      borderables:[],
+      fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+      fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+    }),
+    mapToEditPanelValues:(config)=>new Map([
+      ['app_title',config.app_title||defaultConfig.app_title],
+      ['app_description',config.app_description||defaultConfig.app_description]
+    ])
+  });
+}
+
+// ===== INIT =====
+loadState();
+calcularEmTempoReal();
+renderTemplates();
+renderCambio();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddb4531f24a1b23',t:'MTc3Mzc0Mjg4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

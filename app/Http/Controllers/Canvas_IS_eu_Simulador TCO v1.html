@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador TCO</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;overflow:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#E0E0E0;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#BDBDBD}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:#757575;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:6px;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5;background:rgba(30,136,229,.05)}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:20px;position:relative;transition:all .2s ease;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:8px 0 0 8px}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-blue::before{background:#66CFF5}
+.card-green::before{background:#4CAF50}
+.card-orange::before{background:#FF9800}
+.card-red::before{background:#F44336}
+.card-gold::before{background:#FFC107}
+.btn-primary{background:#66CFF5;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#F8F9FA;color:#555;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid #E0E0E0;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-secondary:hover{background:#E0E0E0}
+.btn-danger{background:#F44336;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-danger:hover{background:#D32F2F}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-icon{width:30px;height:30px;border-radius:6px;border:1px solid #E0E0E0;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s ease;padding:0}
+.btn-icon:hover{background:#F8F9FA;border-color:#66CFF5}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;transition:all .2s ease;background:#fff;font-family:'Inter',sans-serif}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+.select-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;font-family:'Inter',sans-serif}
+.select-field:focus{outline:none;border-color:#66CFF5}
+label{display:block;font-size:12px;font-weight:500;color:#555;margin-bottom:4px}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:10000;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;transform:scale(.95);transition:all .2s ease}
+.modal-overlay.show .modal-box{transform:scale(1)}
+.chart-container{position:relative;background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:10}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.export-hide{transition:all .2s ease}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F8F9FA;padding:10px 12px;text-align:left;font-weight:600;color:#333;border-bottom:2px solid #E0E0E0}
+td{padding:10px 12px;border-bottom:1px solid #F0F0F0;color:#555}
+tr:hover td{background:#FAFBFC}
+.confirm-bar{background:#FFF3E0;border:1px solid #FF9800;border-radius:6px;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#E65100}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',secondary:'#F8F9FA',border:'#E0E0E0',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warning:'#FF9800'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-[#F8F9FA] text-gray-700">
+  <div id="app-root" class="h-full flex flex-col w-full overflow-hidden"><!-- Header -->
+   <header class="bg-white border-b border-[#E0E0E0] px-4 py-3 flex-shrink-0 z-50" style="position:sticky;top:0">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-[#66CFF5] flex items-center justify-center" style="display: none;"><span class="text-white font-bold text-sm">IS</span>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-base font-bold text-gray-800 leading-tight" style="display: none; display: none;">Simulador TCO</h1>
+       <p id="appDesc" class="text-xs text-gray-400 leading-tight" style="display: none; display: none;">Custo Total de Propriedade para a CPLP</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2"><input id="globalSearch" type="text" placeholder="Filtrar dados..." class="input-field text-xs" style="width:180px;padding:6px 10px"> <button class="btn-icon" title="Importar JSON" onclick="importJSON()"><i data-lucide="upload" style="width:15px;height:15px;color:#757575"></i></button> <button class="btn-icon" title="Exportar JSON" onclick="exportJSON()"><i data-lucide="download" style="width:15px;height:15px;color:#757575"></i></button> <button class="btn-icon" title="Exportar Imagem" onclick="exportImage()"><i data-lucide="image" style="width:15px;height:15px;color:#757575"></i></button> <button class="btn-icon" title="Exportar PDF" onclick="exportPDF()"><i data-lucide="file-text" style="width:15px;height:15px;color:#757575"></i></button>
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-[#E0E0E0] flex-shrink-0 z-40" style="position:sticky;top:52px">
+    <div class="max-w-7xl mx-auto flex overflow-x-auto" id="tabNav"><button class="tab-btn active" data-tab="simulator" onclick="switchTab('simulator')"><i data-lucide="calculator" style="width:14px;height:14px"></i>Simulador</button> <button class="tab-btn" data-tab="results" onclick="switchTab('results')"><i data-lucide="bar-chart-3" style="width:14px;height:14px"></i>Resultados</button> <button class="tab-btn" data-tab="scenarios" onclick="switchTab('scenarios')"><i data-lucide="layers" style="width:14px;height:14px"></i>Cenários</button> <button class="tab-btn" data-tab="currency" onclick="switchTab('currency')"><i data-lucide="coins" style="width:14px;height:14px"></i>Moedas</button> <button class="tab-btn" data-tab="guide" onclick="switchTab('guide')"><i data-lucide="book-open" style="width:14px;height:14px"></i>Guia</button>
+    </div>
+   </nav><!-- Content -->
+   <main class="flex-1 overflow-y-auto" id="mainContent">
+    <div class="max-w-7xl mx-auto p-4"><!-- TAB: Simulador -->
+     <div id="tab-simulator" class="tab-content active fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Dados da Simulação</h2>
+        <p class="text-xs text-gray-400">Preencha os custos para calcular o TCO</p>
+       </div>
+       <div class="flex gap-2"><button class="btn-primary btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:13px;height:13px"></i>Guardar Cenário</button> <button class="btn-secondary btn-sm" onclick="resetSimulator()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i>Limpar</button>
+       </div>
+      </div><!-- Title -->
+      <div class="card card-blue mb-4"><label>Título da Simulação</label> <input id="simTitle" type="text" class="input-field" placeholder="Ex: Servidor Dell PowerEdge 2024" value="">
+      </div><!-- Sub-tabs for categories -->
+      <div class="flex gap-1 mb-4 flex-wrap"><button class="btn-secondary btn-sm sim-cat-btn active" data-cat="acquisition" onclick="switchSimCat('acquisition')" style="font-size:11px"><i data-lucide="shopping-cart" style="width:12px;height:12px"></i>Aquisição</button> <button class="btn-secondary btn-sm sim-cat-btn" data-cat="implementation" onclick="switchSimCat('implementation')" style="font-size:11px"><i data-lucide="wrench" style="width:12px;height:12px"></i>Implementação</button> <button class="btn-secondary btn-sm sim-cat-btn" data-cat="operation" onclick="switchSimCat('operation')" style="font-size:11px"><i data-lucide="settings" style="width:12px;height:12px"></i>Operação</button> <button class="btn-secondary btn-sm sim-cat-btn" data-cat="maintenance" onclick="switchSimCat('maintenance')" style="font-size:11px"><i data-lucide="tool" style="width:12px;height:12px"></i>Manutenção</button> <button class="btn-secondary btn-sm sim-cat-btn" data-cat="end" onclick="switchSimCat('end')" style="font-size:11px"><i data-lucide="archive" style="width:12px;height:12px"></i>Fim de Vida</button> <button class="btn-secondary btn-sm sim-cat-btn" data-cat="custom" onclick="switchSimCat('custom')" style="font-size:11px"><i data-lucide="plus-circle" style="width:12px;height:12px"></i>Personalizados</button>
+      </div><!-- Acquisition -->
+      <div id="cat-acquisition" class="sim-cat active">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="card card-blue">
+         <label>Preço de Compra (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="purchase_price" placeholder="0" min="0">
+        </div>
+        <div class="card card-blue">
+         <label>Licenças de Software (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="software_licenses" placeholder="0" min="0">
+        </div>
+        <div class="card card-blue">
+         <label>Hardware Adicional (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="additional_hardware" placeholder="0" min="0">
+        </div>
+        <div class="card card-blue">
+         <label>Impostos e Taxas (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="taxes" placeholder="0" min="0">
+        </div>
+        <div class="card card-blue">
+         <label>Transporte/Frete (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="shipping" placeholder="0" min="0">
+        </div>
+        <div class="card card-blue">
+         <label>Seguros Iniciais (Kz)</label><input type="number" class="input-field cost-input" data-cat="acquisition" data-key="initial_insurance" placeholder="0" min="0">
+        </div>
+       </div>
+      </div><!-- Implementation -->
+      <div id="cat-implementation" class="sim-cat" style="display:none">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="card card-green">
+         <label>Instalação (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="installation" placeholder="0" min="0">
+        </div>
+        <div class="card card-green">
+         <label>Configuração (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="configuration" placeholder="0" min="0">
+        </div>
+        <div class="card card-green">
+         <label>Formação/Treino (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="training" placeholder="0" min="0">
+        </div>
+        <div class="card card-green">
+         <label>Migração de Dados (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="data_migration" placeholder="0" min="0">
+        </div>
+        <div class="card card-green">
+         <label>Consultoria (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="consulting" placeholder="0" min="0">
+        </div>
+        <div class="card card-green">
+         <label>Tempo de Inatividade (Kz)</label><input type="number" class="input-field cost-input" data-cat="implementation" data-key="downtime" placeholder="0" min="0">
+        </div>
+       </div>
+      </div><!-- Operation -->
+      <div id="cat-operation" class="sim-cat" style="display:none">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="card card-orange">
+         <label>Energia/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="energy" placeholder="0" min="0">
+        </div>
+        <div class="card card-orange">
+         <label>Pessoal/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="staff" placeholder="0" min="0">
+        </div>
+        <div class="card card-orange">
+         <label>Licenças Recorrentes/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="recurring_licenses" placeholder="0" min="0">
+        </div>
+        <div class="card card-orange">
+         <label>Hosting/Cloud/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="hosting" placeholder="0" min="0">
+        </div>
+        <div class="card card-orange">
+         <label>Conectividade/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="connectivity" placeholder="0" min="0">
+        </div>
+        <div class="card card-orange">
+         <label>Consumíveis/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="operation" data-key="consumables" placeholder="0" min="0">
+        </div>
+       </div>
+       <div class="card card-orange mt-3"><label>Período Operacional (anos)</label> <input id="opYears" type="number" class="input-field" value="5" min="1" max="30" style="width:120px">
+       </div>
+      </div><!-- Maintenance -->
+      <div id="cat-maintenance" class="sim-cat" style="display:none">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="card card-gold">
+         <label>Manutenção Preventiva/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="preventive" placeholder="0" min="0">
+        </div>
+        <div class="card card-gold">
+         <label>Manutenção Corretiva/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="corrective" placeholder="0" min="0">
+        </div>
+        <div class="card card-gold">
+         <label>Peças de Reposição/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="spare_parts" placeholder="0" min="0">
+        </div>
+        <div class="card card-gold">
+         <label>Atualizações de Software/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="sw_updates" placeholder="0" min="0">
+        </div>
+        <div class="card card-gold">
+         <label>Suporte Técnico/Ano (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="tech_support" placeholder="0" min="0">
+        </div>
+        <div class="card card-gold">
+         <label>Seguros Anuais (Kz)</label><input type="number" class="input-field cost-input" data-cat="maintenance" data-key="annual_insurance" placeholder="0" min="0">
+        </div>
+       </div>
+      </div><!-- End of Life -->
+      <div id="cat-end" class="sim-cat" style="display:none">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="card card-red">
+         <label>Descomissionamento (Kz)</label><input type="number" class="input-field cost-input" data-cat="end" data-key="decommission" placeholder="0" min="0">
+        </div>
+        <div class="card card-red">
+         <label>Migração/Substituição (Kz)</label><input type="number" class="input-field cost-input" data-cat="end" data-key="migration_replacement" placeholder="0" min="0">
+        </div>
+        <div class="card card-red">
+         <label>Destruição de Dados (Kz)</label><input type="number" class="input-field cost-input" data-cat="end" data-key="data_destruction" placeholder="0" min="0">
+        </div>
+        <div class="card card-red">
+         <label>Reciclagem/Descarte (Kz)</label><input type="number" class="input-field cost-input" data-cat="end" data-key="recycling" placeholder="0" min="0">
+        </div>
+        <div class="card card-red">
+         <label>Valor Residual (Kz) <span class="text-xs text-gray-400">(subtrai)</span></label><input type="number" class="input-field cost-input" data-cat="end" data-key="residual_value" placeholder="0" min="0">
+        </div>
+       </div>
+      </div><!-- Custom -->
+      <div id="cat-custom" class="sim-cat" style="display:none">
+       <div id="customItems" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div><button class="btn-secondary btn-sm mt-3" onclick="addCustomItem()"><i data-lucide="plus" style="width:13px;height:13px"></i>Adicionar Item Personalizado</button>
+      </div>
+     </div><!-- TAB: Results -->
+     <div id="tab-results" class="tab-content fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Análise de Resultados</h2>
+        <p class="text-xs text-gray-400">Visualize a composição do seu TCO</p>
+       </div>
+       <div class="flex items-center gap-2"><label class="text-xs text-gray-500">Moeda:</label> <select id="displayCurrency" class="select-field" style="width:110px;padding:5px 8px;font-size:12px" onchange="updateResults()"> <option value="AOA">Kz (AOA)</option> </select>
+       </div>
+      </div><!-- Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="summaryCards"></div><!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+       <div class="chart-container">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs font-semibold text-gray-600">Distribuição por Categoria</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChart('chartDonut')" title="Exportar HD"><i data-lucide="download" style="width:12px;height:12px;color:#757575"></i></button>
+        </div>
+        <canvas id="chartDonut" height="260"></canvas>
+       </div>
+       <div class="chart-container">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs font-semibold text-gray-600">Custos ao Longo do Tempo</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChart('chartLine')" title="Exportar HD"><i data-lucide="download" style="width:12px;height:12px;color:#757575"></i></button>
+        </div>
+        <canvas id="chartLine" height="260"></canvas>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+       <div class="chart-container">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs font-semibold text-gray-600">Comparação por Categoria</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChart('chartBar')" title="Exportar HD"><i data-lucide="download" style="width:12px;height:12px;color:#757575"></i></button>
+        </div>
+        <canvas id="chartBar" height="260"></canvas>
+       </div>
+       <div class="chart-container">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-xs font-semibold text-gray-600">Custo Anual Projetado</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChart('chartAnnual')" title="Exportar HD"><i data-lucide="download" style="width:12px;height:12px;color:#757575"></i></button>
+        </div>
+        <canvas id="chartAnnual" height="260"></canvas>
+       </div>
+      </div><!-- Detailed Table -->
+      <div class="card card-blue">
+       <h3 class="text-xs font-semibold text-gray-600 mb-3">Detalhamento Completo</h3>
+       <div class="overflow-x-auto">
+        <table id="detailTable">
+         <thead>
+          <tr>
+           <th>Categoria</th>
+           <th>Item</th>
+           <th>Valor (Kz)</th>
+           <th>% do TCO</th>
+          </tr>
+         </thead>
+         <tbody></tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- TAB: Scenarios -->
+     <div id="tab-scenarios" class="tab-content fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Cenários Guardados</h2>
+        <p class="text-xs text-gray-400">Gerencie e compare as suas simulações</p>
+       </div>
+       <div class="flex gap-2"><input id="scenarioSearch" type="text" placeholder="Filtrar cenários..." class="input-field text-xs" style="width:180px;padding:6px 10px" oninput="renderScenarios()"> <button class="btn-primary btn-sm" onclick="switchTab('simulator');resetSimulator()"><i data-lucide="plus" style="width:13px;height:13px"></i>Novo</button>
+       </div>
+      </div>
+      <div id="scenariosList"></div>
+      <div id="noScenarios" class="text-center py-12 text-gray-400"><i data-lucide="layers" style="width:40px;height:40px;margin:0 auto 12px;display:block;color:#E0E0E0"></i>
+       <p class="text-sm">Nenhum cenário guardado</p>
+       <p class="text-xs">Crie uma simulação e guarde-a como cenário</p>
+      </div>
+     </div><!-- TAB: Currency -->
+     <div id="tab-currency" class="tab-content fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h2 class="text-sm font-semibold text-gray-700">Taxas de Câmbio</h2>
+        <p class="text-xs text-gray-400">Base: Kwanza angolano (AOA/Kz)</p>
+       </div><button class="btn-primary btn-sm" onclick="addCurrency()"><i data-lucide="plus" style="width:13px;height:13px"></i>Adicionar Moeda</button>
+      </div>
+      <div class="card card-blue mb-3">
+       <p class="text-xs text-gray-500 mb-2">Defina quanto 1 unidade de cada moeda vale em Kwanzas (Kz). Exemplo: 1 USD = 830 Kz</p>
+      </div>
+      <div id="currencyList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+     </div><!-- TAB: Guide -->
+     <div id="tab-guide" class="tab-content fade-in">
+      <div class="mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">Guia de Utilização</h2>
+       <p class="text-xs text-gray-400">Aprenda a usar o simulador e boas práticas de TCO</p>
+      </div>
+      <div class="space-y-3">
+       <div class="card card-blue">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="help-circle" style="width:16px;height:16px;color:#66CFF5"></i>O que é TCO?</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">O Custo Total de Propriedade (TCO – Total Cost of Ownership) é uma metodologia amplamente utilizada na Europa e no mundo para estimar todos os custos diretos e indiretos associados à aquisição, operação e manutenção de um ativo ao longo da sua vida útil. Foi popularizado pela Gartner Group nos anos 1980 e é hoje uma ferramenta essencial para tomadas de decisão informadas em TI, infraestrutura e investimentos empresariais.</p>
+       </div>
+       <div class="card card-green">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="target" style="width:16px;height:16px;color:#4CAF50"></i>Importância do TCO</h3>
+        <ul class="text-xs text-gray-500 space-y-1 list-disc ml-4">
+         <li>Evita surpresas financeiras ao considerar custos ocultos</li>
+         <li>Permite comparar alternativas de investimento de forma justa</li>
+         <li>Facilita negociações com fornecedores baseadas em dados reais</li>
+         <li>Melhora o planeamento financeiro de médio e longo prazo</li>
+         <li>Apoia decisões de compra vs. leasing vs. cloud</li>
+         <li>É exigido em muitos processos de compras públicas na UE</li>
+        </ul>
+       </div>
+       <div class="card card-orange">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="list-checks" style="width:16px;height:16px;color:#FF9800"></i>Como Usar Este Simulador</h3>
+        <ol class="text-xs text-gray-500 space-y-1 list-decimal ml-4">
+         <li><strong>Dê um título</strong> à sua simulação para fácil identificação</li>
+         <li><strong>Preencha os custos</strong> em cada categoria (Aquisição, Implementação, etc.)</li>
+         <li><strong>Defina o período</strong> operacional em anos na aba "Operação"</li>
+         <li><strong>Consulte os resultados</strong> na aba "Resultados" com gráficos interativos</li>
+         <li><strong>Guarde cenários</strong> para comparar diferentes opções</li>
+         <li><strong>Use as moedas CPLP</strong> para converter valores automaticamente</li>
+         <li><strong>Exporte</strong> em PDF, imagem ou JSON para partilhar</li>
+        </ol>
+       </div>
+       <div class="card card-gold">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="star" style="width:16px;height:16px;color:#FFC107"></i>Melhores Práticas</h3>
+        <ul class="text-xs text-gray-500 space-y-1 list-disc ml-4">
+         <li>Inclua sempre custos de formação e mudança organizacional</li>
+         <li>Considere cenários otimista, realista e pessimista (crie 3 cenários)</li>
+         <li>Não ignore custos de fim de vida e descomissionamento</li>
+         <li>Atualize as taxas de câmbio antes de comparações internacionais</li>
+         <li>Documente os pressupostos por trás de cada estimativa</li>
+         <li>Revise o TCO anualmente conforme custos reais surgem</li>
+         <li>Compare sempre pelo menos 2 alternativas antes de decidir</li>
+        </ul>
+       </div>
+       <div class="card card-red">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" style="width:16px;height:16px;color:#F44336"></i>Erros Comuns a Evitar</h3>
+        <ul class="text-xs text-gray-500 space-y-1 list-disc ml-4">
+         <li>Focar apenas no preço de compra e ignorar custos operacionais</li>
+         <li>Subestimar custos de pessoal e formação</li>
+         <li>Não considerar a inflação e variação cambial</li>
+         <li>Esquecer o custo do tempo de inatividade durante a transição</li>
+         <li>Não incluir custos de integração com sistemas existentes</li>
+        </ul>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Toast -->
+  <div id="toast" class="toast"></div><!-- Confirm Modal -->
+  <div id="confirmModal" class="modal-overlay">
+   <div class="modal-box">
+    <h3 id="confirmTitle" class="text-sm font-semibold text-gray-700 mb-2"></h3>
+    <p id="confirmMsg" class="text-xs text-gray-500 mb-4"></p>
+    <div class="flex gap-2 justify-end"><button class="btn-secondary btn-sm" onclick="closeConfirm()">Cancelar</button> <button id="confirmBtn" class="btn-danger btn-sm" onclick="confirmAction()">Confirmar</button>
+    </div>
+   </div>
+  </div><!-- Hidden file input --> <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileImport(event)">
+  <script>
+// ============ STATE ============
+const STORAGE_KEY = 'is_tco_sim';
+let state = loadState();
+let charts = {};
+let pendingConfirm = null;
+let customCounter = state.customCounter || 0;
+
+function defaultState() {
+  return {
+    costs: { acquisition:{}, implementation:{}, operation:{}, maintenance:{}, end:{}, custom:{} },
+    opYears: 5,
+    simTitle: '',
+    scenarios: [],
+    currencies: [
+      {code:'USD',name:'Dólar Americano',rate:830,flag:'🇺🇸'},
+      {code:'BRL',name:'Real Brasileiro',rate:165,flag:'🇧🇷'},
+      {code:'EUR',name:'Euro',rate:910,flag:'🇪🇺'},
+      {code:'CVE',name:'Escudo Cabo-verdiano',rate:8.4,flag:'🇨🇻'},
+      {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:1.39,flag:'🇬🇼'},
+      {code:'MZN',name:'Metical Moçambicano',rate:13,flag:'🇲🇿'},
+      {code:'STN',name:'Dobra São-tomense',rate:36,flag:'🇸🇹'},
+      {code:'MOP',name:'Pataca Macaense',rate:103,flag:'🇲🇴'},
+      {code:'TPL',name:'Dólar Timorense (USD)',rate:830,flag:'🇹🇱'}
+    ],
+    customItems: [],
+    customCounter: 0
+  };
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      const def = defaultState();
+      return { ...def, ...parsed, currencies: parsed.currencies || def.currencies };
+    }
+  } catch(e) {}
+  return defaultState();
+}
+
+function saveState() {
+  state.customCounter = customCounter;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('tab-' + tab);
+  if (el) { el.classList.add('active'); el.classList.add('fade-in'); }
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  if (tab === 'results') updateResults();
+  if (tab === 'scenarios') renderScenarios();
+  if (tab === 'currency') renderCurrencies();
+}
+
+function switchSimCat(cat) {
+  document.querySelectorAll('.sim-cat').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.sim-cat-btn').forEach(b => { b.classList.remove('active'); b.style.background=''; b.style.color=''; b.style.borderColor=''; });
+  const el = document.getElementById('cat-' + cat);
+  if (el) el.style.display = 'block';
+  const btn = document.querySelector(`[data-cat="${cat}"]`);
+  if (btn) { btn.classList.add('active'); btn.style.background='#66CFF5'; btn.style.color='#fff'; btn.style.borderColor='#66CFF5'; }
+}
+
+// ============ COST INPUTS ============
+function setupCostInputs() {
+  document.querySelectorAll('.cost-input').forEach(inp => {
+    const cat = inp.dataset.cat;
+    const key = inp.dataset.key;
+    if (state.costs[cat] && state.costs[cat][key] !== undefined) {
+      inp.value = state.costs[cat][key] || '';
+    }
+    inp.addEventListener('input', () => {
+      const val = parseFloat(inp.value) || 0;
+      if (!state.costs[cat]) state.costs[cat] = {};
+      state.costs[cat][key] = val;
+      saveState();
+    });
+  });
+  document.getElementById('simTitle').value = state.simTitle || '';
+  document.getElementById('simTitle').addEventListener('input', (e) => { state.simTitle = e.target.value; saveState(); });
+  document.getElementById('opYears').value = state.opYears || 5;
+  document.getElementById('opYears').addEventListener('input', (e) => { state.opYears = parseInt(e.target.value) || 5; saveState(); });
+}
+
+// ============ CUSTOM ITEMS ============
+function renderCustomItems() {
+  const ct = document.getElementById('customItems');
+  ct.innerHTML = '';
+  (state.customItems || []).forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'card card-blue';
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <input type="text" class="input-field text-xs" value="${escHtml(item.name)}" placeholder="Nome do custo" style="width:70%" onchange="updateCustomItem(${i},'name',this.value)">
+        <button class="btn-icon btn-sm export-hide" onclick="removeCustomItem(${i})" title="Remover"><i data-lucide="trash-2" style="width:12px;height:12px;color:#F44336"></i></button>
+      </div>
+      <label class="mt-1">Valor (Kz)</label>
+      <input type="number" class="input-field" value="${item.value || ''}" placeholder="0" min="0" onchange="updateCustomItem(${i},'value',this.value)">
+      <label class="mt-1">Tipo</label>
+      <select class="select-field text-xs" onchange="updateCustomItem(${i},'type',this.value)">
+        <option value="once" ${item.type==='once'?'selected':''}>Único</option>
+        <option value="annual" ${item.type==='annual'?'selected':''}>Anual</option>
+      </select>
+    `;
+    ct.appendChild(div);
+  });
+  lucide.createIcons();
+}
+
+function addCustomItem() {
+  if (!state.customItems) state.customItems = [];
+  customCounter++;
+  state.customItems.push({ name: 'Custo Personalizado ' + customCounter, value: 0, type: 'once' });
+  saveState();
+  renderCustomItems();
+}
+
+function updateCustomItem(i, field, val) {
+  if (field === 'value') val = parseFloat(val) || 0;
+  state.customItems[i][field] = val;
+  saveState();
+}
+
+function removeCustomItem(i) {
+  state.customItems.splice(i, 1);
+  saveState();
+  renderCustomItems();
+}
+
+// ============ CALCULATIONS ============
+function calcTCO() {
+  const years = state.opYears || 5;
+  const cats = {
+    'Aquisição': sumObj(state.costs.acquisition),
+    'Implementação': sumObj(state.costs.implementation),
+    'Operação': sumObj(state.costs.operation) * years,
+    'Manutenção': sumObj(state.costs.maintenance) * years,
+    'Fim de Vida': sumEndOfLife(),
+    'Personalizados': calcCustom(years)
+  };
+  const total = Object.values(cats).reduce((a, b) => a + b, 0);
+  return { cats, total, years };
+}
+
+function sumObj(obj) {
+  if (!obj) return 0;
+  return Object.values(obj).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+}
+
+function sumEndOfLife() {
+  const e = state.costs.end || {};
+  const costs = (parseFloat(e.decommission)||0) + (parseFloat(e.migration_replacement)||0) + (parseFloat(e.data_destruction)||0) + (parseFloat(e.recycling)||0);
+  return costs - (parseFloat(e.residual_value) || 0);
+}
+
+function calcCustom(years) {
+  let t = 0;
+  (state.customItems || []).forEach(item => {
+    const v = parseFloat(item.value) || 0;
+    t += item.type === 'annual' ? v * years : v;
+  });
+  return t;
+}
+
+// ============ RESULTS ============
+function updateResults() {
+  const { cats, total, years } = calcTCO();
+  const curr = document.getElementById('displayCurrency').value;
+  const rate = getRate(curr);
+  const sym = curr === 'AOA' ? 'Kz' : curr;
+
+  // Summary cards
+  const sc = document.getElementById('summaryCards');
+  sc.innerHTML = `
+    <div class="card card-blue"><p class="text-xs text-gray-400">TCO Total</p><p class="text-lg font-bold text-gray-800">${formatMoney(total/rate)} ${sym}</p></div>
+    <div class="card card-green"><p class="text-xs text-gray-400">Custo/Ano</p><p class="text-lg font-bold text-gray-800">${formatMoney(total/years/rate)} ${sym}</p></div>
+    <div class="card card-orange"><p class="text-xs text-gray-400">Custo/Mês</p><p class="text-lg font-bold text-gray-800">${formatMoney(total/(years*12)/rate)} ${sym}</p></div>
+    <div class="card card-gold"><p class="text-xs text-gray-400">Período</p><p class="text-lg font-bold text-gray-800">${years} anos</p></div>
+  `;
+
+  // Currency selector update
+  updateCurrencySelector();
+
+  // Charts
+  renderCharts(cats, total, years, rate, sym);
+
+  // Table
+  renderDetailTable(cats, total, rate, sym);
+}
+
+function updateCurrencySelector() {
+  const sel = document.getElementById('displayCurrency');
+  const curr = sel.value;
+  sel.innerHTML = '<option value="AOA">Kz (AOA)</option>';
+  state.currencies.forEach(c => {
+    sel.innerHTML += `<option value="${c.code}" ${curr===c.code?'selected':''}>${c.flag} ${c.code}</option>`;
+  });
+}
+
+function getRate(code) {
+  if (code === 'AOA') return 1;
+  const c = state.currencies.find(x => x.code === code);
+  return c ? c.rate : 1;
+}
+
+function formatMoney(v) {
+  return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v));
+}
+
+// ============ CHARTS ============
+function renderCharts(cats, total, years, rate, sym) {
+  const labels = Object.keys(cats);
+  const values = Object.values(cats).map(v => v / rate);
+  const colors = ['#66CFF5', '#4CAF50', '#FF9800', '#FFC107', '#F44336', '#9C27B0'];
+
+  // Donut
+  if (charts.donut) charts.donut.destroy();
+  const donutCtx = document.getElementById('chartDonut').getContext('2d');
+  charts.donut = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed;
+              const pct = total > 0 ? ((ctx.parsed / (total/rate)) * 100).toFixed(1) : 0;
+              return `${ctx.label}: ${formatMoney(v)} ${sym} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Line
+  if (charts.line) charts.line.destroy();
+  const lineCtx = document.getElementById('chartLine').getContext('2d');
+  const opAnnual = sumObj(state.costs.operation) / rate;
+  const maintAnnual = sumObj(state.costs.maintenance) / rate;
+  const initCost = (sumObj(state.costs.acquisition) + sumObj(state.costs.implementation)) / rate;
+  const endCost = sumEndOfLife() / rate;
+  const customOnce = (state.customItems || []).filter(x=>x.type==='once').reduce((a,b)=>a+(parseFloat(b.value)||0),0)/rate;
+  const customAnnual = (state.customItems || []).filter(x=>x.type==='annual').reduce((a,b)=>a+(parseFloat(b.value)||0),0)/rate;
+  const lineLabels = [];
+  const cumData = [];
+  let cum = initCost + customOnce;
+  lineLabels.push('Ano 0');
+  cumData.push(Math.round(cum));
+  for (let i = 1; i <= years; i++) {
+    cum += opAnnual + maintAnnual + customAnnual;
+    if (i === years) cum += endCost;
+    lineLabels.push('Ano ' + i);
+    cumData.push(Math.round(cum));
+  }
+  charts.line = new Chart(lineCtx, {
+    type: 'line',
+    data: { labels: lineLabels, datasets: [{ label: 'TCO Acumulado (' + sym + ')', data: cumData, borderColor: '#66CFF5', backgroundColor: 'rgba(30,136,229,.1)', fill: true, tension: .3, pointRadius: 4, pointBackgroundColor: '#66CFF5' }] },
+    options: { responsive: true, plugins: { legend: { labels: { font: { family: 'Inter', size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { family:'Inter',size:10 }, callback: v => formatMoney(v) } }, x: { ticks: { font: { family:'Inter',size:10 } } } } }
+  });
+
+  // Bar
+  if (charts.bar) charts.bar.destroy();
+  const barCtx = document.getElementById('chartBar').getContext('2d');
+  charts.bar = new Chart(barCtx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Custo (' + sym + ')', data: values, backgroundColor: colors, borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { family:'Inter',size:10 }, callback: v => formatMoney(v) } }, x: { ticks: { font: { family:'Inter',size:10 } } } } }
+  });
+
+  // Annual bar
+  if (charts.annual) charts.annual.destroy();
+  const annCtx = document.getElementById('chartAnnual').getContext('2d');
+  const annLabels = [];
+  const annData = [];
+  for (let i = 1; i <= years; i++) {
+    annLabels.push('Ano ' + i);
+    let v = opAnnual + maintAnnual + customAnnual;
+    if (i === 1) v += initCost + customOnce;
+    if (i === years) v += endCost;
+    annData.push(Math.round(v));
+  }
+  charts.annual = new Chart(annCtx, {
+    type: 'bar',
+    data: { labels: annLabels, datasets: [{ label: 'Custo Anual (' + sym + ')', data: annData, backgroundColor: '#FF9800', borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { family:'Inter',size:10 }, callback: v => formatMoney(v) } }, x: { ticks: { font: { family:'Inter',size:10 } } } } }
+  });
+}
+
+function renderDetailTable(cats, total, rate, sym) {
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = '';
+  const catNames = { acquisition:'Aquisição', implementation:'Implementação', operation:'Operação', maintenance:'Manutenção', end:'Fim de Vida' };
+  const labelMap = {
+    purchase_price:'Preço de Compra', software_licenses:'Licenças de Software', additional_hardware:'Hardware Adicional', taxes:'Impostos e Taxas', shipping:'Transporte/Frete', initial_insurance:'Seguros Iniciais',
+    installation:'Instalação', configuration:'Configuração', training:'Formação/Treino', data_migration:'Migração de Dados', consulting:'Consultoria', downtime:'Tempo de Inatividade',
+    energy:'Energia', staff:'Pessoal', recurring_licenses:'Licenças Recorrentes', hosting:'Hosting/Cloud', connectivity:'Conectividade', consumables:'Consumíveis',
+    preventive:'Manutenção Preventiva', corrective:'Manutenção Corretiva', spare_parts:'Peças de Reposição', sw_updates:'Atualizações Software', tech_support:'Suporte Técnico', annual_insurance:'Seguros Anuais',
+    decommission:'Descomissionamento', migration_replacement:'Migração/Substituição', data_destruction:'Destruição de Dados', recycling:'Reciclagem/Descarte', residual_value:'Valor Residual'
+  };
+  const years = state.opYears || 5;
+  const filter = (document.getElementById('globalSearch').value || '').toLowerCase();
+
+  Object.entries(state.costs).forEach(([catKey, items]) => {
+    if (catKey === 'custom') return;
+    Object.entries(items || {}).forEach(([key, val]) => {
+      val = parseFloat(val) || 0;
+      if (val === 0) return;
+      const catLabel = catNames[catKey] || catKey;
+      const itemLabel = labelMap[key] || key;
+      if (filter && !catLabel.toLowerCase().includes(filter) && !itemLabel.toLowerCase().includes(filter)) return;
+      let effective = val;
+      if (['operation','maintenance'].includes(catKey)) effective = val * years;
+      if (key === 'residual_value') effective = -val;
+      const pct = total > 0 ? ((effective / total) * 100).toFixed(1) : '0.0';
+      tbody.innerHTML += `<tr><td><span class="badge" style="background:${catKey==='acquisition'?'#E0F4FD':catKey==='implementation'?'#E8F5E9':catKey==='operation'?'#FFF3E0':catKey==='maintenance'?'#FFF8E1':'#FFEBEE'};color:${catKey==='acquisition'?'#66CFF5':catKey==='implementation'?'#4CAF50':catKey==='operation'?'#FF9800':catKey==='maintenance'?'#FFC107':'#F44336'}">${catLabel}</span></td><td>${itemLabel}</td><td>${formatMoney(effective/rate)} ${sym}</td><td>${pct}%</td></tr>`;
+    });
+  });
+  (state.customItems || []).forEach(item => {
+    const v = parseFloat(item.value) || 0;
+    if (v === 0) return;
+    if (filter && !item.name.toLowerCase().includes(filter) && !'personalizado'.includes(filter)) return;
+    const effective = item.type === 'annual' ? v * years : v;
+    const pct = total > 0 ? ((effective / total) * 100).toFixed(1) : '0.0';
+    tbody.innerHTML += `<tr><td><span class="badge" style="background:#F3E5F5;color:#9C27B0">Personalizado</span></td><td>${escHtml(item.name)}</td><td>${formatMoney(effective/rate)} ${sym}</td><td>${pct}%</td></tr>`;
+  });
+  // Total row
+  tbody.innerHTML += `<tr style="font-weight:700;background:#F8F9FA"><td colspan="2">TOTAL TCO</td><td>${formatMoney(total/rate)} ${sym}</td><td>100%</td></tr>`;
+}
+
+// ============ SCENARIOS ============
+function saveScenario() {
+  const title = state.simTitle || 'Cenário ' + (state.scenarios.length + 1);
+  const scenario = {
+    id: Date.now(),
+    title,
+    date: new Date().toISOString(),
+    costs: JSON.parse(JSON.stringify(state.costs)),
+    opYears: state.opYears,
+    customItems: JSON.parse(JSON.stringify(state.customItems || [])),
+    tco: calcTCO().total
+  };
+  state.scenarios.push(scenario);
+  saveState();
+  showToast('Cenário "' + title + '" guardado!', 'success');
+}
+
+function renderScenarios() {
+  const list = document.getElementById('scenariosList');
+  const noEl = document.getElementById('noScenarios');
+  const filter = (document.getElementById('scenarioSearch')?.value || '').toLowerCase();
+  const filtered = state.scenarios.filter(s => !filter || s.title.toLowerCase().includes(filter));
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    noEl.style.display = 'block';
+    return;
+  }
+  noEl.style.display = 'none';
+  list.innerHTML = filtered.map((s, idx) => {
+    const realIdx = state.scenarios.indexOf(s);
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
+    return `
+    <div class="card card-blue mb-3 fade-in">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-700">${escHtml(s.title)}</h3>
+          <p class="text-xs text-gray-400">${dateStr} · TCO: ${formatMoney(s.tco)} Kz · ${s.opYears} anos</p>
+        </div>
+        <div class="flex gap-1 export-hide">
+          <button class="btn-icon btn-sm" onclick="loadScenario(${realIdx})" title="Carregar"><i data-lucide="upload" style="width:12px;height:12px;color:#66CFF5"></i></button>
+          <button class="btn-icon btn-sm" onclick="cloneScenario(${realIdx})" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px;color:#4CAF50"></i></button>
+          <button class="btn-icon btn-sm" onclick="editScenarioTitle(${realIdx})" title="Editar"><i data-lucide="edit" style="width:12px;height:12px;color:#FF9800"></i></button>
+          <button class="btn-icon btn-sm" onclick="deleteScenario(${realIdx})" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px;color:#F44336"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(idx) {
+  const s = state.scenarios[idx];
+  if (!s) return;
+  state.costs = JSON.parse(JSON.stringify(s.costs));
+  state.opYears = s.opYears;
+  state.simTitle = s.title;
+  state.customItems = JSON.parse(JSON.stringify(s.customItems || []));
+  saveState();
+  reloadInputs();
+  switchTab('simulator');
+  showToast('Cenário carregado!', 'info');
+}
+
+function cloneScenario(idx) {
+  const s = state.scenarios[idx];
+  if (!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = Date.now();
+  clone.title = s.title + ' (cópia)';
+  clone.date = new Date().toISOString();
+  state.scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado!', 'success');
+}
+
+function editScenarioTitle(idx) {
+  const s = state.scenarios[idx];
+  if (!s) return;
+  const card = document.querySelectorAll('#scenariosList .card')[state.scenarios.filter((x,i) => {
+    const filter = (document.getElementById('scenarioSearch')?.value || '').toLowerCase();
+    return !filter || x.title.toLowerCase().includes(filter);
+  }).indexOf(s)];
+  if (!card) return;
+  const h3 = card.querySelector('h3');
+  const oldTitle = s.title;
+  h3.innerHTML = `<input type="text" class="input-field text-xs" value="${escHtml(oldTitle)}" id="editScTitle" style="width:200px" autofocus>
+  <button class="btn-primary btn-sm ml-2" onclick="confirmEditTitle(${idx})" style="font-size:10px">OK</button>`;
+  document.getElementById('editScTitle').focus();
+  document.getElementById('editScTitle').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmEditTitle(idx); });
+}
+
+function confirmEditTitle(idx) {
+  const inp = document.getElementById('editScTitle');
+  if (inp && inp.value.trim()) {
+    state.scenarios[idx].title = inp.value.trim();
+    saveState();
+    renderScenarios();
+    showToast('Título atualizado!', 'success');
+  }
+}
+
+function deleteScenario(idx) {
+  showConfirm('Eliminar Cenário', 'Tem a certeza que deseja eliminar este cenário? Esta ação não pode ser desfeita.', () => {
+    state.scenarios.splice(idx, 1);
+    saveState();
+    renderScenarios();
+    showToast('Cenário eliminado.', 'info');
+  });
+}
+
+// ============ CURRENCIES ============
+function renderCurrencies() {
+  const list = document.getElementById('currencyList');
+  list.innerHTML = state.currencies.map((c, i) => `
+    <div class="card card-gold fade-in">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2"><span class="text-lg">${c.flag}</span><strong class="text-sm">${escHtml(c.code)}</strong><span class="text-xs text-gray-400">${escHtml(c.name)}</span></div>
+        <button class="btn-icon btn-sm export-hide" onclick="removeCurrency(${i})" title="Remover"><i data-lucide="trash-2" style="width:12px;height:12px;color:#F44336"></i></button>
+      </div>
+      <label>1 ${escHtml(c.code)} = ? Kz</label>
+      <input type="number" class="input-field" value="${c.rate}" min="0" step="0.01" onchange="updateCurrencyRate(${i}, this.value)">
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function updateCurrencyRate(i, val) {
+  state.currencies[i].rate = parseFloat(val) || 1;
+  saveState();
+}
+
+function removeCurrency(i) {
+  showConfirm('Remover Moeda', 'Deseja remover esta moeda?', () => {
+    state.currencies.splice(i, 1);
+    saveState();
+    renderCurrencies();
+    showToast('Moeda removida.', 'info');
+  });
+}
+
+function addCurrency() {
+  showConfirm('Adicionar Moeda', `
+    <div style="text-align:left">
+      <label>Código (ex: PEN)</label><input type="text" id="newCurrCode" class="input-field mb-2" placeholder="PEN">
+      <label>Nome</label><input type="text" id="newCurrName" class="input-field mb-2" placeholder="Sol Peruano">
+      <label>Bandeira (emoji)</label><input type="text" id="newCurrFlag" class="input-field mb-2" placeholder="🇵🇪">
+      <label>Taxa (1 unidade = ? Kz)</label><input type="number" id="newCurrRate" class="input-field" placeholder="220" min="0" step="0.01">
+    </div>
+  `, () => {
+    const code = document.getElementById('newCurrCode').value.trim().toUpperCase();
+    const name = document.getElementById('newCurrName').value.trim();
+    const flag = document.getElementById('newCurrFlag').value.trim() || '🏳️';
+    const rate = parseFloat(document.getElementById('newCurrRate').value) || 1;
+    if (!code) { showToast('Código é obrigatório!', 'error'); return; }
+    state.currencies.push({ code, name, flag, rate });
+    saveState();
+    renderCurrencies();
+    showToast('Moeda adicionada!', 'success');
+  }, 'Adicionar');
+}
+
+// ============ IMPORT/EXPORT ============
+function exportJSON() {
+  const data = JSON.parse(JSON.stringify(state));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, 'is_tco_' + dateSlug() + '.json');
+  showToast('JSON exportado!', 'success');
+}
+
+function importJSON() {
+  document.getElementById('fileInput').click();
+}
+
+function handleFileImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const def = defaultState();
+      state = { ...def, ...data };
+      saveState();
+      reloadInputs();
+      showToast('Dados importados com sucesso!', 'success');
+    } catch(err) {
+      showToast('Ficheiro inválido!', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function exportImage() {
+  showToast('A gerar imagem...', 'info');
+  const els = document.querySelectorAll('.export-hide');
+  els.forEach(e => e.style.display = 'none');
+  try {
+    const mainEl = document.getElementById('app-root');
+    const canvas = await html2canvas(mainEl, { scale: 2, backgroundColor: '#F8F9FA', useCORS: true, scrollY: -window.scrollY, height: mainEl.scrollHeight });
+    els.forEach(e => e.style.display = '');
+    const link = document.createElement('a');
+    link.download = 'is_tco_' + dateSlug() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Imagem exportada!', 'success');
+  } catch(err) {
+    els.forEach(e => e.style.display = '');
+    showToast('Erro ao exportar imagem.', 'error');
+  }
+}
+
+async function exportChart(canvasId) {
+  const chartCanvas = document.getElementById(canvasId);
+  if (!chartCanvas) return;
+  try {
+    const link = document.createElement('a');
+    link.download = canvasId + '_' + dateSlug() + '.png';
+    link.href = chartCanvas.toDataURL('image/png', 1.0);
+    link.click();
+    showToast('Gráfico exportado em HD!', 'success');
+  } catch(err) {
+    showToast('Erro ao exportar gráfico.', 'error');
+  }
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...', 'info');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const usable = pw - margin * 2;
+    let y = 30;
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('pt-PT', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    function addHeader(pg) {
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pw, 18, 'F');
+      doc.setTextColor(255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('IS Simulador TCO', margin, 11);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text(state.simTitle || 'Simulação', pw - margin, 11, { align: 'right' });
+    }
+
+    function addFooter(pg, totalPages) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(0, ph - 12, pw, 12, 'F');
+      doc.setTextColor(120);
+      doc.setFontSize(6);
+      doc.text('Gerado por IS Simulador TCO ' + dateStr + ' www.investesuite.com', margin, ph - 5);
+      doc.text('Página ' + pg + ' de ' + totalPages, pw - margin, ph - 5, { align: 'right' });
+    }
+
+    function checkPage(needed) {
+      if (y + needed > ph - 18) {
+        doc.addPage();
+        addHeader();
+        y = 28;
+      }
+    }
+
+    addHeader(1);
+    y = 28;
+
+    // Title
+    doc.setTextColor(33, 33, 33);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(state.simTitle || 'Simulação TCO', margin, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text('Custo Total de Propriedade · ' + dateStr, margin, y);
+    y += 10;
+
+    // Summary
+    const { cats, total, years } = calcTCO();
+    doc.setTextColor(33);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('TCO Total: ' + formatMoney(total) + ' Kz', margin, y); y += 4;
+    doc.text('Custo/Ano: ' + formatMoney(total / years) + ' Kz', margin, y); y += 4;
+    doc.text('Custo/Mês: ' + formatMoney(total / (years * 12)) + ' Kz', margin, y); y += 4;
+    doc.text('Período: ' + years + ' anos', margin, y); y += 8;
+
+    // Category breakdown
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Distribuição por Categoria', margin, y); y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    Object.entries(cats).forEach(([cat, val]) => {
+      checkPage(5);
+      const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0.0';
+      doc.text(`${cat}: ${formatMoney(val)} Kz (${pct}%)`, margin, y);
+      y += 4;
+    });
+    y += 6;
+
+    // Charts (small)
+    const chartIds = ['chartDonut', 'chartLine', 'chartBar', 'chartAnnual'];
+    for (const cid of chartIds) {
+      const canvas = document.getElementById(cid);
+      if (!canvas) continue;
+      checkPage(55);
+      const imgData = canvas.toDataURL('image/png', 0.9);
+      const imgW = usable * 0.5;
+      const imgH = imgW * 0.6;
+      doc.addImage(imgData, 'PNG', margin + (usable - imgW) / 2, y, imgW, imgH);
+      y += imgH + 8;
+    }
+
+    // Add footers
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooter(i, totalPages);
+    }
+
+    doc.save('is_tco_' + dateSlug() + '.pdf');
+    showToast('PDF exportado!', 'success');
+  } catch(err) {
+    showToast('Erro ao exportar PDF.', 'error');
+    console.error(err);
+  }
+}
+
+// ============ RESET ============
+function resetSimulator() {
+  showConfirm('Limpar Simulação', 'Deseja limpar todos os dados da simulação atual? Os cenários guardados serão mantidos.', () => {
+    const scenarios = state.scenarios;
+    const currencies = state.currencies;
+    state = defaultState();
+    state.scenarios = scenarios;
+    state.currencies = currencies;
+    saveState();
+    reloadInputs();
+    showToast('Simulação limpa!', 'info');
+  });
+}
+
+function reloadInputs() {
+  document.querySelectorAll('.cost-input').forEach(inp => {
+    const cat = inp.dataset.cat;
+    const key = inp.dataset.key;
+    inp.value = (state.costs[cat] && state.costs[cat][key]) || '';
+  });
+  document.getElementById('simTitle').value = state.simTitle || '';
+  document.getElementById('opYears').value = state.opYears || 5;
+  renderCustomItems();
+}
+
+// ============ CONFIRM MODAL ============
+function showConfirm(title, msg, cb, btnText) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').innerHTML = msg;
+  const btn = document.getElementById('confirmBtn');
+  btn.textContent = btnText || 'Confirmar';
+  pendingConfirm = cb;
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('show');
+  pendingConfirm = null;
+}
+
+function confirmAction() {
+  if (pendingConfirm) pendingConfirm();
+  closeConfirm();
+}
+
+// ============ TOAST ============
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + (type || 'info') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============ UTILS ============
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function dateSlug() { return new Date().toISOString().slice(0, 10).replace(/-/g, ''); }
+
+// ============ GLOBAL FILTER ============
+document.getElementById('globalSearch').addEventListener('input', () => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (activeTab?.id === 'tab-results') updateResults();
+});
+
+// ============ INIT ============
+function init() {
+  setupCostInputs();
+  renderCustomItems();
+  switchSimCat('acquisition');
+  lucide.createIcons();
+}
+
+// Element SDK
+const defaultConfig = {
+  app_title: 'Simulador TCO',
+  app_description: 'Custo Total de Propriedade para a CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#757575',
+  font_family: 'Inter',
+  font_size: 13
+};
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    const t = document.getElementById('appTitle');
+    const d = document.getElementById('appDesc');
+    if (t) t.textContent = config.app_title || defaultConfig.app_title;
+    if (d) d.textContent = config.app_description || defaultConfig.app_description;
+
+    const font = config.font_family || defaultConfig.font_family;
+    const baseSize = config.font_size || defaultConfig.font_size;
+    document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+    document.body.style.fontSize = baseSize + 'px';
+    document.body.style.background = config.background_color || defaultConfig.background_color;
+    document.body.style.color = config.text_color || defaultConfig.text_color;
+
+    document.querySelectorAll('.card').forEach(c => c.style.background = config.surface_color || defaultConfig.surface_color);
+    document.querySelectorAll('.btn-primary').forEach(b => b.style.background = config.primary_action_color || defaultConfig.primary_action_color);
+    document.querySelectorAll('.tab-btn.active').forEach(b => { b.style.color = config.primary_action_color || defaultConfig.primary_action_color; b.style.borderBottomColor = config.primary_action_color || defaultConfig.primary_action_color; });
+
+    if (t) t.style.fontSize = (baseSize * 1.25) + 'px';
+    if (d) d.style.fontSize = (baseSize * 0.85) + 'px';
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+      { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => config.font_family || defaultConfig.font_family,
+      set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+    },
+    fontSizeable: {
+      get: () => config.font_size || defaultConfig.font_size,
+      set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+    }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['app_title', config.app_title || defaultConfig.app_title],
+    ['app_description', config.app_description || defaultConfig.app_description]
+  ])
+});
+
+init();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dee6a08d38a0710',t:'MTc3Mzk0MzYyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

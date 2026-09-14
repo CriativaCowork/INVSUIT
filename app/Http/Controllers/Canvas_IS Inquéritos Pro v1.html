@@ -1,0 +1,1858 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Inquéritos Pro</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; background: rgba(30, 136, 229, 0.05); }
+    .card { background: white; border-radius: 8px; border-left: 4px solid #66CFF5; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease; }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .btn-primary { background: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #33BEF2; transform: translateY(-1px); }
+    .btn-secondary { background: #F8F9FA; color: #333; border: 1px solid #E0E0E0; transition: all 0.2s ease; }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .btn-success { background: #4CAF50; color: white; }
+    .btn-success:hover { background: #388E3C; }
+    .btn-warning { background: #FF9800; color: white; }
+    .btn-warning:hover { background: #F57C00; }
+    .btn-danger { background: #F44336; color: white; }
+    .btn-danger:hover { background: #D32F2F; }
+    .input-field { border: 1px solid #E0E0E0; border-radius: 6px; padding: 10px 12px; transition: all 0.2s ease; width: 100%; }
+    .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .chart-container { position: relative; height: 250px; }
+    .export-hidden { display: none !important; }
+    .scenario-card { border-left-color: #FFC107; }
+    .question-card { border-left-color: #4CAF50; }
+    .response-card { border-left-color: #FF9800; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #F8F9FA; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+    .animate-fade { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-btn { transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+    .tab-btn:hover { background: rgba(30, 136, 229, 0.05); }
+    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .toast { animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full flex flex-col overflow-hidden"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Inquéritos Pro</h1>
+       <p class="text-sm text-gray-500" style="display: none;">Análise Estatística de Inquéritos</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 editable-element"><button onclick="exportImage()" class="btn-secondary px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+       </svg> Imagem </button> <button onclick="exportPDF()" class="btn-secondary px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> PDF </button> <button onclick="exportJSON()" class="btn-secondary px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+       </svg> Exportar </button> <label class="btn-secondary px-3 py-2 rounded-lg flex items-center gap-2 text-sm cursor-pointer">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+       </svg> Importar <input type="file" accept=".json" onchange="importJSON(event)" class="hidden"> </label>
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-6 flex-shrink-0 overflow-x-auto">
+    <div class="flex gap-1"><button onclick="switchTab('surveys')" class="tab-btn tab-active px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="surveys">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg> Inquéritos </button> <button onclick="switchTab('questions')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="questions">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Questões </button> <button onclick="switchTab('responses')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="responses">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+      </svg> Respostas </button> <button onclick="switchTab('analytics')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="analytics">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg> Análise </button> <button onclick="switchTab('scenarios')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="scenarios">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg> Cenários </button> <button onclick="switchTab('currency')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="currency">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('help')" class="tab-btn px-4 py-3 flex items-center gap-2 text-sm font-medium" data-tab="help">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Filter Bar -->
+   <div class="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0 editable-element">
+    <div class="flex items-center gap-4">
+     <div class="flex-1 relative">
+      <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg><input type="text" id="globalFilter" placeholder="Filtrar dados..." class="input-field pl-10" oninput="applyGlobalFilter()">
+     </div><select id="filterCategory" class="input-field w-auto" onchange="applyGlobalFilter()"> <option value="all">Todas Categorias</option> <option value="surveys">Inquéritos</option> <option value="questions">Questões</option> <option value="responses">Respostas</option> </select>
+    </div>
+   </div><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-6"><!-- Surveys Tab -->
+    <div id="tab-surveys" class="tab-content animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Gestão de Inquéritos</h2><button onclick="openSurveyModal()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 editable-element">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+       </svg> Novo Inquérito </button>
+     </div>
+     <div id="surveysList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><!-- Survey cards will be rendered here -->
+     </div>
+     <div id="surveysEmpty" class="text-center py-12 text-gray-500 hidden">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <p>Nenhum inquérito criado</p>
+      <p class="text-sm">Clique em "Novo Inquérito" para começar</p>
+     </div>
+    </div><!-- Questions Tab -->
+    <div id="tab-questions" class="tab-content hidden animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Gestão de Questões</h2>
+      <div class="flex items-center gap-2 editable-element"><select id="questionSurveyFilter" class="input-field w-auto" onchange="renderQuestions()"> <option value="">Todos os Inquéritos</option> </select> <button onclick="openQuestionModal()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Nova Questão </button>
+      </div>
+     </div>
+     <div id="questionsList" class="space-y-4"><!-- Question cards will be rendered here -->
+     </div>
+     <div id="questionsEmpty" class="text-center py-12 text-gray-500 hidden">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p>Nenhuma questão criada</p>
+      <p class="text-sm">Crie um inquérito primeiro e depois adicione questões</p>
+     </div>
+    </div><!-- Responses Tab -->
+    <div id="tab-responses" class="tab-content hidden animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Registo de Respostas</h2>
+      <div class="flex items-center gap-2 editable-element"><select id="responseSurveyFilter" class="input-field w-auto" onchange="renderResponses()"> <option value="">Todos os Inquéritos</option> </select> <button onclick="openResponseModal()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg> Nova Resposta </button>
+      </div>
+     </div>
+     <div id="responsesList" class="space-y-4"><!-- Response cards will be rendered here -->
+     </div>
+     <div id="responsesEmpty" class="text-center py-12 text-gray-500 hidden">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+      </svg>
+      <p>Nenhuma resposta registada</p>
+      <p class="text-sm">Adicione respostas aos seus inquéritos</p>
+     </div>
+    </div><!-- Analytics Tab -->
+    <div id="tab-analytics" class="tab-content hidden animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Análise Estatística</h2>
+      <div class="flex items-center gap-2 editable-element"><select id="analyticsSurveyFilter" class="input-field w-auto" onchange="updateAnalytics()"> <option value="">Todos os Inquéritos</option> </select> <button onclick="saveScenario()" class="btn-success px-4 py-2 rounded-lg flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar Cenário </button>
+      </div>
+     </div><!-- Stats Summary -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-4">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-sm text-gray-500">Total Inquéritos</p>
+         <p id="statSurveys" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-sm text-gray-500">Total Questões</p>
+         <p id="statQuestions" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+         <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-sm text-gray-500">Total Respostas</p>
+         <p id="statResponses" class="text-2xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+         <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-sm text-gray-500">Taxa Resposta</p>
+         <p id="statRate" class="text-2xl font-bold text-gray-800">0%</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts Grid -->
+     <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Respostas por Inquérito</h3><button onclick="exportChartImage('chartSurveyResponses')" class="btn-secondary px-2 py-1 rounded text-xs editable-element">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container">
+        <canvas id="chartSurveyResponses"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Distribuição por Tipo</h3><button onclick="exportChartImage('chartQuestionTypes')" class="btn-secondary px-2 py-1 rounded text-xs editable-element">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container">
+        <canvas id="chartQuestionTypes"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Tendência Temporal</h3><button onclick="exportChartImage('chartTimeline')" class="btn-secondary px-2 py-1 rounded text-xs editable-element">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container">
+        <canvas id="chartTimeline"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Satisfação Média</h3><button onclick="exportChartImage('chartSatisfaction')" class="btn-secondary px-2 py-1 rounded text-xs editable-element">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="chart-container">
+        <canvas id="chartSatisfaction"></canvas>
+       </div>
+      </div>
+     </div><!-- Question Analysis -->
+     <div class="mt-6">
+      <h3 class="font-semibold text-gray-800 mb-4">Análise por Questão</h3>
+      <div id="questionAnalytics" class="space-y-4"><!-- Question analytics will be rendered here -->
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="tab-scenarios" class="tab-content hidden animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Cenários Guardados</h2>
+      <div class="flex items-center gap-2 editable-element"><input type="text" id="scenarioFilter" placeholder="Filtrar cenários..." class="input-field w-64" oninput="renderScenarios()">
+      </div>
+     </div>
+     <div id="scenariosList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><!-- Scenario cards will be rendered here -->
+     </div>
+     <div id="scenariosEmpty" class="text-center py-12 text-gray-500 hidden">
+      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+      <p>Nenhum cenário guardado</p>
+      <p class="text-sm">Guarde cenários na aba de Análise</p>
+     </div><!-- Templates Section -->
+     <div class="mt-8">
+      <h3 class="font-semibold text-gray-800 mb-4">Templates de Aprendizagem</h3>
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+       <div class="card p-4 scenario-card cursor-pointer hover:shadow-lg" onclick="loadTemplate('satisfaction')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Satisfação do Cliente</h4>
+          <p class="text-sm text-gray-500">Modelo NPS e CSAT</p>
+         </div>
+        </div>
+        <p class="text-sm text-gray-600">Inquérito completo para medir a satisfação dos seus clientes com escalas padronizadas.</p>
+       </div>
+       <div class="card p-4 scenario-card cursor-pointer hover:shadow-lg" onclick="loadTemplate('product')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Avaliação de Produto</h4>
+          <p class="text-sm text-gray-500">Feedback detalhado</p>
+         </div>
+        </div>
+        <p class="text-sm text-gray-600">Recolha feedback detalhado sobre características específicas do seu produto.</p>
+       </div>
+       <div class="card p-4 scenario-card cursor-pointer hover:shadow-lg" onclick="loadTemplate('service')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Qualidade de Serviço</h4>
+          <p class="text-sm text-gray-500">Modelo SERVQUAL</p>
+         </div>
+        </div>
+        <p class="text-sm text-gray-600">Avalie múltiplas dimensões da qualidade do serviço prestado.</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Currency Tab -->
+    <div id="tab-currency" class="tab-content hidden animate-fade">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-800">Taxas de Câmbio</h2>
+      <p class="text-sm text-gray-500">Moeda base: Kwanza Angolano (AOA)</p>
+     </div>
+     <div class="card p-6 max-w-2xl">
+      <div class="space-y-4" id="currencyRates"><!-- Currency rates will be rendered here -->
+      </div>
+      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+       <p class="text-sm text-blue-800"><strong>Nota:</strong> As taxas são utilizadas para converter valores monetários nos relatórios e análises. Atualize regularmente para manter a precisão dos cálculos.</p>
+      </div>
+     </div>
+    </div><!-- Help Tab -->
+    <div id="tab-help" class="tab-content hidden animate-fade">
+     <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Guia de Utilização</h2>
+      <div class="space-y-6">
+       <div class="card p-6">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 text-lg mb-2">1. Criar Inquéritos</h3>
+          <p class="text-gray-600">Comece por criar um novo inquérito na aba "Inquéritos". Defina um nome descritivo, descrição e categoria para organizar melhor os seus estudos.</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-6">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 text-lg mb-2">2. Adicionar Questões</h3>
+          <p class="text-gray-600">Adicione questões aos seus inquéritos. Escolha entre diferentes tipos: escala (1-5 ou 1-10), escolha múltipla, sim/não, ou texto livre. Cada tipo oferece análises estatísticas diferentes.</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-6">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 text-lg mb-2">3. Registar Respostas</h3>
+          <p class="text-gray-600">Registe as respostas dos seus consumidores. Pode identificar cada respondente e registar valores monetários associados (convertidos automaticamente para Kwanzas).</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-6">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 text-lg mb-2">4. Analisar Resultados</h3>
+          <p class="text-gray-600">Visualize gráficos dinâmicos e estatísticas em tempo real na aba "Análise". Veja médias, distribuições e tendências temporais.</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-6">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 text-lg mb-2">5. Guardar Cenários</h3>
+          <p class="text-gray-600">Guarde cenários de simulação para comparar diferentes conjuntos de dados. Clone cenários existentes para criar variações ou reutilize templates pré-definidos.</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="mt-8 card p-6 border-l-4 border-l-yellow-500">
+       <h3 class="font-semibold text-gray-800 text-lg mb-3">💡 Melhores Práticas</h3>
+       <ul class="space-y-2 text-gray-600">
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Utilize escalas consistentes (preferencialmente 1-5 ou 1-10) para facilitar comparações</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Formule questões claras e objetivas, evitando ambiguidades</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Exporte regularmente os dados em JSON como cópia de segurança</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Utilize cenários para comparar resultados antes e depois de alterações</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Atualize as taxas de câmbio antes de gerar relatórios financeiros</span></li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div><!-- Modals --> <!-- Survey Modal -->
+   <div id="surveyModal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeSurveyModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-fade">
+     <div class="p-6 border-b border-gray-200">
+      <h3 id="surveyModalTitle" class="text-lg font-semibold text-gray-800">Novo Inquérito</h3>
+     </div>
+     <form id="surveyForm" onsubmit="saveSurvey(event)" class="p-6 space-y-4"><input type="hidden" id="surveyId">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Inquérito *</label> <input type="text" id="surveyName" class="input-field" required placeholder="Ex: Satisfação Q1 2024">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label> <textarea id="surveyDescription" class="input-field" rows="3" placeholder="Descreva o objetivo do inquérito..."></textarea>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label> <select id="surveyCategory" class="input-field"> <option value="satisfaction">Satisfação</option> <option value="product">Produto</option> <option value="service">Serviço</option> <option value="market">Mercado</option> <option value="other">Outro</option> </select>
+      </div>
+      <div class="flex gap-3 pt-4"><button type="button" onclick="closeSurveyModal()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button> <button type="submit" class="btn-primary flex-1 py-2 rounded-lg">Guardar</button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Question Modal -->
+   <div id="questionModal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeQuestionModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-fade max-h-[90%] overflow-y-auto">
+     <div class="p-6 border-b border-gray-200">
+      <h3 id="questionModalTitle" class="text-lg font-semibold text-gray-800">Nova Questão</h3>
+     </div>
+     <form id="questionForm" onsubmit="saveQuestion(event)" class="p-6 space-y-4"><input type="hidden" id="questionId">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Inquérito *</label> <select id="questionSurvey" class="input-field" required> <option value="">Selecione um inquérito</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Texto da Questão *</label> <textarea id="questionText" class="input-field" rows="2" required placeholder="Ex: Como avalia a qualidade do nosso produto?"></textarea>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Questão</label> <select id="questionType" class="input-field" onchange="toggleQuestionOptions()"> <option value="scale5">Escala 1-5</option> <option value="scale10">Escala 1-10</option> <option value="yesno">Sim/Não</option> <option value="multiple">Escolha Múltipla</option> <option value="text">Texto Livre</option> </select>
+      </div>
+      <div id="questionOptionsContainer" class="hidden"><label class="block text-sm font-medium text-gray-700 mb-1">Opções (uma por linha)</label> <textarea id="questionOptions" class="input-field" rows="4" placeholder="Opção 1
+Opção 2
+Opção 3"></textarea>
+      </div>
+      <div class="flex gap-3 pt-4"><button type="button" onclick="closeQuestionModal()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button> <button type="submit" class="btn-primary flex-1 py-2 rounded-lg">Guardar</button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Response Modal -->
+   <div id="responseModal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeResponseModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-fade max-h-[90%] overflow-y-auto">
+     <div class="p-6 border-b border-gray-200">
+      <h3 id="responseModalTitle" class="text-lg font-semibold text-gray-800">Nova Resposta</h3>
+     </div>
+     <form id="responseForm" onsubmit="saveResponse(event)" class="p-6 space-y-4"><input type="hidden" id="responseId">
+      <div class="grid md:grid-cols-2 gap-4">
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Inquérito *</label> <select id="responseSurvey" class="input-field" required onchange="loadSurveyQuestions()"> <option value="">Selecione um inquérito</option> </select>
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Identificador do Respondente</label> <input type="text" id="respondentId" class="input-field" placeholder="Ex: Cliente #123">
+       </div>
+      </div>
+      <div id="responseQuestionsContainer" class="space-y-4"><!-- Dynamic questions will be rendered here -->
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 pt-4 border-t">
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Valor Associado (AOA)</label> <input type="number" id="responseValue" class="input-field" placeholder="0.00" step="0.01">
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-1">Moeda Original</label> <select id="responseCurrency" class="input-field"> <option value="AOA">Kwanza (AOA)</option> <option value="BRL">Real (BRL)</option> <option value="CVE">Escudo CV (CVE)</option> <option value="XOF">Franco CFA (XOF)</option> <option value="MZN">Metical (MZN)</option> <option value="STN">Dobra (STN)</option> <option value="EUR">Euro (EUR)</option> <option value="USD">Dólar (USD)</option> </select>
+       </div>
+      </div>
+      <div class="flex gap-3 pt-4"><button type="button" onclick="closeResponseModal()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button> <button type="submit" class="btn-primary flex-1 py-2 rounded-lg">Guardar</button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Scenario Modal -->
+   <div id="scenarioModal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeScenarioModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-fade">
+     <div class="p-6 border-b border-gray-200">
+      <h3 id="scenarioModalTitle" class="text-lg font-semibold text-gray-800">Editar Cenário</h3>
+     </div>
+     <form id="scenarioForm" onsubmit="updateScenario(event)" class="p-6 space-y-4"><input type="hidden" id="scenarioEditId">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cenário</label> <input type="text" id="scenarioName" class="input-field" required>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Notas</label> <textarea id="scenarioNotes" class="input-field" rows="3" placeholder="Adicione notas sobre este cenário..."></textarea>
+      </div>
+      <div class="flex gap-3 pt-4"><button type="button" onclick="closeScenarioModal()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button> <button type="submit" class="btn-primary flex-1 py-2 rounded-lg">Guardar</button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Delete Confirmation -->
+   <div id="deleteConfirm" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeDeleteConfirm()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-fade">
+     <div class="text-center">
+      <div class="w-12 h-12 rounded-full bg-red-100 mx-auto mb-4 flex items-center justify-center">
+       <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+       </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirmar Eliminação</h3>
+      <p id="deleteConfirmText" class="text-gray-600 mb-6">Tem a certeza que deseja eliminar este item?</p>
+      <div class="flex gap-3"><button onclick="closeDeleteConfirm()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button> <button onclick="confirmDelete()" class="btn-danger flex-1 py-2 rounded-lg">Eliminar</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // ========================================
+    // DATA STORAGE
+    // ========================================
+    const defaultConfig = {
+      app_title: 'IS Inquéritos Pro',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#333333',
+      accent_color: '#FFC107',
+      font_family: 'Inter'
+    };
+
+    let config = { ...defaultConfig };
+    let data = {
+      surveys: [],
+      questions: [],
+      responses: [],
+      scenarios: [],
+      currencies: {
+        BRL: 165.50,
+        CVE: 8.20,
+        XOF: 1.40,
+        MZN: 13.10,
+        STN: 38.50,
+        EUR: 920.00,
+        USD: 850.00
+      }
+    };
+
+    let deleteCallback = null;
+    let charts = {};
+
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    function init() {
+      loadFromStorage();
+      renderAll();
+      initCharts();
+      updateAnalytics();
+      renderCurrencyRates();
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (newConfig) => {
+            config = { ...config, ...newConfig };
+            applyConfig();
+          },
+          mapToCapabilities: (cfg) => ({
+            recolorables: [
+              { get: () => cfg.primary_color || defaultConfig.primary_color, set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+              { get: () => cfg.secondary_color || defaultConfig.secondary_color, set: (v) => { cfg.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } },
+              { get: () => cfg.text_color || defaultConfig.text_color, set: (v) => { cfg.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+              { get: () => cfg.accent_color || defaultConfig.accent_color, set: (v) => { cfg.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } }
+            ],
+            borderables: [],
+            fontEditable: { get: () => cfg.font_family || defaultConfig.font_family, set: (v) => { cfg.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['app_title', cfg.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    }
+
+    function applyConfig() {
+      document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+      document.documentElement.style.setProperty('--primary-color', config.primary_color || defaultConfig.primary_color);
+    }
+
+    function loadFromStorage() {
+      try {
+        const saved = localStorage.getItem('is_inqueritos_data');
+        if (saved) {
+          data = JSON.parse(saved);
+        }
+        const savedConfig = localStorage.getItem('is_inqueritos_config');
+        if (savedConfig) {
+          config = { ...defaultConfig, ...JSON.parse(savedConfig) };
+        }
+      } catch (e) {
+        console.error('Error loading data:', e);
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem('is_inqueritos_data', JSON.stringify(data));
+        localStorage.setItem('is_inqueritos_config', JSON.stringify(config));
+      } catch (e) {
+        console.error('Error saving data:', e);
+      }
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // ========================================
+    // TAB NAVIGATION
+    // ========================================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+      
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('tab-active');
+      
+      if (tabName === 'analytics') {
+        updateAnalytics();
+      }
+    }
+
+    // ========================================
+    // SURVEYS
+    // ========================================
+    function renderSurveys() {
+      const container = document.getElementById('surveysList');
+      const empty = document.getElementById('surveysEmpty');
+      const filter = document.getElementById('globalFilter').value.toLowerCase();
+      const category = document.getElementById('filterCategory').value;
+      
+      let filtered = data.surveys;
+      if (filter && (category === 'all' || category === 'surveys')) {
+        filtered = data.surveys.filter(s => 
+          s.name.toLowerCase().includes(filter) || 
+          (s.description || '').toLowerCase().includes(filter)
+        );
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      container.innerHTML = filtered.map(survey => {
+        const questionCount = data.questions.filter(q => q.surveyId === survey.id).length;
+        const responseCount = data.responses.filter(r => r.surveyId === survey.id).length;
+        const categoryColors = {
+          satisfaction: '#4CAF50',
+          product: '#66CFF5',
+          service: '#FF9800',
+          market: '#9C27B0',
+          other: '#607D8B'
+        };
+        return `
+          <div class="card p-4" style="border-left-color: ${categoryColors[survey.category] || '#66CFF5'}">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h3 class="font-semibold text-gray-800">${escapeHtml(survey.name)}</h3>
+                <p class="text-sm text-gray-500 mt-1">${escapeHtml(survey.description || 'Sem descrição')}</p>
+              </div>
+              <span class="badge bg-gray-100 text-gray-600">${survey.category}</span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                ${questionCount} questões
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+                ${responseCount} respostas
+              </span>
+            </div>
+            <div class="flex gap-2 editable-element">
+              <button onclick="editSurvey('${survey.id}')" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Editar
+              </button>
+              <button onclick="deleteSurvey('${survey.id}')" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1 text-red-500 hover:bg-red-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      updateSurveySelects();
+    }
+
+    function openSurveyModal() {
+      document.getElementById('surveyModal').classList.remove('hidden');
+      document.getElementById('surveyModalTitle').textContent = 'Novo Inquérito';
+      document.getElementById('surveyForm').reset();
+      document.getElementById('surveyId').value = '';
+    }
+
+    function closeSurveyModal() {
+      document.getElementById('surveyModal').classList.add('hidden');
+    }
+
+    function editSurvey(id) {
+      const survey = data.surveys.find(s => s.id === id);
+      if (!survey) return;
+      
+      document.getElementById('surveyModal').classList.remove('hidden');
+      document.getElementById('surveyModalTitle').textContent = 'Editar Inquérito';
+      document.getElementById('surveyId').value = survey.id;
+      document.getElementById('surveyName').value = survey.name;
+      document.getElementById('surveyDescription').value = survey.description || '';
+      document.getElementById('surveyCategory').value = survey.category;
+    }
+
+    function saveSurvey(e) {
+      e.preventDefault();
+      const id = document.getElementById('surveyId').value;
+      const surveyData = {
+        id: id || generateId(),
+        name: document.getElementById('surveyName').value,
+        description: document.getElementById('surveyDescription').value,
+        category: document.getElementById('surveyCategory').value,
+        createdAt: id ? data.surveys.find(s => s.id === id)?.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (id) {
+        const idx = data.surveys.findIndex(s => s.id === id);
+        if (idx !== -1) data.surveys[idx] = surveyData;
+      } else {
+        data.surveys.push(surveyData);
+      }
+      
+      saveToStorage();
+      closeSurveyModal();
+      renderSurveys();
+      showToast('Inquérito guardado com sucesso', 'success');
+    }
+
+    function deleteSurvey(id) {
+      showDeleteConfirm('Tem a certeza que deseja eliminar este inquérito? Todas as questões e respostas associadas serão eliminadas.', () => {
+        data.surveys = data.surveys.filter(s => s.id !== id);
+        data.questions = data.questions.filter(q => q.surveyId !== id);
+        data.responses = data.responses.filter(r => r.surveyId !== id);
+        saveToStorage();
+        renderAll();
+        showToast('Inquérito eliminado', 'success');
+      });
+    }
+
+    // ========================================
+    // QUESTIONS
+    // ========================================
+    function renderQuestions() {
+      const container = document.getElementById('questionsList');
+      const empty = document.getElementById('questionsEmpty');
+      const surveyFilter = document.getElementById('questionSurveyFilter').value;
+      const globalFilter = document.getElementById('globalFilter').value.toLowerCase();
+      const category = document.getElementById('filterCategory').value;
+      
+      let filtered = data.questions;
+      if (surveyFilter) {
+        filtered = filtered.filter(q => q.surveyId === surveyFilter);
+      }
+      if (globalFilter && (category === 'all' || category === 'questions')) {
+        filtered = filtered.filter(q => q.text.toLowerCase().includes(globalFilter));
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      container.innerHTML = filtered.map(question => {
+        const survey = data.surveys.find(s => s.id === question.surveyId);
+        const responseCount = data.responses.filter(r => r.answers && r.answers[question.id]).length;
+        const typeLabels = {
+          scale5: 'Escala 1-5',
+          scale10: 'Escala 1-10',
+          yesno: 'Sim/Não',
+          multiple: 'Escolha Múltipla',
+          text: 'Texto Livre'
+        };
+        return `
+          <div class="card question-card p-4">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="badge bg-blue-100 text-blue-600">${typeLabels[question.type]}</span>
+                  <span class="text-sm text-gray-500">${survey?.name || 'Inquérito removido'}</span>
+                </div>
+                <p class="text-gray-800 font-medium">${escapeHtml(question.text)}</p>
+                ${question.options ? `<p class="text-sm text-gray-500 mt-1">Opções: ${question.options.join(', ')}</p>` : ''}
+                <p class="text-sm text-gray-400 mt-2">${responseCount} respostas</p>
+              </div>
+              <div class="flex gap-2 editable-element">
+                <button onclick="editQuestion('${question.id}')" class="btn-secondary px-3 py-1 rounded text-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="deleteQuestion('${question.id}')" class="btn-secondary px-3 py-1 rounded text-sm text-red-500 hover:bg-red-50">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openQuestionModal() {
+      if (data.surveys.length === 0) {
+        showToast('Crie primeiro um inquérito', 'warning');
+        return;
+      }
+      document.getElementById('questionModal').classList.remove('hidden');
+      document.getElementById('questionModalTitle').textContent = 'Nova Questão';
+      document.getElementById('questionForm').reset();
+      document.getElementById('questionId').value = '';
+      document.getElementById('questionOptionsContainer').classList.add('hidden');
+      updateQuestionSurveySelect();
+    }
+
+    function closeQuestionModal() {
+      document.getElementById('questionModal').classList.add('hidden');
+    }
+
+    function toggleQuestionOptions() {
+      const type = document.getElementById('questionType').value;
+      const container = document.getElementById('questionOptionsContainer');
+      container.classList.toggle('hidden', type !== 'multiple');
+    }
+
+    function updateQuestionSurveySelect() {
+      const select = document.getElementById('questionSurvey');
+      select.innerHTML = '<option value="">Selecione um inquérito</option>' + 
+        data.surveys.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    }
+
+    function editQuestion(id) {
+      const question = data.questions.find(q => q.id === id);
+      if (!question) return;
+      
+      document.getElementById('questionModal').classList.remove('hidden');
+      document.getElementById('questionModalTitle').textContent = 'Editar Questão';
+      document.getElementById('questionId').value = question.id;
+      updateQuestionSurveySelect();
+      document.getElementById('questionSurvey').value = question.surveyId;
+      document.getElementById('questionText').value = question.text;
+      document.getElementById('questionType').value = question.type;
+      
+      if (question.type === 'multiple' && question.options) {
+        document.getElementById('questionOptionsContainer').classList.remove('hidden');
+        document.getElementById('questionOptions').value = question.options.join('\n');
+      } else {
+        document.getElementById('questionOptionsContainer').classList.add('hidden');
+      }
+    }
+
+    function saveQuestion(e) {
+      e.preventDefault();
+      const id = document.getElementById('questionId').value;
+      const type = document.getElementById('questionType').value;
+      const questionData = {
+        id: id || generateId(),
+        surveyId: document.getElementById('questionSurvey').value,
+        text: document.getElementById('questionText').value,
+        type: type,
+        options: type === 'multiple' ? document.getElementById('questionOptions').value.split('\n').filter(o => o.trim()) : null,
+        createdAt: id ? data.questions.find(q => q.id === id)?.createdAt : new Date().toISOString()
+      };
+      
+      if (id) {
+        const idx = data.questions.findIndex(q => q.id === id);
+        if (idx !== -1) data.questions[idx] = questionData;
+      } else {
+        data.questions.push(questionData);
+      }
+      
+      saveToStorage();
+      closeQuestionModal();
+      renderQuestions();
+      showToast('Questão guardada com sucesso', 'success');
+    }
+
+    function deleteQuestion(id) {
+      showDeleteConfirm('Tem a certeza que deseja eliminar esta questão?', () => {
+        data.questions = data.questions.filter(q => q.id !== id);
+        saveToStorage();
+        renderQuestions();
+        showToast('Questão eliminada', 'success');
+      });
+    }
+
+    // ========================================
+    // RESPONSES
+    // ========================================
+    function renderResponses() {
+      const container = document.getElementById('responsesList');
+      const empty = document.getElementById('responsesEmpty');
+      const surveyFilter = document.getElementById('responseSurveyFilter').value;
+      const globalFilter = document.getElementById('globalFilter').value.toLowerCase();
+      const category = document.getElementById('filterCategory').value;
+      
+      let filtered = data.responses;
+      if (surveyFilter) {
+        filtered = filtered.filter(r => r.surveyId === surveyFilter);
+      }
+      if (globalFilter && (category === 'all' || category === 'responses')) {
+        filtered = filtered.filter(r => 
+          (r.respondentId || '').toLowerCase().includes(globalFilter)
+        );
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      container.innerHTML = filtered.map(response => {
+        const survey = data.surveys.find(s => s.id === response.surveyId);
+        const answerCount = response.answers ? Object.keys(response.answers).length : 0;
+        return `
+          <div class="card response-card p-4">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="font-medium text-gray-800">${escapeHtml(response.respondentId || 'Anónimo')}</span>
+                  <span class="text-sm text-gray-500">• ${survey?.name || 'Inquérito removido'}</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span>${answerCount} respostas</span>
+                  ${response.value ? `<span>Valor: ${formatCurrency(response.value)} AOA</span>` : ''}
+                  <span>${new Date(response.createdAt).toLocaleDateString('pt-PT')}</span>
+                </div>
+              </div>
+              <div class="flex gap-2 editable-element">
+                <button onclick="viewResponse('${response.id}')" class="btn-secondary px-3 py-1 rounded text-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+                <button onclick="deleteResponse('${response.id}')" class="btn-secondary px-3 py-1 rounded text-sm text-red-500 hover:bg-red-50">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openResponseModal() {
+      if (data.surveys.length === 0) {
+        showToast('Crie primeiro um inquérito', 'warning');
+        return;
+      }
+      document.getElementById('responseModal').classList.remove('hidden');
+      document.getElementById('responseModalTitle').textContent = 'Nova Resposta';
+      document.getElementById('responseForm').reset();
+      document.getElementById('responseId').value = '';
+      document.getElementById('responseQuestionsContainer').innerHTML = '<p class="text-gray-500 text-center py-4">Selecione um inquérito para ver as questões</p>';
+      updateResponseSurveySelect();
+    }
+
+    function closeResponseModal() {
+      document.getElementById('responseModal').classList.add('hidden');
+    }
+
+    function updateResponseSurveySelect() {
+      const select = document.getElementById('responseSurvey');
+      select.innerHTML = '<option value="">Selecione um inquérito</option>' + 
+        data.surveys.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    }
+
+    function loadSurveyQuestions() {
+      const surveyId = document.getElementById('responseSurvey').value;
+      const container = document.getElementById('responseQuestionsContainer');
+      
+      if (!surveyId) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">Selecione um inquérito para ver as questões</p>';
+        return;
+      }
+      
+      const questions = data.questions.filter(q => q.surveyId === surveyId);
+      if (questions.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">Este inquérito não tem questões</p>';
+        return;
+      }
+      
+      container.innerHTML = questions.map(q => {
+        let inputHtml = '';
+        switch (q.type) {
+          case 'scale5':
+            inputHtml = `
+              <div class="flex gap-2">
+                ${[1,2,3,4,5].map(n => `
+                  <label class="flex-1">
+                    <input type="radio" name="answer_${q.id}" value="${n}" class="peer hidden">
+                    <div class="peer-checked:bg-blue-500 peer-checked:text-white bg-gray-100 rounded-lg py-2 text-center cursor-pointer transition-all hover:bg-gray-200">${n}</div>
+                  </label>
+                `).join('')}
+              </div>
+            `;
+            break;
+          case 'scale10':
+            inputHtml = `
+              <div class="grid grid-cols-5 gap-2">
+                ${[1,2,3,4,5,6,7,8,9,10].map(n => `
+                  <label>
+                    <input type="radio" name="answer_${q.id}" value="${n}" class="peer hidden">
+                    <div class="peer-checked:bg-blue-500 peer-checked:text-white bg-gray-100 rounded-lg py-2 text-center cursor-pointer transition-all hover:bg-gray-200">${n}</div>
+                  </label>
+                `).join('')}
+              </div>
+            `;
+            break;
+          case 'yesno':
+            inputHtml = `
+              <div class="flex gap-4">
+                <label class="flex-1">
+                  <input type="radio" name="answer_${q.id}" value="sim" class="peer hidden">
+                  <div class="peer-checked:bg-green-500 peer-checked:text-white bg-gray-100 rounded-lg py-2 text-center cursor-pointer transition-all hover:bg-gray-200">Sim</div>
+                </label>
+                <label class="flex-1">
+                  <input type="radio" name="answer_${q.id}" value="não" class="peer hidden">
+                  <div class="peer-checked:bg-red-500 peer-checked:text-white bg-gray-100 rounded-lg py-2 text-center cursor-pointer transition-all hover:bg-gray-200">Não</div>
+                </label>
+              </div>
+            `;
+            break;
+          case 'multiple':
+            inputHtml = `
+              <div class="space-y-2">
+                ${(q.options || []).map(opt => `
+                  <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="answer_${q.id}" value="${escapeHtml(opt)}" class="w-4 h-4 text-blue-500">
+                    <span>${escapeHtml(opt)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            `;
+            break;
+          case 'text':
+            inputHtml = `<textarea name="answer_${q.id}" class="input-field" rows="2" placeholder="Escreva a sua resposta..."></textarea>`;
+            break;
+        }
+        return `
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <p class="font-medium text-gray-800 mb-3">${escapeHtml(q.text)}</p>
+            ${inputHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function saveResponse(e) {
+      e.preventDefault();
+      const surveyId = document.getElementById('responseSurvey').value;
+      const questions = data.questions.filter(q => q.surveyId === surveyId);
+      
+      const answers = {};
+      questions.forEach(q => {
+        const input = document.querySelector(`[name="answer_${q.id}"]:checked`) || document.querySelector(`[name="answer_${q.id}"]`);
+        if (input && input.value) {
+          answers[q.id] = input.value;
+        }
+      });
+      
+      let value = parseFloat(document.getElementById('responseValue').value) || 0;
+      const currency = document.getElementById('responseCurrency').value;
+      if (currency !== 'AOA' && value > 0) {
+        value = value * (data.currencies[currency] || 1);
+      }
+      
+      const responseData = {
+        id: generateId(),
+        surveyId: surveyId,
+        respondentId: document.getElementById('respondentId').value,
+        answers: answers,
+        value: value,
+        originalCurrency: currency,
+        createdAt: new Date().toISOString()
+      };
+      
+      data.responses.push(responseData);
+      saveToStorage();
+      closeResponseModal();
+      renderResponses();
+      updateAnalytics();
+      showToast('Resposta registada com sucesso', 'success');
+    }
+
+    function viewResponse(id) {
+      const response = data.responses.find(r => r.id === id);
+      if (!response) return;
+      
+      const survey = data.surveys.find(s => s.id === response.surveyId);
+      const questions = data.questions.filter(q => q.surveyId === response.surveyId);
+      
+      let content = `<div class="space-y-4">
+        <div class="p-4 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-600">Inquérito: ${survey?.name || 'Removido'}</p>
+          <p class="text-sm text-blue-600">Respondente: ${response.respondentId || 'Anónimo'}</p>
+          <p class="text-sm text-blue-600">Data: ${new Date(response.createdAt).toLocaleString('pt-PT')}</p>
+        </div>`;
+      
+      questions.forEach(q => {
+        const answer = response.answers[q.id] || 'Sem resposta';
+        content += `
+          <div class="p-3 border-l-4 border-l-green-500 bg-gray-50 rounded">
+            <p class="text-sm text-gray-600 mb-1">${escapeHtml(q.text)}</p>
+            <p class="font-medium text-gray-800">${escapeHtml(answer)}</p>
+          </div>
+        `;
+      });
+      
+      if (response.value) {
+        content += `<div class="p-3 bg-yellow-50 rounded">
+          <p class="text-sm text-yellow-700">Valor: ${formatCurrency(response.value)} AOA</p>
+        </div>`;
+      }
+      
+      content += '</div>';
+      
+      showInfoModal('Detalhes da Resposta', content);
+    }
+
+    function deleteResponse(id) {
+      showDeleteConfirm('Tem a certeza que deseja eliminar esta resposta?', () => {
+        data.responses = data.responses.filter(r => r.id !== id);
+        saveToStorage();
+        renderResponses();
+        updateAnalytics();
+        showToast('Resposta eliminada', 'success');
+      });
+    }
+
+    // ========================================
+    // ANALYTICS
+    // ========================================
+    function initCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 15, usePointStyle: true }
+          }
+        }
+      };
+
+      charts.surveyResponses = new Chart(document.getElementById('chartSurveyResponses'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Respostas', data: [], backgroundColor: '#66CFF5' }] },
+        options: { ...chartOptions, indexAxis: 'y' }
+      });
+
+      charts.questionTypes = new Chart(document.getElementById('chartQuestionTypes'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: ['#66CFF5', '#4CAF50', '#FF9800', '#9C27B0', '#F44336'] }] },
+        options: chartOptions
+      });
+
+      charts.timeline = new Chart(document.getElementById('chartTimeline'), {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Respostas', data: [], borderColor: '#66CFF5', fill: true, backgroundColor: 'rgba(30, 136, 229, 0.1)' }] },
+        options: { ...chartOptions, scales: { y: { beginAtZero: true } } }
+      });
+
+      charts.satisfaction = new Chart(document.getElementById('chartSatisfaction'), {
+        type: 'radar',
+        data: { labels: [], datasets: [{ label: 'Média', data: [], borderColor: '#4CAF50', backgroundColor: 'rgba(76, 175, 80, 0.2)' }] },
+        options: chartOptions
+      });
+    }
+
+    function updateAnalytics() {
+      const surveyFilter = document.getElementById('analyticsSurveyFilter')?.value;
+      
+      // Stats
+      document.getElementById('statSurveys').textContent = data.surveys.length;
+      document.getElementById('statQuestions').textContent = data.questions.length;
+      document.getElementById('statResponses').textContent = data.responses.length;
+      
+      const totalQuestions = data.questions.length;
+      const answeredQuestions = data.responses.reduce((acc, r) => acc + Object.keys(r.answers || {}).length, 0);
+      const rate = totalQuestions > 0 ? Math.round((answeredQuestions / (totalQuestions * data.responses.length || 1)) * 100) : 0;
+      document.getElementById('statRate').textContent = rate + '%';
+
+      // Survey Responses Chart
+      let filteredSurveys = data.surveys;
+      if (surveyFilter) filteredSurveys = filteredSurveys.filter(s => s.id === surveyFilter);
+      
+      const surveyResponseCounts = filteredSurveys.map(s => ({
+        name: s.name,
+        count: data.responses.filter(r => r.surveyId === s.id).length
+      }));
+      
+      charts.surveyResponses.data.labels = surveyResponseCounts.map(s => s.name.substring(0, 20));
+      charts.surveyResponses.data.datasets[0].data = surveyResponseCounts.map(s => s.count);
+      charts.surveyResponses.update();
+
+      // Question Types Chart
+      const typeLabels = { scale5: 'Escala 1-5', scale10: 'Escala 1-10', yesno: 'Sim/Não', multiple: 'Múltipla', text: 'Texto' };
+      const typeCounts = {};
+      data.questions.forEach(q => {
+        typeCounts[q.type] = (typeCounts[q.type] || 0) + 1;
+      });
+      
+      charts.questionTypes.data.labels = Object.keys(typeCounts).map(t => typeLabels[t] || t);
+      charts.questionTypes.data.datasets[0].data = Object.values(typeCounts);
+      charts.questionTypes.update();
+
+      // Timeline Chart
+      const responsesByDate = {};
+      data.responses.forEach(r => {
+        const date = new Date(r.createdAt).toLocaleDateString('pt-PT');
+        responsesByDate[date] = (responsesByDate[date] || 0) + 1;
+      });
+      
+      const dates = Object.keys(responsesByDate).sort((a, b) => new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-')));
+      charts.timeline.data.labels = dates.slice(-10);
+      charts.timeline.data.datasets[0].data = dates.slice(-10).map(d => responsesByDate[d]);
+      charts.timeline.update();
+
+      // Satisfaction Chart
+      const scaleQuestions = data.questions.filter(q => q.type === 'scale5' || q.type === 'scale10');
+      const avgByQuestion = scaleQuestions.map(q => {
+        const answers = data.responses.filter(r => r.answers && r.answers[q.id]).map(r => parseFloat(r.answers[q.id]));
+        const avg = answers.length > 0 ? answers.reduce((a, b) => a + b, 0) / answers.length : 0;
+        return { text: q.text.substring(0, 30), avg: avg.toFixed(1) };
+      });
+      
+      charts.satisfaction.data.labels = avgByQuestion.map(q => q.text);
+      charts.satisfaction.data.datasets[0].data = avgByQuestion.map(q => q.avg);
+      charts.satisfaction.update();
+
+      // Question Analytics
+      renderQuestionAnalytics(surveyFilter);
+    }
+
+    function renderQuestionAnalytics(surveyFilter) {
+      const container = document.getElementById('questionAnalytics');
+      let questions = data.questions;
+      if (surveyFilter) {
+        questions = questions.filter(q => q.surveyId === surveyFilter);
+      }
+      
+      if (questions.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma questão para analisar</p>';
+        return;
+      }
+      
+      container.innerHTML = questions.map(q => {
+        const answers = data.responses.filter(r => r.answers && r.answers[q.id]).map(r => r.answers[q.id]);
+        let statsHtml = '';
+        
+        if (q.type === 'scale5' || q.type === 'scale10') {
+          const numAnswers = answers.map(a => parseFloat(a));
+          const avg = numAnswers.length > 0 ? (numAnswers.reduce((a, b) => a + b, 0) / numAnswers.length).toFixed(2) : 0;
+          const min = numAnswers.length > 0 ? Math.min(...numAnswers) : 0;
+          const max = numAnswers.length > 0 ? Math.max(...numAnswers) : 0;
+          
+          statsHtml = `
+            <div class="grid grid-cols-4 gap-4 text-center">
+              <div><p class="text-2xl font-bold text-blue-500">${avg}</p><p class="text-xs text-gray-500">Média</p></div>
+              <div><p class="text-2xl font-bold text-green-500">${min}</p><p class="text-xs text-gray-500">Mínimo</p></div>
+              <div><p class="text-2xl font-bold text-orange-500">${max}</p><p class="text-xs text-gray-500">Máximo</p></div>
+              <div><p class="text-2xl font-bold text-purple-500">${answers.length}</p><p class="text-xs text-gray-500">Respostas</p></div>
+            </div>
+          `;
+        } else if (q.type === 'yesno' || q.type === 'multiple') {
+          const distribution = {};
+          answers.forEach(a => {
+            distribution[a] = (distribution[a] || 0) + 1;
+          });
+          
+          statsHtml = `
+            <div class="space-y-2">
+              ${Object.entries(distribution).map(([option, count]) => {
+                const pct = answers.length > 0 ? Math.round((count / answers.length) * 100) : 0;
+                return `
+                  <div class="flex items-center gap-3">
+                    <span class="w-24 text-sm text-gray-600 truncate">${escapeHtml(option)}</span>
+                    <div class="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div class="bg-blue-500 h-full transition-all" style="width: ${pct}%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 w-16 text-right">${count} (${pct}%)</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          statsHtml = `<p class="text-gray-500">${answers.length} respostas em texto</p>`;
+        }
+        
+        return `
+          <div class="card p-4 question-card">
+            <p class="font-medium text-gray-800 mb-4">${escapeHtml(q.text)}</p>
+            ${statsHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ========================================
+    // SCENARIOS
+    // ========================================
+    function saveScenario() {
+      const scenarioNumber = data.scenarios.length + 1;
+      const scenario = {
+        id: generateId(),
+        name: `Cenário ${scenarioNumber}`,
+        notes: '',
+        data: JSON.parse(JSON.stringify({ surveys: data.surveys, questions: data.questions, responses: data.responses })),
+        createdAt: new Date().toISOString()
+      };
+      
+      data.scenarios.push(scenario);
+      saveToStorage();
+      showToast(`Cenário ${scenarioNumber} guardado`, 'success');
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenariosList');
+      const empty = document.getElementById('scenariosEmpty');
+      const filter = document.getElementById('scenarioFilter')?.value.toLowerCase() || '';
+      
+      let filtered = data.scenarios;
+      if (filter) {
+        filtered = filtered.filter(s => s.name.toLowerCase().includes(filter) || (s.notes || '').toLowerCase().includes(filter));
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      container.innerHTML = filtered.map(scenario => `
+        <div class="card scenario-card p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-800">${escapeHtml(scenario.name)}</h3>
+              <p class="text-sm text-gray-500">${new Date(scenario.createdAt).toLocaleString('pt-PT')}</p>
+            </div>
+            <span class="badge bg-yellow-100 text-yellow-700">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+              Guardado
+            </span>
+          </div>
+          ${scenario.notes ? `<p class="text-sm text-gray-600 mb-3">${escapeHtml(scenario.notes)}</p>` : ''}
+          <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+            <span>${scenario.data.surveys?.length || 0} inquéritos</span>
+            <span>${scenario.data.questions?.length || 0} questões</span>
+            <span>${scenario.data.responses?.length || 0} respostas</span>
+          </div>
+          <div class="flex gap-2 editable-element">
+            <button onclick="loadScenario('${scenario.id}')" class="btn-primary px-3 py-1 rounded text-sm flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Carregar
+            </button>
+            <button onclick="cloneScenario('${scenario.id}')" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              Clonar
+            </button>
+            <button onclick="editScenario('${scenario.id}')" class="btn-secondary px-3 py-1 rounded text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button onclick="deleteScenario('${scenario.id}')" class="btn-secondary px-3 py-1 rounded text-sm text-red-500 hover:bg-red-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadScenario(id) {
+      const scenario = data.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      data.surveys = JSON.parse(JSON.stringify(scenario.data.surveys || []));
+      data.questions = JSON.parse(JSON.stringify(scenario.data.questions || []));
+      data.responses = JSON.parse(JSON.stringify(scenario.data.responses || []));
+      
+      saveToStorage();
+      renderAll();
+      showToast(`${scenario.name} carregado`, 'success');
+      switchTab('surveys');
+    }
+
+    function cloneScenario(id) {
+      const scenario = data.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      const newScenario = {
+        ...JSON.parse(JSON.stringify(scenario)),
+        id: generateId(),
+        name: `${scenario.name} (Cópia)`,
+        createdAt: new Date().toISOString()
+      };
+      
+      data.scenarios.push(newScenario);
+      saveToStorage();
+      renderScenarios();
+      showToast('Cenário clonado', 'success');
+    }
+
+    function editScenario(id) {
+      const scenario = data.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      document.getElementById('scenarioModal').classList.remove('hidden');
+      document.getElementById('scenarioEditId').value = scenario.id;
+      document.getElementById('scenarioName').value = scenario.name;
+      document.getElementById('scenarioNotes').value = scenario.notes || '';
+    }
+
+    function closeScenarioModal() {
+      document.getElementById('scenarioModal').classList.add('hidden');
+    }
+
+    function updateScenario(e) {
+      e.preventDefault();
+      const id = document.getElementById('scenarioEditId').value;
+      const idx = data.scenarios.findIndex(s => s.id === id);
+      if (idx === -1) return;
+      
+      data.scenarios[idx].name = document.getElementById('scenarioName').value;
+      data.scenarios[idx].notes = document.getElementById('scenarioNotes').value;
+      
+      saveToStorage();
+      closeScenarioModal();
+      renderScenarios();
+      showToast('Cenário atualizado', 'success');
+    }
+
+    function deleteScenario(id) {
+      showDeleteConfirm('Tem a certeza que deseja eliminar este cenário?', () => {
+        data.scenarios = data.scenarios.filter(s => s.id !== id);
+        saveToStorage();
+        renderScenarios();
+        showToast('Cenário eliminado', 'success');
+      });
+    }
+
+    function loadTemplate(type) {
+      const templates = {
+        satisfaction: {
+          survey: { name: 'Satisfação do Cliente', description: 'Inquérito NPS e CSAT para medir satisfação', category: 'satisfaction' },
+          questions: [
+            { text: 'Numa escala de 1-10, qual a probabilidade de recomendar os nossos serviços?', type: 'scale10' },
+            { text: 'Como avalia a qualidade geral do nosso atendimento?', type: 'scale5' },
+            { text: 'Os nossos serviços corresponderam às suas expectativas?', type: 'yesno' },
+            { text: 'O que podemos melhorar?', type: 'text' }
+          ]
+        },
+        product: {
+          survey: { name: 'Avaliação de Produto', description: 'Feedback detalhado sobre características do produto', category: 'product' },
+          questions: [
+            { text: 'Como avalia a qualidade do produto?', type: 'scale5' },
+            { text: 'O preço é adequado ao valor oferecido?', type: 'scale5' },
+            { text: 'Qual característica mais valoriza?', type: 'multiple', options: ['Design', 'Funcionalidade', 'Durabilidade', 'Preço', 'Outro'] },
+            { text: 'Voltaria a comprar este produto?', type: 'yesno' }
+          ]
+        },
+        service: {
+          survey: { name: 'Qualidade de Serviço', description: 'Avaliação SERVQUAL de múltiplas dimensões', category: 'service' },
+          questions: [
+            { text: 'Como avalia a fiabilidade do serviço?', type: 'scale5' },
+            { text: 'Como avalia a rapidez de resposta?', type: 'scale5' },
+            { text: 'Como avalia a competência da equipa?', type: 'scale5' },
+            { text: 'Como avalia a empatia demonstrada?', type: 'scale5' },
+            { text: 'Tem alguma sugestão de melhoria?', type: 'text' }
+          ]
+        }
+      };
+      
+      const template = templates[type];
+      if (!template) return;
+      
+      const surveyId = generateId();
+      const survey = {
+        id: surveyId,
+        ...template.survey,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const questions = template.questions.map(q => ({
+        id: generateId(),
+        surveyId: surveyId,
+        ...q,
+        createdAt: new Date().toISOString()
+      }));
+      
+      data.surveys.push(survey);
+      data.questions.push(...questions);
+      
+      saveToStorage();
+      renderAll();
+      showToast('Template carregado', 'success');
+      switchTab('surveys');
+    }
+
+    // ========================================
+    // CURRENCY
+    // ========================================
+    function renderCurrencyRates() {
+      const container = document.getElementById('currencyRates');
+      const currencies = [
+        { code: 'BRL', name: 'Real Brasileiro', flag: '🇧🇷' },
+        { code: 'CVE', name: 'Escudo Cabo-Verdiano', flag: '🇨🇻' },
+        { code: 'XOF', name: 'Franco CFA (Guiné-Bissau)', flag: '🇬🇼' },
+        { code: 'MZN', name: 'Metical Moçambicano', flag: '🇲🇿' },
+        { code: 'STN', name: 'Dobra São-Tomense', flag: '🇸🇹' },
+        { code: 'EUR', name: 'Euro (Portugal/Timor)', flag: '🇪🇺' },
+        { code: 'USD', name: 'Dólar Americano', flag: '🇺🇸' }
+      ];
+      
+      container.innerHTML = currencies.map(c => `
+        <div class="flex items-center gap-4">
+          <span class="text-2xl">${c.flag}</span>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">${c.name} (${c.code})</label>
+            <p class="text-xs text-gray-500">1 ${c.code} = X AOA</p>
+          </div>
+          <input type="number" value="${data.currencies[c.code] || 1}" step="0.01" class="input-field w-32 text-right editable-element" onchange="updateCurrencyRate('${c.code}', this.value)">
+        </div>
+      `).join('');
+    }
+
+    function updateCurrencyRate(code, value) {
+      data.currencies[code] = parseFloat(value) || 1;
+      saveToStorage();
+      showToast('Taxa atualizada', 'success');
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    }
+
+    // ========================================
+    // EXPORT / IMPORT
+    // ========================================
+    async function exportImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      document.querySelectorAll('.editable-element').forEach(el => el.classList.add('export-hidden'));
+      
+      try {
+        const canvas = await html2canvas(document.getElementById('app'), {
+          backgroundColor: '#F8F9FA',
+          scale: 2,
+          useCORS: true
+        });
+        
+        const link = document.createElement('a');
+        link.download = `${config.app_title || 'IS_Inqueritos'}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada', 'success');
+      } catch (e) {
+        console.error('Export error:', e);
+        showToast('Erro ao exportar', 'error');
+      } finally {
+        document.querySelectorAll('.editable-element').forEach(el => el.classList.remove('export-hidden'));
+      }
+    }
+
+    async function exportChartImage(chartId) {
+      const canvas = document.getElementById(chartId);
+      const link = document.createElement('a');
+      link.download = `${chartId}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      showToast('Gráfico exportado', 'success');
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      document.querySelectorAll('.editable-element').forEach(el => el.classList.add('export-hidden'));
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        let yPos = margin + 15;
+        
+        // Header
+        pdf.setFillColor(30, 136, 229);
+        pdf.rect(0, 0, pageWidth, 20, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(14);
+        pdf.text(config.app_title || 'IS Inquéritos Pro', margin, 13);
+        pdf.setFontSize(8);
+        pdf.text(new Date().toLocaleString('pt-PT'), pageWidth - margin, 13, { align: 'right' });
+        
+        pdf.setTextColor(0, 0, 0);
+        
+        // Stats
+        pdf.setFontSize(12);
+        pdf.text('Resumo Estatístico', margin, yPos);
+        yPos += 8;
+        
+        pdf.setFontSize(10);
+        pdf.text(`Inquéritos: ${data.surveys.length}`, margin, yPos);
+        pdf.text(`Questões: ${data.questions.length}`, margin + 50, yPos);
+        pdf.text(`Respostas: ${data.responses.length}`, margin + 100, yPos);
+        yPos += 15;
+        
+        // Charts
+        const chartIds = ['chartSurveyResponses', 'chartQuestionTypes', 'chartTimeline', 'chartSatisfaction'];
+        const chartSize = 70;
+        
+        for (let i = 0; i < chartIds.length; i++) {
+          const canvas = document.getElementById(chartIds[i]);
+          const imgData = canvas.toDataURL('image/png');
+          
+          const x = margin + (i % 2) * (chartSize + 10);
+          const y = yPos + Math.floor(i / 2) * (chartSize + 10);
+          
+          if (y + chartSize > pageHeight - 20) {
+            pdf.addPage();
+            yPos = margin + 15;
+          }
+          
+          pdf.addImage(imgData, 'PNG', x, y, chartSize, chartSize * 0.75);
+        }
+        
+        // Footer
+        const pageCount = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setTextColor(128, 128, 128);
+          pdf.text(`${config.app_title || 'IS Inquéritos Pro'} - Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+        
+        pdf.save(`${config.app_title || 'IS_Inqueritos'}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showToast('PDF exportado', 'success');
+      } catch (e) {
+        console.error('PDF export error:', e);
+        showToast('Erro ao exportar PDF', 'error');
+      } finally {
+        document.querySelectorAll('.editable-element').forEach(el => el.classList.remove('export-hidden'));
+      }
+    }
+
+    function exportJSON() {
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        config: config,
+        data: data
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.download = `${config.app_title || 'IS_Inqueritos'}_backup_${new Date().toISOString().split('T')[0]}.json`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      
+      showToast('Dados exportados', 'success');
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          
+          if (imported.data) {
+            data = { ...data, ...imported.data };
+          }
+          if (imported.config) {
+            config = { ...config, ...imported.config };
+          }
+          
+          saveToStorage();
+          renderAll();
+          applyConfig();
+          showToast('Dados importados com sucesso', 'success');
+        } catch (err) {
+          console.error('Import error:', err);
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    // ========================================
+    // UI HELPERS
+    // ========================================
+    function updateSurveySelects() {
+      const options = '<option value="">Todos os Inquéritos</option>' + 
+        data.surveys.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+      
+      ['questionSurveyFilter', 'responseSurveyFilter', 'analyticsSurveyFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+    }
+
+    function applyGlobalFilter() {
+      renderSurveys();
+      renderQuestions();
+      renderResponses();
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-orange-500',
+        info: 'bg-blue-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : 
+            type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+        ${escapeHtml(message)}
+      `;
+      
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function showDeleteConfirm(message, callback) {
+      document.getElementById('deleteConfirmText').textContent = message;
+      document.getElementById('deleteConfirm').classList.remove('hidden');
+      deleteCallback = callback;
+    }
+
+    function closeDeleteConfirm() {
+      document.getElementById('deleteConfirm').classList.add('hidden');
+      deleteCallback = null;
+    }
+
+    function confirmDelete() {
+      if (deleteCallback) {
+        deleteCallback();
+      }
+      closeDeleteConfirm();
+    }
+
+    function showInfoModal(title, content) {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50';
+      modal.innerHTML = `
+        <div class="modal-overlay absolute inset-0" onclick="this.parentElement.remove()"></div>
+        <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-fade max-h-[90%] overflow-y-auto">
+          <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-800">${title}</h3>
+            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="p-6">${content}</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function renderAll() {
+      renderSurveys();
+      renderQuestions();
+      renderResponses();
+      renderScenarios();
+      updateSurveySelects();
+      applyConfig();
+    }
+
+    // Initialize
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d61ec83f53177d9',t:'MTc3MjQ3MDQ3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

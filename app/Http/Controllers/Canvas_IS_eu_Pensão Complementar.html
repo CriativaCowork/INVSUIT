@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Pensão Complementar</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#F8F9FA;color:#333}
+.app-wrapper{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.header-fixed{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:14px 24px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.tabs-fixed{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #E0E0E0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.tabs-fixed::-webkit-scrollbar{height:3px}
+.tabs-fixed::-webkit-scrollbar-thumb{background:#E0E0E0;border-radius:4px}
+.tab-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;font-size:13px;font-weight:500;color:#888;border-bottom:2px solid transparent;transition:all .2s ease;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+.content-area{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:20px;margin-bottom:16px;position:relative;transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,0.15)}
+.card-accent{border-left:3px solid #66CFF5}
+.card-accent-green{border-left:3px solid #4CAF50}
+.card-accent-gold{border-left:3px solid #FFC107}
+.card-accent-orange{border-left:3px solid #FF9800}
+.card-accent-red{border-left:3px solid #F44336}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;border:none}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#F8F9FA;color:#555;border:1px solid #E0E0E0}
+.btn-secondary:hover{background:#E0E0E0}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-gold{background:#FFC107;color:#333}
+.btn-gold:hover{background:#FFB300}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;transition:border .2s ease;background:#fff}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,0.15)}
+.label{font-size:12px;font-weight:500;color:#666;margin-bottom:4px;display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.stat-card{text-align:center;padding:16px;background:#F8F9FA;border-radius:8px;border:1px solid #E0E0E0}
+.stat-value{font-size:22px;font-weight:700;color:#66CFF5}
+.stat-label{font-size:11px;color:#888;margin-top:2px}
+.chart-container{position:relative;width:100%;max-width:100%}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5;background:rgba(255,255,255,0.9);border:1px solid #E0E0E0;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;color:#888;transition:all .2s ease;display:inline-flex;align-items:center;gap:3px}
+.chart-export-btn:hover{background:#66CFF5;color:#fff;border-color:#66CFF5}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal-content{background:#fff;border-radius:10px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+.scenario-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #E0E0E0;border-radius:8px;margin-bottom:8px;transition:all .2s ease;border-left:3px solid #66CFF5}
+.scenario-item:hover{box-shadow:0 2px 8px rgba(30,136,229,0.1)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-blue{background:rgba(30,136,229,0.1);color:#66CFF5}
+.badge-green{background:rgba(76,175,80,0.1);color:#4CAF50}
+.filter-input{padding:6px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:12px;width:100%;max-width:300px;font-family:'Inter',sans-serif}
+.filter-input:focus{outline:none;border-color:#66CFF5}
+select.input-field{appearance:auto}
+.tip-box{background:rgba(30,136,229,0.05);border:1px solid rgba(30,136,229,0.15);border-radius:8px;padding:14px;margin-bottom:12px}
+.tip-box p{font-size:12px;color:#555;line-height:1.6}
+.accordion{border:1px solid #E0E0E0;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.accordion-header{padding:14px 16px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:500;transition:background .2s ease}
+.accordion-header:hover{background:#F8F9FA}
+.accordion-body{padding:0 16px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.accordion-body.open{max-height:2000px;padding:14px 16px}
+.export-hide{transition:opacity .2s ease}
+.inline-confirm{display:flex;align-items:center;gap:6px}
+@media(max-width:768px){
+.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+.content-area{padding:12px 14px 30px}
+.header-fixed{padding:10px 14px}
+.tab-btn{padding:8px 12px;font-size:12px}
+}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrapper" id="appWrapper"><!-- Header -->
+   <header class="header-fixed" id="appHeader">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+     <div>
+      <h1 id="appTitle" style="display: none; display: none; font-size:18px;font-weight:700;color:#66CFF5">IS Pensão Complementar</h1>
+      <p id="appDesc" style="display: none; display: none; font-size:12px;color:#888;margin-top:2px">Simulador de Planos de Pensão Complementar (PPR/3.º Pilar) para cidadãos CPLP</p>
+     </div>
+     <div style="display:flex;gap:6px;flex-wrap:wrap" class="export-hide"><button class="btn btn-secondary btn-sm" onclick="exportAllImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn btn-secondary btn-sm" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button> <button class="btn btn-secondary btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="tabs-fixed" id="tabsNav"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator"></i>Simulador</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers"></i>Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins"></i>Moedas</button> <button class="tab-btn" data-tab="guia" onclick="switchTab('guia')"><i data-lucide="book-open"></i>Guia</button>
+   </nav><!-- Content -->
+   <main class="content-area" id="mainContent"><!-- TAB: Simulador -->
+    <section id="tab-simulador">
+     <div class="card card-accent" id="simCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+       <div>
+        <h2 style="font-size:15px;font-weight:600;color:#333"><i data-lucide="target" style="width:16px;height:16px;display:inline;vertical-align:middle;color:#66CFF5"></i> Parâmetros da Simulação</h2>
+        <p style="font-size:11px;color:#999;margin-top:2px">Configure os dados para calcular a sua pensão complementar</p>
+       </div>
+       <div style="display:flex;gap:6px" class="export-hide"><button class="btn btn-primary btn-sm" onclick="calcular()"><i data-lucide="play" style="width:13px;height:13px"></i> Calcular</button> <button class="btn btn-success btn-sm" onclick="guardarCenario()"><i data-lucide="save" style="width:13px;height:13px"></i> Guardar</button> <button class="btn btn-secondary btn-sm" onclick="limparSimulador()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Limpar</button>
+       </div>
+      </div>
+      <div style="margin-bottom:12px" class="export-hide"><label class="label">Título do Cenário</label> <input type="text" id="simTitulo" class="input-field" placeholder="Ex.: Plano Conservador 2025" maxlength="60">
+      </div>
+      <div class="grid-3" style="margin-bottom:12px">
+       <div><label class="label">Idade Atual (anos)</label> <input type="number" id="simIdade" class="input-field export-hide" value="30" min="18" max="80"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Idade de Reforma</label> <input type="number" id="simReforma" class="input-field export-hide" value="66" min="50" max="80"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Contribuição Mensal (Kz)</label> <input type="number" id="simContrib" class="input-field export-hide" value="50000" min="0" step="1000"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+      </div>
+      <div class="grid-3" style="margin-bottom:12px">
+       <div><label class="label">Capital Inicial (Kz)</label> <input type="number" id="simCapital" class="input-field export-hide" value="0" min="0" step="1000"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Rentabilidade Anual (%)</label> <input type="number" id="simRent" class="input-field export-hide" value="5" min="0" max="30" step="0.1"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Taxa de Inflação (%)</label> <input type="number" id="simInflacao" class="input-field export-hide" value="2" min="0" max="50" step="0.1"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+      </div>
+      <div class="grid-3">
+       <div><label class="label">Aumento Anual da Contribuição (%)</label> <input type="number" id="simAumento" class="input-field export-hide" value="2" min="0" max="20" step="0.5"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Taxa sobre Rendimentos (%)</label> <input type="number" id="simTaxa" class="input-field export-hide" value="8" min="0" max="50" step="0.5"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+       <div><label class="label">Período de Levantamento (anos)</label> <input type="number" id="simLevant" class="input-field export-hide" value="20" min="1" max="50"> <span class="sim-display" style="display:none;font-size:14px;font-weight:500"></span>
+       </div>
+      </div>
+     </div><!-- Results -->
+     <div id="resultados" style="display:none">
+      <div class="grid-4" style="margin-bottom:16px" id="statsGrid">
+       <div class="stat-card">
+        <div class="stat-value" id="statTotal">
+         -
+        </div>
+        <div class="stat-label">
+         Capital Acumulado
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-value" id="statContrib">
+         -
+        </div>
+        <div class="stat-label">
+         Total Contribuído
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-value" id="statRendimento">
+         -
+        </div>
+        <div class="stat-label">
+         Rendimentos Gerados
+        </div>
+       </div>
+       <div class="stat-card">
+        <div class="stat-value" id="statMensal">
+         -
+        </div>
+        <div class="stat-label">
+         Pensão Mensal Estimada
+        </div>
+       </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px">
+       <div class="card card-accent-green">
+        <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartEvolucao')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="chartEvolucao" height="220"></canvas>
+        </div>
+       </div>
+       <div class="card card-accent-gold">
+        <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartDistrib')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="chartDistrib" height="220"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px">
+       <div class="card card-accent-orange">
+        <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartAnual')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="chartAnual" height="220"></canvas>
+        </div>
+       </div>
+       <div class="card card-accent">
+        <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartReal')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="chartReal" height="220"></canvas>
+        </div>
+       </div>
+      </div><!-- Conversion Card -->
+      <div class="card card-accent-gold" id="conversionCard">
+       <h3 style="font-size:14px;font-weight:600;margin-bottom:12px"><i data-lucide="repeat" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FFC107"></i> Conversão para Moedas CPLP</h3>
+       <div id="conversionGrid" class="grid-4"></div>
+      </div><!-- Yearly Table -->
+      <div class="card card-accent" style="overflow-x:auto">
+       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:600"><i data-lucide="table" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Evolução Anual Detalhada</h3><input type="text" class="filter-input export-hide" placeholder="Filtrar ano..." oninput="filterTable(this.value)" style="max-width:160px">
+       </div>
+       <table id="tabelaAnual" style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+         <tr style="background:#F8F9FA;border-bottom:2px solid #E0E0E0">
+          <th style="padding:8px;text-align:left;font-weight:600">Ano</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Idade</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Contrib. Mensal</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Contrib. Anual</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Rendimento</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Capital Acumulado</th>
+          <th style="padding:8px;text-align:right;font-weight:600">Valor Real</th>
+         </tr>
+        </thead>
+        <tbody id="tabelaBody"></tbody>
+       </table>
+      </div>
+     </div>
+    </section><!-- TAB: Cenários -->
+    <section id="tab-cenarios" style="display:none">
+     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+       <h2 style="font-size:15px;font-weight:600"><i data-lucide="layers" style="width:16px;height:16px;display:inline;vertical-align:middle;color:#66CFF5"></i> Cenários Guardados</h2>
+       <p style="font-size:11px;color:#999;margin-top:2px">Gerencie e compare as suas simulações</p>
+      </div>
+      <div class="export-hide"><input type="text" id="filterCenarios" class="filter-input" placeholder="Pesquisar cenários..." oninput="renderCenarios()" style="max-width:220px">
+      </div>
+     </div>
+     <div id="cenariosLista"></div>
+     <div id="semCenarios" style="display:none;text-align:center;padding:40px"><i data-lucide="inbox" style="width:48px;height:48px;color:#E0E0E0;margin:0 auto 12px;display:block"></i>
+      <p style="color:#999;font-size:14px">Nenhum cenário guardado</p>
+      <p style="color:#bbb;font-size:12px;margin-top:4px">Utilize o simulador para criar e guardar cenários</p>
+     </div>
+    </section><!-- TAB: Moedas -->
+    <section id="tab-moedas" style="display:none">
+     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+       <h2 style="font-size:15px;font-weight:600"><i data-lucide="coins" style="width:16px;height:16px;display:inline;vertical-align:middle;color:#66CFF5"></i> Taxas de Câmbio</h2>
+       <p style="font-size:11px;color:#999;margin-top:2px">Configure taxas de conversão do Kwanza (AOA) para moedas CPLP e USD</p>
+      </div>
+     </div>
+     <div class="card card-accent-gold">
+      <div class="tip-box" style="margin-bottom:16px">
+       <p><strong>Base:</strong> 1 Kwanza Angolano (AOA). Insira quantas unidades de cada moeda correspondem a 1 Kz.</p>
+      </div>
+      <div id="moedasGrid" class="grid-2" style="gap:10px"></div>
+      <div style="margin-top:16px;display:flex;gap:8px" class="export-hide"><button class="btn btn-primary btn-sm" onclick="guardarMoedas()"><i data-lucide="save" style="width:13px;height:13px"></i> Guardar Taxas</button> <button class="btn btn-secondary btn-sm" onclick="resetMoedas()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Repor Padrão</button>
+      </div>
+     </div>
+    </section><!-- TAB: Guia -->
+    <section id="tab-guia" style="display:none">
+     <div style="margin-bottom:16px">
+      <h2 style="font-size:15px;font-weight:600"><i data-lucide="book-open" style="width:16px;height:16px;display:inline;vertical-align:middle;color:#66CFF5"></i> Guia de Utilização</h2>
+      <p style="font-size:11px;color:#999;margin-top:2px">Entenda como funciona a pensão complementar e como usar este simulador</p>
+     </div>
+     <div class="export-hide" style="margin-bottom:16px"><input type="text" id="filterGuia" class="filter-input" placeholder="Pesquisar tópico..." oninput="filterGuiaItems()" style="max-width:300px">
+     </div>
+     <div id="guiaContent">
+      <div class="accordion guia-item" data-keywords="ppr pensão complementar terceiro pilar">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="help-circle" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> O que é um PPR/3.º Pilar?</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555">O <strong>Plano Poupança Reforma (PPR)</strong>, também conhecido como <strong>3.º Pilar</strong> nos sistemas europeus, é um instrumento de poupança complementar à pensão pública (1.º Pilar) e à pensão profissional (2.º Pilar). É um veículo de investimento individual e voluntário destinado a complementar o rendimento na reforma.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555;margin-top:8px">Na Europa, este sistema é amplamente utilizado em países como Portugal, Suíça, Alemanha e França, onde os cidadãos investem regularmente durante a vida ativa para garantir uma reforma mais confortável.</p>
+       </div>
+      </div>
+      <div class="accordion guia-item" data-keywords="importância porquê investir reforma">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="trending-up" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#4CAF50"></i> Porquê investir numa Pensão Complementar?</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>1. Segurança financeira:</strong> A pensão pública pode não ser suficiente para manter o nível de vida desejado.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>2. Juros compostos:</strong> Começar cedo significa que o dinheiro trabalha a seu favor por mais tempo.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>3. Benefícios fiscais:</strong> Em muitos países, as contribuições para PPR têm deduções fiscais.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>4. Flexibilidade:</strong> Pode ajustar contribuições conforme a sua situação financeira.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>5. Herança:</strong> O capital acumulado pode ser transmitido aos herdeiros.</p>
+       </div>
+      </div>
+      <div class="accordion guia-item" data-keywords="como usar simulador calcular">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="settings" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FF9800"></i> Como Usar o Simulador</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Passo 1:</strong> Insira a sua idade atual e a idade pretendida para a reforma.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Passo 2:</strong> Defina a contribuição mensal em Kwanzas e o capital inicial (se houver).</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Passo 3:</strong> Ajuste a rentabilidade esperada, inflação e taxa sobre rendimentos.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Passo 4:</strong> Clique em "Calcular" para ver os resultados e gráficos.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Passo 5:</strong> Guarde o cenário para comparar diferentes estratégias.</p>
+       </div>
+      </div>
+      <div class="accordion guia-item" data-keywords="melhores práticas dicas conselho">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="award" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#FFC107"></i> Melhores Práticas</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Comece cedo:</strong> Mesmo pequenas contribuições crescem significativamente ao longo de décadas.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Seja consistente:</strong> Contribuições regulares superam investimentos pontuais.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Diversifique:</strong> Não coloque todos os recursos num único produto.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Reveja anualmente:</strong> Ajuste contribuições conforme aumentos salariais.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Considere a inflação:</strong> Use a taxa de aumento anual da contribuição para combater a desvalorização.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555">• <strong>Compare cenários:</strong> Use a funcionalidade de guardar cenários para encontrar a melhor estratégia.</p>
+       </div>
+      </div>
+      <div class="accordion guia-item" data-keywords="cplp países moedas angola brasil portugal">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="globe" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Contexto CPLP</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555">A Comunidade dos Países de Língua Portuguesa (CPLP) reúne nações com diferentes realidades económicas. Este simulador permite converter valores em Kwanzas para as moedas de todos os países membros, facilitando a comparação e o planeamento financeiro para cidadãos que vivem ou trabalham em diferentes países lusófonos.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555;margin-top:8px"><strong>Países membros:</strong> Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe, Timor-Leste.</p>
+       </div>
+      </div>
+      <div class="accordion guia-item" data-keywords="glossário termos definições">
+       <div class="accordion-header" onclick="toggleAccordion(this)"><span><i data-lucide="book" style="width:14px;height:14px;display:inline;vertical-align:middle;color:#66CFF5"></i> Glossário</span> <i data-lucide="chevron-down" style="width:16px;height:16px;transition:transform .2s ease"></i>
+       </div>
+       <div class="accordion-body">
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>PPR:</strong> Plano Poupança Reforma — produto de investimento para a reforma.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>3.º Pilar:</strong> Sistema de pensão complementar individual e voluntário.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Rentabilidade:</strong> Retorno anual esperado do investimento.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Inflação:</strong> Taxa de desvalorização do poder de compra ao longo do tempo.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Valor Real:</strong> Capital ajustado à inflação, refletindo o poder de compra efetivo.</p>
+        <p style="font-size:13px;line-height:1.8;color:#555"><strong>Juros Compostos:</strong> Rendimentos que geram novos rendimentos sobre si mesmos.</p>
+       </div>
+      </div>
+     </div>
+    </section>
+   </main>
+  </div><!-- Edit Scenario Modal -->
+  <div id="editModal" class="modal-overlay" style="display:none">
+   <div class="modal-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+     <h3 id="editModalTitle" style="font-size:15px;font-weight:600">Editar Cenário</h3><button class="btn btn-secondary btn-xs" onclick="closeEditModal()"><i data-lucide="x" style="width:14px;height:14px"></i></button>
+    </div>
+    <div id="editModalBody"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end"><button class="btn btn-secondary btn-sm" onclick="closeEditModal()">Cancelar</button> <button class="btn btn-primary btn-sm" onclick="saveEditModal()"><i data-lucide="check" style="width:13px;height:13px"></i> Guardar</button>
+    </div>
+   </div>
+  </div>
+  <script>
+// ======= STATE =======
+const STORAGE_KEY = 'is_pensao_complementar';
+let appState = {
+  cenarios: [],
+  moedas: {},
+  lastCalcResult: null
+};
+
+const DEFAULT_MOEDAS = {
+  'USD': {name:'Dólar Americano',symbol:'$',rate:0.0012,flag:'🇺🇸'},
+  'EUR': {name:'Euro',symbol:'€',rate:0.0011,flag:'🇪🇺'},
+  'BRL': {name:'Real Brasileiro',symbol:'R$',rate:0.006,flag:'🇧🇷'},
+  'CVE': {name:'Escudo Cabo-verdiano',symbol:'CVE',rate:0.12,flag:'🇨🇻'},
+  'XOF': {name:'Franco CFA (Guiné-Bissau)',symbol:'XOF',rate:0.72,flag:'🇬🇼'},
+  'XAF': {name:'Franco CFA (Guiné Equatorial)',symbol:'XAF',rate:0.72,flag:'🇬🇶'},
+  'MZN': {name:'Metical Moçambicano',symbol:'MZN',rate:0.077,flag:'🇲🇿'},
+  'STN': {name:'Dobra (São Tomé)',symbol:'STN',rate:0.027,flag:'🇸🇹'},
+  'USD_TL': {name:'Dólar (Timor-Leste)',symbol:'$',rate:0.0012,flag:'🇹🇱'}
+};
+
+let charts = {};
+let editingScenarioIdx = null;
+
+// ======= PERSISTENCE =======
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      appState.cenarios = parsed.cenarios || [];
+      appState.moedas = parsed.moedas || {};
+    }
+  } catch(e) { console.error(e); }
+  // fill default moedas
+  Object.keys(DEFAULT_MOEDAS).forEach(k => {
+    if (!appState.moedas[k]) {
+      appState.moedas[k] = { ...DEFAULT_MOEDAS[k] };
+    } else {
+      appState.moedas[k].name = DEFAULT_MOEDAS[k].name;
+      appState.moedas[k].symbol = DEFAULT_MOEDAS[k].symbol;
+      appState.moedas[k].flag = DEFAULT_MOEDAS[k].flag;
+    }
+  });
+}
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({cenarios: appState.cenarios, moedas: appState.moedas}));
+  } catch(e) { console.error(e); }
+}
+
+// ======= TABS =======
+function switchTab(tab) {
+  document.querySelectorAll('[id^="tab-"]').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const section = document.getElementById('tab-' + tab);
+  if (section) section.style.display = '';
+  const btn = document.querySelector(`[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
+  if (tab === 'cenarios') renderCenarios();
+  if (tab === 'moedas') renderMoedas();
+}
+
+// ======= FORMAT =======
+function fmtKz(v) {
+  if (v === undefined || v === null || isNaN(v)) return '0 Kz';
+  return Number(v).toLocaleString('pt-AO',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' Kz';
+}
+function fmtNum(v,d=0) {
+  return Number(v).toLocaleString('pt-AO',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+
+// ======= SIMULATOR =======
+function getSimParams() {
+  return {
+    titulo: document.getElementById('simTitulo').value.trim(),
+    idade: parseInt(document.getElementById('simIdade').value) || 30,
+    reforma: parseInt(document.getElementById('simReforma').value) || 66,
+    contrib: parseFloat(document.getElementById('simContrib').value) || 0,
+    capital: parseFloat(document.getElementById('simCapital').value) || 0,
+    rent: parseFloat(document.getElementById('simRent').value) || 0,
+    inflacao: parseFloat(document.getElementById('simInflacao').value) || 0,
+    aumento: parseFloat(document.getElementById('simAumento').value) || 0,
+    taxa: parseFloat(document.getElementById('simTaxa').value) || 0,
+    levant: parseInt(document.getElementById('simLevant').value) || 20
+  };
+}
+function setSimParams(p) {
+  document.getElementById('simTitulo').value = p.titulo || '';
+  document.getElementById('simIdade').value = p.idade;
+  document.getElementById('simReforma').value = p.reforma;
+  document.getElementById('simContrib').value = p.contrib;
+  document.getElementById('simCapital').value = p.capital;
+  document.getElementById('simRent').value = p.rent;
+  document.getElementById('simInflacao').value = p.inflacao;
+  document.getElementById('simAumento').value = p.aumento;
+  document.getElementById('simTaxa').value = p.taxa;
+  document.getElementById('simLevant').value = p.levant;
+}
+function limparSimulador() {
+  setSimParams({titulo:'',idade:30,reforma:66,contrib:50000,capital:0,rent:5,inflacao:2,aumento:2,taxa:8,levant:20});
+  document.getElementById('resultados').style.display = 'none';
+  appState.lastCalcResult = null;
+  showToast('Simulador reposto','info');
+}
+
+function calcular() {
+  const p = getSimParams();
+  if (p.idade >= p.reforma) { showToast('Idade deve ser inferior à idade de reforma','error'); return; }
+  const anos = p.reforma - p.idade;
+  let capital = p.capital;
+  let totalContrib = p.capital;
+  let contribMensal = p.contrib;
+  const yearlyData = [];
+  const rentMensal = p.rent / 100 / 12;
+
+  for (let i = 1; i <= anos; i++) {
+    let rendimentoAnual = 0;
+    for (let m = 0; m < 12; m++) {
+      const rend = capital * rentMensal;
+      rendimentoAnual += rend;
+      capital += rend + contribMensal;
+      totalContrib += contribMensal;
+    }
+    const inflFactor = Math.pow(1 + p.inflacao / 100, i);
+    yearlyData.push({
+      ano: i,
+      idade: p.idade + i,
+      contribMensal: contribMensal,
+      contribAnual: contribMensal * 12,
+      rendimento: rendimentoAnual,
+      capital: capital,
+      capitalReal: capital / inflFactor
+    });
+    contribMensal *= (1 + p.aumento / 100);
+  }
+
+  const rendTotal = capital - totalContrib;
+  const taxaRendimento = rendTotal * (p.taxa / 100);
+  const capitalLiquido = capital - taxaRendimento;
+  const pensaoMensal = capitalLiquido / (p.levant * 12);
+
+  appState.lastCalcResult = {
+    params: p,
+    totalCapital: capital,
+    capitalLiquido,
+    totalContrib,
+    rendTotal,
+    taxaRendimento,
+    pensaoMensal,
+    yearlyData,
+    calculadoEm: new Date().toISOString()
+  };
+
+  // Stats
+  document.getElementById('statTotal').textContent = fmtKz(capitalLiquido);
+  document.getElementById('statContrib').textContent = fmtKz(totalContrib);
+  document.getElementById('statRendimento').textContent = fmtKz(rendTotal);
+  document.getElementById('statMensal').textContent = fmtKz(pensaoMensal);
+  document.getElementById('resultados').style.display = '';
+
+  renderCharts(yearlyData, totalContrib, rendTotal, taxaRendimento);
+  renderTable(yearlyData);
+  renderConversions(capitalLiquido, pensaoMensal);
+  showToast('Cálculo concluído','success');
+}
+
+// ======= CHARTS =======
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+function renderCharts(yearlyData, totalContrib, rendTotal, taxaRendimento) {
+  const labels = yearlyData.map(d => 'Ano ' + d.ano);
+
+  // Evolution
+  destroyChart('chartEvolucao');
+  charts['chartEvolucao'] = new Chart(document.getElementById('chartEvolucao'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'Capital Acumulado',data:yearlyData.map(d=>d.capital),borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,0.08)',fill:true,tension:0.3,pointRadius:1},
+        {label:'Total Contribuído',data:yearlyData.map((_,i)=>yearlyData.slice(0,i+1).reduce((s,d)=>s+d.contribAnual,getSimParams().capital)),borderColor:'#4CAF50',backgroundColor:'rgba(76,175,80,0.08)',fill:true,tension:0.3,pointRadius:1},
+        {label:'Valor Real',data:yearlyData.map(d=>d.capitalReal),borderColor:'#FF9800',borderDash:[4,4],fill:false,tension:0.3,pointRadius:1}
+      ]
+    },
+    options:{responsive:true,plugins:{title:{display:true,text:'Evolução do Capital',font:{family:'Inter',size:13,weight:'600'}},legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{ticks:{callback:v=>fmtNum(v/1e6,1)+'M',font:{family:'Inter',size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{family:'Inter',size:9},maxTicksLimit:12},grid:{display:false}}}}
+  });
+
+  // Distribution Donut
+  destroyChart('chartDistrib');
+  const distribData = [totalContrib, rendTotal, taxaRendimento];
+  const distribTotal = distribData.reduce((a,b)=>a+b,0);
+  charts['chartDistrib'] = new Chart(document.getElementById('chartDistrib'), {
+    type: 'doughnut',
+    data: {
+      labels: [
+        `Contribuições (${(totalContrib/distribTotal*100).toFixed(1)}%)`,
+        `Rendimentos (${(rendTotal/distribTotal*100).toFixed(1)}%)`,
+        `Imposto (${(taxaRendimento/distribTotal*100).toFixed(1)}%)`
+      ],
+      datasets: [{data: distribData, backgroundColor:['#66CFF5','#4CAF50','#F44336'],borderWidth:2,borderColor:'#fff'}]
+    },
+    options:{responsive:true,plugins:{title:{display:true,text:'Distribuição do Capital',font:{family:'Inter',size:13,weight:'600'}},legend:{position:'bottom',labels:{font:{family:'Inter',size:11},padding:10}},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+fmtKz(ctx.raw)}}}}}
+  });
+
+  // Annual bars
+  destroyChart('chartAnual');
+  charts['chartAnual'] = new Chart(document.getElementById('chartAnual'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {label:'Contribuição Anual',data:yearlyData.map(d=>d.contribAnual),backgroundColor:'rgba(30,136,229,0.7)',borderRadius:3},
+        {label:'Rendimento Anual',data:yearlyData.map(d=>d.rendimento),backgroundColor:'rgba(76,175,80,0.7)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,plugins:{title:{display:true,text:'Contribuições vs Rendimentos Anuais',font:{family:'Inter',size:13,weight:'600'}},legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{stacked:false,ticks:{callback:v=>fmtNum(v/1e3)+'K',font:{family:'Inter',size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{family:'Inter',size:9},maxTicksLimit:12},grid:{display:false}}}}
+  });
+
+  // Real vs Nominal
+  destroyChart('chartReal');
+  charts['chartReal'] = new Chart(document.getElementById('chartReal'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'Valor Nominal',data:yearlyData.map(d=>d.capital),borderColor:'#66CFF5',tension:0.3,pointRadius:1,fill:false},
+        {label:'Valor Real (ajustado)',data:yearlyData.map(d=>d.capitalReal),borderColor:'#F44336',borderDash:[5,3],tension:0.3,pointRadius:1,fill:false}
+      ]
+    },
+    options:{responsive:true,plugins:{title:{display:true,text:'Impacto da Inflação',font:{family:'Inter',size:13,weight:'600'}},legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{ticks:{callback:v=>fmtNum(v/1e6,1)+'M',font:{family:'Inter',size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{family:'Inter',size:9},maxTicksLimit:12},grid:{display:false}}}}
+  });
+
+  setTimeout(() => lucide.createIcons(), 50);
+}
+
+// ======= TABLE =======
+function renderTable(yearlyData) {
+  const tbody = document.getElementById('tabelaBody');
+  tbody.innerHTML = '';
+  yearlyData.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-year', d.ano);
+    tr.style.borderBottom = '1px solid #f0f0f0';
+    tr.innerHTML = `<td style="padding:6px 8px">${d.ano}</td><td style="padding:6px 8px;text-align:right">${d.idade}</td><td style="padding:6px 8px;text-align:right">${fmtKz(d.contribMensal)}</td><td style="padding:6px 8px;text-align:right">${fmtKz(d.contribAnual)}</td><td style="padding:6px 8px;text-align:right;color:#4CAF50">${fmtKz(d.rendimento)}</td><td style="padding:6px 8px;text-align:right;font-weight:600">${fmtKz(d.capital)}</td><td style="padding:6px 8px;text-align:right;color:#FF9800">${fmtKz(d.capitalReal)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function filterTable(q) {
+  const rows = document.querySelectorAll('#tabelaBody tr');
+  rows.forEach(r => {
+    r.style.display = !q || r.getAttribute('data-year').includes(q) ? '' : 'none';
+  });
+}
+
+// ======= CONVERSIONS =======
+function renderConversions(capitalLiquido, pensaoMensal) {
+  const grid = document.getElementById('conversionGrid');
+  grid.innerHTML = '';
+  Object.keys(appState.moedas).forEach(k => {
+    const m = appState.moedas[k];
+    const capConv = capitalLiquido * m.rate;
+    const penConv = pensaoMensal * m.rate;
+    const div = document.createElement('div');
+    div.style.cssText = 'background:#F8F9FA;border-radius:6px;padding:10px;border:1px solid #E0E0E0';
+    div.innerHTML = `<div style="font-size:11px;color:#888;margin-bottom:4px">${m.flag} ${m.name}</div><div style="font-size:14px;font-weight:600;color:#333">${m.symbol} ${fmtNum(capConv,2)}</div><div style="font-size:11px;color:#4CAF50;margin-top:2px">Pensão: ${m.symbol} ${fmtNum(penConv,2)}/mês</div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ======= SCENARIOS =======
+function guardarCenario() {
+  const p = getSimParams();
+  if (!appState.lastCalcResult) { showToast('Calcule primeiro antes de guardar','error'); return; }
+  const idx = appState.cenarios.length + 1;
+  const titulo = p.titulo || ('Cenário ' + idx);
+  appState.cenarios.push({
+    titulo,
+    params: {...p, titulo},
+    result: appState.lastCalcResult,
+    criadoEm: new Date().toISOString()
+  });
+  saveState();
+  showToast('Cenário "' + titulo + '" guardado','success');
+}
+
+function renderCenarios() {
+  const lista = document.getElementById('cenariosLista');
+  const sem = document.getElementById('semCenarios');
+  const filterVal = (document.getElementById('filterCenarios')?.value || '').toLowerCase();
+  const filtered = appState.cenarios.filter(c => !filterVal || c.titulo.toLowerCase().includes(filterVal) || JSON.stringify(c.params).toLowerCase().includes(filterVal));
+
+  if (filtered.length === 0) {
+    lista.innerHTML = '';
+    sem.style.display = '';
+    return;
+  }
+  sem.style.display = 'none';
+  lista.innerHTML = '';
+
+  filtered.forEach((c, idx) => {
+    const realIdx = appState.cenarios.indexOf(c);
+    const div = document.createElement('div');
+    div.className = 'scenario-item';
+    const date = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-PT') : '';
+    div.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.titulo}</div>
+        <div style="font-size:11px;color:#999;margin-top:2px">
+          <span class="badge badge-blue">${c.params.idade}→${c.params.reforma} anos</span>
+          <span class="badge badge-green" style="margin-left:4px">${fmtKz(c.params.contrib)}/mês</span>
+          <span style="margin-left:6px">${date}</span>
+        </div>
+        <div style="font-size:12px;color:#66CFF5;font-weight:500;margin-top:4px">Capital: ${fmtKz(c.result?.capitalLiquido||0)} · Pensão: ${fmtKz(c.result?.pensaoMensal||0)}/mês</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0" class="export-hide">
+        <button class="btn btn-secondary btn-xs" onclick="carregarCenario(${realIdx})" title="Carregar"><i data-lucide="upload" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-xs" onclick="clonarCenario(${realIdx})" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-xs" onclick="editarCenario(${realIdx})" title="Editar"><i data-lucide="edit" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-danger btn-xs" onclick="confirmarEliminarCenario(this,${realIdx})" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>`;
+    lista.appendChild(div);
+  });
+  lucide.createIcons();
+}
+
+function carregarCenario(idx) {
+  const c = appState.cenarios[idx];
+  if (!c) return;
+  setSimParams(c.params);
+  switchTab('simulador');
+  setTimeout(() => calcular(), 100);
+  showToast('Cenário "' + c.titulo + '" carregado','info');
+}
+function clonarCenario(idx) {
+  const c = appState.cenarios[idx];
+  if (!c) return;
+  const clone = JSON.parse(JSON.stringify(c));
+  clone.titulo = c.titulo + ' (cópia)';
+  clone.params.titulo = clone.titulo;
+  clone.criadoEm = new Date().toISOString();
+  appState.cenarios.push(clone);
+  saveState();
+  renderCenarios();
+  showToast('Cenário clonado','success');
+}
+function confirmarEliminarCenario(btn, idx) {
+  const parent = btn.parentElement;
+  if (parent.querySelector('.inline-confirm')) return;
+  const conf = document.createElement('div');
+  conf.className = 'inline-confirm';
+  conf.innerHTML = `<span style="font-size:11px;color:#F44336;font-weight:500">Eliminar?</span>
+    <button class="btn btn-danger btn-xs" onclick="eliminarCenario(${idx})">Sim</button>
+    <button class="btn btn-secondary btn-xs" onclick="this.parentElement.remove()">Não</button>`;
+  parent.appendChild(conf);
+}
+function eliminarCenario(idx) {
+  const nome = appState.cenarios[idx]?.titulo || '';
+  appState.cenarios.splice(idx, 1);
+  saveState();
+  renderCenarios();
+  showToast('Cenário "' + nome + '" eliminado','info');
+}
+
+function editarCenario(idx) {
+  editingScenarioIdx = idx;
+  const c = appState.cenarios[idx];
+  document.getElementById('editModalTitle').textContent = 'Editar: ' + c.titulo;
+  const body = document.getElementById('editModalBody');
+  const fields = [
+    {id:'ed_titulo',label:'Título',val:c.params.titulo,type:'text'},
+    {id:'ed_idade',label:'Idade Atual',val:c.params.idade,type:'number'},
+    {id:'ed_reforma',label:'Idade Reforma',val:c.params.reforma,type:'number'},
+    {id:'ed_contrib',label:'Contribuição Mensal (Kz)',val:c.params.contrib,type:'number'},
+    {id:'ed_capital',label:'Capital Inicial (Kz)',val:c.params.capital,type:'number'},
+    {id:'ed_rent',label:'Rentabilidade (%)',val:c.params.rent,type:'number',step:'0.1'},
+    {id:'ed_inflacao',label:'Inflação (%)',val:c.params.inflacao,type:'number',step:'0.1'},
+    {id:'ed_aumento',label:'Aumento Anual (%)',val:c.params.aumento,type:'number',step:'0.5'},
+    {id:'ed_taxa',label:'Taxa Rendimentos (%)',val:c.params.taxa,type:'number',step:'0.5'},
+    {id:'ed_levant',label:'Período Levantamento (anos)',val:c.params.levant,type:'number'}
+  ];
+  body.innerHTML = '<div class="grid-2" style="gap:10px">' + fields.map(f =>
+    `<div><label class="label">${f.label}</label><input type="${f.type}" id="${f.id}" class="input-field" value="${f.val}" ${f.step ? 'step="'+f.step+'"' : ''}></div>`
+  ).join('') + '</div>';
+  document.getElementById('editModal').style.display = '';
+}
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  editingScenarioIdx = null;
+}
+function saveEditModal() {
+  if (editingScenarioIdx === null) return;
+  const c = appState.cenarios[editingScenarioIdx];
+  c.params.titulo = document.getElementById('ed_titulo').value;
+  c.titulo = c.params.titulo;
+  c.params.idade = parseInt(document.getElementById('ed_idade').value);
+  c.params.reforma = parseInt(document.getElementById('ed_reforma').value);
+  c.params.contrib = parseFloat(document.getElementById('ed_contrib').value);
+  c.params.capital = parseFloat(document.getElementById('ed_capital').value);
+  c.params.rent = parseFloat(document.getElementById('ed_rent').value);
+  c.params.inflacao = parseFloat(document.getElementById('ed_inflacao').value);
+  c.params.aumento = parseFloat(document.getElementById('ed_aumento').value);
+  c.params.taxa = parseFloat(document.getElementById('ed_taxa').value);
+  c.params.levant = parseInt(document.getElementById('ed_levant').value);
+  // Recalculate
+  setSimParams(c.params);
+  calcular();
+  c.result = appState.lastCalcResult;
+  saveState();
+  closeEditModal();
+  renderCenarios();
+  showToast('Cenário atualizado','success');
+}
+
+// ======= MOEDAS =======
+function renderMoedas() {
+  const grid = document.getElementById('moedasGrid');
+  grid.innerHTML = '';
+  Object.keys(appState.moedas).forEach(k => {
+    const m = appState.moedas[k];
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid #E0E0E0;border-radius:6px;border-left:3px solid #FFC107';
+    div.innerHTML = `<span style="font-size:20px">${m.flag}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:#333">${k} — ${m.name}</div>
+        <div style="font-size:10px;color:#999;margin-top:1px">1 AOA = ? ${k}</div>
+      </div>
+      <input type="number" class="input-field export-hide" style="width:100px;text-align:right" value="${m.rate}" step="0.0001" min="0" data-moeda="${k}" onchange="updateMoedaRate('${k}',this.value)">
+      <span class="moeda-display" style="display:none;font-size:13px;font-weight:500">${m.rate}</span>`;
+    grid.appendChild(div);
+  });
+}
+function updateMoedaRate(k, v) {
+  appState.moedas[k].rate = parseFloat(v) || 0;
+}
+function guardarMoedas() {
+  saveState();
+  showToast('Taxas guardadas','success');
+  if (appState.lastCalcResult) {
+    renderConversions(appState.lastCalcResult.capitalLiquido, appState.lastCalcResult.pensaoMensal);
+  }
+}
+function resetMoedas() {
+  Object.keys(DEFAULT_MOEDAS).forEach(k => {
+    appState.moedas[k] = {...DEFAULT_MOEDAS[k]};
+  });
+  saveState();
+  renderMoedas();
+  showToast('Taxas repostas ao padrão','info');
+}
+
+// ======= GUIDE FILTER =======
+function filterGuiaItems() {
+  const q = (document.getElementById('filterGuia')?.value || '').toLowerCase();
+  document.querySelectorAll('.guia-item').forEach(item => {
+    const kw = (item.getAttribute('data-keywords') || '') + ' ' + item.textContent.toLowerCase();
+    item.style.display = !q || kw.includes(q) ? '' : 'none';
+  });
+}
+
+// ======= ACCORDION =======
+function toggleAccordion(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('[data-lucide="chevron-down"]');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  if (icon) icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+// ======= EXPORTS =======
+function exportChartImage(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  // Create HD version
+  const scale = 3;
+  const w = canvas.width;
+  const h = canvas.height;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = w * scale;
+  tempCanvas.height = h * scale;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, 0, 0, w, h);
+
+  const link = document.createElement('a');
+  link.download = canvasId + '_HD.png';
+  link.href = tempCanvas.toDataURL('image/png', 1.0);
+  link.click();
+  showToast('Gráfico exportado em HD','success');
+}
+
+async function exportAllImage() {
+  showToast('A preparar imagem...','info');
+  // Hide export elements
+  document.querySelectorAll('.export-hide').forEach(el => el.style.display = 'none');
+  // Show display values
+  showDisplayValues(true);
+  await new Promise(r => setTimeout(r, 300));
+
+  try {
+    const el = document.getElementById('appWrapper');
+    // Temporarily expand for full capture
+    const origOverflow = el.style.overflow;
+    const origHeight = el.style.height;
+    el.style.overflow = 'visible';
+    el.style.height = 'auto';
+
+    const canvas = await html2canvas(el, {scale:2, backgroundColor:'#F8F9FA', useCORS:true, logging:false});
+    const link = document.createElement('a');
+    link.download = 'IS_Pensao_Complementar.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    el.style.overflow = origOverflow;
+    el.style.height = origHeight;
+    showToast('Imagem exportada','success');
+  } catch(e) {
+    showToast('Erro ao exportar imagem','error');
+    console.error(e);
+  }
+  document.querySelectorAll('.export-hide').forEach(el => el.style.display = '');
+  showDisplayValues(false);
+}
+
+function showDisplayValues(show) {
+  if (show) {
+    document.querySelectorAll('#simCard .sim-display').forEach((span, i) => {
+      const input = span.previousElementSibling;
+      if (input && input.tagName === 'INPUT') {
+        span.textContent = input.value;
+        span.style.display = '';
+      }
+    });
+    document.querySelectorAll('#moedasGrid .moeda-display').forEach(span => {
+      span.style.display = '';
+    });
+  } else {
+    document.querySelectorAll('.sim-display').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.moeda-display').forEach(s => s.style.display = 'none');
+  }
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...','info');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const contentW = pageW - margin * 2;
+  let y = 10;
+
+  const dataExtenso = new Date().toLocaleDateString('pt-PT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const appName = document.getElementById('appTitle').textContent;
+
+  function addHeader() {
+    pdf.setFillColor(30, 136, 229);
+    pdf.rect(0, 0, pageW, 14, 'F');
+    pdf.setFontSize(9);
+    pdf.setTextColor(255,255,255);
+    pdf.text('IS ' + appName, margin, 9);
+    pdf.text(dataExtenso, pageW - margin, 9, {align:'right'});
+    y = 20;
+  }
+  function addFooter(pageNum) {
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(0, pageH - 12, pageW, 12, 'F');
+    pdf.setFontSize(7);
+    pdf.setTextColor(150);
+    pdf.text('Gerado por IS ' + appName + ' · ' + dataExtenso + ' · www.investesuite.com', margin, pageH - 5);
+    pdf.text('Página ' + pageNum, pageW - margin, pageH - 5, {align:'right'});
+  }
+  function checkNewPage(needed, pageCount) {
+    if (y + needed > pageH - 18) {
+      addFooter(pageCount.val);
+      pdf.addPage();
+      pageCount.val++;
+      addHeader();
+    }
+  }
+
+  const pageCount = {val: 1};
+  addHeader();
+
+  // Title
+  pdf.setFontSize(16);
+  pdf.setTextColor(30,136,229);
+  pdf.text(appName, margin, y + 6);
+  y += 14;
+  pdf.setFontSize(9);
+  pdf.setTextColor(100);
+  pdf.text('Simulador de Planos de Pensão Complementar (PPR/3.º Pilar) para cidadãos CPLP', margin, y);
+  y += 10;
+
+  if (appState.lastCalcResult) {
+    const r = appState.lastCalcResult;
+    const p = r.params;
+
+    // Params table
+    pdf.setFontSize(11);
+    pdf.setTextColor(51);
+    pdf.text('Parâmetros da Simulação', margin, y);
+    y += 6;
+    pdf.setFontSize(8);
+    pdf.setTextColor(80);
+    const paramLines = [
+      ['Título', p.titulo || 'Sem título'],
+      ['Idade Atual / Reforma', p.idade + ' → ' + p.reforma + ' anos (' + (p.reforma-p.idade) + ' anos)'],
+      ['Contribuição Mensal', fmtKz(p.contrib)],
+      ['Capital Inicial', fmtKz(p.capital)],
+      ['Rentabilidade / Inflação', p.rent + '% / ' + p.inflacao + '%'],
+      ['Aumento Anual / Taxa Rendimentos', p.aumento + '% / ' + p.taxa + '%'],
+      ['Período de Levantamento', p.levant + ' anos']
+    ];
+    paramLines.forEach(([k,v]) => {
+      checkNewPage(5, pageCount);
+      pdf.setTextColor(120);
+      pdf.text(k + ':', margin, y);
+      pdf.setTextColor(51);
+      pdf.text(v, margin + 60, y);
+      y += 5;
+    });
+    y += 6;
+
+    // Results
+    checkNewPage(20, pageCount);
+    pdf.setFontSize(11);
+    pdf.setTextColor(51);
+    pdf.text('Resultados', margin, y);
+    y += 6;
+    pdf.setFontSize(8);
+    const resLines = [
+      ['Capital Acumulado Líquido', fmtKz(r.capitalLiquido)],
+      ['Total Contribuído', fmtKz(r.totalContrib)],
+      ['Rendimentos Gerados', fmtKz(r.rendTotal)],
+      ['Imposto sobre Rendimentos', fmtKz(r.taxaRendimento)],
+      ['Pensão Mensal Estimada', fmtKz(r.pensaoMensal)]
+    ];
+    resLines.forEach(([k,v]) => {
+      checkNewPage(5, pageCount);
+      pdf.setTextColor(120);
+      pdf.text(k + ':', margin, y);
+      pdf.setTextColor(30,136,229);
+      pdf.text(v, margin + 60, y);
+      y += 5;
+    });
+    y += 8;
+
+    // Charts - small size
+    const chartIds = ['chartEvolucao','chartDistrib','chartAnual','chartReal'];
+    for (const cid of chartIds) {
+      const canvas = document.getElementById(cid);
+      if (!canvas) continue;
+      checkNewPage(50, pageCount);
+      try {
+        const imgData = canvas.toDataURL('image/png');
+        const chartW = contentW * 0.5;
+        const chartH = 38;
+        pdf.addImage(imgData, 'PNG', margin, y, chartW, chartH);
+        y += chartH + 6;
+      } catch(e) { console.error(e); }
+    }
+
+    // Conversions
+    checkNewPage(20, pageCount);
+    pdf.setFontSize(11);
+    pdf.setTextColor(51);
+    pdf.text('Conversão para Moedas CPLP', margin, y);
+    y += 6;
+    pdf.setFontSize(8);
+    Object.keys(appState.moedas).forEach(k => {
+      const m = appState.moedas[k];
+      checkNewPage(5, pageCount);
+      pdf.setTextColor(80);
+      const capConv = r.capitalLiquido * m.rate;
+      const penConv = r.pensaoMensal * m.rate;
+      pdf.text(`${m.flag} ${k}: Capital ${m.symbol} ${fmtNum(capConv,2)} · Pensão ${m.symbol} ${fmtNum(penConv,2)}/mês`, margin, y);
+      y += 5;
+    });
+  }
+
+  addFooter(pageCount.val);
+  pdf.save('IS_Pensao_Complementar.pdf');
+  showToast('PDF exportado','success');
+}
+
+function exportJSON() {
+  const data = {
+    app: 'IS Pensão Complementar',
+    versao: '1.0',
+    exportadoEm: new Date().toISOString(),
+    cenarios: appState.cenarios,
+    moedas: appState.moedas
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.download = 'IS_Pensao_Complementar.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  showToast('Dados exportados em JSON','success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.cenarios) appState.cenarios = data.cenarios;
+      if (data.moedas) {
+        Object.keys(data.moedas).forEach(k => {
+          if (appState.moedas[k]) {
+            appState.moedas[k].rate = data.moedas[k].rate || appState.moedas[k].rate;
+          }
+        });
+      }
+      saveState();
+      renderCenarios();
+      renderMoedas();
+      showToast('Dados importados com sucesso','success');
+    } catch(err) {
+      showToast('Ficheiro inválido','error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ======= TOAST =======
+function showToast(msg, type='info') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ======= ELEMENT SDK =======
+const defaultConfig = {
+  app_title: 'IS Pensão Complementar',
+  app_description: 'Simulador de Planos de Pensão Complementar (PPR/3.º Pilar) para cidadãos CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+async function onConfigChange(config) {
+  const c = key => config[key] || defaultConfig[key];
+
+  document.getElementById('appTitle').textContent = c('app_title');
+  document.getElementById('appDesc').textContent = c('app_description');
+
+  document.body.style.background = c('background_color');
+  document.body.style.color = c('text_color');
+  document.querySelectorAll('.card, .modal-content').forEach(el => el.style.background = c('surface_color'));
+  document.querySelectorAll('.header-fixed, .tabs-fixed').forEach(el => el.style.background = c('surface_color'));
+  document.querySelectorAll('.btn-primary').forEach(el => { el.style.background = c('primary_action_color'); });
+  document.querySelectorAll('.btn-success').forEach(el => { el.style.background = c('secondary_action_color'); });
+  document.querySelectorAll('.stat-value').forEach(el => el.style.color = c('primary_action_color'));
+  document.getElementById('appTitle').style.color = c('primary_action_color');
+
+  const ff = c('font_family');
+  const fs = c('font_size');
+  const stack = `${ff}, 'Inter', sans-serif`;
+  document.body.style.fontFamily = stack;
+  document.querySelectorAll('h1,h2,h3,.stat-value,.stat-label,.label,.tab-btn').forEach(el => el.style.fontFamily = stack);
+  document.querySelectorAll('p,.input-field,.btn,.accordion-header').forEach(el => el.style.fontFamily = stack);
+
+  document.getElementById('appTitle').style.fontSize = `${fs * 1.3}px`;
+  document.getElementById('appDesc').style.fontSize = `${fs * 0.85}px`;
+  document.querySelectorAll('h2').forEach(el => el.style.fontSize = `${fs * 1.07}px`);
+  document.querySelectorAll('.label').forEach(el => el.style.fontSize = `${fs * 0.85}px`);
+  document.querySelectorAll('.stat-value').forEach(el => el.style.fontSize = `${fs * 1.57}px`);
+  document.querySelectorAll('.stat-label').forEach(el => el.style.fontSize = `${fs * 0.78}px`);
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange,
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: v => { config.background_color = v; window.elementSdk.setConfig({background_color: v}); }},
+      { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({surface_color: v}); }},
+      { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({text_color: v}); }},
+      { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: v => { config.primary_action_color = v; window.elementSdk.setConfig({primary_action_color: v}); }},
+      { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: v => { config.secondary_action_color = v; window.elementSdk.setConfig({secondary_action_color: v}); }}
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => config.font_family || defaultConfig.font_family,
+      set: v => { config.font_family = v; window.elementSdk.setConfig({font_family: v}); }
+    },
+    fontSizeable: {
+      get: () => config.font_size || defaultConfig.font_size,
+      set: v => { config.font_size = v; window.elementSdk.setConfig({font_size: v}); }
+    }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['app_title', config.app_title || defaultConfig.app_title],
+    ['app_description', config.app_description || defaultConfig.app_description]
+  ])
+});
+
+// ======= INIT =======
+loadState();
+renderMoedas();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dedd879701b0710',t:'MTc3MzkzNzY1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

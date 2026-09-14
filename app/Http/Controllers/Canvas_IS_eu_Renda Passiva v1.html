@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Renda Passiva</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#212529}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#B0BEC5;border-radius:3px}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:#757575;cursor:pointer;background:none;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:20px;transition:all .2s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:8px 0 0 8px}
+.card-blue::before{background:#66CFF5}
+.card-green::before{background:#4CAF50}
+.card-gold::before{background:#FFC107}
+.card-orange::before{background:#FF9800}
+.card-red::before{background:#F44336}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.btn-primary{background:#66CFF5;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#fff;color:#424242;border:1px solid #E0E0E0;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-secondary:hover{background:#F5F5F5}
+.btn-danger{background:#F44336;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
+.btn-danger:hover{background:#D32F2F}
+.btn-success{background:#4CAF50;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:4px}
+.btn-success:hover{background:#388E3C}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:4px}
+.btn-icon{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #E0E0E0;border-radius:6px;background:#fff;cursor:pointer;transition:all .2s ease;color:#757575}
+.btn-icon:hover{background:#F5F5F5;color:#66CFF5}
+input,select,textarea{border:1px solid #E0E0E0;border-radius:6px;padding:8px 12px;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s ease;outline:none;width:100%;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+label{font-size:12px;font-weight:500;color:#616161;margin-bottom:4px;display:block}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-content{background:#fff;border-radius:10px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;transform:scale(.95);transition:all .2s ease}
+.modal-overlay.show .modal-content{transform:scale(1)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-gold{background:#FFF8E1;color:#F57F17}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:5;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #E0E0E0;border-radius:4px;cursor:pointer;transition:all .2s ease;color:#9E9E9E}
+.chart-export-btn:hover{color:#66CFF5;border-color:#66CFF5}
+.export-hide{transition:all .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease forwards}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.stat-value{font-size:24px;font-weight:700;color:#212529}
+.stat-label{font-size:11px;font-weight:500;color:#9E9E9E;text-transform:uppercase;letter-spacing:.5px}
+.header-fixed{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #E0E0E0}
+.tabs-fixed{position:sticky;top:61px;z-index:99;background:#fff;border-bottom:1px solid #E0E0E0}
+.search-input{background:#F5F5F5;border:1px solid #E0E0E0;border-radius:20px;padding:7px 14px 7px 36px;font-size:12px}
+.table-row{transition:all .15s ease}
+.table-row:hover{background:#F8F9FA}
+.confirm-bar{background:#FFF3E0;border:1px solid #FFE0B2;border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#E65100;margin-bottom:10px}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full flex flex-col" style="overflow:auto"><!-- Header -->
+   <header class="header-fixed px-4 py-3 flex items-center justify-between" id="appHeader">
+    <div class="flex items-center gap-3">
+     <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#66CFF5,#0D47A1);display:flex;align-items:center;justify-content:center"><i data-lucide="trending-up" style="width:20px;height:20px;color:#fff"></i>
+     </div>
+     <div>
+      <h1 id="mainTitle" class="text-base font-semibold" style="display: none; display: none; color:#212529;margin:0;line-height:1.3">IS Renda Passiva</h1>
+      <p id="mainDesc" class="text-xs" style="display: none; display: none; color:#9E9E9E;margin:0">Calculadora de Renda Passiva por Dividendos</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 export-hide"><button class="btn-icon" onclick="exportImage()" title="Exportar Imagem"><i data-lucide="image" style="width:16px;height:16px"></i></button> <button class="btn-icon" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:16px;height:16px"></i></button> <button class="btn-icon" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:16px;height:16px"></i></button> <button class="btn-icon" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:16px;height:16px"></i></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>
+   </header><!-- Tabs -->
+   <nav class="tabs-fixed" id="tabNav">
+    <div class="flex overflow-x-auto px-4" style="gap:2px" id="tabBar"><button class="tab-btn active" data-tab="simulator"><i data-lucide="calculator" style="width:15px;height:15px"></i>Simulador</button> <button class="tab-btn" data-tab="scenarios"><i data-lucide="layers" style="width:15px;height:15px"></i>Cenários</button> <button class="tab-btn" data-tab="currencies"><i data-lucide="banknote" style="width:15px;height:15px"></i>Moedas</button> <button class="tab-btn" data-tab="guide"><i data-lucide="book-open" style="width:15px;height:15px"></i>Guia</button>
+    </div>
+   </nav><!-- Filter Bar -->
+   <div class="px-4 pt-3 pb-1 export-hide" id="filterBar">
+    <div class="relative" style="max-width:320px"><i data-lucide="search" style="width:14px;height:14px;position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9E9E9E"></i> <input type="text" class="search-input" id="globalFilter" placeholder="Filtrar dados..." oninput="applyFilter()">
+    </div>
+   </div><!-- TAB: Simulador -->
+   <div class="tab-content active p-4 fade-in" id="tab-simulator"><!-- Title Assignment -->
+    <div class="mb-4 export-hide"><input type="text" id="simTitle" placeholder="Título da simulação (ex: Plano Dividendos 2025)" style="font-size:15px;font-weight:600;border:1px dashed #E0E0E0;padding:10px 14px" value="">
+    </div><!-- Input Form -->
+    <div class="card card-blue mb-4">
+     <h3 class="text-sm font-semibold mb-3" style="color:#66CFF5"><i data-lucide="sliders" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Parâmetros da Simulação</h3>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div><label>Capital Inicial (AOA)</label> <input type="number" id="capital" value="1000000" min="0" step="1000" oninput="calculate()">
+      </div>
+      <div><label>Aporte Mensal (AOA)</label> <input type="number" id="monthly" value="50000" min="0" step="1000" oninput="calculate()">
+      </div>
+      <div><label>Dividend Yield Anual (%)</label> <input type="number" id="dyield" value="5" min="0" max="100" step="0.1" oninput="calculate()">
+      </div>
+      <div><label>Horizonte (anos)</label> <input type="number" id="years" value="10" min="1" max="50" step="1" oninput="calculate()">
+      </div>
+      <div><label>Crescimento Dividendo Anual (%)</label> <input type="number" id="divGrowth" value="3" min="0" max="50" step="0.1" oninput="calculate()">
+      </div>
+      <div><label>Imposto sobre Dividendos (%)</label> <input type="number" id="taxRate" value="10" min="0" max="100" step="0.5" oninput="calculate()">
+      </div>
+      <div><label>Reinvestir Dividendos</label> <select id="reinvest" onchange="calculate()"> <option value="1">Sim (DRIP)</option> <option value="0">Não</option> </select>
+      </div>
+      <div><label>Inflação Anual (%)</label> <input type="number" id="inflation" value="2.5" min="0" max="50" step="0.1" oninput="calculate()">
+      </div>
+     </div>
+     <div class="flex gap-2 mt-4 flex-wrap export-hide"><button class="btn-primary" onclick="saveScenario()"><i data-lucide="save" style="width:14px;height:14px"></i>Guardar Cenário</button> <button class="btn-secondary" onclick="resetSimulator()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i>Limpar</button>
+     </div>
+    </div><!-- Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4" id="summaryCards">
+     <div class="card card-green">
+      <div class="stat-label">
+       Patrimônio Final
+      </div>
+      <div class="stat-value" id="statPatrimony" style="color:#4CAF50">
+       —
+      </div>
+     </div>
+     <div class="card card-gold">
+      <div class="stat-label">
+       Dividendo Mensal
+      </div>
+      <div class="stat-value" id="statMonthlyDiv" style="color:#F57F17">
+       —
+      </div>
+     </div>
+     <div class="card card-blue">
+      <div class="stat-label">
+       Total Investido
+      </div>
+      <div class="stat-value" id="statInvested" style="color:#66CFF5">
+       —
+      </div>
+     </div>
+     <div class="card card-orange">
+      <div class="stat-label">
+       Rendimento Real
+      </div>
+      <div class="stat-value" id="statRealReturn" style="color:#FF9800">
+       —
+      </div>
+     </div>
+    </div><!-- Detailed Table -->
+    <div class="card card-blue mb-4">
+     <h3 class="text-sm font-semibold mb-3" style="color:#66CFF5"><i data-lucide="table" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Projeção Anual</h3>
+     <div style="overflow-x:auto">
+      <table class="w-full text-xs" style="border-collapse:collapse">
+       <thead>
+        <tr style="background:#F8F9FA;border-bottom:2px solid #E0E0E0">
+         <th class="text-left p-2 font-semibold" style="color:#616161">Ano</th>
+         <th class="text-right p-2 font-semibold" style="color:#616161">Patrimônio</th>
+         <th class="text-right p-2 font-semibold" style="color:#616161">Dividendo Anual</th>
+         <th class="text-right p-2 font-semibold" style="color:#616161">Div. Líquido</th>
+         <th class="text-right p-2 font-semibold" style="color:#616161">Aporte Acum.</th>
+         <th class="text-right p-2 font-semibold" style="color:#616161">Valor Real</th>
+        </tr>
+       </thead>
+       <tbody id="projectionTable"></tbody>
+      </table>
+     </div>
+    </div><!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+     <div class="card card-green" style="position:relative"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartPatrimony','patrimonio')" title="Exportar HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+      <h3 class="text-sm font-semibold mb-2" style="color:#4CAF50">Evolução do Patrimônio</h3>
+      <canvas id="chartPatrimony" height="220"></canvas>
+     </div>
+     <div class="card card-gold" style="position:relative"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartDividends','dividendos')" title="Exportar HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+      <h3 class="text-sm font-semibold mb-2" style="color:#F57F17">Dividendos ao Longo do Tempo</h3>
+      <canvas id="chartDividends" height="220"></canvas>
+     </div>
+     <div class="card card-blue" style="position:relative"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartComposition','composicao')" title="Exportar HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+      <h3 class="text-sm font-semibold mb-2" style="color:#66CFF5">Composição Final</h3>
+      <canvas id="chartComposition" height="220"></canvas>
+     </div>
+     <div class="card card-orange" style="position:relative"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartReal','valor_real')" title="Exportar HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+      <h3 class="text-sm font-semibold mb-2" style="color:#FF9800">Nominal vs Real</h3>
+      <canvas id="chartReal" height="220"></canvas>
+     </div>
+    </div>
+   </div><!-- TAB: Cenários -->
+   <div class="tab-content p-4" id="tab-scenarios">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+     <h2 class="text-sm font-semibold" style="color:#424242"><i data-lucide="layers" style="width:15px;height:15px;display:inline;vertical-align:middle"></i> Cenários Guardados</h2>
+     <div class="flex gap-2 export-hide"><button class="btn-primary btn-sm" onclick="switchTab('simulator')"><i data-lucide="plus" style="width:13px;height:13px"></i>Novo</button>
+     </div>
+    </div>
+    <div class="mb-3 export-hide"><input type="text" id="scenarioFilter" placeholder="Filtrar cenários..." class="search-input" style="max-width:280px;padding-left:12px" oninput="renderScenarios()">
+    </div>
+    <div id="scenariosList"></div><!-- Templates -->
+    <div class="mt-6">
+     <h3 class="text-sm font-semibold mb-3" style="color:#66CFF5"><i data-lucide="bookmark" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Templates de Aprendizagem</h3>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="templatesList"></div>
+    </div>
+   </div><!-- TAB: Moedas -->
+   <div class="tab-content p-4" id="tab-currencies">
+    <h2 class="text-sm font-semibold mb-4" style="color:#424242"><i data-lucide="banknote" style="width:15px;height:15px;display:inline;vertical-align:middle"></i> Taxas de Câmbio (Base: AOA)</h2>
+    <p class="text-xs mb-4" style="color:#9E9E9E">Edite as taxas de câmbio para converter valores do simulador. Base: 1 unidade da moeda = X AOA.</p>
+    <div class="card card-blue mb-4">
+     <div id="currencyTable"></div>
+     <div class="mt-3 export-hide"><button class="btn-primary btn-sm" onclick="addCurrency()"><i data-lucide="plus" style="width:13px;height:13px"></i>Adicionar Moeda</button>
+     </div>
+    </div><!-- Converter -->
+    <div class="card card-gold">
+     <h3 class="text-sm font-semibold mb-3" style="color:#F57F17"><i data-lucide="repeat" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Conversor Rápido</h3>
+     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+      <div><label>Valor (AOA)</label> <input type="number" id="convertAmount" value="1000000" min="0" oninput="convertCurrency()">
+      </div>
+      <div><label>Para Moeda</label> <select id="convertTo" onchange="convertCurrency()"></select>
+      </div>
+      <div><label>Resultado</label>
+       <div class="text-lg font-bold" style="color:#F57F17;padding:8px 0" id="convertResult">
+        —
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- TAB: Guia -->
+   <div class="tab-content p-4" id="tab-guide">
+    <h2 class="text-sm font-semibold mb-4" style="color:#424242"><i data-lucide="book-open" style="width:15px;height:15px;display:inline;vertical-align:middle"></i> Guia de Utilização</h2>
+    <div id="guideContent"></div>
+   </div><!-- Toast -->
+   <div id="toast" class="toast"></div><!-- Confirm Modal -->
+   <div class="modal-overlay" id="confirmModal">
+    <div class="modal-content" style="max-width:400px">
+     <h3 class="text-sm font-semibold mb-2" id="confirmTitle">Confirmar</h3>
+     <p class="text-xs mb-4" style="color:#616161" id="confirmMsg"></p>
+     <div class="flex gap-2 justify-end"><button class="btn-secondary btn-sm" onclick="closeConfirm()">Cancelar</button> <button class="btn-danger btn-sm" id="confirmBtn" onclick="">Confirmar</button>
+     </div>
+    </div>
+   </div><!-- Edit Scenario Modal -->
+   <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+     <h3 class="text-sm font-semibold mb-3" id="editModalTitle">Editar Cenário</h3>
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="editModalFields"></div>
+     <div class="flex gap-2 justify-end mt-4"><button class="btn-secondary btn-sm" onclick="closeEditModal()">Cancelar</button> <button class="btn-primary btn-sm" id="editModalSave">Guardar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ===== STATE =====
+let state = {
+  scenarios: [],
+  currencies: [
+    {code:'BRL',name:'Real Brasileiro',rate:82.5},
+    {code:'EUR',name:'Euro',rate:920},
+    {code:'USD',name:'Dólar Americano',rate:835},
+    {code:'CVE',name:'Escudo Cabo-Verdiano',rate:8.35},
+    {code:'MZN',name:'Metical Moçambicano',rate:13.1},
+    {code:'STN',name:'Dobra S.Tomé',rate:37.5},
+    {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:1.4},
+    {code:'MOP',name:'Pataca Macaense',rate:104},
+    {code:'TPL',name:'Dólar Timorense (USD)',rate:835}
+  ],
+  results: null,
+  simTitle: ''
+};
+let charts = {};
+let confirmCallback = null;
+
+// ===== PERSISTENCE =====
+function saveState(){
+  try{localStorage.setItem('is_renda_passiva',JSON.stringify(state))}catch(e){}
+}
+function loadState(){
+  try{
+    const d=localStorage.getItem('is_renda_passiva');
+    if(d){
+      const p=JSON.parse(d);
+      state.scenarios=p.scenarios||[];
+      if(p.currencies&&p.currencies.length) state.currencies=p.currencies;
+      state.simTitle=p.simTitle||'';
+    }
+  }catch(e){}
+}
+
+// ===== TABS =====
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tab-content').forEach(c=>{c.classList.remove('active');c.classList.remove('fade-in')});
+  const el=document.getElementById('tab-'+tab);
+  if(el){el.classList.add('active');void el.offsetWidth;el.classList.add('fade-in')}
+}
+document.getElementById('tabBar').addEventListener('click',e=>{
+  const btn=e.target.closest('.tab-btn');
+  if(btn)switchTab(btn.dataset.tab);
+});
+
+// ===== FORMAT =====
+function fmtAOA(v){
+  if(v==null||isNaN(v)) return '—';
+  return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+}
+function fmtPct(v){return (v||0).toFixed(1)+'%'}
+function fmtNum(v){return new Intl.NumberFormat('pt-AO',{minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0)}
+
+// ===== CALCULATOR =====
+function getInputs(){
+  return {
+    capital: parseFloat(document.getElementById('capital').value)||0,
+    monthly: parseFloat(document.getElementById('monthly').value)||0,
+    dyield: parseFloat(document.getElementById('dyield').value)||0,
+    years: parseInt(document.getElementById('years').value)||1,
+    divGrowth: parseFloat(document.getElementById('divGrowth').value)||0,
+    taxRate: parseFloat(document.getElementById('taxRate').value)||0,
+    reinvest: document.getElementById('reinvest').value==='1',
+    inflation: parseFloat(document.getElementById('inflation').value)||0
+  };
+}
+
+function calculate(){
+  const inp=getInputs();
+  const rows=[];
+  let patrimony=inp.capital;
+  let totalContrib=inp.capital;
+  let currentYield=inp.dyield/100;
+  const taxMult=1-(inp.taxRate/100);
+  const inflRate=inp.inflation/100;
+
+  for(let y=1;y<=inp.years;y++){
+    // add monthly contributions for the year
+    patrimony+=inp.monthly*12;
+    totalContrib+=inp.monthly*12;
+    // dividends
+    const divGross=patrimony*currentYield;
+    const divNet=divGross*taxMult;
+    if(inp.reinvest) patrimony+=divNet;
+    const realValue=patrimony/Math.pow(1+inflRate,y);
+    rows.push({year:y,patrimony,divGross,divNet,totalContrib,realValue});
+    // grow yield
+    currentYield*=(1+(inp.divGrowth/100));
+  }
+
+  state.results={inputs:inp,rows};
+  renderResults();
+  saveState();
+}
+
+function renderResults(){
+  if(!state.results) return;
+  const {rows,inputs}=state.results;
+  const last=rows[rows.length-1]||{};
+  
+  document.getElementById('statPatrimony').textContent=fmtAOA(last.patrimony);
+  document.getElementById('statMonthlyDiv').textContent=fmtAOA((last.divNet||0)/12);
+  document.getElementById('statInvested').textContent=fmtAOA(last.totalContrib);
+  const realReturn=last.patrimony>0?((last.patrimony-last.totalContrib)/last.totalContrib*100):0;
+  document.getElementById('statRealReturn').textContent=fmtPct(realReturn);
+
+  // Table
+  const tbody=document.getElementById('projectionTable');
+  const filter=(document.getElementById('globalFilter').value||'').toLowerCase();
+  tbody.innerHTML=rows.filter(r=>{
+    if(!filter)return true;
+    return ('ano '+r.year).includes(filter)||fmtAOA(r.patrimony).toLowerCase().includes(filter);
+  }).map(r=>`
+    <tr class="table-row" style="border-bottom:1px solid #F5F5F5">
+      <td class="p-2 font-medium">${r.year}</td>
+      <td class="p-2 text-right">${fmtAOA(r.patrimony)}</td>
+      <td class="p-2 text-right">${fmtAOA(r.divGross)}</td>
+      <td class="p-2 text-right" style="color:#4CAF50">${fmtAOA(r.divNet)}</td>
+      <td class="p-2 text-right" style="color:#66CFF5">${fmtAOA(r.totalContrib)}</td>
+      <td class="p-2 text-right" style="color:#FF9800">${fmtAOA(r.realValue)}</td>
+    </tr>
+  `).join('');
+
+  renderCharts();
+}
+
+// ===== CHARTS =====
+function destroyChart(key){if(charts[key]){charts[key].destroy();delete charts[key]}}
+
+function renderCharts(){
+  if(!state.results)return;
+  const {rows,inputs}=state.results;
+  const labels=rows.map(r=>'Ano '+r.year);
+  
+  // Patrimony
+  destroyChart('patrimony');
+  charts.patrimony=new Chart(document.getElementById('chartPatrimony'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Patrimônio',data:rows.map(r=>r.patrimony),borderColor:'#4CAF50',backgroundColor:'rgba(76,175,80,.1)',fill:true,tension:.3,pointRadius:2},
+      {label:'Investido',data:rows.map(r=>r.totalContrib),borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,.05)',fill:true,tension:.3,pointRadius:2,borderDash:[5,3]}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{ticks:{callback:v=>fmtNum(v),font:{family:'Inter',size:10}}},x:{ticks:{font:{family:'Inter',size:10}}}}}
+  });
+
+  // Dividends
+  destroyChart('dividends');
+  charts.dividends=new Chart(document.getElementById('chartDividends'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Div. Bruto',data:rows.map(r=>r.divGross),backgroundColor:'rgba(255,193,7,.6)',borderColor:'#FFC107',borderWidth:1},
+      {label:'Div. Líquido',data:rows.map(r=>r.divNet),backgroundColor:'rgba(76,175,80,.6)',borderColor:'#4CAF50',borderWidth:1}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{ticks:{callback:v=>fmtNum(v),font:{family:'Inter',size:10}}},x:{ticks:{font:{family:'Inter',size:10}}}}}
+  });
+
+  // Composition Donut
+  const last=rows[rows.length-1];
+  const invested=last.totalContrib;
+  const gains=last.patrimony-invested;
+  const totalComp=invested+Math.abs(gains);
+  const investedPct=totalComp>0?((invested/totalComp)*100):0;
+  const gainsPct=totalComp>0?((Math.abs(gains)/totalComp)*100):0;
+
+  destroyChart('composition');
+  charts.composition=new Chart(document.getElementById('chartComposition'),{
+    type:'doughnut',
+    data:{
+      labels:[`Investido (${investedPct.toFixed(1)}%)`,`Ganhos (${gainsPct.toFixed(1)}%)`],
+      datasets:[{data:[invested,Math.max(0,gains)],backgroundColor:['#66CFF5','#4CAF50'],borderWidth:2,borderColor:'#fff'}]
+    },
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:11},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtAOA(ctx.raw)}`}}}}
+  });
+
+  // Real vs Nominal
+  destroyChart('real');
+  charts.real=new Chart(document.getElementById('chartReal'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Nominal',data:rows.map(r=>r.patrimony),borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,.1)',fill:true,tension:.3,pointRadius:2},
+      {label:'Real (ajust. inflação)',data:rows.map(r=>r.realValue),borderColor:'#9E9E9E',backgroundColor:'rgba(158,158,158,.05)',fill:true,tension:.3,pointRadius:2,borderDash:[5,3]}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},scales:{y:{ticks:{callback:v=>fmtNum(v),font:{family:'Inter',size:10}}},x:{ticks:{font:{family:'Inter',size:10}}}}}
+  });
+}
+
+// ===== CHART IMAGE EXPORT =====
+function exportChartImage(canvasId, name){
+  const canvas=document.getElementById(canvasId);
+  // create HD version
+  const scale=2;
+  const w=canvas.width;
+  const h=canvas.height;
+  const tempCanvas=document.createElement('canvas');
+  tempCanvas.width=w*scale;
+  tempCanvas.height=h*scale;
+  const ctx=tempCanvas.getContext('2d');
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,tempCanvas.width,tempCanvas.height);
+  ctx.drawImage(canvas,0,0,tempCanvas.width,tempCanvas.height);
+  const link=document.createElement('a');
+  link.download=`IS_RendaPassiva_${name}_${Date.now()}.png`;
+  link.href=tempCanvas.toDataURL('image/png',1.0);
+  link.click();
+  showToast('Gráfico exportado!','success');
+}
+
+// ===== SCENARIOS =====
+function saveScenario(){
+  const inp=getInputs();
+  const title=document.getElementById('simTitle').value.trim()||`Cenário ${state.scenarios.length+1}`;
+  state.scenarios.push({id:Date.now(),title,inputs:inp,createdAt:new Date().toISOString()});
+  saveState();
+  showToast('Cenário guardado!','success');
+  renderScenarios();
+}
+
+function renderScenarios(){
+  const container=document.getElementById('scenariosList');
+  const filter=(document.getElementById('scenarioFilter')?.value||'').toLowerCase();
+  const filtered=state.scenarios.filter(s=>{
+    if(!filter)return true;
+    return s.title.toLowerCase().includes(filter)||fmtAOA(s.inputs.capital).toLowerCase().includes(filter);
+  });
+  if(filtered.length===0){
+    container.innerHTML=`<div class="card card-blue" style="text-align:center;padding:40px"><i data-lucide="inbox" style="width:40px;height:40px;color:#E0E0E0;margin:0 auto 12px"></i><p class="text-sm" style="color:#9E9E9E">Nenhum cenário guardado.</p><p class="text-xs" style="color:#BDBDBD">Vá ao Simulador e guarde a sua primeira simulação.</p></div>`;
+    lucide.createIcons();
+    return;
+  }
+  container.innerHTML=filtered.map(s=>{
+    const d=new Date(s.createdAt);
+    const dateStr=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});
+    return `
+    <div class="card card-green mb-3 filterable" data-filter="${s.title.toLowerCase()}">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div style="flex:1;min-width:200px">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-semibold text-sm">${escHTML(s.title)}</span>
+            <span class="badge badge-green">${dateStr}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs" style="color:#757575">
+            <span>Capital: ${fmtAOA(s.inputs.capital)}</span>
+            <span>Aporte: ${fmtAOA(s.inputs.monthly)}/mês</span>
+            <span>Yield: ${s.inputs.dyield}%</span>
+            <span>${s.inputs.years} anos</span>
+            <span>${s.inputs.reinvest?'DRIP':'Sem reinvest.'}</span>
+          </div>
+        </div>
+        <div class="flex gap-1 export-hide">
+          <button class="btn-icon" style="width:28px;height:28px" onclick="loadScenario(${s.id})" title="Carregar"><i data-lucide="play" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" style="width:28px;height:28px" onclick="editScenario(${s.id})" title="Editar"><i data-lucide="edit" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" style="width:28px;height:28px" onclick="cloneScenario(${s.id})" title="Clonar"><i data-lucide="copy" style="width:13px;height:13px"></i></button>
+          <button class="btn-icon" style="width:28px;height:28px;color:#F44336" onclick="deleteScenario(${s.id})" title="Eliminar"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(!s)return;
+  document.getElementById('simTitle').value=s.title;
+  document.getElementById('capital').value=s.inputs.capital;
+  document.getElementById('monthly').value=s.inputs.monthly;
+  document.getElementById('dyield').value=s.inputs.dyield;
+  document.getElementById('years').value=s.inputs.years;
+  document.getElementById('divGrowth').value=s.inputs.divGrowth||3;
+  document.getElementById('taxRate').value=s.inputs.taxRate||10;
+  document.getElementById('reinvest').value=s.inputs.reinvest?'1':'0';
+  document.getElementById('inflation').value=s.inputs.inflation||2.5;
+  calculate();
+  switchTab('simulator');
+  showToast('Cenário carregado!','info');
+}
+
+function cloneScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(!s)return;
+  state.scenarios.push({...JSON.parse(JSON.stringify(s)),id:Date.now(),title:s.title+' (cópia)',createdAt:new Date().toISOString()});
+  saveState();renderScenarios();
+  showToast('Cenário clonado!','success');
+}
+
+function deleteScenario(id){
+  showConfirm('Eliminar Cenário','Tem certeza que deseja eliminar este cenário? Esta ação é irreversível.',()=>{
+    state.scenarios=state.scenarios.filter(x=>x.id!==id);
+    saveState();renderScenarios();
+    showToast('Cenário eliminado.','info');
+  });
+}
+
+function editScenario(id){
+  const s=state.scenarios.find(x=>x.id===id);
+  if(!s)return;
+  const fields=[
+    {key:'title',label:'Título',value:s.title,type:'text'},
+    {key:'capital',label:'Capital Inicial (AOA)',value:s.inputs.capital,type:'number'},
+    {key:'monthly',label:'Aporte Mensal (AOA)',value:s.inputs.monthly,type:'number'},
+    {key:'dyield',label:'Dividend Yield (%)',value:s.inputs.dyield,type:'number'},
+    {key:'years',label:'Horizonte (anos)',value:s.inputs.years,type:'number'},
+    {key:'divGrowth',label:'Crescimento Div. (%)',value:s.inputs.divGrowth||3,type:'number'},
+    {key:'taxRate',label:'Imposto (%)',value:s.inputs.taxRate||10,type:'number'},
+    {key:'inflation',label:'Inflação (%)',value:s.inputs.inflation||2.5,type:'number'}
+  ];
+  document.getElementById('editModalTitle').textContent='Editar: '+s.title;
+  document.getElementById('editModalFields').innerHTML=fields.map(f=>
+    `<div><label>${f.label}</label><input type="${f.type}" id="edit_${f.key}" value="${f.value}"></div>`
+  ).join('');
+  document.getElementById('editModalSave').onclick=()=>{
+    s.title=document.getElementById('edit_title').value||s.title;
+    s.inputs.capital=parseFloat(document.getElementById('edit_capital').value)||s.inputs.capital;
+    s.inputs.monthly=parseFloat(document.getElementById('edit_monthly').value)||s.inputs.monthly;
+    s.inputs.dyield=parseFloat(document.getElementById('edit_dyield').value)||s.inputs.dyield;
+    s.inputs.years=parseInt(document.getElementById('edit_years').value)||s.inputs.years;
+    s.inputs.divGrowth=parseFloat(document.getElementById('edit_divGrowth').value)||0;
+    s.inputs.taxRate=parseFloat(document.getElementById('edit_taxRate').value)||0;
+    s.inputs.inflation=parseFloat(document.getElementById('edit_inflation').value)||0;
+    saveState();renderScenarios();closeEditModal();
+    showToast('Cenário atualizado!','success');
+  };
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){document.getElementById('editModal').classList.remove('show')}
+
+// ===== TEMPLATES =====
+function renderTemplates(){
+  const templates=[
+    {title:'Conservador',desc:'Baixo risco, dividendos estáveis de empresas blue-chip.',capital:500000,monthly:25000,dyield:3,years:15,divGrowth:2,taxRate:10,reinvest:true,inflation:2},
+    {title:'Moderado',desc:'Equilíbrio entre crescimento e renda. ETFs de dividendos.',capital:1000000,monthly:50000,dyield:5,years:10,divGrowth:3,taxRate:10,reinvest:true,inflation:2.5},
+    {title:'Agressivo',desc:'Alto yield, empresas emergentes, maior volatilidade.',capital:2000000,monthly:100000,dyield:8,years:7,divGrowth:5,taxRate:15,reinvest:true,inflation:3},
+    {title:'Aposentadoria',desc:'Plano de longo prazo para independência financeira.',capital:300000,monthly:30000,dyield:4,years:25,divGrowth:2.5,taxRate:10,reinvest:true,inflation:2.5},
+    {title:'Renda Imediata',desc:'Sem reinvestimento, foco em renda passiva mensal.',capital:5000000,monthly:0,dyield:6,years:5,divGrowth:1,taxRate:10,reinvest:false,inflation:2},
+    {title:'DRIP Intensivo',desc:'Reinvestimento total com aportes elevados.',capital:750000,monthly:75000,dyield:5.5,years:20,divGrowth:4,taxRate:10,reinvest:true,inflation:2.5}
+  ];
+  document.getElementById('templatesList').innerHTML=templates.map(t=>`
+    <div class="card card-gold cursor-pointer" onclick="loadTemplate(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <div class="flex items-center gap-2 mb-1">
+        <i data-lucide="bookmark" style="width:14px;height:14px;color:#FFC107"></i>
+        <span class="font-semibold text-sm">${t.title}</span>
+      </div>
+      <p class="text-xs mb-2" style="color:#757575">${t.desc}</p>
+      <div class="flex flex-wrap gap-2 text-xs" style="color:#9E9E9E">
+        <span class="badge badge-blue">${fmtAOA(t.capital)}</span>
+        <span class="badge badge-green">Yield ${t.dyield}%</span>
+        <span class="badge badge-gold">${t.years} anos</span>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function loadTemplate(t){
+  document.getElementById('simTitle').value=t.title;
+  document.getElementById('capital').value=t.capital;
+  document.getElementById('monthly').value=t.monthly;
+  document.getElementById('dyield').value=t.dyield;
+  document.getElementById('years').value=t.years;
+  document.getElementById('divGrowth').value=t.divGrowth;
+  document.getElementById('taxRate').value=t.taxRate;
+  document.getElementById('reinvest').value=t.reinvest?'1':'0';
+  document.getElementById('inflation').value=t.inflation;
+  calculate();
+  switchTab('simulator');
+  showToast('Template carregado!','info');
+}
+
+// ===== CURRENCIES =====
+function renderCurrencies(){
+  const container=document.getElementById('currencyTable');
+  container.innerHTML=`
+    <table class="w-full text-xs" style="border-collapse:collapse">
+      <thead>
+        <tr style="background:#F8F9FA;border-bottom:2px solid #E0E0E0">
+          <th class="text-left p-2 font-semibold" style="color:#616161">Código</th>
+          <th class="text-left p-2 font-semibold" style="color:#616161">Nome</th>
+          <th class="text-right p-2 font-semibold" style="color:#616161">1 Unidade = AOA</th>
+          <th class="text-right p-2 font-semibold export-hide" style="color:#616161">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${state.currencies.map((c,i)=>`
+          <tr class="table-row" style="border-bottom:1px solid #F5F5F5">
+            <td class="p-2 font-medium">${c.code}</td>
+            <td class="p-2">${c.name}</td>
+            <td class="p-2 text-right">
+              <input type="number" class="export-hide" value="${c.rate}" min="0" step="0.01" style="width:100px;text-align:right;padding:4px 8px;font-size:12px" onchange="updateCurrencyRate(${i},this.value)">
+              <span class="hidden-for-screen" style="display:none">${c.rate}</span>
+            </td>
+            <td class="p-2 text-right export-hide">
+              <button class="btn-icon" style="width:24px;height:24px;color:#F44336" onclick="removeCurrency(${i})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  // Update converter select
+  const sel=document.getElementById('convertTo');
+  sel.innerHTML=state.currencies.map(c=>`<option value="${c.rate}">${c.code} - ${c.name}</option>`).join('');
+  convertCurrency();
+  lucide.createIcons();
+}
+
+function updateCurrencyRate(i,val){
+  state.currencies[i].rate=parseFloat(val)||0;
+  saveState();
+  convertCurrency();
+}
+
+function addCurrency(){
+  const code=prompt_inline('Nova moeda','Código (ex: GBP)');
+  if(!code)return;
+  // Use inline
+  showInlineAdd();
+}
+
+function showInlineAdd(){
+  const container=document.getElementById('currencyTable');
+  // Add a temporary row
+  const row=document.createElement('div');
+  row.className='card card-blue mt-2';
+  row.id='newCurrencyRow';
+  row.innerHTML=`
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+      <div><label>Código</label><input type="text" id="newCurrCode" placeholder="GBP" maxlength="5"></div>
+      <div><label>Nome</label><input type="text" id="newCurrName" placeholder="Libra Esterlina"></div>
+      <div><label>Taxa (1 un. = AOA)</label><input type="number" id="newCurrRate" value="1000" min="0" step="0.01"></div>
+    </div>
+    <div class="flex gap-2 mt-2">
+      <button class="btn-success btn-sm" onclick="confirmAddCurrency()"><i data-lucide="check" style="width:12px;height:12px"></i>Adicionar</button>
+      <button class="btn-secondary btn-sm" onclick="document.getElementById('newCurrencyRow').remove()">Cancelar</button>
+    </div>
+  `;
+  container.appendChild(row);
+  lucide.createIcons();
+  document.getElementById('newCurrCode').focus();
+}
+
+// Override addCurrency
+addCurrency=function(){
+  if(document.getElementById('newCurrencyRow'))return;
+  showInlineAdd();
+};
+
+function confirmAddCurrency(){
+  const code=(document.getElementById('newCurrCode').value||'').toUpperCase().trim();
+  const name=document.getElementById('newCurrName').value.trim();
+  const rate=parseFloat(document.getElementById('newCurrRate').value)||0;
+  if(!code||!name){showToast('Preencha código e nome.','error');return;}
+  state.currencies.push({code,name,rate});
+  saveState();renderCurrencies();
+  showToast('Moeda adicionada!','success');
+}
+
+function removeCurrency(i){
+  showConfirm('Remover Moeda',`Remover ${state.currencies[i].code}?`,()=>{
+    state.currencies.splice(i,1);
+    saveState();renderCurrencies();
+    showToast('Moeda removida.','info');
+  });
+}
+
+function convertCurrency(){
+  const amount=parseFloat(document.getElementById('convertAmount').value)||0;
+  const rate=parseFloat(document.getElementById('convertTo').value)||1;
+  const result=rate>0?(amount/rate):0;
+  document.getElementById('convertResult').textContent=result.toLocaleString('pt-AO',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ===== GUIDE =====
+function renderGuide(){
+  const sections=[
+    {icon:'calculator',title:'Como Utilizar',color:'#66CFF5',content:`
+      <ol class="text-xs" style="color:#616161;line-height:1.8;padding-left:16px">
+        <li>No separador <strong>Simulador</strong>, introduza o capital inicial em Kwanzas (AOA)</li>
+        <li>Defina o aporte mensal que pretende realizar regularmente</li>
+        <li>Indique o Dividend Yield anual esperado (% de retorno em dividendos)</li>
+        <li>Escolha o horizonte temporal em anos para a sua simulação</li>
+        <li>Ajuste a taxa de crescimento anual dos dividendos e o imposto aplicável</li>
+        <li>Selecione se deseja reinvestir dividendos (DRIP) ou recebê-los como renda</li>
+        <li>A inflação ajusta o valor real do seu patrimônio ao longo do tempo</li>
+        <li>Clique em <strong>Guardar Cenário</strong> para salvar a simulação atual</li>
+      </ol>`},
+    {icon:'trending-up',title:'Dividend Yield',color:'#4CAF50',content:`
+      <p class="text-xs" style="color:#616161;line-height:1.8">
+        O <strong>Dividend Yield</strong> é a razão entre os dividendos anuais pagos por ação e o preço atual da ação. 
+        É o indicador mais importante para investidores focados em renda passiva.<br><br>
+        <strong>Yield baixo (1-3%):</strong> Empresas de crescimento que reinvestem lucros<br>
+        <strong>Yield médio (3-5%):</strong> Empresas maduras com pagamento estável<br>
+        <strong>Yield alto (5-10%+):</strong> Pode indicar maior risco ou preço deprimido<br><br>
+        Na Europa, ETFs de dividendos populares incluem: iShares STOXX Europe 600, Vanguard FTSE All-World High Dividend Yield, SPDR S&P Euro Dividend Aristocrats.
+      </p>`},
+    {icon:'repeat',title:'DRIP (Reinvestimento)',color:'#FFC107',content:`
+      <p class="text-xs" style="color:#616161;line-height:1.8">
+        O <strong>DRIP</strong> (Dividend Reinvestment Plan) é a estratégia de reinvestir automaticamente os dividendos recebidos 
+        na compra de mais ações. Este mecanismo potencia o efeito dos juros compostos.<br><br>
+        <strong>Exemplo:</strong> Com 1.000.000 AOA a 5% yield e DRIP ativo durante 20 anos, o patrimônio pode multiplicar 
+        significativamente comparado a não reinvestir. A diferença torna-se exponencial ao longo do tempo.
+      </p>`},
+    {icon:'shield',title:'Melhores Práticas',color:'#FF9800',content:`
+      <ul class="text-xs" style="color:#616161;line-height:1.8;padding-left:16px">
+        <li><strong>Diversifique:</strong> Não concentre em apenas uma empresa ou setor</li>
+        <li><strong>Priorize consistência:</strong> Empresas com histórico longo de pagamento de dividendos (Dividend Aristocrats)</li>
+        <li><strong>Considere ETFs:</strong> Para CPLP, ETFs europeus oferecem diversificação com baixo custo</li>
+        <li><strong>Reinvista:</strong> O DRIP potencia os juros compostos significativamente</li>
+        <li><strong>Aportes regulares:</strong> Investir mensalmente (Dollar-Cost Averaging) reduz o risco do timing</li>
+        <li><strong>Considere impostos:</strong> Diferentes países da CPLP têm diferentes taxações sobre dividendos</li>
+        <li><strong>Ajuste à inflação:</strong> Aumente os aportes anualmente para manter o poder de compra</li>
+        <li><strong>Paciência:</strong> Renda passiva por dividendos é uma estratégia de longo prazo</li>
+      </ul>`},
+    {icon:'globe',title:'Impostos na CPLP',color:'#F44336',content:`
+      <div class="text-xs" style="color:#616161;line-height:1.8">
+        <p><strong>Angola:</strong> Imposto sobre dividendos de 10% (IPR)</p>
+        <p><strong>Brasil:</strong> Atualmente isentos para pessoa física (em revisão)</p>
+        <p><strong>Portugal:</strong> 28% sobre dividendos (ou englobamento)</p>
+        <p><strong>Moçambique:</strong> 20% de retenção na fonte</p>
+        <p><strong>Cabo Verde:</strong> 20% de retenção na fonte</p>
+        <p><strong>São Tomé e Príncipe:</strong> 10-20% variável</p>
+        <p><strong>Guiné-Bissau:</strong> 10-25% variável</p>
+        <p><strong>Timor-Leste:</strong> 10% de retenção na fonte</p>
+        <p class="mt-2" style="color:#FF9800"><strong>Nota:</strong> Verifique sempre a legislação fiscal atualizada do seu país.</p>
+      </div>`}
+  ];
+  document.getElementById('guideContent').innerHTML=sections.map(s=>`
+    <div class="card card-blue mb-3" style="border-left-color:${s.color}">
+      <div class="flex items-center gap-2 mb-2">
+        <i data-lucide="${s.icon}" style="width:16px;height:16px;color:${s.color}"></i>
+        <h3 class="text-sm font-semibold" style="color:${s.color}">${s.title}</h3>
+      </div>
+      ${s.content}
+    </div>
+  `).join('');
+  // Override card left border colors
+  document.querySelectorAll('#guideContent .card').forEach((c,i)=>{
+    c.style.setProperty('--left-color',sections[i].color);
+    c.querySelector('::before')
+  });
+  lucide.createIcons();
+}
+
+// ===== EXPORT / IMPORT =====
+function exportJSON(){
+  const data={version:1,exportDate:new Date().toISOString(),scenarios:state.scenarios,currencies:state.currencies};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const link=document.createElement('a');
+  link.download=`IS_RendaPassiva_${new Date().toISOString().slice(0,10)}.json`;
+  link.href=URL.createObjectURL(blob);
+  link.click();
+  showToast('Dados exportados!','success');
+}
+
+function importJSON(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.scenarios) state.scenarios=[...state.scenarios,...data.scenarios];
+      if(data.currencies) state.currencies=data.currencies;
+      saveState();renderAll();
+      showToast('Dados importados!','success');
+    }catch(err){showToast('Ficheiro inválido.','error')}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+async function exportImage(){
+  // Hide export controls
+  document.querySelectorAll('.export-hide').forEach(el=>el.style.display='none');
+  // Show values that are hidden in inputs
+  document.querySelectorAll('.hidden-for-screen').forEach(el=>el.style.display='inline');
+  
+  await new Promise(r=>setTimeout(r,200));
+  try{
+    const app=document.getElementById('app');
+    const canvas=await html2canvas(app,{
+      scale:2,backgroundColor:'#F8F9FA',useCORS:true,
+      ignoreElements:el=>el.classList.contains('export-hide')
+    });
+    const link=document.createElement('a');
+    link.download=`IS_RendaPassiva_${Date.now()}.png`;
+    link.href=canvas.toDataURL('image/png',1.0);
+    link.click();
+    showToast('Imagem exportada!','success');
+  }catch(e){showToast('Erro ao exportar imagem.','error')}
+  
+  document.querySelectorAll('.export-hide').forEach(el=>el.style.display='');
+  document.querySelectorAll('.hidden-for-screen').forEach(el=>el.style.display='none');
+}
+
+async function exportPDF(){
+  document.querySelectorAll('.export-hide').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.hidden-for-screen').forEach(el=>el.style.display='inline');
+  await new Promise(r=>setTimeout(r,200));
+
+  try{
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pageW=210;
+    const pageH=297;
+    const margin=15;
+    const contentW=pageW-margin*2;
+    const now=new Date();
+    const dateStr=now.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+    const simTitle=document.getElementById('simTitle').value||'IS Renda Passiva';
+    let pageNum=1;
+
+    function addHeader(){
+      pdf.setFontSize(8);pdf.setTextColor(30,136,229);
+      pdf.text('IS Renda Passiva',margin,8);
+      pdf.setTextColor(158,158,158);
+      pdf.text(simTitle,pageW-margin,8,{align:'right'});
+      pdf.setDrawColor(224,224,224);
+      pdf.line(margin,10,pageW-margin,10);
+    }
+    function addFooter(){
+      pdf.setDrawColor(224,224,224);
+      pdf.line(margin,pageH-12,pageW-margin,pageH-12);
+      pdf.setFontSize(7);pdf.setTextColor(158,158,158);
+      pdf.text(`Gerado por IS Renda Passiva | ${dateStr} | www.investesuite.com`,margin,pageH-8);
+      pdf.text(`Página ${pageNum}`,pageW-margin,pageH-8,{align:'right'});
+    }
+    function newPage(){
+      pdf.addPage();pageNum++;addHeader();addFooter();
+    }
+
+    addHeader();addFooter();
+
+    // Title
+    let y=18;
+    pdf.setFontSize(16);pdf.setTextColor(33,37,41);
+    pdf.text(simTitle,margin,y);y+=8;
+    pdf.setFontSize(9);pdf.setTextColor(117,117,117);
+    pdf.text('Calculadora de Renda Passiva por Dividendos — CPLP',margin,y);y+=10;
+
+    // Summary
+    if(state.results){
+      const last=state.results.rows[state.results.rows.length-1];
+      const inp=state.results.inputs;
+      pdf.setFontSize(10);pdf.setTextColor(30,136,229);
+      pdf.text('Resumo da Simulação',margin,y);y+=6;
+      pdf.setFontSize(8);pdf.setTextColor(66,66,66);
+      const summaryLines=[
+        `Capital Inicial: ${fmtAOA(inp.capital)}`,
+        `Aporte Mensal: ${fmtAOA(inp.monthly)}`,
+        `Dividend Yield: ${inp.dyield}% | Crescimento: ${inp.divGrowth}%`,
+        `Horizonte: ${inp.years} anos | Imposto: ${inp.taxRate}% | Inflação: ${inp.inflation}%`,
+        `Reinvestimento: ${inp.reinvest?'Sim (DRIP)':'Não'}`,
+        ``,
+        `Patrimônio Final: ${fmtAOA(last.patrimony)}`,
+        `Dividendo Mensal Líquido: ${fmtAOA(last.divNet/12)}`,
+        `Total Investido: ${fmtAOA(last.totalContrib)}`,
+        `Valor Real (ajust. inflação): ${fmtAOA(last.realValue)}`
+      ];
+      summaryLines.forEach(l=>{pdf.text(l,margin,y);y+=4.5;});
+      y+=5;
+
+      // Table
+      if(y>pageH-40){newPage();y=18;}
+      pdf.setFontSize(10);pdf.setTextColor(30,136,229);
+      pdf.text('Projeção Anual',margin,y);y+=6;
+      pdf.setFontSize(7);pdf.setTextColor(97,97,97);
+      const colX=[margin,margin+15,margin+55,margin+90,margin+125,margin+155];
+      const headers=['Ano','Patrimônio','Div. Bruto','Div. Líquido','Investido','Valor Real'];
+      headers.forEach((h,i)=>pdf.text(h,colX[i],y));y+=4;
+      pdf.setDrawColor(224,224,224);pdf.line(margin,y-1,pageW-margin,y-1);y+=1;
+      pdf.setTextColor(66,66,66);
+      state.results.rows.forEach(r=>{
+        if(y>pageH-20){newPage();y=18;}
+        pdf.text(''+r.year,colX[0],y);
+        pdf.text(fmtAOA(r.patrimony),colX[1],y);
+        pdf.text(fmtAOA(r.divGross),colX[2],y);
+        pdf.text(fmtAOA(r.divNet),colX[3],y);
+        pdf.text(fmtAOA(r.totalContrib),colX[4],y);
+        pdf.text(fmtAOA(r.realValue),colX[5],y);
+        y+=4;
+      });
+
+      // Charts on new page
+      newPage();y=18;
+      pdf.setFontSize(10);pdf.setTextColor(30,136,229);
+      pdf.text('Gráficos',margin,y);y+=6;
+
+      const chartIds=['chartPatrimony','chartDividends','chartComposition','chartReal'];
+      const chartTitles=['Evolução do Patrimônio','Dividendos ao Longo do Tempo','Composição Final','Nominal vs Real'];
+      const chartW=80;
+      const chartH=50;
+
+      for(let i=0;i<chartIds.length;i++){
+        const cx=(i%2===0)?margin:margin+contentW/2+2;
+        const cy=y+(Math.floor(i/2)*(chartH+14));
+        if(cy+chartH>pageH-20){newPage();y=18;}
+        const realCy=(i<2)?y:y+chartH+14;
+        const canvas=document.getElementById(chartIds[i]);
+        if(canvas){
+          const imgData=canvas.toDataURL('image/png',1.0);
+          pdf.setFontSize(8);pdf.setTextColor(97,97,97);
+          pdf.text(chartTitles[i],cx,realCy-2);
+          pdf.addImage(imgData,'PNG',cx,realCy,chartW,chartH);
+        }
+      }
+    }
+
+    pdf.save(`IS_RendaPassiva_${now.toISOString().slice(0,10)}.pdf`);
+    showToast('PDF exportado!','success');
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao gerar PDF.','error');
+  }
+
+  document.querySelectorAll('.export-hide').forEach(el=>el.style.display='');
+  document.querySelectorAll('.hidden-for-screen').forEach(el=>el.style.display='none');
+}
+
+// ===== UTILITY =====
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast toast-'+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showConfirm(title,msg,callback){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  confirmCallback=callback;
+  document.getElementById('confirmBtn').onclick=()=>{
+    if(confirmCallback)confirmCallback();
+    closeConfirm();
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.remove('show');
+  confirmCallback=null;
+}
+
+function escHTML(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function applyFilter(){
+  // Re-render current tab data
+  const active=document.querySelector('.tab-btn.active');
+  if(active){
+    const tab=active.dataset.tab;
+    if(tab==='simulator')renderResults();
+    if(tab==='scenarios')renderScenarios();
+  }
+}
+
+function resetSimulator(){
+  document.getElementById('capital').value=1000000;
+  document.getElementById('monthly').value=50000;
+  document.getElementById('dyield').value=5;
+  document.getElementById('years').value=10;
+  document.getElementById('divGrowth').value=3;
+  document.getElementById('taxRate').value=10;
+  document.getElementById('reinvest').value='1';
+  document.getElementById('inflation').value=2.5;
+  document.getElementById('simTitle').value='';
+  calculate();
+}
+
+function renderAll(){
+  renderScenarios();
+  renderCurrencies();
+  renderTemplates();
+  renderGuide();
+  calculate();
+}
+
+// ===== ELEMENT SDK =====
+const defaultConfig={
+  app_title:'IS Renda Passiva',
+  app_description:'Calculadora de Renda Passiva por Dividendos',
+  background_color:'#F8F9FA',
+  surface_color:'#FFFFFF',
+  text_color:'#212529',
+  primary_color:'#66CFF5',
+  accent_color:'#4CAF50',
+  font_family:'Inter',
+  font_size:14
+};
+
+function applyConfig(config){
+  const bg=config.background_color||defaultConfig.background_color;
+  const surface=config.surface_color||defaultConfig.surface_color;
+  const text=config.text_color||defaultConfig.text_color;
+  const primary=config.primary_color||defaultConfig.primary_color;
+  const accent=config.accent_color||defaultConfig.accent_color;
+  const font=config.font_family||defaultConfig.font_family;
+  const baseSize=config.font_size||defaultConfig.font_size;
+
+  document.body.style.background=bg;
+  document.body.style.color=text;
+  document.body.style.fontFamily=`${font}, Inter, sans-serif`;
+  document.body.style.fontSize=baseSize+'px';
+
+  document.querySelectorAll('.card').forEach(c=>{c.style.background=surface;c.style.color=text});
+  document.querySelectorAll('.header-fixed,.tabs-fixed').forEach(el=>{el.style.background=surface});
+  document.querySelectorAll('.btn-primary').forEach(b=>{b.style.background=primary});
+  document.querySelectorAll('.btn-success').forEach(b=>{b.style.background=accent});
+
+  const title=document.getElementById('mainTitle');
+  const desc=document.getElementById('mainDesc');
+  if(title)title.textContent=config.app_title||defaultConfig.app_title;
+  if(desc)desc.textContent=config.app_description||defaultConfig.app_description;
+  if(title)title.style.fontSize=(baseSize*1.15)+'px';
+  if(desc)desc.style.fontSize=(baseSize*0.8)+'px';
+}
+
+if(window.elementSdk){
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange:async(config)=>{applyConfig(config)},
+    mapToCapabilities:(config)=>({
+      recolorables:[
+        {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+        {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+        {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+        {get:()=>config.primary_color||defaultConfig.primary_color,set:v=>{config.primary_color=v;window.elementSdk.setConfig({primary_color:v})}},
+        {get:()=>config.accent_color||defaultConfig.accent_color,set:v=>{config.accent_color=v;window.elementSdk.setConfig({accent_color:v})}}
+      ],
+      borderables:[],
+      fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+      fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+    }),
+    mapToEditPanelValues:(config)=>new Map([
+      ['app_title',config.app_title||defaultConfig.app_title],
+      ['app_description',config.app_description||defaultConfig.app_description]
+    ])
+  });
+}
+
+// ===== INIT =====
+loadState();
+if(state.simTitle) document.getElementById('simTitle').value=state.simTitle;
+renderAll();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9df328cfb46d0710',t:'MTc3Mzk5MzM3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

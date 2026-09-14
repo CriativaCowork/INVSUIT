@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Ponto de Equilíbrio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    .tab-btn {
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      border-bottom: 3px solid #66CFF5;
+      color: #66CFF5;
+    }
+    .card-hover {
+      transition: all 0.2s ease;
+    }
+    .card-hover:hover {
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+      transform: translateY(-2px);
+    }
+    .toast {
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .currency-btn {
+      transition: all 0.2s ease;
+    }
+    .currency-btn.active {
+      background: #66CFF5;
+      color: white;
+    }
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .collapsible-content.open {
+      max-height: 2000px;
+    }
+    .input-field {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .input-field:focus {
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    .scenario-card {
+      transition: all 0.2s ease;
+    }
+    .scenario-card:hover {
+      border-color: #66CFF5;
+    }
+    .btn-primary {
+      background: #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background: #33BEF2;
+    }
+    .btn-secondary {
+      background: #F8F9FA;
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background: #E0E0E0;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F8F9FA;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #E0E0E0;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #BDBDBD;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full flex flex-col overflow-auto"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-lg font-semibold text-gray-800" style="display: none; display: none;">Simulador de Ponto de Equilíbrio</h1>
+       <p class="text-xs text-gray-500" style="display: none;">Comunidade CPLP</p>
+      </div>
+     </div><button onclick="openCurrencyModal()" class="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"> <span id="current-currency-display" class="text-sm font-medium text-gray-700">AOA</span>
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg></button>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 flex-shrink-0 overflow-x-auto">
+    <div class="max-w-6xl mx-auto flex"><button onclick="switchTab('simulator')" class="tab-btn active flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="simulator">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg><span class="whitespace-nowrap">Simulador</span> </button> <button onclick="switchTab('scenarios')" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="scenarios">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg><span class="whitespace-nowrap">Cenários</span> </button> <button onclick="switchTab('examples')" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="examples">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg><span class="whitespace-nowrap">Exemplos</span> </button> <button onclick="switchTab('education')" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="education">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg><span class="whitespace-nowrap">Educação</span> </button> <button onclick="switchTab('about')" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="about">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg><span class="whitespace-nowrap">Sobre</span> </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-4">
+    <div class="max-w-6xl mx-auto"><!-- Simulator Tab -->
+     <div id="tab-simulator" class="tab-content">
+      <div class="grid lg:grid-cols-2 gap-6"><!-- Input Section -->
+       <div class="space-y-4">
+        <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+         <h2 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg> Dados da Simulação</h2>
+         <div class="space-y-4">
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Custo Fixo Mensal</label>
+           <div class="relative"><span id="currency-prefix-1" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Kz</span> <input type="text" id="fixed-cost" class="input-field w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="500.000" oninput="formatAndCalculate(this)">
+           </div>
+           <p class="text-xs text-gray-400 mt-1">Renda, salários, seguros, etc.</p>
+          </div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Custo Variável por Unidade</label>
+           <div class="relative"><span id="currency-prefix-2" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Kz</span> <input type="text" id="variable-cost" class="input-field w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="2.000" oninput="formatAndCalculate(this)">
+           </div>
+           <p class="text-xs text-gray-400 mt-1">Matéria-prima, comissões, etc.</p>
+          </div>
+          <div><label class="block text-sm font-medium text-gray-600 mb-1">Preço de Venda por Unidade</label>
+           <div class="relative"><span id="currency-prefix-3" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Kz</span> <input type="text" id="sale-price" class="input-field w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none" placeholder="7.000" oninput="formatAndCalculate(this)">
+           </div>
+           <p class="text-xs text-gray-400 mt-1">Preço cobrado ao cliente</p>
+          </div>
+         </div>
+        </div><!-- Results Section -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+         <h2 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg> Resultados</h2>
+         <div class="grid grid-cols-2 gap-4">
+          <div class="bg-blue-50 rounded-lg p-4 text-center">
+           <p class="text-xs text-blue-600 font-medium mb-1">Ponto de Equilíbrio</p>
+           <p id="break-even-units" class="text-2xl font-bold text-blue-700">0</p>
+           <p class="text-xs text-blue-500">unidades/mês</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4 text-center">
+           <p class="text-xs text-green-600 font-medium mb-1">Receita no PE</p>
+           <p id="break-even-revenue" class="text-2xl font-bold text-green-700">Kz 0</p>
+           <p class="text-xs text-green-500">valor mínimo</p>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-4 text-center">
+           <p class="text-xs text-purple-600 font-medium mb-1">Margem de Contribuição</p>
+           <p id="contribution-margin" class="text-2xl font-bold text-purple-700">Kz 0</p>
+           <p class="text-xs text-purple-500">por unidade</p>
+          </div>
+          <div class="bg-orange-50 rounded-lg p-4 text-center">
+           <p class="text-xs text-orange-600 font-medium mb-1">Margem (%)</p>
+           <p id="margin-percentage" class="text-2xl font-bold text-orange-700">0%</p>
+           <p class="text-xs text-orange-500">do preço de venda</p>
+          </div>
+         </div>
+         <div id="empathic-message" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 hidden">
+          <p class="text-sm text-gray-600 flex items-start gap-2">
+           <svg class="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+           </svg><span id="empathic-text"></span></p>
+         </div>
+        </div><!-- Actions -->
+        <div class="flex flex-wrap gap-2"><button onclick="saveScenario()" class="btn-primary flex items-center gap-2 px-4 py-2.5 text-white rounded-lg text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg> Guardar Cenário </button> <button onclick="exportPDF()" class="btn-secondary flex items-center gap-2 px-4 py-2.5 text-gray-700 rounded-lg text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg> PDF </button> <button onclick="exportImage()" class="btn-secondary flex items-center gap-2 px-4 py-2.5 text-gray-700 rounded-lg text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg> Imagem </button> <button onclick="clearInputs()" class="btn-secondary flex items-center gap-2 px-4 py-2.5 text-gray-700 rounded-lg text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg> Limpar </button>
+        </div>
+       </div><!-- Chart Section -->
+       <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover">
+        <h2 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+         </svg> Gráfico do Ponto de Equilíbrio</h2>
+        <div class="relative" style="height: 300px;">
+         <canvas id="breakEvenChart"></canvas>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-4 text-xs">
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-red-500 rounded"></div><span class="text-gray-600">Custos Totais</span>
+         </div>
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-green-500 rounded"></div><span class="text-gray-600">Receita Total</span>
+         </div>
+         <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-blue-500 rounded"></div><span class="text-gray-600">Ponto de Equilíbrio</span>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Scenarios Tab -->
+     <div id="tab-scenarios" class="tab-content hidden">
+      <div class="bg-white rounded-lg border border-gray-200 p-5 mb-4">
+       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <h2 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+         </svg> Cenários Guardados</h2>
+        <div class="flex gap-2"><button onclick="exportAllJSON()" class="btn-secondary flex items-center gap-2 px-3 py-2 text-sm rounded-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg> Exportar JSON </button> <label class="btn-secondary flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg> Importar JSON <input type="file" accept=".json" onchange="importJSON(event)" class="hidden"> </label>
+        </div>
+       </div>
+       <div id="scenarios-list" class="grid gap-3">
+        <div class="text-center py-8 text-gray-400">
+         <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+         </svg>
+         <p class="text-sm">Nenhum cenário guardado ainda</p>
+         <p class="text-xs mt-1">Utilize o simulador e guarde os seus cenários</p>
+        </div>
+       </div>
+      </div>
+      <p id="scenario-limit-warning" class="text-xs text-orange-600 text-center hidden">
+       <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+       </svg> Limite máximo de cenários atingido (999)</p>
+     </div><!-- Examples Tab -->
+     <div id="tab-examples" class="tab-content hidden">
+      <div class="bg-white rounded-lg border border-gray-200 p-5 mb-4">
+       <h2 class="text-base font-semibold text-gray-800 mb-2 flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Exemplos de Simulação</h2>
+       <p class="text-sm text-gray-500 mb-4">Clique em qualquer exemplo para carregar os dados no simulador</p>
+       <div class="grid sm:grid-cols-2 gap-4" id="examples-grid"><!-- Examples will be rendered here -->
+       </div>
+      </div>
+     </div><!-- Education Tab -->
+     <div id="tab-education" class="tab-content hidden">
+      <div class="space-y-4"><!-- Financial Tips Collapsible -->
+       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden"><button onclick="toggleCollapsible('tips-content')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all">
+         <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+           <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+           </svg>
+          </div>
+          <div class="text-left">
+           <h3 class="font-semibold text-gray-800">Dicas de Educação Financeira</h3>
+           <p class="text-xs text-gray-500">Aprenda conceitos importantes para gerir o seu negócio</p>
+          </div>
+         </div>
+         <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="tips-arrow" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></button>
+        <div id="tips-content" class="collapsible-content">
+         <div class="p-4 pt-0 space-y-4">
+          <div class="bg-blue-50 rounded-lg p-4">
+           <h4 class="font-medium text-blue-800 mb-2">💡 Reduza os Custos Fixos</h4>
+           <p class="text-sm text-blue-700">Quanto menores os custos fixos, menor será o ponto de equilíbrio. Negocie rendas, opte por espaços partilhados ou trabalho remoto quando possível.</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4">
+           <h4 class="font-medium text-green-800 mb-2">📈 Aumente a Margem de Contribuição</h4>
+           <p class="text-sm text-green-700">Aumente o preço de venda (se o mercado permitir) ou reduza os custos variáveis negociando com fornecedores.</p>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-4">
+           <h4 class="font-medium text-purple-800 mb-2">🎯 Conheça o Seu Mercado</h4>
+           <p class="text-sm text-purple-700">Entenda a elasticidade do preço no seu mercado. Às vezes, um pequeno aumento no preço não afeta as vendas significativamente.</p>
+          </div>
+          <div class="bg-orange-50 rounded-lg p-4">
+           <h4 class="font-medium text-orange-800 mb-2">⚖️ Diversifique as Receitas</h4>
+           <p class="text-sm text-orange-700">Ter múltiplas fontes de receita reduz o risco e pode ajudar a atingir o ponto de equilíbrio mais rapidamente.</p>
+          </div>
+         </div>
+        </div>
+       </div><!-- Financing Sources -->
+       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden"><button onclick="toggleCollapsible('financing-content')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all">
+         <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+           <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg>
+          </div>
+          <div class="text-left">
+           <h3 class="font-semibold text-gray-800">Fontes de Financiamento</h3>
+           <p class="text-xs text-gray-500">Conheça as opções para financiar o seu negócio</p>
+          </div>
+         </div>
+         <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="financing-arrow" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></button>
+        <div id="financing-content" class="collapsible-content">
+         <div class="p-4 pt-0">
+          <div class="space-y-3">
+           <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-bold">👤</span>
+            </div>
+            <div>
+             <h4 class="font-medium text-gray-800 text-sm">Capital Próprio</h4>
+             <p class="text-xs text-gray-600">Investimento pessoal do empreendedor. Menor risco de endividamento, mas limita o crescimento.</p>
+            </div>
+           </div>
+           <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-bold">🤝</span>
+            </div>
+            <div>
+             <h4 class="font-medium text-gray-800 text-sm">Parceiros/Investidores</h4>
+             <p class="text-xs text-gray-600">Outros empresários ou investidores anjo que investem em troca de participação nos lucros ou na empresa.</p>
+            </div>
+           </div>
+           <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-bold">🏦</span>
+            </div>
+            <div>
+             <h4 class="font-medium text-gray-800 text-sm">Financiamento Bancário</h4>
+             <p class="text-xs text-gray-600">Empréstimos, linhas de crédito ou microcrédito. Requer garantias e plano de negócios sólido.</p>
+            </div>
+           </div>
+           <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-bold">🏛️</span>
+            </div>
+            <div>
+             <h4 class="font-medium text-gray-800 text-sm">Apoio Estatal</h4>
+             <p class="text-xs text-gray-600">Programas governamentais, subsídios e incentivos fiscais, especialmente para setores prioritários e sociais.</p>
+            </div>
+           </div>
+           <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-bold">🌐</span>
+            </div>
+            <div>
+             <h4 class="font-medium text-gray-800 text-sm">Crowdfunding</h4>
+             <p class="text-xs text-gray-600">Financiamento coletivo através de plataformas online. Ideal para projetos inovadores e com apelo social.</p>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div><!-- Key Concepts -->
+       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden"><button onclick="toggleCollapsible('concepts-content')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all">
+         <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+           </svg>
+          </div>
+          <div class="text-left">
+           <h3 class="font-semibold text-gray-800">Conceitos-Chave</h3>
+           <p class="text-xs text-gray-500">Definições importantes para entender o simulador</p>
+          </div>
+         </div>
+         <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="concepts-arrow" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></button>
+        <div id="concepts-content" class="collapsible-content">
+         <div class="p-4 pt-0 space-y-4">
+          <div class="border-l-4 border-blue-500 pl-4">
+           <h4 class="font-medium text-gray-800">Ponto de Equilíbrio (Break-Even Point)</h4>
+           <p class="text-sm text-gray-600 mt-1">O momento em que as receitas totais igualam os custos totais. Não há lucro nem prejuízo.</p>
+          </div>
+          <div class="border-l-4 border-red-500 pl-4">
+           <h4 class="font-medium text-gray-800">Custos Fixos</h4>
+           <p class="text-sm text-gray-600 mt-1">Despesas que não variam com o volume de produção ou vendas. Exemplos: renda, salários fixos, seguros.</p>
+          </div>
+          <div class="border-l-4 border-orange-500 pl-4">
+           <h4 class="font-medium text-gray-800">Custos Variáveis</h4>
+           <p class="text-sm text-gray-600 mt-1">Despesas que aumentam proporcionalmente às vendas. Exemplos: matéria-prima, comissões, embalagens.</p>
+          </div>
+          <div class="border-l-4 border-green-500 pl-4">
+           <h4 class="font-medium text-gray-800">Margem de Contribuição</h4>
+           <p class="text-sm text-gray-600 mt-1">Diferença entre o preço de venda e o custo variável por unidade. Valor que contribui para cobrir os custos fixos.</p>
+          </div>
+          <div class="border-l-4 border-purple-500 pl-4">
+           <h4 class="font-medium text-gray-800">Receita Total</h4>
+           <p class="text-sm text-gray-600 mt-1">Valor total obtido com as vendas. Calculada multiplicando o preço de venda pela quantidade vendida.</p>
+          </div>
+         </div>
+        </div>
+       </div><!-- Formulas -->
+       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden"><button onclick="toggleCollapsible('formulas-content')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all">
+         <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+           <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+           </svg>
+          </div>
+          <div class="text-left">
+           <h3 class="font-semibold text-gray-800">Fórmulas de Cálculo</h3>
+           <p class="text-xs text-gray-500">As fórmulas matemáticas utilizadas no simulador</p>
+          </div>
+         </div>
+         <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="formulas-arrow" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></button>
+        <div id="formulas-content" class="collapsible-content">
+         <div class="p-4 pt-0 space-y-4">
+          <div class="bg-gray-50 rounded-lg p-4">
+           <h4 class="font-medium text-gray-800 mb-2">Margem de Contribuição</h4>
+           <div class="bg-white rounded p-3 font-mono text-sm text-center border">
+            MC = Preço de Venda - Custo Variável
+           </div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4">
+           <h4 class="font-medium text-gray-800 mb-2">Ponto de Equilíbrio (Unidades)</h4>
+           <div class="bg-white rounded p-3 font-mono text-sm text-center border">
+            PE = Custos Fixos ÷ Margem de Contribuição
+           </div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4">
+           <h4 class="font-medium text-gray-800 mb-2">Ponto de Equilíbrio (Valor)</h4>
+           <div class="bg-white rounded p-3 font-mono text-sm text-center border">
+            PE(R$) = PE(unidades) × Preço de Venda
+           </div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4">
+           <h4 class="font-medium text-gray-800 mb-2">Margem de Contribuição (%)</h4>
+           <div class="bg-white rounded p-3 font-mono text-sm text-center border">
+            MC% = (MC ÷ Preço de Venda) × 100
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- About Tab -->
+     <div id="tab-about" class="tab-content hidden">
+      <div class="bg-white rounded-lg border border-gray-200 p-5 mb-4">
+       <div class="flex items-center gap-4 mb-4">
+        <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center">
+         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg>
+        </div>
+        <div>
+         <h2 class="text-xl font-bold text-gray-800">Simulador de Ponto de Equilíbrio</h2>
+         <p class="text-sm text-gray-500">Versão 1.0 • Comunidade CPLP</p>
+        </div>
+       </div>
+       <div class="prose prose-sm max-w-none">
+        <h3 class="text-base font-semibold text-gray-800 mt-6 mb-2">Sobre o Simulador</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">O Simulador de Ponto de Equilíbrio é uma ferramenta desenvolvida especialmente para a comunidade dos países de língua portuguesa (CPLP). O seu propósito é ajudar empresários, empreendedores e estudantes a compreender e calcular o ponto exato em que um negócio começa a ser rentável.</p>
+        <h3 class="text-base font-semibold text-gray-800 mt-6 mb-2">O que é o Ponto de Equilíbrio?</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">O ponto de equilíbrio (ou break-even point) representa o momento em que as receitas totais de uma empresa igualam os seus custos totais. Neste ponto, não há lucro nem prejuízo — é o limite entre operar no vermelho e começar a gerar lucro.</p>
+        <h3 class="text-base font-semibold text-gray-800 mt-6 mb-2">Funcionalidades</h3>
+        <ul class="text-gray-600 text-sm space-y-1">
+         <li>• Cálculo automático do ponto de equilíbrio em unidades e valor monetário</li>
+         <li>• Gráficos dinâmicos em tempo real</li>
+         <li>• Suporte a múltiplas moedas da CPLP</li>
+         <li>• Guardar e reutilizar cenários de simulação</li>
+         <li>• Exportação em PDF e imagem</li>
+         <li>• Importação e exportação de dados em JSON</li>
+         <li>• Exemplos práticos para aprendizagem</li>
+         <li>• Conteúdo educativo sobre finanças empresariais</li>
+        </ul>
+        <h3 class="text-base font-semibold text-gray-800 mt-6 mb-2">Países da CPLP</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇦🇴 Angola (AOA)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇧🇷 Brasil (BRL)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇨🇻 Cabo Verde (CVE)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇲🇿 Moçambique (MZN)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇵🇹 Portugal (EUR)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇸🇹 S. Tomé (STN)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇹🇱 Timor-Leste (USD)
+         </div>
+         <div class="bg-gray-50 rounded-lg p-2 text-center text-xs">
+          🇬🇼 Guiné-Bissau (XOF)
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
+    <div class="max-w-6xl mx-auto text-center">
+     <p id="footer-text" class="text-xs text-gray-500">CPLP Financial Tools • Simulador de Ponto de Equilíbrio</p>
+    </div>
+   </footer>
+  </div><!-- Currency Modal -->
+  <div id="currency-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+   <div class="bg-white rounded-xl p-5 w-full max-w-md mx-4 max-h-[90%] overflow-auto">
+    <div class="flex items-center justify-between mb-4">
+     <h3 class="text-lg font-semibold text-gray-800">Configuração de Moeda</h3><button onclick="closeCurrencyModal()" class="p-1 hover:bg-gray-100 rounded-lg transition-all">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="mb-4"><label class="block text-sm font-medium text-gray-600 mb-2">Selecionar Moeda</label>
+     <div class="grid grid-cols-4 gap-2" id="currency-buttons"><button onclick="selectCurrency('AOA')" class="currency-btn active px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="AOA">AOA</button> <button onclick="selectCurrency('BRL')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="BRL">BRL</button> <button onclick="selectCurrency('EUR')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="EUR">EUR</button> <button onclick="selectCurrency('USD')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="USD">USD</button> <button onclick="selectCurrency('MZN')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="MZN">MZN</button> <button onclick="selectCurrency('CVE')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="CVE">CVE</button> <button onclick="selectCurrency('STN')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="STN">STN</button> <button onclick="selectCurrency('XOF')" class="currency-btn px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-currency="XOF">XOF</button>
+     </div>
+    </div>
+    <div class="space-y-3 mb-4">
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Símbolo da Moeda</label> <input type="text" id="currency-symbol" class="input-field w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" value="Kz">
+     </div>
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Casas Decimais</label> <input type="number" id="decimal-places" class="input-field w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" value="2" min="0" max="4">
+     </div>
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Separador Decimal</label>
+      <div class="flex gap-2"><button onclick="setDecimalSeparator(',')" class="decimal-sep-btn flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium bg-blue-500 text-white" data-sep=",">Vírgula (,)</button> <button onclick="setDecimalSeparator('.')" class="decimal-sep-btn flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-sep=".">Ponto (.)</button>
+      </div>
+     </div>
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Separador de Milhares</label>
+      <div class="flex gap-2"><button onclick="setThousandSeparator('.')" class="thousand-sep-btn flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium bg-blue-500 text-white" data-sep=".">Ponto (.)</button> <button onclick="setThousandSeparator(',')" class="thousand-sep-btn flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-sep=",">Vírgula (,)</button> <button onclick="setThousandSeparator(' ')" class="thousand-sep-btn flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium" data-sep=" ">Espaço</button>
+      </div>
+     </div>
+    </div><button onclick="applyCurrencySettings()" class="btn-primary w-full py-2.5 text-white rounded-lg text-sm font-medium"> Aplicar Configurações </button>
+   </div>
+  </div><!-- Edit Scenario Modal -->
+  <div id="edit-scenario-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+   <div class="bg-white rounded-xl p-5 w-full max-w-md mx-4">
+    <div class="flex items-center justify-between mb-4">
+     <h3 class="text-lg font-semibold text-gray-800">Editar Cenário</h3><button onclick="closeEditScenarioModal()" class="p-1 hover:bg-gray-100 rounded-lg transition-all">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="space-y-3 mb-4">
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Nome do Cenário</label> <input type="text" id="edit-scenario-name" class="input-field w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+     </div>
+     <div><label class="block text-sm font-medium text-gray-600 mb-1">Descrição</label> <input type="text" id="edit-scenario-description" class="input-field w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+     </div>
+    </div>
+    <div class="flex gap-2"><button onclick="closeEditScenarioModal()" class="btn-secondary flex-1 py-2.5 rounded-lg text-sm font-medium">Cancelar</button> <button onclick="updateScenario()" class="btn-primary flex-1 py-2.5 text-white rounded-lg text-sm font-medium">Guardar</button>
+    </div>
+   </div>
+  </div><!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      app_title: 'Simulador de Ponto de Equilíbrio',
+      footer_text: 'CPLP Financial Tools • Simulador de Ponto de Equilíbrio',
+      primary_color: '#66CFF5',
+      background_color: '#F8F9FA',
+      text_color: '#333333'
+    };
+
+    // Currency settings
+    const currencyDefaults = {
+      AOA: { symbol: 'Kz', locale: 'pt-AO', decimal: ',', thousand: '.' },
+      BRL: { symbol: 'R$', locale: 'pt-BR', decimal: ',', thousand: '.' },
+      EUR: { symbol: '€', locale: 'pt-PT', decimal: ',', thousand: '.' },
+      USD: { symbol: '$', locale: 'en-US', decimal: '.', thousand: ',' },
+      MZN: { symbol: 'MT', locale: 'pt-MZ', decimal: ',', thousand: '.' },
+      CVE: { symbol: '$', locale: 'pt-CV', decimal: ',', thousand: '.' },
+      STN: { symbol: 'Db', locale: 'pt-ST', decimal: ',', thousand: '.' },
+      XOF: { symbol: 'CFA', locale: 'fr-GW', decimal: ',', thousand: ' ' }
+    };
+
+    // Example scenarios for learning
+    const exampleScenarios = [
+      { name: 'Padaria Artesanal', description: 'Produção de pães artesanais', fixed_cost: 500000, variable_cost: 200, sale_price: 500, currency: 'AOA' },
+      { name: 'Loja de Roupa', description: 'Comércio de vestuário', fixed_cost: 800000, variable_cost: 15000, sale_price: 35000, currency: 'AOA' },
+      { name: 'Restaurante', description: 'Serviços de alimentação', fixed_cost: 1200000, variable_cost: 3500, sale_price: 8000, currency: 'AOA' },
+      { name: 'Oficina Mecânica', description: 'Reparação automóvel', fixed_cost: 600000, variable_cost: 25000, sale_price: 75000, currency: 'AOA' },
+      { name: 'Salão de Beleza', description: 'Serviços de estética', fixed_cost: 400000, variable_cost: 5000, sale_price: 15000, currency: 'AOA' },
+      { name: 'Consultoria', description: 'Serviços profissionais', fixed_cost: 300000, variable_cost: 2000, sale_price: 50000, currency: 'AOA' },
+      { name: 'E-commerce', description: 'Venda online de produtos', fixed_cost: 200000, variable_cost: 8000, sale_price: 20000, currency: 'AOA' },
+      { name: 'Escola de Idiomas', description: 'Cursos de línguas', fixed_cost: 450000, variable_cost: 1000, sale_price: 25000, currency: 'AOA' },
+      { name: 'Café/Bar', description: 'Bebidas e petiscos', fixed_cost: 350000, variable_cost: 800, sale_price: 2500, currency: 'AOA' },
+      { name: 'Startup Tech', description: 'Desenvolvimento de software', fixed_cost: 1500000, variable_cost: 5000, sale_price: 100000, currency: 'AOA' }
+    ];
+
+    // App state
+    let scenarios = [];
+    let currentCurrency = 'AOA';
+    let currencySettings = { ...currencyDefaults.AOA, code: 'AOA', decimals: 2 };
+    let chart = null;
+    let editingScenarioId = null;
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+          document.getElementById('footer-text').textContent = config.footer_text || defaultConfig.footer_text;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => window.elementSdk.setConfig({ primary_color: value })
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['app_title', config.app_title || defaultConfig.app_title],
+          ['footer_text', config.footer_text || defaultConfig.footer_text]
+        ])
+      });
+    }
+
+    // Initialize Data SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        scenarios = data.filter(d => !d.is_example);
+        renderScenarios();
+        
+        if (scenarios.length >= 999) {
+          document.getElementById('scenario-limit-warning').classList.remove('hidden');
+        } else {
+          document.getElementById('scenario-limit-warning').classList.add('hidden');
+        }
+      }
+    };
+
+    // Initialize app
+    async function initApp() {
+      // Load currency settings from localStorage
+      const savedCurrency = localStorage.getItem('pe_currency_settings');
+      if (savedCurrency) {
+        try {
+          const parsed = JSON.parse(savedCurrency);
+          currentCurrency = parsed.code || 'AOA';
+          currencySettings = { ...currencyDefaults[currentCurrency], ...parsed };
+        } catch (e) {
+          console.error('Error loading currency settings');
+        }
+      }
+      
+      // Load last inputs from localStorage
+      const savedInputs = localStorage.getItem('pe_last_inputs');
+      if (savedInputs) {
+        try {
+          const inputs = JSON.parse(savedInputs);
+          if (inputs.fixed_cost) document.getElementById('fixed-cost').value = inputs.fixed_cost;
+          if (inputs.variable_cost) document.getElementById('variable-cost').value = inputs.variable_cost;
+          if (inputs.sale_price) document.getElementById('sale-price').value = inputs.sale_price;
+        } catch (e) {
+          console.error('Error loading saved inputs');
+        }
+      }
+      
+      updateCurrencyDisplay();
+      initChart();
+      renderExamples();
+      calculateBreakEven();
+      
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          showToast('Erro ao inicializar armazenamento', 'error');
+        }
+      }
+    }
+
+    // Chart initialization
+    function initChart() {
+      const ctx = document.getElementById('breakEvenChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Custos Totais',
+              data: [],
+              borderColor: '#F44336',
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: 'Receita Total',
+              data: [],
+              borderColor: '#4CAF50',
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              fill: true,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Quantidade (unidades)' },
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            y: {
+              title: { display: true, text: 'Valor' },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                callback: (value) => formatCurrencyShort(value)
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      if (value === null || value === undefined || isNaN(value)) return `${currencySettings.symbol} 0`;
+      
+      const parts = value.toFixed(currencySettings.decimals).split('.');
+      const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencySettings.thousand);
+      const decPart = parts[1] || '';
+      
+      if (currencySettings.decimals > 0) {
+        return `${currencySettings.symbol} ${intPart}${currencySettings.decimal}${decPart}`;
+      }
+      return `${currencySettings.symbol} ${intPart}`;
+    }
+
+    function formatCurrencyShort(value) {
+      if (value >= 1000000) return `${currencySettings.symbol} ${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `${currencySettings.symbol} ${(value / 1000).toFixed(1)}K`;
+      return `${currencySettings.symbol} ${value}`;
+    }
+
+    // Parse formatted number
+    function parseFormattedNumber(str) {
+      if (!str) return 0;
+      const cleaned = str.replace(/[^\d,.-]/g, '')
+        .replace(new RegExp('\\' + currencySettings.thousand, 'g'), '')
+        .replace(currencySettings.decimal, '.');
+      return parseFloat(cleaned) || 0;
+    }
+
+    // Format input field
+    function formatAndCalculate(input) {
+      const value = parseFormattedNumber(input.value);
+      if (value > 0) {
+        const parts = value.toString().split('.');
+        const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencySettings.thousand);
+        input.value = parts[1] ? `${intPart}${currencySettings.decimal}${parts[1]}` : intPart;
+      }
+      calculateBreakEven();
+      saveInputsToStorage();
+    }
+
+    // Save inputs to localStorage
+    function saveInputsToStorage() {
+      const inputs = {
+        fixed_cost: document.getElementById('fixed-cost').value,
+        variable_cost: document.getElementById('variable-cost').value,
+        sale_price: document.getElementById('sale-price').value
+      };
+      localStorage.setItem('pe_last_inputs', JSON.stringify(inputs));
+    }
+
+    // Calculate break-even
+    function calculateBreakEven() {
+      const fixedCost = parseFormattedNumber(document.getElementById('fixed-cost').value);
+      const variableCost = parseFormattedNumber(document.getElementById('variable-cost').value);
+      const salePrice = parseFormattedNumber(document.getElementById('sale-price').value);
+      
+      const contributionMargin = salePrice - variableCost;
+      let breakEvenUnits = 0;
+      let breakEvenRevenue = 0;
+      let marginPercentage = 0;
+      
+      if (contributionMargin > 0) {
+        breakEvenUnits = Math.ceil(fixedCost / contributionMargin);
+        breakEvenRevenue = breakEvenUnits * salePrice;
+        marginPercentage = (contributionMargin / salePrice) * 100;
+      }
+      
+      // Update results
+      document.getElementById('break-even-units').textContent = breakEvenUnits.toLocaleString('pt-PT');
+      document.getElementById('break-even-revenue').textContent = formatCurrency(breakEvenRevenue);
+      document.getElementById('contribution-margin').textContent = formatCurrency(contributionMargin);
+      document.getElementById('margin-percentage').textContent = `${marginPercentage.toFixed(1)}%`;
+      
+      // Update chart
+      updateChart(fixedCost, variableCost, salePrice, breakEvenUnits);
+      
+      // Show empathic message
+      showEmpathicMessage(breakEvenUnits, contributionMargin, marginPercentage);
+    }
+
+    // Update chart
+    function updateChart(fixedCost, variableCost, salePrice, breakEvenUnits) {
+      if (!chart) return;
+      
+      const maxUnits = Math.max(breakEvenUnits * 2, 100);
+      const step = Math.max(1, Math.floor(maxUnits / 10));
+      const labels = [];
+      const costs = [];
+      const revenues = [];
+      
+      for (let i = 0; i <= maxUnits; i += step) {
+        labels.push(i);
+        costs.push(fixedCost + (variableCost * i));
+        revenues.push(salePrice * i);
+      }
+      
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = costs;
+      chart.data.datasets[1].data = revenues;
+      chart.update('none');
+    }
+
+    // Show empathic message
+    function showEmpathicMessage(units, margin, percentage) {
+      const messageEl = document.getElementById('empathic-message');
+      const textEl = document.getElementById('empathic-text');
+      
+      if (units === 0 || margin <= 0) {
+        textEl.textContent = 'A margem de contribuição precisa ser positiva. Verifique se o preço de venda é maior que o custo variável.';
+        messageEl.classList.remove('hidden');
+      } else if (percentage < 20) {
+        textEl.textContent = `Com uma margem de ${percentage.toFixed(1)}%, precisará vender ${units} unidades para atingir o equilíbrio. Considere aumentar o preço ou reduzir os custos variáveis.`;
+        messageEl.classList.remove('hidden');
+      } else if (units > 1000) {
+        textEl.textContent = `Excelente margem de ${percentage.toFixed(1)}%! Porém, ${units} unidades é um volume considerável. Foco em marketing pode ajudar.`;
+        messageEl.classList.remove('hidden');
+      } else if (units <= 50) {
+        textEl.textContent = `Óptimo! Com apenas ${units} unidades, já alcança o ponto de equilíbrio. O seu negócio tem uma estrutura financeira saudável! 🎉`;
+        messageEl.classList.remove('hidden');
+      } else {
+        textEl.textContent = `O seu ponto de equilíbrio é de ${units} unidades. Continue a monitorizar os seus custos e margem para otimizar os resultados.`;
+        messageEl.classList.remove('hidden');
+      }
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) btn.classList.add('active');
+      });
+      
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    }
+
+    // Currency modal
+    function openCurrencyModal() {
+      document.getElementById('currency-modal').classList.remove('hidden');
+      updateCurrencyModalUI();
+    }
+
+    function closeCurrencyModal() {
+      document.getElementById('currency-modal').classList.add('hidden');
+    }
+
+    function selectCurrency(code) {
+      currentCurrency = code;
+      const defaults = currencyDefaults[code];
+      document.getElementById('currency-symbol').value = defaults.symbol;
+      
+      document.querySelectorAll('.currency-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.currency === code);
+      });
+      
+      // Update separators based on locale
+      setDecimalSeparator(defaults.decimal);
+      setThousandSeparator(defaults.thousand);
+    }
+
+    function setDecimalSeparator(sep) {
+      currencySettings.decimal = sep;
+      document.querySelectorAll('.decimal-sep-btn').forEach(btn => {
+        btn.classList.toggle('bg-blue-500', btn.dataset.sep === sep);
+        btn.classList.toggle('text-white', btn.dataset.sep === sep);
+      });
+    }
+
+    function setThousandSeparator(sep) {
+      currencySettings.thousand = sep;
+      document.querySelectorAll('.thousand-sep-btn').forEach(btn => {
+        btn.classList.toggle('bg-blue-500', btn.dataset.sep === sep);
+        btn.classList.toggle('text-white', btn.dataset.sep === sep);
+      });
+    }
+
+    function applyCurrencySettings() {
+      currencySettings = {
+        ...currencySettings,
+        code: currentCurrency,
+        symbol: document.getElementById('currency-symbol').value,
+        decimals: parseInt(document.getElementById('decimal-places').value) || 2
+      };
+      
+      localStorage.setItem('pe_currency_settings', JSON.stringify(currencySettings));
+      updateCurrencyDisplay();
+      calculateBreakEven();
+      closeCurrencyModal();
+      showToast('Configurações de moeda aplicadas', 'success');
+    }
+
+    function updateCurrencyDisplay() {
+      document.getElementById('current-currency-display').textContent = currentCurrency;
+      document.querySelectorAll('[id^="currency-prefix"]').forEach(el => {
+        el.textContent = currencySettings.symbol;
+      });
+    }
+
+    function updateCurrencyModalUI() {
+      document.querySelectorAll('.currency-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.currency === currentCurrency);
+      });
+      document.getElementById('currency-symbol').value = currencySettings.symbol;
+      document.getElementById('decimal-places').value = currencySettings.decimals;
+      setDecimalSeparator(currencySettings.decimal);
+      setThousandSeparator(currencySettings.thousand);
+    }
+
+    // Collapsible sections
+    function toggleCollapsible(contentId) {
+      const content = document.getElementById(contentId);
+      const arrow = document.getElementById(contentId.replace('-content', '-arrow'));
+      
+      content.classList.toggle('open');
+      if (arrow) {
+        arrow.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    }
+
+    // Save scenario
+    async function saveScenario() {
+      if (scenarios.length >= 999) {
+        showToast('Limite máximo de cenários atingido', 'error');
+        return;
+      }
+      
+      const fixedCost = parseFormattedNumber(document.getElementById('fixed-cost').value);
+      const variableCost = parseFormattedNumber(document.getElementById('variable-cost').value);
+      const salePrice = parseFormattedNumber(document.getElementById('sale-price').value);
+      
+      if (fixedCost <= 0 || variableCost <= 0 || salePrice <= 0) {
+        showToast('Preencha todos os campos antes de guardar', 'warning');
+        return;
+      }
+      
+      const scenarioNumber = scenarios.length + 1;
+      const scenario = {
+        id: Date.now().toString(),
+        name: `Cenário ${scenarioNumber}`,
+        description: 'Simulação personalizada',
+        fixed_cost: fixedCost,
+        variable_cost: variableCost,
+        sale_price: salePrice,
+        currency: currentCurrency,
+        created_at: new Date().toISOString(),
+        is_example: false
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(scenario);
+        if (result.isOk) {
+          showToast(`Cenário ${scenarioNumber} guardado com sucesso`, 'success');
+        } else {
+          showToast('Erro ao guardar cenário', 'error');
+        }
+      }
+    }
+
+    // Render scenarios
+    function renderScenarios() {
+      const container = document.getElementById('scenarios-list');
+      
+      if (scenarios.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-400">
+            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <p class="text-sm">Nenhum cenário guardado ainda</p>
+            <p class="text-xs mt-1">Utilize o simulador e guarde os seus cenários</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = scenarios.map(scenario => {
+        const margin = scenario.sale_price - scenario.variable_cost;
+        const breakEven = margin > 0 ? Math.ceil(scenario.fixed_cost / margin) : 0;
+        const currencySymbol = currencyDefaults[scenario.currency]?.symbol || 'Kz';
+        
+        return `
+          <div class="scenario-card bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-medium text-gray-800">${scenario.name}</h4>
+                <p class="text-xs text-gray-500">${scenario.description}</p>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="editScenarioName('${scenario.__backendId}')" class="p-1.5 hover:bg-white rounded-lg transition-all" title="Editar nome">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="loadScenario('${scenario.__backendId}')" class="p-1.5 hover:bg-white rounded-lg transition-all" title="Carregar">
+                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                </button>
+                <button onclick="deleteScenario('${scenario.__backendId}')" class="p-1.5 hover:bg-white rounded-lg transition-all" title="Eliminar">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-white rounded p-2">
+                <span class="text-gray-500">Custo Fixo:</span>
+                <span class="font-medium text-gray-800 ml-1">${currencySymbol} ${scenario.fixed_cost.toLocaleString('pt-PT')}</span>
+              </div>
+              <div class="bg-white rounded p-2">
+                <span class="text-gray-500">Custo Var.:</span>
+                <span class="font-medium text-gray-800 ml-1">${currencySymbol} ${scenario.variable_cost.toLocaleString('pt-PT')}</span>
+              </div>
+              <div class="bg-white rounded p-2">
+                <span class="text-gray-500">Preço Venda:</span>
+                <span class="font-medium text-gray-800 ml-1">${currencySymbol} ${scenario.sale_price.toLocaleString('pt-PT')}</span>
+              </div>
+              <div class="bg-blue-100 rounded p-2">
+                <span class="text-blue-600">PE:</span>
+                <span class="font-medium text-blue-700 ml-1">${breakEven} un.</span>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">${new Date(scenario.created_at).toLocaleDateString('pt-PT')}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Load scenario
+    function loadScenario(backendId) {
+      const scenario = scenarios.find(s => s.__backendId === backendId);
+      if (!scenario) return;
+      
+      document.getElementById('fixed-cost').value = scenario.fixed_cost.toLocaleString('pt-PT');
+      document.getElementById('variable-cost').value = scenario.variable_cost.toLocaleString('pt-PT');
+      document.getElementById('sale-price').value = scenario.sale_price.toLocaleString('pt-PT');
+      
+      if (scenario.currency !== currentCurrency) {
+        selectCurrency(scenario.currency);
+        applyCurrencySettings();
+      }
+      
+      calculateBreakEven();
+      switchTab('simulator');
+      showToast(`Cenário "${scenario.name}" carregado`, 'success');
+    }
+
+    // Edit scenario name
+    function editScenarioName(backendId) {
+      const scenario = scenarios.find(s => s.__backendId === backendId);
+      if (!scenario) return;
+      
+      editingScenarioId = backendId;
+      document.getElementById('edit-scenario-name').value = scenario.name;
+      document.getElementById('edit-scenario-description').value = scenario.description;
+      document.getElementById('edit-scenario-modal').classList.remove('hidden');
+    }
+
+    function closeEditScenarioModal() {
+      document.getElementById('edit-scenario-modal').classList.add('hidden');
+      editingScenarioId = null;
+    }
+
+    async function updateScenario() {
+      if (!editingScenarioId) return;
+      
+      const scenario = scenarios.find(s => s.__backendId === editingScenarioId);
+      if (!scenario) return;
+      
+      const updatedScenario = {
+        ...scenario,
+        name: document.getElementById('edit-scenario-name').value || scenario.name,
+        description: document.getElementById('edit-scenario-description').value || scenario.description
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedScenario);
+        if (result.isOk) {
+          showToast('Cenário atualizado', 'success');
+          closeEditScenarioModal();
+        } else {
+          showToast('Erro ao atualizar cenário', 'error');
+        }
+      }
+    }
+
+    // Delete scenario
+    async function deleteScenario(backendId) {
+      const scenario = scenarios.find(s => s.__backendId === backendId);
+      if (!scenario) return;
+      
+      // Inline confirmation
+      const card = event.target.closest('.scenario-card');
+      const existingConfirm = card.querySelector('.delete-confirm');
+      if (existingConfirm) {
+        existingConfirm.remove();
+        return;
+      }
+      
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'delete-confirm mt-2 p-2 bg-red-50 rounded-lg flex items-center justify-between';
+      confirmDiv.innerHTML = `
+        <span class="text-xs text-red-600">Confirmar eliminação?</span>
+        <div class="flex gap-2">
+          <button onclick="this.closest('.delete-confirm').remove()" class="text-xs px-2 py-1 bg-white rounded border border-gray-200">Cancelar</button>
+          <button onclick="confirmDelete('${backendId}')" class="text-xs px-2 py-1 bg-red-500 text-white rounded">Eliminar</button>
+        </div>
+      `;
+      card.appendChild(confirmDiv);
+    }
+
+    async function confirmDelete(backendId) {
+      const scenario = scenarios.find(s => s.__backendId === backendId);
+      if (!scenario || !window.dataSdk) return;
+      
+      const result = await window.dataSdk.delete(scenario);
+      if (result.isOk) {
+        showToast('Cenário eliminado', 'success');
+      } else {
+        showToast('Erro ao eliminar cenário', 'error');
+      }
+    }
+
+    // Render examples
+    function renderExamples() {
+      const container = document.getElementById('examples-grid');
+      container.innerHTML = exampleScenarios.map((example, index) => {
+        const margin = example.sale_price - example.variable_cost;
+        const breakEven = margin > 0 ? Math.ceil(example.fixed_cost / margin) : 0;
+        
+        return `
+          <div onclick="loadExample(${index})" class="scenario-card bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:border-blue-500">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <span class="text-lg">${['🥖', '👔', '🍽️', '🔧', '💇', '💼', '🛒', '📚', '☕', '💻'][index]}</span>
+              </div>
+              <div>
+                <h4 class="font-medium text-gray-800 text-sm">${example.name}</h4>
+                <p class="text-xs text-gray-500">${example.description}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-white rounded p-2">
+                <span class="text-gray-500">Custo Fixo:</span>
+                <span class="font-medium text-gray-800 ml-1">Kz ${example.fixed_cost.toLocaleString('pt-PT')}</span>
+              </div>
+              <div class="bg-blue-100 rounded p-2">
+                <span class="text-blue-600">PE:</span>
+                <span class="font-medium text-blue-700 ml-1">${breakEven} un.</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Load example
+    function loadExample(index) {
+      const example = exampleScenarios[index];
+      document.getElementById('fixed-cost').value = example.fixed_cost.toLocaleString('pt-PT');
+      document.getElementById('variable-cost').value = example.variable_cost.toLocaleString('pt-PT');
+      document.getElementById('sale-price').value = example.sale_price.toLocaleString('pt-PT');
+      
+      calculateBreakEven();
+      switchTab('simulator');
+      showToast(`Exemplo "${example.name}" carregado`, 'success');
+    }
+
+    // Clear inputs
+    function clearInputs() {
+      document.getElementById('fixed-cost').value = '';
+      document.getElementById('variable-cost').value = '';
+      document.getElementById('sale-price').value = '';
+      calculateBreakEven();
+      localStorage.removeItem('pe_last_inputs');
+      showToast('Campos limpos', 'success');
+    }
+
+    // Export JSON
+    function exportAllJSON() {
+      const data = {
+        scenarios: scenarios,
+        currencySettings: currencySettings,
+        exportDate: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cenarios_pe_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados', 'success');
+    }
+
+    // Import JSON
+    async function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        if (data.scenarios && Array.isArray(data.scenarios)) {
+          let imported = 0;
+          for (const scenario of data.scenarios) {
+            if (scenarios.length + imported >= 999) break;
+            
+            const newScenario = {
+              id: Date.now().toString() + imported,
+              name: scenario.name || `Cenário Importado ${imported + 1}`,
+              description: scenario.description || 'Importado',
+              fixed_cost: scenario.fixed_cost || 0,
+              variable_cost: scenario.variable_cost || 0,
+              sale_price: scenario.sale_price || 0,
+              currency: scenario.currency || 'AOA',
+              created_at: new Date().toISOString(),
+              is_example: false
+            };
+            
+            if (window.dataSdk) {
+              await window.dataSdk.create(newScenario);
+              imported++;
+            }
+          }
+          
+          showToast(`${imported} cenários importados`, 'success');
+        }
+        
+        if (data.currencySettings) {
+          currencySettings = { ...currencySettings, ...data.currencySettings };
+          localStorage.setItem('pe_currency_settings', JSON.stringify(currencySettings));
+          updateCurrencyDisplay();
+        }
+      } catch (e) {
+        showToast('Erro ao importar ficheiro', 'error');
+      }
+      
+      event.target.value = '';
+    }
+
+    // Export PDF
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      
+      // Header
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageWidth, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Simulador de Ponto de Equilíbrio', margin, 13);
+      pdf.setFontSize(8);
+      pdf.text('Comunidade CPLP', pageWidth - margin - 30, 13);
+      
+      // Date
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(8);
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth - margin - 35, 28);
+      
+      // Current simulation data
+      const fixedCost = parseFormattedNumber(document.getElementById('fixed-cost').value);
+      const variableCost = parseFormattedNumber(document.getElementById('variable-cost').value);
+      const salePrice = parseFormattedNumber(document.getElementById('sale-price').value);
+      const margin_contrib = salePrice - variableCost;
+      const breakEvenUnits = margin_contrib > 0 ? Math.ceil(fixedCost / margin_contrib) : 0;
+      const breakEvenRevenue = breakEvenUnits * salePrice;
+      const marginPercentage = salePrice > 0 ? (margin_contrib / salePrice) * 100 : 0;
+      
+      let yPos = 35;
+      
+      // Simulation data section
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Dados da Simulação', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      
+      const data = [
+        ['Custo Fixo Mensal', formatCurrency(fixedCost)],
+        ['Custo Variável por Unidade', formatCurrency(variableCost)],
+        ['Preço de Venda por Unidade', formatCurrency(salePrice)],
+        ['Margem de Contribuição', formatCurrency(margin_contrib)],
+        ['Margem (%)', `${marginPercentage.toFixed(1)}%`]
+      ];
+      
+      data.forEach(([label, value]) => {
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(label + ':', margin, yPos);
+        pdf.setTextColor(30, 30, 30);
+        pdf.text(value, margin + 60, yPos);
+        yPos += 6;
+      });
+      
+      // Results highlight box
+      yPos += 5;
+      pdf.setFillColor(240, 248, 255);
+      pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 25, 3, 3, 'F');
+      
+      pdf.setTextColor(30, 136, 229);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Ponto de Equilíbrio', margin + 5, yPos + 8);
+      
+      pdf.setFontSize(14);
+      pdf.text(`${breakEvenUnits.toLocaleString('pt-PT')} unidades`, margin + 5, yPos + 17);
+      
+      pdf.setTextColor(76, 175, 80);
+      pdf.setFontSize(11);
+      pdf.text('Receita no PE', pageWidth / 2, yPos + 8);
+      pdf.setFontSize(14);
+      pdf.text(formatCurrency(breakEvenRevenue), pageWidth / 2, yPos + 17);
+      
+      yPos += 35;
+      
+      // Chart
+      try {
+        const chartCanvas = document.getElementById('breakEvenChart');
+        const chartImage = chartCanvas.toDataURL('image/png', 0.8);
+        const chartWidth = 100;
+        const chartHeight = 60;
+        pdf.addImage(chartImage, 'PNG', (pageWidth - chartWidth) / 2, yPos, chartWidth, chartHeight);
+        yPos += chartHeight + 10;
+      } catch (e) {
+        console.error('Error adding chart to PDF');
+      }
+      
+      // Footer
+      const addFooter = (pageNum) => {
+        pdf.setFillColor(245, 245, 245);
+        pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+        pdf.setTextColor(150, 150, 150);
+        pdf.setFontSize(8);
+        pdf.text('CPLP Financial Tools • Simulador de Ponto de Equilíbrio', margin, pageHeight - 5);
+        pdf.text(`Página ${pageNum}`, pageWidth - margin - 15, pageHeight - 5);
+      };
+      
+      addFooter(1);
+      
+      pdf.save(`simulacao_pe_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF gerado com sucesso', 'success');
+    }
+
+    // Export Image
+    async function exportImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      try {
+        const simulatorTab = document.getElementById('tab-simulator');
+        const canvas = await html2canvas(simulatorTab, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          useCORS: true
+        });
+        
+        const link = document.createElement('a');
+        link.download = `simulacao_pe_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem gerada com sucesso', 'success');
+      } catch (e) {
+        showToast('Erro ao gerar imagem', 'error');
+      }
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-orange-500',
+        info: 'bg-blue-500'
+      };
+      
+      const icons = {
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${icons[type]}
+        </svg>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Initialize
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bcc0079b4e31b23',t:'MTc2ODIxNDA3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

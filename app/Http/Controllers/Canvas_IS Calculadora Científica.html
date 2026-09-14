@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Calculadora Científica</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#F8F9FA;color:#333}
+.app-wrapper{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.header-fixed{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.tabs-fixed{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #E0E0E0;overflow-x:auto;white-space:nowrap;padding:0 12px}
+.tabs-fixed::-webkit-scrollbar{height:3px}
+.tabs-fixed::-webkit-scrollbar-thumb{background:#E0E0E0;border-radius:4px}
+.tab-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;font-weight:500;color:#777;border-bottom:2px solid transparent;transition:all .2s ease;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom:2px solid #66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+.content-area{flex:1;overflow-y:auto;padding:16px 20px 80px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:12px;border-left:3px solid #66CFF5;transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,0.15)}
+.card-gold{border-left-color:#FFC107}
+.card-green{border-left-color:#4CAF50}
+.card-red{border-left-color:#F44336}
+.card-orange{border-left-color:#FF9800}
+.btn-primary{background:#66CFF5;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#F8F9FA;color:#555;border:1px solid #E0E0E0;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.btn-secondary:hover{background:#E0E0E0}
+.btn-danger{background:#F44336;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s ease}
+.btn-danger:hover{background:#D32F2F}
+.btn-success{background:#4CAF50;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s ease}
+.btn-success:hover{background:#388E3C}
+.btn-warn{background:#FF9800;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .2s ease}
+.btn-warn:hover{background:#F57C00}
+.input-field{width:100%;padding:8px 12px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;transition:border-color .2s ease;background:#fff}
+.input-field:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,0.15)}
+.label-text{font-size:12px;font-weight:500;color:#777;margin-bottom:4px;display:block}
+.calc-display{background:#1a1a2e;color:#4CAF50;font-family:'Courier New',monospace;padding:16px;border-radius:8px;margin-bottom:12px;min-height:80px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;font-size:28px;font-weight:600;overflow:hidden;word-break:break-all}
+.calc-display .expr{font-size:14px;color:#888;margin-bottom:4px;min-height:18px}
+.calc-btn{padding:12px;border:1px solid #E0E0E0;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s ease;background:#fff;font-family:'Inter',sans-serif;text-align:center}
+.calc-btn:hover{background:#E0F4FD;border-color:#66CFF5}
+.calc-btn:active{transform:scale(0.95)}
+.calc-btn-op{background:#E0F4FD;color:#66CFF5;font-weight:600}
+.calc-btn-op:hover{background:#BBDEFB}
+.calc-btn-eq{background:#66CFF5;color:#fff;font-weight:700}
+.calc-btn-eq:hover{background:#33BEF2}
+.calc-btn-clear{background:#F44336;color:#fff}
+.calc-btn-clear:hover{background:#D32F2F}
+.calc-btn-func{background:#FFF8E1;color:#F57C00;font-size:12px;font-weight:600}
+.calc-btn-func:hover{background:#FFF3C4}
+.history-item{padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background .2s}
+.history-item:hover{background:#F8F9FA}
+.chart-container{position:relative;height:250px;margin:12px 0}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5;background:rgba(255,255,255,0.9);border:1px solid #E0E0E0;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s}
+.chart-export-btn:hover{background:#66CFF5;color:#fff}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,0.15)}
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;transform:translateY(100px);opacity:0;transition:all .3s ease}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#4CAF50}
+.toast.error{background:#F44336}
+.toast.warn{background:#FF9800}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-gold{background:#FFF8E1;color:#FF9800}
+select.input-field{appearance:auto}
+.scenario-card{transition:all .2s ease;position:relative}
+.scenario-card:hover{transform:translateY(-2px)}
+.grid-calc{display:grid;gap:6px}
+.export-hide{transition:opacity .2s}
+@media(max-width:640px){
+.calc-display{font-size:22px;padding:12px}
+.calc-btn{padding:10px;font-size:13px}
+.content-area{padding:12px 12px 80px}
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',secondary:'#F8F9FA',border:'#E0E0E0',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warn:'#FF9800'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrapper" id="appWrapper"><!-- Header -->
+   <div class="header-fixed" id="appHeader">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+     <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;background:#66CFF5;border-radius:8px;display:flex;align-items:center;justify-content:center">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <rect x="4" y="2" width="16" height="20" rx="2" /><line x1="8" y1="6" x2="16" y2="6" /><circle cx="9" cy="11" r="1" /><circle cx="15" cy="11" r="1" /><circle cx="9" cy="15" r="1" /><circle cx="15" cy="15" r="1" /><circle cx="12" cy="11" r="1" /><circle cx="12" cy="15" r="1" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="headerTitle" style="display: none; font-size:16px;font-weight:700;color:#1a1a2e;line-height:1.2">IS Calculadora Científica</h1>
+       <p id="headerDesc" style="display: none; font-size:11px;color:#999;font-weight:400">Calculadora científica avançada para a Comunidade dos Países de Língua Portuguesa</p>
+      </div>
+     </div>
+     <div style="display:flex;gap:6px;flex-wrap:wrap" class="export-hide"><button class="btn-secondary" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button> <button class="btn-secondary" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i></button> <button class="btn-secondary" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i></button> <button class="btn-secondary" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+     </div>
+    </div>
+   </div><!-- Tabs -->
+   <div class="tabs-fixed" id="tabsBar"><button class="tab-btn active" data-tab="calc" onclick="switchTab('calc')"><i data-lucide="calculator"></i>Calculadora</button> <button class="tab-btn" data-tab="history" onclick="switchTab('history')"><i data-lucide="clock"></i>Histórico</button> <button class="tab-btn" data-tab="scenarios" onclick="switchTab('scenarios')"><i data-lucide="bookmark"></i>Cenários</button> <button class="tab-btn" data-tab="currency" onclick="switchTab('currency')"><i data-lucide="coins"></i>Câmbio CPLP</button> <button class="tab-btn" data-tab="charts" onclick="switchTab('charts')"><i data-lucide="bar-chart-2"></i>Gráficos</button> <button class="tab-btn" data-tab="help" onclick="switchTab('help')"><i data-lucide="help-circle"></i>Ajuda</button>
+   </div><!-- Content Area -->
+   <div class="content-area" id="contentArea"><!-- ===== CALCULADORA TAB ===== -->
+    <div id="tab-calc" class="tab-content fade-in">
+     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap" class="export-hide"><input type="text" id="calcTitle" class="input-field" style="max-width:250px" placeholder="Título do cálculo..." value=""> <button class="btn-primary" onclick="saveCurrentScenario()"><i data-lucide="save" style="width:14px;height:14px"></i>Guardar Cenário</button>
+     </div><!-- Mode Tabs -->
+     <div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap" class="export-hide"><button class="calc-mode-btn btn-primary" data-mode="basic" onclick="switchCalcMode('basic')" style="font-size:12px;padding:6px 12px">Básica</button> <button class="calc-mode-btn btn-secondary" data-mode="scientific" onclick="switchCalcMode('scientific')" style="font-size:12px;padding:6px 12px">Científica</button> <button class="calc-mode-btn btn-secondary" data-mode="programmer" onclick="switchCalcMode('programmer')" style="font-size:12px;padding:6px 12px">Programador</button> <button class="calc-mode-btn btn-secondary" data-mode="converter" onclick="switchCalcMode('converter')" style="font-size:12px;padding:6px 12px">Conversões</button>
+     </div><!-- Display -->
+     <div class="calc-display" id="calcDisplay">
+      <div class="expr" id="calcExpr"></div>
+      <div id="calcResult">
+       0
+      </div>
+     </div>
+     <div id="calcAngleMode" style="font-size:11px;color:#999;margin-bottom:8px;display:flex;gap:12px;align-items:center" class="export-hide"><label style="cursor:pointer"><input type="radio" name="angleMode" value="deg" checked onchange="setAngleMode('deg')"> DEG</label> <label style="cursor:pointer"><input type="radio" name="angleMode" value="rad" onchange="setAngleMode('rad')"> RAD</label> <span id="memIndicator" style="color:#FFC107;font-weight:600;display:none">M</span>
+     </div><!-- Basic Mode -->
+     <div id="mode-basic" class="calc-mode">
+      <div class="grid-calc" style="grid-template-columns:repeat(4,1fr)"><button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button> <button class="calc-btn calc-btn-op" onclick="calcInput('(')">(</button> <button class="calc-btn calc-btn-op" onclick="calcInput(')')">)</button> <button class="calc-btn calc-btn-op" onclick="calcInput('÷')">÷</button> <button class="calc-btn" onclick="calcInput('7')">7</button> <button class="calc-btn" onclick="calcInput('8')">8</button> <button class="calc-btn" onclick="calcInput('9')">9</button> <button class="calc-btn calc-btn-op" onclick="calcInput('×')">×</button> <button class="calc-btn" onclick="calcInput('4')">4</button> <button class="calc-btn" onclick="calcInput('5')">5</button> <button class="calc-btn" onclick="calcInput('6')">6</button> <button class="calc-btn calc-btn-op" onclick="calcInput('-')">−</button> <button class="calc-btn" onclick="calcInput('1')">1</button> <button class="calc-btn" onclick="calcInput('2')">2</button> <button class="calc-btn" onclick="calcInput('3')">3</button> <button class="calc-btn calc-btn-op" onclick="calcInput('+')">+</button> <button class="calc-btn" onclick="calcInput('0')">0</button> <button class="calc-btn" onclick="calcInput('.')">.</button> <button class="calc-btn calc-btn-op" onclick="calcBackspace()">⌫</button> <button class="calc-btn calc-btn-eq" onclick="calcEvaluate()">=</button>
+      </div>
+     </div><!-- Scientific Mode -->
+     <div id="mode-scientific" class="calc-mode" style="display:none">
+      <div class="grid-calc" style="grid-template-columns:repeat(5,1fr);margin-bottom:6px"><button class="calc-btn calc-btn-func" onclick="calcFunc('sin')">sin</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('cos')">cos</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('tan')">tan</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('asin')">sin⁻¹</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('acos')">cos⁻¹</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('atan')">tan⁻¹</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('ln')">ln</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('log')">log</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('sqrt')">√</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('cbrt')">∛</button> <button class="calc-btn calc-btn-func" onclick="calcInput('π')">π</button> <button class="calc-btn calc-btn-func" onclick="calcInput('e')">e</button> <button class="calc-btn calc-btn-func" onclick="calcInput('^')">xʸ</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('fact')">x!</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('abs')">|x|</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('exp')">eˣ</button> <button class="calc-btn calc-btn-func" onclick="calcInput('%')">%</button> <button class="calc-btn calc-btn-func" onclick="calcFunc('1/x')">1/x</button> <button class="calc-btn calc-btn-func" onclick="memStore()">MS</button> <button class="calc-btn calc-btn-func" onclick="memRecall()">MR</button>
+      </div>
+      <div class="grid-calc" style="grid-template-columns:repeat(4,1fr)"><button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button> <button class="calc-btn calc-btn-op" onclick="calcInput('(')">(</button> <button class="calc-btn calc-btn-op" onclick="calcInput(')')">)</button> <button class="calc-btn calc-btn-op" onclick="calcInput('÷')">÷</button> <button class="calc-btn" onclick="calcInput('7')">7</button> <button class="calc-btn" onclick="calcInput('8')">8</button> <button class="calc-btn" onclick="calcInput('9')">9</button> <button class="calc-btn calc-btn-op" onclick="calcInput('×')">×</button> <button class="calc-btn" onclick="calcInput('4')">4</button> <button class="calc-btn" onclick="calcInput('5')">5</button> <button class="calc-btn" onclick="calcInput('6')">6</button> <button class="calc-btn calc-btn-op" onclick="calcInput('-')">−</button> <button class="calc-btn" onclick="calcInput('1')">1</button> <button class="calc-btn" onclick="calcInput('2')">2</button> <button class="calc-btn" onclick="calcInput('3')">3</button> <button class="calc-btn calc-btn-op" onclick="calcInput('+')">+</button> <button class="calc-btn" onclick="calcInput('0')">0</button> <button class="calc-btn" onclick="calcInput('.')">.</button> <button class="calc-btn calc-btn-op" onclick="calcBackspace()">⌫</button> <button class="calc-btn calc-btn-eq" onclick="calcEvaluate()">=</button>
+      </div>
+     </div><!-- Programmer Mode -->
+     <div id="mode-programmer" class="calc-mode" style="display:none">
+      <div class="card" style="margin-bottom:8px">
+       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><label class="label-text" style="width:100%">Inserir número:</label> <input type="text" id="progInput" class="input-field" placeholder="Ex: 255" style="flex:1"> <select id="progBase" class="input-field" style="width:auto"> <option value="10">Decimal</option> <option value="2">Binário</option> <option value="8">Octal</option> <option value="16">Hexadecimal</option> </select> <button class="btn-primary" onclick="convertBase()">Converter</button>
+       </div>
+       <div id="progResults" style="font-size:13px"></div>
+      </div>
+      <div class="card"><label class="label-text">Operações Bit a Bit</label>
+       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"><input type="number" id="bitA" class="input-field" placeholder="A" style="width:80px"> <select id="bitOp" class="input-field" style="width:auto"> <option value="AND">AND</option> <option value="OR">OR</option> <option value="XOR">XOR</option> <option value="NOT">NOT A</option> <option value="LSHIFT">A &lt;&lt; B</option> <option value="RSHIFT">A &gt;&gt; B</option> </select> <input type="number" id="bitB" class="input-field" placeholder="B" style="width:80px"> <button class="btn-primary" onclick="bitwiseCalc()">Calcular</button>
+       </div>
+       <div id="bitResult" style="font-size:13px;color:#66CFF5;font-weight:600"></div>
+      </div>
+     </div><!-- Converter Mode -->
+     <div id="mode-converter" class="calc-mode" style="display:none">
+      <div class="card"><label class="label-text">Categoria</label> <select id="convCategory" class="input-field" style="margin-bottom:8px" onchange="loadConvUnits()"> <option value="length">Comprimento</option> <option value="weight">Massa</option> <option value="temperature">Temperatura</option> <option value="area">Área</option> <option value="volume">Volume</option> <option value="speed">Velocidade</option> <option value="time">Tempo</option> <option value="data">Dados</option> </select>
+       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:120px"><label class="label-text">Valor</label> <input type="number" id="convValue" class="input-field" placeholder="0" oninput="doConversion()">
+        </div>
+        <div style="flex:1;min-width:120px"><label class="label-text">De</label> <select id="convFrom" class="input-field" onchange="doConversion()"></select>
+        </div>
+        <div style="flex:1;min-width:120px"><label class="label-text">Para</label> <select id="convTo" class="input-field" onchange="doConversion()"></select>
+        </div>
+       </div>
+       <div id="convResult" style="margin-top:12px;font-size:20px;font-weight:700;color:#66CFF5;text-align:center"></div>
+      </div>
+     </div>
+    </div><!-- ===== HISTÓRICO TAB ===== -->
+    <div id="tab-history" class="tab-content fade-in" style="display:none">
+     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap" class="export-hide"><input type="text" id="historyFilter" class="input-field" placeholder="Filtrar histórico..." style="flex:1;min-width:150px" oninput="renderHistory()"> <button class="btn-danger" onclick="clearHistory()"><i data-lucide="trash-2" style="width:14px;height:14px"></i>Limpar</button>
+     </div>
+     <div id="historyList"></div>
+     <div id="historyEmpty" class="card" style="text-align:center;color:#999;display:none"><i data-lucide="clock" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#E0E0E0"></i>
+      <p>Sem cálculos no histórico</p>
+     </div>
+    </div><!-- ===== CENÁRIOS TAB ===== -->
+    <div id="tab-scenarios" class="tab-content fade-in" style="display:none">
+     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap" class="export-hide"><input type="text" id="scenarioFilter" class="input-field" placeholder="Filtrar cenários..." style="flex:1;min-width:150px" oninput="renderScenarios()"> <button class="btn-primary" onclick="createNewScenario()"><i data-lucide="plus" style="width:14px;height:14px"></i>Novo Cenário</button>
+     </div>
+     <div id="scenariosList"></div>
+     <div id="scenariosEmpty" class="card" style="text-align:center;color:#999;display:none"><i data-lucide="bookmark" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#E0E0E0"></i>
+      <p>Nenhum cenário guardado</p>
+     </div><!-- Templates -->
+     <div style="margin-top:20px">
+      <h3 style="font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:8px"><i data-lucide="book-open" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:4px"></i>Templates de Aprendizagem</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('pythagoras')">
+        <div style="font-size:13px;font-weight:600">
+         Teorema de Pitágoras
+        </div>
+        <div style="font-size:11px;color:#999">
+         a² + b² = c²
+        </div>
+       </div>
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('quadratic')">
+        <div style="font-size:13px;font-weight:600">
+         Fórmula Quadrática
+        </div>
+        <div style="font-size:11px;color:#999">
+         x = (-b ± √(b²-4ac)) / 2a
+        </div>
+       </div>
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('compound')">
+        <div style="font-size:13px;font-weight:600">
+         Juros Compostos
+        </div>
+        <div style="font-size:11px;color:#999">
+         A = P(1 + r/n)^(nt)
+        </div>
+       </div>
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('bmi')">
+        <div style="font-size:13px;font-weight:600">
+         Índice Massa Corporal
+        </div>
+        <div style="font-size:11px;color:#999">
+         IMC = peso / altura²
+        </div>
+       </div>
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('circle')">
+        <div style="font-size:13px;font-weight:600">
+         Área do Círculo
+        </div>
+        <div style="font-size:11px;color:#999">
+         A = πr²
+        </div>
+       </div>
+       <div class="card card-gold" style="cursor:pointer" onclick="loadTemplate('velocity')">
+        <div style="font-size:13px;font-weight:600">
+         Velocidade Média
+        </div>
+        <div style="font-size:11px;color:#999">
+         v = d / t
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- ===== CÂMBIO CPLP TAB ===== -->
+    <div id="tab-currency" class="tab-content fade-in" style="display:none">
+     <div class="card card-green" style="margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Conversor de Moedas CPLP</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+       <div style="flex:1;min-width:100px"><label class="label-text">Valor (AOA)</label> <input type="number" id="currValue" class="input-field" placeholder="0" value="1000" oninput="convertCurrency()">
+       </div>
+       <div style="flex:1;min-width:100px"><label class="label-text">De</label> <select id="currFrom" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+       <div style="flex:1;min-width:100px"><label class="label-text">Para</label> <select id="currTo" class="input-field" onchange="convertCurrency()"></select>
+       </div>
+      </div>
+      <div id="currResult" style="margin-top:12px;font-size:22px;font-weight:700;color:#4CAF50;text-align:center"></div>
+     </div>
+     <div class="card card-orange">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+       <h3 style="font-size:14px;font-weight:600">Taxas de Câmbio (Base: AOA)</h3><button class="btn-secondary export-hide" onclick="showCurrencyEditModal()" style="font-size:11px"><i data-lucide="edit" style="width:12px;height:12px"></i>Editar Taxas</button>
+      </div>
+      <div id="currencyTable" style="font-size:13px"></div>
+     </div>
+    </div><!-- ===== GRÁFICOS TAB ===== -->
+    <div id="tab-charts" class="tab-content fade-in" style="display:none">
+     <div class="card">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Distribuição por Tipo de Operação</h3>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartOps')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       <canvas id="chartOps"></canvas>
+      </div>
+     </div>
+     <div class="card" style="margin-top:12px">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Histórico de Resultados</h3>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartHistory')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       <canvas id="chartHistory"></canvas>
+      </div>
+     </div>
+     <div class="card" style="margin-top:12px">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Funções Mais Utilizadas</h3>
+      <div class="chart-container"><button class="chart-export-btn export-hide" onclick="exportChartImage('chartFuncs')"><i data-lucide="image" style="width:12px;height:12px"></i>HD</button>
+       <canvas id="chartFuncs"></canvas>
+      </div>
+     </div>
+    </div><!-- ===== AJUDA TAB ===== -->
+    <div id="tab-help" class="tab-content fade-in" style="display:none">
+     <div class="card">
+      <h3 style="font-size:15px;font-weight:700;color:#66CFF5;margin-bottom:8px">Como Utilizar</h3>
+      <p style="font-size:13px;line-height:1.7;color:#555">A <strong>IS Calculadora Científica</strong> é uma ferramenta completa desenvolvida para cidadãos da CPLP. Permite cálculos básicos, científicos, conversões de unidades, operações de programador e conversão de moedas dos países lusófonos.</p>
+     </div>
+     <div class="card card-green">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Modos Disponíveis</h3>
+      <ul style="font-size:13px;line-height:1.8;color:#555;padding-left:16px">
+       <li><strong>Básica:</strong> Operações aritméticas simples (soma, subtração, multiplicação, divisão)</li>
+       <li><strong>Científica:</strong> Funções trigonométricas, logarítmicas, exponenciais, fatorial e mais</li>
+       <li><strong>Programador:</strong> Conversão entre bases numéricas e operações bit a bit</li>
+       <li><strong>Conversões:</strong> Comprimento, massa, temperatura, área, volume, velocidade, tempo e dados</li>
+      </ul>
+     </div>
+     <div class="card card-gold">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Cenários e Templates</h3>
+      <p style="font-size:13px;line-height:1.7;color:#555">Guarde cálculos como cenários para reutilizar depois. Utilize os templates de aprendizagem para explorar fórmulas matemáticas comuns. Pode clonar, editar ou criar cenários novos.</p>
+     </div>
+     <div class="card card-orange">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Câmbio CPLP</h3>
+      <p style="font-size:13px;line-height:1.7;color:#555">Converta entre moedas dos países de língua portuguesa (Kwanza, Real, Euro, Escudo, Metical, Dobra, Franco CFA, Dólar e USD). As taxas são editáveis e guardadas localmente.</p>
+     </div>
+     <div class="card">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Exportação e Importação</h3>
+      <ul style="font-size:13px;line-height:1.8;color:#555;padding-left:16px">
+       <li><strong>JSON:</strong> Exporte e importe todos os dados (histórico, cenários, taxas)</li>
+       <li><strong>Imagem:</strong> Capture o ecrã da aplicação (campos editáveis ficam ocultos)</li>
+       <li><strong>PDF:</strong> Gere um relatório profissional com cabeçalho, rodapé e gráficos</li>
+       <li><strong>Gráficos HD:</strong> Exporte cada gráfico individualmente em alta resolução</li>
+      </ul>
+     </div>
+     <div class="card card-green">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Melhores Práticas</h3>
+      <ul style="font-size:13px;line-height:1.8;color:#555;padding-left:16px">
+       <li>Atribua títulos descritivos aos cenários para fácil identificação</li>
+       <li>Utilize o modo DEG para cálculos trigonométricos do dia-a-dia</li>
+       <li>Exporte os dados regularmente como backup via JSON</li>
+       <li>Actualize as taxas de câmbio frequentemente para maior precisão</li>
+       <li>Use os templates de aprendizagem para estudar fórmulas</li>
+      </ul>
+     </div>
+    </div>
+   </div><!-- end content area --> <!-- Toast -->
+   <div class="toast" id="toast"></div><!-- Currency Edit Modal -->
+   <div class="modal-overlay" id="currencyModal">
+    <div class="modal-box">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700">Editar Taxas de Câmbio</h3><button onclick="closeCurrencyModal()" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:20px;height:20px;color:#999"></i></button>
+     </div>
+     <div id="currencyEditFields"></div>
+     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end"><button class="btn-secondary" onclick="closeCurrencyModal()">Cancelar</button> <button class="btn-primary" onclick="saveCurrencyRates()">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Scenario Edit Modal -->
+   <div class="modal-overlay" id="scenarioModal">
+    <div class="modal-box">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700" id="scenarioModalTitle">Editar Cenário</h3><button onclick="closeScenarioModal()" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:20px;height:20px;color:#999"></i></button>
+     </div><label class="label-text">Título</label> <input type="text" id="scenarioEditTitle" class="input-field" style="margin-bottom:8px"> <label class="label-text">Expressão</label> <input type="text" id="scenarioEditExpr" class="input-field" style="margin-bottom:8px"> <label class="label-text">Resultado</label> <input type="text" id="scenarioEditResult" class="input-field" style="margin-bottom:8px" readonly> <label class="label-text">Modo</label> <select id="scenarioEditMode" class="input-field" style="margin-bottom:12px"> <option value="basic">Básica</option> <option value="scientific">Científica</option> <option value="programmer">Programador</option> <option value="converter">Conversões</option> </select>
+     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn-secondary" onclick="closeScenarioModal()">Cancelar</button> <button class="btn-primary" onclick="saveScenarioEdit()">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Template Modal -->
+   <div class="modal-overlay" id="templateModal">
+    <div class="modal-box">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700" id="templateTitle">Template</h3><button onclick="closeTemplateModal()" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:20px;height:20px;color:#999"></i></button>
+     </div>
+     <div id="templateContent"></div>
+     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end"><button class="btn-secondary" onclick="closeTemplateModal()">Fechar</button> <button class="btn-primary" id="templateCalcBtn">Calcular</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ============ STATE ============
+let calcExpression = '';
+let calcResult = '0';
+let currentMode = 'basic';
+let angleMode = 'deg';
+let memory = 0;
+let history = [];
+let scenarios = [];
+let charts = {};
+let editingScenarioIdx = -1;
+let funcUsage = {};
+
+const defaultCurrencyRates = {
+  'AOA': { name: 'Kwanza (Angola)', rate: 1, symbol: 'Kz' },
+  'BRL': { name: 'Real (Brasil)', rate: 0.006, symbol: 'R$' },
+  'EUR': { name: 'Euro (Portugal)', rate: 0.00095, symbol: '€' },
+  'CVE': { name: 'Escudo (Cabo Verde)', rate: 0.105, symbol: '$' },
+  'MZN': { name: 'Metical (Moçambique)', rate: 0.077, symbol: 'MT' },
+  'STN': { name: 'Dobra (São Tomé)', rate: 0.024, symbol: 'Db' },
+  'XOF': { name: 'Franco CFA (Guiné-Bissau)', rate: 0.625, symbol: 'CFA' },
+  'USD': { name: 'Dólar (EUA)', rate: 0.0012, symbol: '$' },
+  'TOP': { name: 'Paʻanga (Timor-Leste/USD)', rate: 0.0012, symbol: '$' }
+};
+let currencyRates = JSON.parse(JSON.stringify(defaultCurrencyRates));
+
+const conversionUnits = {
+  length: { m: 'Metro', km: 'Quilómetro', cm: 'Centímetro', mm: 'Milímetro', mi: 'Milha', ft: 'Pé', in: 'Polegada', yd: 'Jarda' },
+  weight: { kg: 'Quilograma', g: 'Grama', mg: 'Miligrama', t: 'Tonelada', lb: 'Libra', oz: 'Onça' },
+  temperature: { C: 'Celsius', F: 'Fahrenheit', K: 'Kelvin' },
+  area: { m2: 'm²', km2: 'km²', ha: 'Hectare', ac: 'Acre', ft2: 'ft²' },
+  volume: { L: 'Litro', mL: 'Mililitro', m3: 'm³', gal: 'Galão', fl_oz: 'Onça fluida' },
+  speed: { ms: 'm/s', kmh: 'km/h', mph: 'mph', kn: 'Nó' },
+  time: { s: 'Segundo', min: 'Minuto', h: 'Hora', d: 'Dia', wk: 'Semana' },
+  data: { B: 'Byte', KB: 'Kilobyte', MB: 'Megabyte', GB: 'Gigabyte', TB: 'Terabyte' }
+};
+
+const convFactorsToBase = {
+  length: { m:1, km:1000, cm:0.01, mm:0.001, mi:1609.344, ft:0.3048, in:0.0254, yd:0.9144 },
+  weight: { kg:1, g:0.001, mg:0.000001, t:1000, lb:0.453592, oz:0.0283495 },
+  area: { m2:1, km2:1e6, ha:10000, ac:4046.86, ft2:0.092903 },
+  volume: { L:1, mL:0.001, m3:1000, gal:3.78541, fl_oz:0.0295735 },
+  speed: { ms:1, kmh:0.277778, mph:0.44704, kn:0.514444 },
+  time: { s:1, min:60, h:3600, d:86400, wk:604800 },
+  data: { B:1, KB:1024, MB:1048576, GB:1073741824, TB:1099511627776 }
+};
+
+// ============ INIT ============
+function init() {
+  loadFromStorage();
+  populateCurrencySelects();
+  loadConvUnits();
+  renderHistory();
+  renderScenarios();
+  renderCurrencyTable();
+  convertCurrency();
+  updateCharts();
+  lucide.createIcons();
+}
+
+function loadFromStorage() {
+  try {
+    const d = localStorage.getItem('is_calc_data');
+    if (d) {
+      const parsed = JSON.parse(d);
+      history = parsed.history || [];
+      scenarios = parsed.scenarios || [];
+      funcUsage = parsed.funcUsage || {};
+      if (parsed.currencyRates) {
+        Object.keys(parsed.currencyRates).forEach(k => {
+          if (currencyRates[k]) {
+            currencyRates[k].rate = parsed.currencyRates[k];
+          }
+        });
+      }
+    }
+  } catch(e) { console.error(e); }
+}
+
+function saveToStorage() {
+  const ratesOnly = {};
+  Object.keys(currencyRates).forEach(k => ratesOnly[k] = currencyRates[k].rate);
+  localStorage.setItem('is_calc_data', JSON.stringify({
+    history, scenarios, funcUsage, currencyRates: ratesOnly
+  }));
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).style.display = 'block';
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'charts') setTimeout(updateCharts, 100);
+  lucide.createIcons();
+}
+
+function switchCalcMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.calc-mode').forEach(el => el.style.display = 'none');
+  document.getElementById('mode-' + mode).style.display = 'block';
+  document.querySelectorAll('.calc-mode-btn').forEach(el => {
+    el.className = el.dataset.mode === mode ? 'calc-mode-btn btn-primary' : 'calc-mode-btn btn-secondary';
+  });
+  document.getElementById('calcAngleMode').style.display = (mode === 'scientific') ? 'flex' : 'none';
+}
+
+// ============ CALCULATOR ============
+function calcInput(ch) {
+  if (calcResult !== '0' && calcExpression === '' && !'+-×÷^%'.includes(ch)) {
+    calcExpression = '';
+    calcResult = '0';
+  }
+  calcExpression += ch;
+  updateDisplay();
+}
+
+function calcClear() {
+  calcExpression = '';
+  calcResult = '0';
+  updateDisplay();
+}
+
+function calcBackspace() {
+  calcExpression = calcExpression.slice(0, -1);
+  updateDisplay();
+}
+
+function calcFunc(fn) {
+  funcUsage[fn] = (funcUsage[fn] || 0) + 1;
+  saveToStorage();
+  if (fn === '1/x') {
+    calcExpression = `1/(${calcExpression || calcResult})`;
+  } else {
+    calcExpression = `${fn}(${calcExpression || calcResult})`;
+  }
+  updateDisplay();
+}
+
+function setAngleMode(m) {
+  angleMode = m;
+}
+
+function memStore() {
+  const v = parseFloat(calcResult);
+  if (!isNaN(v)) {
+    memory = v;
+    document.getElementById('memIndicator').style.display = 'inline';
+    showToast('Valor guardado na memória', 'success');
+  }
+}
+
+function memRecall() {
+  calcExpression += memory.toString();
+  updateDisplay();
+}
+
+function updateDisplay() {
+  document.getElementById('calcExpr').textContent = calcExpression;
+  document.getElementById('calcResult').textContent = calcResult;
+}
+
+function calcEvaluate() {
+  try {
+    let expr = calcExpression;
+    if (!expr) return;
+    const originalExpr = expr;
+
+    // Replace display chars
+    expr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+    expr = expr.replace(/π/g, `(${Math.PI})`).replace(/(?<![a-z])e(?![a-z(])/gi, `(${Math.E})`);
+    expr = expr.replace(/\^/g, '**');
+
+    // Functions
+    const toRad = angleMode === 'deg' ? `*${Math.PI}/180` : '';
+    const fromRad = angleMode === 'deg' ? `*180/${Math.PI}` : '';
+    expr = expr.replace(/sin\(([^)]+)\)/g, `Math.sin(($1)${toRad})`);
+    expr = expr.replace(/cos\(([^)]+)\)/g, `Math.cos(($1)${toRad})`);
+    expr = expr.replace(/tan\(([^)]+)\)/g, `Math.tan(($1)${toRad})`);
+    expr = expr.replace(/asin\(([^)]+)\)/g, `(Math.asin($1)${fromRad})`);
+    expr = expr.replace(/acos\(([^)]+)\)/g, `(Math.acos($1)${fromRad})`);
+    expr = expr.replace(/atan\(([^)]+)\)/g, `(Math.atan($1)${fromRad})`);
+    expr = expr.replace(/ln\(([^)]+)\)/g, 'Math.log($1)');
+    expr = expr.replace(/log\(([^)]+)\)/g, 'Math.log10($1)');
+    expr = expr.replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)');
+    expr = expr.replace(/cbrt\(([^)]+)\)/g, 'Math.cbrt($1)');
+    expr = expr.replace(/abs\(([^)]+)\)/g, 'Math.abs($1)');
+    expr = expr.replace(/exp\(([^)]+)\)/g, 'Math.exp($1)');
+    expr = expr.replace(/fact\(([^)]+)\)/g, 'factorial($1)');
+
+    const result = Function('"use strict"; return (' + expr + ')')();
+    if (typeof result !== 'number' || !isFinite(result)) {
+      calcResult = 'Erro';
+    } else {
+      calcResult = Number.isInteger(result) ? result.toString() : parseFloat(result.toFixed(10)).toString();
+    }
+
+    // Track operation type
+    let opType = 'basic';
+    if (/sin|cos|tan|log|ln|sqrt|cbrt|exp|fact|abs|asin|acos|atan/.test(originalExpr)) opType = 'scientific';
+    else if (/\^|\*\*/.test(originalExpr)) opType = 'power';
+
+    history.unshift({
+      expr: originalExpr,
+      result: calcResult,
+      mode: currentMode,
+      opType,
+      timestamp: new Date().toISOString()
+    });
+    if (history.length > 200) history = history.slice(0, 200);
+    saveToStorage();
+    calcExpression = '';
+    updateDisplay();
+  } catch (e) {
+    calcResult = 'Erro';
+    updateDisplay();
+  }
+}
+
+function factorial(n) {
+  n = Math.round(n);
+  if (n < 0) return NaN;
+  if (n <= 1) return 1;
+  let r = 1;
+  for (let i = 2; i <= n; i++) r *= i;
+  return r;
+}
+
+// ============ BASE CONVERSION ============
+function convertBase() {
+  const input = document.getElementById('progInput').value.trim();
+  const base = parseInt(document.getElementById('progBase').value);
+  if (!input) return;
+  try {
+    const dec = parseInt(input, base);
+    if (isNaN(dec)) { document.getElementById('progResults').innerHTML = '<span style="color:#F44336">Valor inválido</span>'; return; }
+    document.getElementById('progResults').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <div class="card" style="padding:8px"><span class="badge badge-blue">DEC</span> <strong>${dec}</strong></div>
+        <div class="card" style="padding:8px"><span class="badge badge-green">BIN</span> <strong>${(dec >>> 0).toString(2)}</strong></div>
+        <div class="card" style="padding:8px"><span class="badge badge-gold">OCT</span> <strong>${(dec >>> 0).toString(8)}</strong></div>
+        <div class="card" style="padding:8px"><span class="badge badge-blue">HEX</span> <strong>${(dec >>> 0).toString(16).toUpperCase()}</strong></div>
+      </div>`;
+    history.unshift({ expr: `${input} (base ${base})`, result: `DEC:${dec} BIN:${(dec>>>0).toString(2)} OCT:${(dec>>>0).toString(8)} HEX:${(dec>>>0).toString(16).toUpperCase()}`, mode: 'programmer', opType: 'conversion', timestamp: new Date().toISOString() });
+    saveToStorage();
+  } catch(e) {
+    document.getElementById('progResults').innerHTML = '<span style="color:#F44336">Erro na conversão</span>';
+  }
+}
+
+function bitwiseCalc() {
+  const a = parseInt(document.getElementById('bitA').value);
+  const op = document.getElementById('bitOp').value;
+  const b = parseInt(document.getElementById('bitB').value);
+  if (isNaN(a)) return;
+  let result;
+  switch(op) {
+    case 'AND': result = a & b; break;
+    case 'OR': result = a | b; break;
+    case 'XOR': result = a ^ b; break;
+    case 'NOT': result = ~a; break;
+    case 'LSHIFT': result = a << b; break;
+    case 'RSHIFT': result = a >> b; break;
+  }
+  const expr = op === 'NOT' ? `NOT ${a}` : `${a} ${op} ${b}`;
+  document.getElementById('bitResult').innerHTML = `Resultado: ${result} (BIN: ${(result >>> 0).toString(2)})`;
+  history.unshift({ expr, result: result.toString(), mode: 'programmer', opType: 'bitwise', timestamp: new Date().toISOString() });
+  saveToStorage();
+}
+
+// ============ UNIT CONVERSION ============
+function loadConvUnits() {
+  const cat = document.getElementById('convCategory').value;
+  const units = conversionUnits[cat];
+  const fromSel = document.getElementById('convFrom');
+  const toSel = document.getElementById('convTo');
+  fromSel.innerHTML = '';
+  toSel.innerHTML = '';
+  Object.keys(units).forEach((k, i) => {
+    fromSel.innerHTML += `<option value="${k}" ${i===0?'selected':''}>${units[k]}</option>`;
+    toSel.innerHTML += `<option value="${k}" ${i===1?'selected':''}>${units[k]}</option>`;
+  });
+  doConversion();
+}
+
+function doConversion() {
+  const cat = document.getElementById('convCategory').value;
+  const val = parseFloat(document.getElementById('convValue').value);
+  const from = document.getElementById('convFrom').value;
+  const to = document.getElementById('convTo').value;
+  if (isNaN(val)) { document.getElementById('convResult').textContent = ''; return; }
+
+  let result;
+  if (cat === 'temperature') {
+    result = convertTemperature(val, from, to);
+  } else {
+    const factors = convFactorsToBase[cat];
+    result = val * factors[from] / factors[to];
+  }
+  const formatted = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+  document.getElementById('convResult').textContent = `${val} ${from} = ${formatted} ${to}`;
+}
+
+function convertTemperature(v, from, to) {
+  let celsius;
+  if (from === 'C') celsius = v;
+  else if (from === 'F') celsius = (v - 32) * 5/9;
+  else celsius = v - 273.15;
+  if (to === 'C') return celsius;
+  if (to === 'F') return celsius * 9/5 + 32;
+  return celsius + 273.15;
+}
+
+// ============ CURRENCY ============
+function populateCurrencySelects() {
+  const fromSel = document.getElementById('currFrom');
+  const toSel = document.getElementById('currTo');
+  fromSel.innerHTML = '';
+  toSel.innerHTML = '';
+  Object.keys(currencyRates).forEach((k, i) => {
+    const opt = `<option value="${k}">${k} - ${currencyRates[k].name}</option>`;
+    fromSel.innerHTML += opt;
+    toSel.innerHTML += opt;
+  });
+  fromSel.value = 'AOA';
+  toSel.value = 'USD';
+}
+
+function convertCurrency() {
+  const val = parseFloat(document.getElementById('currValue').value);
+  const from = document.getElementById('currFrom').value;
+  const to = document.getElementById('currTo').value;
+  if (isNaN(val)) { document.getElementById('currResult').textContent = ''; return; }
+  // Convert via AOA base
+  const inAOA = val / currencyRates[from].rate;
+  const result = inAOA * currencyRates[to].rate;
+  const formatted = parseFloat(result.toFixed(4));
+  document.getElementById('currResult').textContent = `${currencyRates[from].symbol} ${val.toLocaleString('pt-PT')} = ${currencyRates[to].symbol} ${formatted.toLocaleString('pt-PT')}`;
+}
+
+function renderCurrencyTable() {
+  const container = document.getElementById('currencyTable');
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">';
+  Object.keys(currencyRates).forEach(k => {
+    const c = currencyRates[k];
+    html += `<div class="card" style="padding:8px;border-left-color:${k==='AOA'?'#FFC107':'#4CAF50'}">
+      <div style="font-size:12px;font-weight:600">${k}</div>
+      <div style="font-size:11px;color:#999">${c.name}</div>
+      <div style="font-size:14px;font-weight:700;color:#66CFF5">${c.rate}</div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function showCurrencyEditModal() {
+  const container = document.getElementById('currencyEditFields');
+  container.innerHTML = '';
+  Object.keys(currencyRates).forEach(k => {
+    container.innerHTML += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:600;width:40px">${k}</span>
+      <span style="font-size:11px;color:#999;flex:1">${currencyRates[k].name}</span>
+      <input type="number" step="any" class="input-field" style="width:120px" id="rate_${k}" value="${currencyRates[k].rate}" ${k==='AOA'?'readonly':''}>
+    </div>`;
+  });
+  document.getElementById('currencyModal').classList.add('show');
+  lucide.createIcons();
+}
+
+function closeCurrencyModal() {
+  document.getElementById('currencyModal').classList.remove('show');
+}
+
+function saveCurrencyRates() {
+  Object.keys(currencyRates).forEach(k => {
+    if (k === 'AOA') return;
+    const input = document.getElementById('rate_' + k);
+    if (input) {
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v > 0) currencyRates[k].rate = v;
+    }
+  });
+  saveToStorage();
+  renderCurrencyTable();
+  convertCurrency();
+  closeCurrencyModal();
+  showToast('Taxas actualizadas', 'success');
+}
+
+// ============ HISTORY ============
+function renderHistory() {
+  const filter = (document.getElementById('historyFilter')?.value || '').toLowerCase();
+  const filtered = history.filter(h => h.expr.toLowerCase().includes(filter) || h.result.toLowerCase().includes(filter));
+  const container = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  container.innerHTML = filtered.map((h, i) => {
+    const modeLabel = { basic:'Básica', scientific:'Científica', programmer:'Programador', converter:'Conversões' }[h.mode] || h.mode;
+    const d = new Date(h.timestamp);
+    const dateStr = d.toLocaleDateString('pt-PT') + ' ' + d.toLocaleTimeString('pt-PT', {hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-item" onclick="loadHistoryItem(${i})">
+      <div>
+        <div style="font-size:13px;font-weight:500">${escHtml(h.expr)}</div>
+        <div style="font-size:11px;color:#999">${modeLabel} · ${dateStr}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700;color:#66CFF5">${escHtml(h.result)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadHistoryItem(i) {
+  const h = history[i];
+  calcExpression = h.expr;
+  calcResult = h.result;
+  updateDisplay();
+  switchTab('calc');
+}
+
+function clearHistory() {
+  if (history.length === 0) return;
+  showInlineConfirm('historyList', 'Tem certeza que deseja limpar o histórico?', () => {
+    history = [];
+    saveToStorage();
+    renderHistory();
+    showToast('Histórico limpo', 'success');
+  });
+}
+
+// ============ SCENARIOS ============
+function saveCurrentScenario() {
+  const title = document.getElementById('calcTitle').value.trim();
+  const nextNum = scenarios.length + 1;
+  scenarios.push({
+    title: title || `Cenário ${nextNum}`,
+    expr: calcExpression || calcResult,
+    result: calcResult,
+    mode: currentMode,
+    timestamp: new Date().toISOString()
+  });
+  saveToStorage();
+  renderScenarios();
+  showToast('Cenário guardado', 'success');
+  document.getElementById('calcTitle').value = '';
+}
+
+function createNewScenario() {
+  editingScenarioIdx = -1;
+  document.getElementById('scenarioModalTitle').textContent = 'Novo Cenário';
+  document.getElementById('scenarioEditTitle').value = `Cenário ${scenarios.length + 1}`;
+  document.getElementById('scenarioEditExpr').value = '';
+  document.getElementById('scenarioEditResult').value = '';
+  document.getElementById('scenarioEditMode').value = 'basic';
+  document.getElementById('scenarioModal').classList.add('show');
+  lucide.createIcons();
+}
+
+function editScenario(i) {
+  editingScenarioIdx = i;
+  const s = scenarios[i];
+  document.getElementById('scenarioModalTitle').textContent = 'Editar Cenário';
+  document.getElementById('scenarioEditTitle').value = s.title;
+  document.getElementById('scenarioEditExpr').value = s.expr;
+  document.getElementById('scenarioEditResult').value = s.result;
+  document.getElementById('scenarioEditMode').value = s.mode;
+  document.getElementById('scenarioModal').classList.add('show');
+  lucide.createIcons();
+}
+
+function closeScenarioModal() {
+  document.getElementById('scenarioModal').classList.remove('show');
+}
+
+function saveScenarioEdit() {
+  const title = document.getElementById('scenarioEditTitle').value.trim() || `Cenário ${scenarios.length + 1}`;
+  const expr = document.getElementById('scenarioEditExpr').value.trim();
+  const mode = document.getElementById('scenarioEditMode').value;
+  if (editingScenarioIdx >= 0) {
+    scenarios[editingScenarioIdx].title = title;
+    scenarios[editingScenarioIdx].expr = expr;
+    scenarios[editingScenarioIdx].mode = mode;
+  } else {
+    scenarios.push({ title, expr, result: '', mode, timestamp: new Date().toISOString() });
+  }
+  saveToStorage();
+  renderScenarios();
+  closeScenarioModal();
+  showToast('Cenário guardado', 'success');
+}
+
+function cloneScenario(i) {
+  const s = { ...scenarios[i] };
+  s.title = s.title + ' (cópia)';
+  s.timestamp = new Date().toISOString();
+  scenarios.push(s);
+  saveToStorage();
+  renderScenarios();
+  showToast('Cenário clonado', 'success');
+}
+
+function deleteScenario(i) {
+  showInlineConfirm('scenariosList', 'Eliminar este cenário?', () => {
+    scenarios.splice(i, 1);
+    saveToStorage();
+    renderScenarios();
+    showToast('Cenário eliminado', 'success');
+  });
+}
+
+function loadScenario(i) {
+  const s = scenarios[i];
+  calcExpression = s.expr;
+  calcResult = s.result || '0';
+  updateDisplay();
+  switchCalcMode(s.mode);
+  switchTab('calc');
+  document.getElementById('calcTitle').value = s.title;
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenarioFilter')?.value || '').toLowerCase();
+  const filtered = scenarios.map((s, i) => ({ ...s, _idx: i })).filter(s =>
+    s.title.toLowerCase().includes(filter) || s.expr.toLowerCase().includes(filter)
+  );
+  const container = document.getElementById('scenariosList');
+  const empty = document.getElementById('scenariosEmpty');
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  container.innerHTML = filtered.map(s => {
+    const d = new Date(s.timestamp);
+    const dateStr = d.toLocaleDateString('pt-PT');
+    const modeLabel = { basic:'Básica', scientific:'Científica', programmer:'Programador', converter:'Conversões' }[s.mode] || s.mode;
+    return `<div class="card scenario-card" style="cursor:pointer" onclick="loadScenario(${s._idx})">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div style="font-size:14px;font-weight:600">${escHtml(s.title)}</div>
+          <div style="font-size:12px;color:#999;margin-top:2px">${escHtml(s.expr)}</div>
+          <div style="font-size:11px;color:#aaa;margin-top:4px"><span class="badge badge-blue">${modeLabel}</span> · ${dateStr}</div>
+        </div>
+        <div style="display:flex;gap:4px" class="export-hide" onclick="event.stopPropagation()">
+          <button class="btn-secondary" style="padding:4px 6px" onclick="editScenario(${s._idx})" title="Editar"><i data-lucide="edit" style="width:12px;height:12px"></i></button>
+          <button class="btn-secondary" style="padding:4px 6px" onclick="cloneScenario(${s._idx})" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+          <button class="btn-danger" style="padding:4px 6px" onclick="deleteScenario(${s._idx})" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        </div>
+      </div>
+      ${s.result ? `<div style="font-size:16px;font-weight:700;color:#66CFF5;margin-top:6px">= ${escHtml(s.result)}</div>` : ''}
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// ============ TEMPLATES ============
+function loadTemplate(name) {
+  const templates = {
+    pythagoras: {
+      title: 'Teorema de Pitágoras',
+      desc: 'Calcula a hipotenusa de um triângulo retângulo: c = √(a² + b²)',
+      fields: [
+        { id: 'tpl_a', label: 'Cateto a', val: '3' },
+        { id: 'tpl_b', label: 'Cateto b', val: '4' }
+      ],
+      calc: () => {
+        const a = parseFloat(document.getElementById('tpl_a').value);
+        const b = parseFloat(document.getElementById('tpl_b').value);
+        return `c = √(${a}² + ${b}²) = ${parseFloat(Math.sqrt(a*a + b*b).toFixed(6))}`;
+      },
+      expr: (a,b) => `sqrt(${a}^2+${b}^2)`
+    },
+    quadratic: {
+      title: 'Fórmula Quadrática',
+      desc: 'Resolve ax² + bx + c = 0',
+      fields: [
+        { id: 'tpl_a', label: 'a', val: '1' },
+        { id: 'tpl_b', label: 'b', val: '-5' },
+        { id: 'tpl_c', label: 'c', val: '6' }
+      ],
+      calc: () => {
+        const a = parseFloat(document.getElementById('tpl_a').value);
+        const b = parseFloat(document.getElementById('tpl_b').value);
+        const c = parseFloat(document.getElementById('tpl_c').value);
+        const disc = b*b - 4*a*c;
+        if (disc < 0) return 'Sem raízes reais (Δ < 0)';
+        const x1 = (-b + Math.sqrt(disc)) / (2*a);
+        const x2 = (-b - Math.sqrt(disc)) / (2*a);
+        return `Δ = ${disc} | x₁ = ${parseFloat(x1.toFixed(6))} | x₂ = ${parseFloat(x2.toFixed(6))}`;
+      }
+    },
+    compound: {
+      title: 'Juros Compostos',
+      desc: 'A = P(1 + r/n)^(nt) — Moeda: Kwanza (AOA)',
+      fields: [
+        { id: 'tpl_P', label: 'Capital (Kz)', val: '100000' },
+        { id: 'tpl_r', label: 'Taxa anual (%)', val: '15' },
+        { id: 'tpl_n', label: 'Capitalizações/ano', val: '12' },
+        { id: 'tpl_t', label: 'Tempo (anos)', val: '5' }
+      ],
+      calc: () => {
+        const P = parseFloat(document.getElementById('tpl_P').value);
+        const r = parseFloat(document.getElementById('tpl_r').value) / 100;
+        const n = parseFloat(document.getElementById('tpl_n').value);
+        const t = parseFloat(document.getElementById('tpl_t').value);
+        const A = P * Math.pow(1 + r/n, n*t);
+        const juros = A - P;
+        return `Montante: Kz ${parseFloat(A.toFixed(2)).toLocaleString('pt-PT')} | Juros: Kz ${parseFloat(juros.toFixed(2)).toLocaleString('pt-PT')}`;
+      }
+    },
+    bmi: {
+      title: 'Índice Massa Corporal',
+      desc: 'IMC = peso (kg) / altura² (m)',
+      fields: [
+        { id: 'tpl_w', label: 'Peso (kg)', val: '70' },
+        { id: 'tpl_h', label: 'Altura (m)', val: '1.75' }
+      ],
+      calc: () => {
+        const w = parseFloat(document.getElementById('tpl_w').value);
+        const h = parseFloat(document.getElementById('tpl_h').value);
+        const imc = w / (h*h);
+        let cat = 'Normal';
+        if (imc < 18.5) cat = 'Abaixo do peso';
+        else if (imc < 25) cat = 'Normal';
+        else if (imc < 30) cat = 'Sobrepeso';
+        else cat = 'Obesidade';
+        return `IMC = ${parseFloat(imc.toFixed(1))} — ${cat}`;
+      }
+    },
+    circle: {
+      title: 'Área do Círculo',
+      desc: 'A = πr²',
+      fields: [{ id: 'tpl_r', label: 'Raio', val: '5' }],
+      calc: () => {
+        const r = parseFloat(document.getElementById('tpl_r').value);
+        return `A = π × ${r}² = ${parseFloat((Math.PI * r * r).toFixed(6))}`;
+      }
+    },
+    velocity: {
+      title: 'Velocidade Média',
+      desc: 'v = d / t',
+      fields: [
+        { id: 'tpl_d', label: 'Distância (m)', val: '100' },
+        { id: 'tpl_t', label: 'Tempo (s)', val: '9.58' }
+      ],
+      calc: () => {
+        const d = parseFloat(document.getElementById('tpl_d').value);
+        const t = parseFloat(document.getElementById('tpl_t').value);
+        const v = d / t;
+        const kmh = v * 3.6;
+        return `v = ${parseFloat(v.toFixed(4))} m/s = ${parseFloat(kmh.toFixed(2))} km/h`;
+      }
+    }
+  };
+
+  const tpl = templates[name];
+  if (!tpl) return;
+
+  document.getElementById('templateTitle').textContent = tpl.title;
+  let html = `<p style="font-size:13px;color:#555;margin-bottom:12px">${tpl.desc}</p>`;
+  tpl.fields.forEach(f => {
+    html += `<div style="margin-bottom:8px">
+      <label class="label-text">${f.label}</label>
+      <input type="number" step="any" id="${f.id}" class="input-field" value="${f.val}">
+    </div>`;
+  });
+  html += `<div id="templateResult" style="margin-top:12px;font-size:15px;font-weight:600;color:#66CFF5;padding:12px;background:#F8F9FA;border-radius:6px"></div>`;
+  document.getElementById('templateContent').innerHTML = html;
+
+  document.getElementById('templateCalcBtn').onclick = () => {
+    const resultStr = tpl.calc();
+    document.getElementById('templateResult').textContent = resultStr;
+    history.unshift({ expr: `[${tpl.title}]`, result: resultStr, mode: 'scientific', opType: 'template', timestamp: new Date().toISOString() });
+    saveToStorage();
+  };
+
+  document.getElementById('templateModal').classList.add('show');
+  lucide.createIcons();
+}
+
+function closeTemplateModal() {
+  document.getElementById('templateModal').classList.remove('show');
+}
+
+// ============ CHARTS ============
+function updateCharts() {
+  // Destroy existing
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+  charts = {};
+
+  // Operations distribution (doughnut with %)
+  const opCounts = {};
+  history.forEach(h => {
+    const t = h.opType || 'basic';
+    opCounts[t] = (opCounts[t] || 0) + 1;
+  });
+  const opLabels = Object.keys(opCounts);
+  const opData = Object.values(opCounts);
+  const opTotal = opData.reduce((a, b) => a + b, 0);
+
+  if (opLabels.length > 0) {
+    const ctx1 = document.getElementById('chartOps');
+    charts.ops = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: opLabels.map((l, i) => {
+          const pct = ((opData[i] / opTotal) * 100).toFixed(1);
+          return `${l} (${opData[i]} — ${pct}%)`;
+        }),
+        datasets: [{ data: opData, backgroundColor: ['#66CFF5','#4CAF50','#FFC107','#F44336','#FF9800','#9C27B0','#00BCD4'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } }
+      }
+    });
+  }
+
+  // Result history (line)
+  const numericResults = history.filter(h => !isNaN(parseFloat(h.result))).slice(0, 30).reverse();
+  if (numericResults.length > 0) {
+    const ctx2 = document.getElementById('chartHistory');
+    charts.history = new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: numericResults.map((_, i) => `#${i+1}`),
+        datasets: [{ label: 'Resultado', data: numericResults.map(h => parseFloat(h.result)), borderColor: '#66CFF5', backgroundColor: 'rgba(30,136,229,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#f0f0f0' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // Function usage (bar)
+  const funcLabels = Object.keys(funcUsage).sort((a, b) => funcUsage[b] - funcUsage[a]).slice(0, 10);
+  if (funcLabels.length > 0) {
+    const ctx3 = document.getElementById('chartFuncs');
+    charts.funcs = new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: funcLabels,
+        datasets: [{ label: 'Utilizações', data: funcLabels.map(k => funcUsage[k]), backgroundColor: '#FFC107', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#f0f0f0' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}
+
+// ============ EXPORT / IMPORT ============
+function exportJSON() {
+  const ratesOnly = {};
+  Object.keys(currencyRates).forEach(k => ratesOnly[k] = currencyRates[k].rate);
+  const data = { history, scenarios, funcUsage, currencyRates: ratesOnly, exportDate: new Date().toISOString(), app: 'IS Calculadora Científica' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `IS_Calculadora_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Dados exportados em JSON', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.history) history = data.history;
+      if (data.scenarios) scenarios = data.scenarios;
+      if (data.funcUsage) funcUsage = data.funcUsage;
+      if (data.currencyRates) {
+        Object.keys(data.currencyRates).forEach(k => {
+          if (currencyRates[k]) currencyRates[k].rate = data.currencyRates[k];
+        });
+      }
+      saveToStorage();
+      renderHistory();
+      renderScenarios();
+      renderCurrencyTable();
+      convertCurrency();
+      showToast('Dados importados com sucesso', 'success');
+    } catch(err) {
+      showToast('Erro ao importar ficheiro', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function exportAppImage() {
+  showToast('A gerar imagem...', 'warn');
+  document.querySelectorAll('.export-hide').forEach(el => el.style.opacity = '0');
+  try {
+    const canvas = await html2canvas(document.getElementById('appWrapper'), { scale: 2, useCORS: true, backgroundColor: '#F8F9FA' });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `IS_Calculadora_${new Date().toISOString().slice(0,10)}.png`;
+    a.click();
+    showToast('Imagem exportada', 'success');
+  } catch(e) {
+    showToast('Erro ao gerar imagem', 'error');
+  }
+  document.querySelectorAll('.export-hide').forEach(el => el.style.opacity = '1');
+}
+
+async function exportChartImage(canvasId) {
+  const canvasEl = document.getElementById(canvasId);
+  if (!canvasEl) return;
+  try {
+    const a = document.createElement('a');
+    a.href = canvasEl.toDataURL('image/png', 1.0);
+    a.download = `IS_Calc_${canvasId}_HD.png`;
+    a.click();
+    showToast('Gráfico exportado em HD', 'success');
+  } catch(e) {
+    showToast('Erro ao exportar gráfico', 'error');
+  }
+}
+
+async function exportPDF() {
+  showToast('A gerar PDF...', 'warn');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = 30;
+    const now = new Date();
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const dataExtenso = `${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+    let pageNum = 1;
+
+    function addHeader() {
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pageW, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('IS Calculadora Científica', margin, 14);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(dataExtenso, pageW - margin, 14, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+    }
+
+    function addFooter() {
+      doc.setFontSize(7);
+      doc.setTextColor(150);
+      doc.text(`Gerado por IS Calculadora Científica · ${dataExtenso} · www.investesuite.com`, margin, pageH - 8);
+      doc.text(`Página ${pageNum}`, pageW - margin, pageH - 8, { align: 'right' });
+      doc.setTextColor(0);
+    }
+
+    function checkPage(needed) {
+      if (y + needed > pageH - 20) {
+        addFooter();
+        doc.addPage();
+        pageNum++;
+        addHeader();
+        y = 30;
+      }
+    }
+
+    addHeader();
+
+    // History section
+    if (history.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Histórico de Cálculos', margin, y);
+      y += 8;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const showHistory = history.slice(0, 50);
+      showHistory.forEach(h => {
+        checkPage(8);
+        const d = new Date(h.timestamp);
+        doc.text(`${h.expr} = ${h.result}`, margin, y);
+        doc.setTextColor(150);
+        doc.text(`${d.toLocaleDateString('pt-PT')}`, pageW - margin, y, { align: 'right' });
+        doc.setTextColor(0);
+        y += 5;
+      });
+      y += 6;
+    }
+
+    // Scenarios section
+    if (scenarios.length > 0) {
+      checkPage(15);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Cenários Guardados', margin, y);
+      y += 8;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      scenarios.forEach(s => {
+        checkPage(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(s.title, margin, y);
+        doc.setFont('helvetica', 'normal');
+        y += 4;
+        doc.text(`${s.expr} = ${s.result || 'N/A'}`, margin + 4, y);
+        y += 6;
+      });
+      y += 6;
+    }
+
+    // Charts - small size
+    const chartIds = ['chartOps', 'chartHistory', 'chartFuncs'];
+    const chartTitles = ['Distribuição por Operação', 'Histórico de Resultados', 'Funções Mais Utilizadas'];
+    for (let i = 0; i < chartIds.length; i++) {
+      const el = document.getElementById(chartIds[i]);
+      if (el && charts[Object.keys(charts)[i]]) {
+        checkPage(55);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(chartTitles[i], margin, y);
+        y += 4;
+        const imgData = el.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', margin, y, 80, 45);
+        y += 50;
+      }
+    }
+
+    addFooter();
+    doc.save(`IS_Calculadora_${now.toISOString().slice(0,10)}.pdf`);
+    showToast('PDF exportado', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('Erro ao gerar PDF', 'error');
+  }
+}
+
+// ============ UTILITIES ============
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => { toast.className = 'toast'; }, 3000);
+}
+
+function showInlineConfirm(containerId, msg, onConfirm) {
+  const container = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = 'card card-red fade-in';
+  div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px';
+  div.innerHTML = `<span style="font-size:13px">${msg}</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn-danger" id="confirmYes">Sim</button>
+      <button class="btn-secondary" id="confirmNo">Não</button>
+    </div>`;
+  container.prepend(div);
+  div.querySelector('#confirmYes').onclick = () => { div.remove(); onConfirm(); };
+  div.querySelector('#confirmNo').onclick = () => div.remove();
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ============ ELEMENT SDK ============
+const defaultConfig = {
+  app_title: 'IS Calculadora Científica',
+  app_description: 'Calculadora científica avançada para a Comunidade dos Países de Língua Portuguesa',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#333333',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#777777',
+  font_family: 'Inter',
+  font_size: 13
+};
+
+function applyConfig(config) {
+  const t = config.app_title || defaultConfig.app_title;
+  const d = config.app_description || defaultConfig.app_description;
+  const bg = config.background_color || defaultConfig.background_color;
+  const sf = config.surface_color || defaultConfig.surface_color;
+  const tx = config.text_color || defaultConfig.text_color;
+  const pa = config.primary_action_color || defaultConfig.primary_action_color;
+  const sa = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const ff = config.font_family || defaultConfig.font_family;
+  const fs = config.font_size || defaultConfig.font_size;
+
+  document.getElementById('headerTitle').textContent = t;
+  document.getElementById('headerDesc').textContent = d;
+
+  document.body.style.background = bg;
+  document.body.style.color = tx;
+  document.body.style.fontFamily = `${ff}, Inter, sans-serif`;
+  document.body.style.fontSize = fs + 'px';
+
+  document.querySelectorAll('.card').forEach(el => el.style.backgroundColor = sf);
+  document.querySelectorAll('.header-fixed').forEach(el => el.style.backgroundColor = sf);
+  document.querySelectorAll('.tabs-fixed').forEach(el => el.style.backgroundColor = sf);
+
+  document.querySelectorAll('.btn-primary').forEach(el => el.style.backgroundColor = pa);
+  document.querySelectorAll('.calc-btn-eq').forEach(el => el.style.backgroundColor = pa);
+  document.querySelectorAll('.calc-btn-op').forEach(el => { el.style.color = pa; el.style.backgroundColor = pa + '18'; });
+
+  document.querySelectorAll('.tab-btn.active').forEach(el => { el.style.color = pa; el.style.borderBottomColor = pa; });
+
+  document.querySelectorAll('h1,h2,h3').forEach(el => el.style.fontFamily = `${ff}, Inter, sans-serif`);
+
+  document.getElementById('headerTitle').style.fontSize = (fs * 1.25) + 'px';
+  document.getElementById('headerDesc').style.fontSize = (fs * 0.85) + 'px';
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab !== 'calc') return;
+  if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT') return;
+
+  const keyMap = {
+    '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+    '.':'.', '+':'+', '-':'−', '*':'×', '/':'÷', '(':'(', ')':')',
+    '^':'^', '%':'%'
+  };
+  if (keyMap[e.key]) { e.preventDefault(); calcInput(keyMap[e.key]); }
+  else if (e.key === 'Enter') { e.preventDefault(); calcEvaluate(); }
+  else if (e.key === 'Backspace') { e.preventDefault(); calcBackspace(); }
+  else if (e.key === 'Escape') { e.preventDefault(); calcClear(); }
+});
+
+init();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd2d2569479d04e',t:'MTc3MzY1NDI5MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matrizes GE McKinsey</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+    .matrix-cell { transition: all 0.2s ease; }
+    .matrix-cell:hover { transform: scale(1.02); }
+    .bubble { transition: all 0.3s ease; cursor: pointer; }
+    .bubble:hover { filter: brightness(1.1); }
+    .toast { animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .export-hide { }
+    @media print { .export-hide { display: none !important; } }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #F8F9FA; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 text-gray-800">
+  <div id="app" class="h-full flex flex-col overflow-hidden"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+     <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Matrizes GE McKinsey</h1>
+      <p class="text-xs text-gray-500" style="display: none;">Análise Estratégica de Portfólio</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 export-hide"><button onclick="exportImage()" class="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Exportar Imagem">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg></button> <button onclick="exportPDF()" class="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Exportar PDF">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg></button> <button onclick="exportJSON()" class="p-2 text-gray-500 hover:text-green-500 hover:bg-green-50 rounded-lg transition-all" title="Exportar JSON">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg></button> <label class="p-2 text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all cursor-pointer" title="Importar JSON">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg><input type="file" accept=".json" onchange="importJSON(event)" class="hidden"> </label>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-6 flex-shrink-0 export-hide">
+    <div class="flex gap-1 overflow-x-auto"><button onclick="switchTab('simulator')" id="tab-simulator" class="tab-active flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg> Simulador </button> <button onclick="switchTab('scenarios')" id="tab-scenarios" class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-blue-500 whitespace-nowrap transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg> Cenários Salvos </button> <button onclick="switchTab('templates')" id="tab-templates" class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-blue-500 whitespace-nowrap transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg> Templates </button> <button onclick="switchTab('help')" id="tab-help" class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500 hover:text-blue-500 whitespace-nowrap transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-6 scrollbar-thin"><!-- Simulator Tab -->
+    <div id="content-simulator" class="tab-content"><!-- Title Input -->
+     <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 card-hover export-hide" style="border-left: 4px solid #66CFF5;"><label class="block text-sm font-medium text-gray-700 mb-2">Título do Cenário</label> <input type="text" id="scenarioTitle" placeholder="Digite o título do cenário..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" value="Novo Cenário">
+     </div><!-- Business Units Section -->
+     <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6 card-hover" style="border-left: 4px solid #4CAF50;">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg> Unidades de Negócio</h2>
+       <div class="flex gap-2 export-hide"><input type="text" id="filterUnits" placeholder="Filtrar..." class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" oninput="filterBusinessUnits()"> <button onclick="addBusinessUnit()" class="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Adicionar </button>
+       </div>
+      </div>
+      <div id="businessUnits" class="space-y-3"><!-- Business units will be rendered here -->
+      </div>
+     </div><!-- Matrix and Charts Grid -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><!-- GE McKinsey Matrix -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #66CFF5;">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+         </svg> Matriz GE McKinsey</h2><button onclick="exportChartImage('matrixChart')" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all export-hide" title="Exportar Imagem HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div id="matrixChart" class="relative">
+        <div class="flex">
+         <div class="flex flex-col justify-around text-xs text-gray-500 pr-2 font-medium" style="writing-mode: vertical-rl; transform: rotate(180deg);"><span>Alta</span> <span>Média</span> <span>Baixa</span>
+         </div>
+         <div class="flex-1">
+          <div class="text-xs text-gray-500 text-center mb-1 font-medium">
+           Força Competitiva
+          </div>
+          <div class="grid grid-cols-3 gap-1 mb-1">
+           <div class="text-center text-xs text-gray-400">
+            Alta
+           </div>
+           <div class="text-center text-xs text-gray-400">
+            Média
+           </div>
+           <div class="text-center text-xs text-gray-400">
+            Baixa
+           </div>
+          </div>
+          <div id="matrixGrid" class="grid grid-cols-3 gap-1 aspect-square relative"><!-- Matrix cells will be rendered here -->
+          </div>
+         </div>
+        </div>
+        <div class="text-xs text-gray-500 text-center mt-2 font-medium" style="margin-left: 20px;">
+         ← Atratividade do Mercado →
+        </div>
+       </div>
+       <div id="matrixLegend" class="mt-4 flex flex-wrap gap-2 text-xs"><!-- Legend items will be rendered here -->
+       </div>
+      </div><!-- Radar Chart -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #FF9800;">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+         </svg> Análise Comparativa</h2><button onclick="exportChartImage('radarChart')" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all export-hide" title="Exportar Imagem HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div id="radarChart" class="flex items-center justify-center" style="min-height: 280px;">
+        <svg id="radarSvg" viewbox="0 0 300 300" class="w-full max-w-xs"></svg>
+       </div>
+      </div>
+     </div><!-- Bar Charts Row -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><!-- Market Attractiveness Chart -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #9C27B0;">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+         </svg> Atratividade do Mercado</h2><button onclick="exportChartImage('attractivenessChart')" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all export-hide" title="Exportar Imagem HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div id="attractivenessChart" class="space-y-3"><!-- Bar chart will be rendered here -->
+       </div>
+      </div><!-- Competitive Strength Chart -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #00BCD4;">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+         <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+         </svg> Força Competitiva</h2><button onclick="exportChartImage('strengthChart')" class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all export-hide" title="Exportar Imagem HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div id="strengthChart" class="space-y-3"><!-- Bar chart will be rendered here -->
+       </div>
+      </div>
+     </div><!-- Strategic Recommendations -->
+     <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #FFC107;">
+      <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+       <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+       </svg> Recomendações Estratégicas</h2>
+      <div id="recommendations" class="grid grid-cols-1 md:grid-cols-3 gap-4"><!-- Recommendations will be rendered here -->
+      </div>
+     </div><!-- Quick Save Button -->
+     <div class="fixed bottom-6 right-6 export-hide"><button onclick="quickSave()" class="flex items-center gap-2 px-5 py-3 bg-blue-500 text-white font-medium rounded-full shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+       </svg> Guardar Cenário </button>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="content-scenarios" class="tab-content hidden">
+     <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #66CFF5;">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg> Cenários Salvos</h2>
+       <div class="flex gap-2"><input type="text" id="filterScenarios" placeholder="Filtrar cenários..." class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" oninput="renderScenarios()"> <button onclick="createNewScenario()" class="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo </button>
+       </div>
+      </div>
+      <div id="scenariosList" class="space-y-3"><!-- Scenarios will be rendered here -->
+      </div>
+      <div id="noScenarios" class="hidden text-center py-12 text-gray-500">
+       <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+       </svg>
+       <p class="font-medium">Nenhum cenário guardado</p>
+       <p class="text-sm mt-1">Clique em "Guardar Cenário" para criar o primeiro</p>
+      </div>
+     </div>
+    </div><!-- Templates Tab -->
+    <div id="content-templates" class="tab-content hidden">
+     <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #9C27B0;">
+      <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-6">
+       <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Templates de Aprendizagem</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('tech')">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Empresa de Tecnologia</h3>
+        <p class="text-sm text-gray-500">Portfólio diversificado com produtos em diferentes fases de maturidade</p>
+       </div>
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('retail')">
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Retalho</h3>
+        <p class="text-sm text-gray-500">Análise de diferentes canais e formatos de loja</p>
+       </div>
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('finance')">
+        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Serviços Financeiros</h3>
+        <p class="text-sm text-gray-500">Análise de produtos bancários e de investimento</p>
+       </div>
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('pharma')">
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Farmacêutica</h3>
+        <p class="text-sm text-gray-500">Pipeline de medicamentos em desenvolvimento</p>
+       </div>
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-cyan-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('energy')">
+        <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Energia</h3>
+        <p class="text-sm text-gray-500">Portfólio de fontes de energia renováveis e tradicionais</p>
+       </div>
+       <div class="border border-gray-200 rounded-lg p-4 hover:border-red-300 hover:shadow-md transition-all cursor-pointer" onclick="loadTemplate('startup')">
+        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+         <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+         </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Startup</h3>
+        <p class="text-sm text-gray-500">Análise de produtos para empresa em crescimento</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Help Tab -->
+    <div id="content-help" class="tab-content hidden">
+     <div class="space-y-6"><!-- What is GE McKinsey Matrix -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #66CFF5;">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> O que é a Matriz GE McKinsey?</h2>
+       <p class="text-gray-600 leading-relaxed mb-4">A Matriz GE McKinsey é uma ferramenta de análise estratégica de portfólio desenvolvida pela General Electric em parceria com a consultora McKinsey &amp; Company nos anos 1970. É uma evolução da Matriz BCG, oferecendo uma análise mais sofisticada e multidimensional.</p>
+       <p class="text-gray-600 leading-relaxed">A matriz avalia as unidades de negócio com base em dois eixos principais: <strong>Atratividade do Mercado</strong> (fatores externos) e <strong>Força Competitiva</strong> (fatores internos), permitindo decisões mais informadas sobre investimentos e alocação de recursos.</p>
+      </div><!-- How to Use -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #4CAF50;">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg> Como Utilizar</h2>
+       <ol class="space-y-3 text-gray-600">
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">1</span> <span><strong>Adicione unidades de negócio:</strong> Clique em "Adicionar" e insira o nome de cada produto, serviço ou divisão da empresa.</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">2</span> <span><strong>Avalie a Atratividade do Mercado (1-10):</strong> Considere fatores como tamanho do mercado, taxa de crescimento, rentabilidade, intensidade competitiva e tendências.</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">3</span> <span><strong>Avalie a Força Competitiva (1-10):</strong> Analise quota de mercado, força da marca, capacidades tecnológicas, qualidade do produto e eficiência operacional.</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">4</span> <span><strong>Defina o tamanho relativo:</strong> Indique a importância ou receita relativa de cada unidade de negócio (aparece como tamanho do círculo na matriz).</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">5</span> <span><strong>Analise os resultados:</strong> Observe a posição de cada unidade na matriz e siga as recomendações estratégicas geradas automaticamente.</span></li>
+       </ol>
+      </div><!-- Matrix Zones -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #FF9800;">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg> Zonas da Matriz</h2>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+         <h3 class="font-semibold text-green-700 mb-2">🟢 Investir/Crescer</h3>
+         <p class="text-sm text-green-600">Alta atratividade e forte posição competitiva. Priorizar investimentos e expansão agressiva.</p>
+        </div>
+        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+         <h3 class="font-semibold text-yellow-700 mb-2">🟡 Selectividade</h3>
+         <p class="text-sm text-yellow-600">Posição mista. Investir seletivamente em segmentos promissores, proteger posições fortes.</p>
+        </div>
+        <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+         <h3 class="font-semibold text-red-700 mb-2">🔴 Colher/Desinvestir</h3>
+         <p class="text-sm text-red-600">Baixa atratividade e posição fraca. Minimizar investimentos, extrair valor ou desinvestir.</p>
+        </div>
+       </div>
+      </div><!-- Best Practices -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 card-hover" style="border-left: 4px solid #9C27B0;">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg> Melhores Práticas</h2>
+       <ul class="space-y-2 text-gray-600">
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Envolva múltiplos stakeholders na avaliação para reduzir vieses.</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Revise a análise periodicamente (trimestral ou semestralmente).</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Documente os critérios utilizados para cada avaliação.</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Compare cenários históricos para identificar tendências.</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Use a matriz como ponto de partida, não como decisão final.</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Considere sinergias entre unidades de negócio na análise global.</span></li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div><!-- Edit Modal -->
+   <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+     <div class="bg-blue-500 px-6 py-4">
+      <h3 class="text-lg font-semibold text-white">Editar Cenário</h3>
+     </div>
+     <div class="p-6"><label class="block text-sm font-medium text-gray-700 mb-2">Título do Cenário</label> <input type="text" id="editScenarioTitle" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+     </div>
+     <div class="px-6 pb-6 flex gap-3 justify-end"><button onclick="closeEditModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">Cancelar</button> <button onclick="saveEditedScenario()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Delete Confirmation Modal -->
+   <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+     <div class="bg-red-500 px-6 py-4">
+      <h3 class="text-lg font-semibold text-white">Confirmar Eliminação</h3>
+     </div>
+     <div class="p-6">
+      <p class="text-gray-600">Tem a certeza que deseja eliminar este cenário? Esta ação não pode ser desfeita.</p>
+     </div>
+     <div class="px-6 pb-6 flex gap-3 justify-end"><button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">Cancelar</button> <button onclick="confirmDelete()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">Eliminar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Default Configuration
+    const defaultConfig = {
+      app_title: 'IS Matrizes GE McKinsey'
+    };
+
+    let config = { ...defaultConfig };
+
+    // Application State
+    let businessUnits = [];
+    let savedScenarios = [];
+    let editingScenarioId = null;
+    let deletingScenarioId = null;
+    let nextScenarioNumber = 1;
+
+    // Color palette for business units
+    const unitColors = [
+      '#66CFF5', '#4CAF50', '#FF9800', '#9C27B0', '#F44336',
+      '#00BCD4', '#E91E63', '#3F51B5', '#009688', '#FF5722'
+    ];
+
+    // Initialize
+    function init() {
+      loadFromLocalStorage();
+      renderBusinessUnits();
+      renderMatrix();
+      renderCharts();
+      renderRecommendations();
+      renderScenarios();
+    }
+
+    // LocalStorage Functions
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('ge_mckinseyData');
+        if (saved) {
+          const data = JSON.parse(saved);
+          businessUnits = data.businessUnits || [];
+          savedScenarios = data.scenarios || [];
+          nextScenarioNumber = data.nextScenarioNumber || 1;
+          if (data.currentTitle) {
+            document.getElementById('scenarioTitle').value = data.currentTitle;
+          }
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
+      }
+    }
+
+    function saveToLocalStorage() {
+      try {
+        const data = {
+          businessUnits,
+          scenarios: savedScenarios,
+          nextScenarioNumber,
+          currentTitle: document.getElementById('scenarioTitle').value
+        };
+        localStorage.setItem('ge_mckinseyData', JSON.stringify(data));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.querySelectorAll('nav button').forEach(b => {
+        b.classList.remove('tab-active');
+        b.classList.add('text-gray-500');
+      });
+      
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      const tabBtn = document.getElementById(`tab-${tabName}`);
+      tabBtn.classList.add('tab-active');
+      tabBtn.classList.remove('text-gray-500');
+    }
+
+    // Business Unit Management
+    function addBusinessUnit() {
+      const newUnit = {
+        id: Date.now().toString(),
+        name: `Unidade ${businessUnits.length + 1}`,
+        attractiveness: 5,
+        strength: 5,
+        size: 50,
+        color: unitColors[businessUnits.length % unitColors.length]
+      };
+      businessUnits.push(newUnit);
+      renderBusinessUnits();
+      renderMatrix();
+      renderCharts();
+      renderRecommendations();
+      saveToLocalStorage();
+      showToast('Unidade de negócio adicionada', 'success');
+    }
+
+    function removeBusinessUnit(id) {
+      businessUnits = businessUnits.filter(u => u.id !== id);
+      renderBusinessUnits();
+      renderMatrix();
+      renderCharts();
+      renderRecommendations();
+      saveToLocalStorage();
+      showToast('Unidade de negócio removida', 'info');
+    }
+
+    function updateBusinessUnit(id, field, value) {
+      const unit = businessUnits.find(u => u.id === id);
+      if (unit) {
+        unit[field] = field === 'name' ? value : parseFloat(value);
+        renderMatrix();
+        renderCharts();
+        renderRecommendations();
+        saveToLocalStorage();
+      }
+    }
+
+    function filterBusinessUnits() {
+      const filter = document.getElementById('filterUnits').value.toLowerCase();
+      const container = document.getElementById('businessUnits');
+      Array.from(container.children).forEach(child => {
+        const name = child.querySelector('input[type="text"]')?.value.toLowerCase() || '';
+        child.style.display = name.includes(filter) ? '' : 'none';
+      });
+    }
+
+    function renderBusinessUnits() {
+      const container = document.getElementById('businessUnits');
+      if (businessUnits.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <p class="font-medium">Nenhuma unidade de negócio</p>
+            <p class="text-sm">Clique em "Adicionar" para começar</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = businessUnits.map((unit, idx) => `
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 export-hide" data-unit-id="${unit.id}">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: ${unit.color}"></div>
+            <input type="text" value="${unit.name}" onchange="updateBusinessUnit('${unit.id}', 'name', this.value)" 
+              class="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="removeBusinessUnit('${unit.id}')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Remover">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Atratividade (1-10)</label>
+              <input type="range" min="1" max="10" value="${unit.attractiveness}" 
+                oninput="updateBusinessUnit('${unit.id}', 'attractiveness', this.value); this.nextElementSibling.textContent = this.value"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500">
+              <span class="text-xs text-gray-600 font-medium">${unit.attractiveness}</span>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Força (1-10)</label>
+              <input type="range" min="1" max="10" value="${unit.strength}" 
+                oninput="updateBusinessUnit('${unit.id}', 'strength', this.value); this.nextElementSibling.textContent = this.value"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+              <span class="text-xs text-gray-600 font-medium">${unit.strength}</span>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Tamanho (%)</label>
+              <input type="range" min="10" max="100" value="${unit.size}" 
+                oninput="updateBusinessUnit('${unit.id}', 'size', this.value); this.nextElementSibling.textContent = this.value + '%'"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500">
+              <span class="text-xs text-gray-600 font-medium">${unit.size}%</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Also render as read-only display for export
+      const exportDisplay = businessUnits.map(unit => `
+        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 print-only hidden">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" style="background-color: ${unit.color}"></div>
+            <span class="font-medium text-sm">${unit.name}</span>
+            <span class="text-xs text-gray-500 ml-auto">A: ${unit.attractiveness} | F: ${unit.strength} | T: ${unit.size}%</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Matrix Rendering
+    function renderMatrix() {
+      const grid = document.getElementById('matrixGrid');
+      const legend = document.getElementById('matrixLegend');
+      
+      // Matrix cell colors
+      const cellColors = [
+        ['#4CAF50', '#8BC34A', '#FFC107'], // High attractiveness
+        ['#8BC34A', '#FFC107', '#FF9800'], // Medium attractiveness
+        ['#FFC107', '#FF9800', '#F44336']  // Low attractiveness
+      ];
+
+      const cellLabels = [
+        ['Investir', 'Investir', 'Selectividade'],
+        ['Investir', 'Selectividade', 'Colher'],
+        ['Selectividade', 'Colher', 'Desinvestir']
+      ];
+
+      let gridHTML = '';
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          gridHTML += `
+            <div class="matrix-cell rounded-lg flex items-center justify-center text-xs font-medium text-white relative" 
+                 style="background-color: ${cellColors[row][col]}; opacity: 0.85;">
+              <span class="opacity-70">${cellLabels[row][col]}</span>
+            </div>
+          `;
+        }
+      }
+      grid.innerHTML = gridHTML;
+
+      // Add business unit bubbles
+      businessUnits.forEach(unit => {
+        // Convert values to position (1-10 scale to percentage)
+        // Strength: high (7-10) = left column, medium (4-6) = middle, low (1-3) = right
+        // Attractiveness: high (7-10) = top row, medium (4-6) = middle, low (1-3) = bottom
+        const xPercent = ((10 - unit.strength) / 9) * 100;
+        const yPercent = ((10 - unit.attractiveness) / 9) * 100;
+        const size = Math.max(20, unit.size * 0.5);
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble absolute rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg';
+        bubble.style.cssText = `
+          left: calc(${xPercent}% - ${size/2}px);
+          top: calc(${yPercent}% - ${size/2}px);
+          width: ${size}px;
+          height: ${size}px;
+          background-color: ${unit.color};
+          border: 2px solid white;
+          z-index: 10;
+        `;
+        bubble.textContent = unit.name.substring(0, 2).toUpperCase();
+        bubble.title = `${unit.name}\nAtratividade: ${unit.attractiveness}\nForça: ${unit.strength}`;
+        grid.appendChild(bubble);
+      });
+
+      // Legend
+      legend.innerHTML = businessUnits.map(unit => `
+        <div class="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-full">
+          <div class="w-3 h-3 rounded-full" style="background-color: ${unit.color}"></div>
+          <span class="text-gray-700">${unit.name}</span>
+        </div>
+      `).join('');
+    }
+
+    // Bar Charts Rendering
+    function renderCharts() {
+      const attractivenessChart = document.getElementById('attractivenessChart');
+      const strengthChart = document.getElementById('strengthChart');
+
+      if (businessUnits.length === 0) {
+        attractivenessChart.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Adicione unidades de negócio para ver o gráfico</div>';
+        strengthChart.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Adicione unidades de negócio para ver o gráfico</div>';
+        renderRadarChart();
+        return;
+      }
+
+      // Attractiveness Chart
+      attractivenessChart.innerHTML = businessUnits.map(unit => `
+        <div class="flex items-center gap-3">
+          <div class="w-24 text-sm text-gray-600 truncate" title="${unit.name}">${unit.name}</div>
+          <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2" 
+                 style="width: ${unit.attractiveness * 10}%; background-color: ${unit.color};">
+              <span class="text-white text-xs font-medium">${unit.attractiveness}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Strength Chart
+      strengthChart.innerHTML = businessUnits.map(unit => `
+        <div class="flex items-center gap-3">
+          <div class="w-24 text-sm text-gray-600 truncate" title="${unit.name}">${unit.name}</div>
+          <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2" 
+                 style="width: ${unit.strength * 10}%; background-color: ${unit.color};">
+              <span class="text-white text-xs font-medium">${unit.strength}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      renderRadarChart();
+    }
+
+    // Radar Chart
+    function renderRadarChart() {
+      const svg = document.getElementById('radarSvg');
+      const cx = 150, cy = 150, radius = 100;
+      
+      if (businessUnits.length === 0) {
+        svg.innerHTML = '<text x="150" y="150" text-anchor="middle" fill="#9CA3AF" font-size="12">Sem dados</text>';
+        return;
+      }
+
+      const axes = ['Atratividade', 'Força', 'Tamanho'];
+      const numAxes = axes.length;
+      const angleStep = (2 * Math.PI) / numAxes;
+
+      let html = '';
+
+      // Grid circles
+      for (let i = 1; i <= 5; i++) {
+        const r = (radius / 5) * i;
+        html += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E5E7EB" stroke-width="1"/>`;
+      }
+
+      // Axes
+      for (let i = 0; i < numAxes; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E5E7EB" stroke-width="1"/>`;
+        
+        // Labels
+        const labelX = cx + (radius + 20) * Math.cos(angle);
+        const labelY = cy + (radius + 20) * Math.sin(angle);
+        html += `<text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" fill="#6B7280" font-size="10">${axes[i]}</text>`;
+      }
+
+      // Data polygons
+      businessUnits.forEach((unit, idx) => {
+        const values = [unit.attractiveness / 10, unit.strength / 10, unit.size / 100];
+        const points = values.map((v, i) => {
+          const angle = i * angleStep - Math.PI / 2;
+          const r = radius * v;
+          return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+        }).join(' ');
+
+        html += `<polygon points="${points}" fill="${unit.color}" fill-opacity="0.2" stroke="${unit.color}" stroke-width="2"/>`;
+        
+        // Points
+        values.forEach((v, i) => {
+          const angle = i * angleStep - Math.PI / 2;
+          const r = radius * v;
+          const px = cx + r * Math.cos(angle);
+          const py = cy + r * Math.sin(angle);
+          html += `<circle cx="${px}" cy="${py}" r="4" fill="${unit.color}"/>`;
+        });
+      });
+
+      svg.innerHTML = html;
+    }
+
+    // Recommendations
+    function renderRecommendations() {
+      const container = document.getElementById('recommendations');
+      
+      const invest = businessUnits.filter(u => u.attractiveness >= 7 && u.strength >= 7);
+      const selective = businessUnits.filter(u => (u.attractiveness >= 4 && u.attractiveness < 7) || (u.strength >= 4 && u.strength < 7));
+      const harvest = businessUnits.filter(u => u.attractiveness < 4 || u.strength < 4);
+
+      container.innerHTML = `
+        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+          <h3 class="font-semibold text-green-700 mb-2 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            Investir/Crescer
+          </h3>
+          <p class="text-sm text-green-600 mb-2">Prioridade máxima de investimento</p>
+          ${invest.length > 0 ? invest.map(u => `
+            <div class="flex items-center gap-2 text-sm text-green-700">
+              <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
+              ${u.name}
+            </div>
+          `).join('') : '<p class="text-xs text-green-500 italic">Nenhuma unidade nesta categoria</p>'}
+        </div>
+        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          <h3 class="font-semibold text-yellow-700 mb-2 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Selectividade
+          </h3>
+          <p class="text-sm text-yellow-600 mb-2">Investir seletivamente</p>
+          ${selective.length > 0 ? selective.map(u => `
+            <div class="flex items-center gap-2 text-sm text-yellow-700">
+              <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
+              ${u.name}
+            </div>
+          `).join('') : '<p class="text-xs text-yellow-500 italic">Nenhuma unidade nesta categoria</p>'}
+        </div>
+        <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+          <h3 class="font-semibold text-red-700 mb-2 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+            Colher/Desinvestir
+          </h3>
+          <p class="text-sm text-red-600 mb-2">Minimizar investimentos</p>
+          ${harvest.length > 0 ? harvest.map(u => `
+            <div class="flex items-center gap-2 text-sm text-red-700">
+              <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
+              ${u.name}
+            </div>
+          `).join('') : '<p class="text-xs text-red-500 italic">Nenhuma unidade nesta categoria</p>'}
+        </div>
+      `;
+    }
+
+    // Scenario Management
+    function quickSave() {
+      const title = document.getElementById('scenarioTitle').value || `Cenário ${nextScenarioNumber}`;
+      const scenario = {
+        id: Date.now().toString(),
+        title: title,
+        businessUnits: JSON.parse(JSON.stringify(businessUnits)),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      savedScenarios.unshift(scenario);
+      nextScenarioNumber++;
+      document.getElementById('scenarioTitle').value = `Cenário ${nextScenarioNumber}`;
+      saveToLocalStorage();
+      renderScenarios();
+      showToast(`"${title}" guardado com sucesso`, 'success');
+    }
+
+    function loadScenario(id) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (scenario) {
+        businessUnits = JSON.parse(JSON.stringify(scenario.businessUnits));
+        document.getElementById('scenarioTitle').value = scenario.title;
+        renderBusinessUnits();
+        renderMatrix();
+        renderCharts();
+        renderRecommendations();
+        saveToLocalStorage();
+        switchTab('simulator');
+        showToast(`"${scenario.title}" carregado`, 'info');
+      }
+    }
+
+    function cloneScenario(id) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (scenario) {
+        const clone = {
+          id: Date.now().toString(),
+          title: `${scenario.title} (Cópia)`,
+          businessUnits: JSON.parse(JSON.stringify(scenario.businessUnits)),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        savedScenarios.unshift(clone);
+        saveToLocalStorage();
+        renderScenarios();
+        showToast('Cenário clonado com sucesso', 'success');
+      }
+    }
+
+    function openEditModal(id) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (scenario) {
+        editingScenarioId = id;
+        document.getElementById('editScenarioTitle').value = scenario.title;
+        document.getElementById('editModal').classList.remove('hidden');
+      }
+    }
+
+    function closeEditModal() {
+      editingScenarioId = null;
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function saveEditedScenario() {
+      const newTitle = document.getElementById('editScenarioTitle').value;
+      const scenario = savedScenarios.find(s => s.id === editingScenarioId);
+      if (scenario && newTitle) {
+        scenario.title = newTitle;
+        scenario.updatedAt = new Date().toISOString();
+        saveToLocalStorage();
+        renderScenarios();
+        closeEditModal();
+        showToast('Cenário atualizado', 'success');
+      }
+    }
+
+    function openDeleteModal(id) {
+      deletingScenarioId = id;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      deletingScenarioId = null;
+      document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    function confirmDelete() {
+      savedScenarios = savedScenarios.filter(s => s.id !== deletingScenarioId);
+      saveToLocalStorage();
+      renderScenarios();
+      closeDeleteModal();
+      showToast('Cenário eliminado', 'info');
+    }
+
+    function createNewScenario() {
+      businessUnits = [];
+      document.getElementById('scenarioTitle').value = `Cenário ${nextScenarioNumber}`;
+      renderBusinessUnits();
+      renderMatrix();
+      renderCharts();
+      renderRecommendations();
+      saveToLocalStorage();
+      switchTab('simulator');
+      showToast('Novo cenário criado', 'success');
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenariosList');
+      const noScenarios = document.getElementById('noScenarios');
+      const filter = document.getElementById('filterScenarios')?.value.toLowerCase() || '';
+
+      const filtered = savedScenarios.filter(s => s.title.toLowerCase().includes(filter));
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        noScenarios.classList.remove('hidden');
+        return;
+      }
+
+      noScenarios.classList.add('hidden');
+      container.innerHTML = filtered.map(scenario => {
+        const date = new Date(scenario.createdAt);
+        const dateStr = date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-800">${scenario.title}</h3>
+                <p class="text-xs text-gray-500">${scenario.businessUnits.length} unidades • ${dateStr}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="loadScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Carregar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              </button>
+              <button onclick="cloneScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition-all" title="Clonar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+              <button onclick="openEditModal('${scenario.id}')" class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button onclick="openDeleteModal('${scenario.id}')" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Templates
+    function loadTemplate(type) {
+      const templates = {
+        tech: {
+          title: 'Empresa de Tecnologia',
+          units: [
+            { name: 'Cloud Services', attractiveness: 9, strength: 8, size: 80 },
+            { name: 'Mobile Apps', attractiveness: 7, strength: 6, size: 50 },
+            { name: 'Hardware Legacy', attractiveness: 3, strength: 7, size: 60 },
+            { name: 'AI/ML Solutions', attractiveness: 10, strength: 5, size: 30 }
+          ]
+        },
+        retail: {
+          title: 'Empresa de Retalho',
+          units: [
+            { name: 'E-commerce', attractiveness: 9, strength: 7, size: 70 },
+            { name: 'Lojas Físicas', attractiveness: 5, strength: 8, size: 80 },
+            { name: 'Marketplace', attractiveness: 8, strength: 4, size: 40 },
+            { name: 'Logística', attractiveness: 7, strength: 6, size: 50 }
+          ]
+        },
+        finance: {
+          title: 'Serviços Financeiros',
+          units: [
+            { name: 'Banca Digital', attractiveness: 9, strength: 6, size: 60 },
+            { name: 'Seguros', attractiveness: 6, strength: 8, size: 70 },
+            { name: 'Investimentos', attractiveness: 8, strength: 7, size: 50 },
+            { name: 'Crédito Pessoal', attractiveness: 5, strength: 9, size: 80 }
+          ]
+        },
+        pharma: {
+          title: 'Farmacêutica',
+          units: [
+            { name: 'Oncologia', attractiveness: 10, strength: 7, size: 60 },
+            { name: 'Genéricos', attractiveness: 5, strength: 9, size: 80 },
+            { name: 'Biotecnologia', attractiveness: 9, strength: 4, size: 30 },
+            { name: 'OTC', attractiveness: 6, strength: 8, size: 70 }
+          ]
+        },
+        energy: {
+          title: 'Setor Energético',
+          units: [
+            { name: 'Solar', attractiveness: 10, strength: 6, size: 50 },
+            { name: 'Eólica', attractiveness: 9, strength: 7, size: 60 },
+            { name: 'Gás Natural', attractiveness: 6, strength: 9, size: 80 },
+            { name: 'Petróleo', attractiveness: 4, strength: 8, size: 90 }
+          ]
+        },
+        startup: {
+          title: 'Startup em Crescimento',
+          units: [
+            { name: 'Produto Core', attractiveness: 8, strength: 7, size: 70 },
+            { name: 'Nova Feature', attractiveness: 9, strength: 4, size: 20 },
+            { name: 'API B2B', attractiveness: 7, strength: 5, size: 30 }
+          ]
+        }
+      };
+
+      const template = templates[type];
+      if (template) {
+        businessUnits = template.units.map((u, i) => ({
+          ...u,
+          id: Date.now().toString() + i,
+          color: unitColors[i % unitColors.length]
+        }));
+        document.getElementById('scenarioTitle').value = template.title;
+        renderBusinessUnits();
+        renderMatrix();
+        renderCharts();
+        renderRecommendations();
+        saveToLocalStorage();
+        switchTab('simulator');
+        showToast(`Template "${template.title}" carregado`, 'success');
+      }
+    }
+
+    // Export Functions
+    async function exportImage() {
+      showToast('A preparar imagem...', 'info');
+      
+      // Hide export elements
+      document.querySelectorAll('.export-hide').forEach(el => el.style.visibility = 'hidden');
+      
+      try {
+        const canvas = await html2canvas(document.getElementById('content-simulator'), {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `GE-McKinsey-${document.getElementById('scenarioTitle').value || 'Cenario'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso', 'success');
+      } catch (e) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      // Show export elements again
+      document.querySelectorAll('.export-hide').forEach(el => el.style.visibility = '');
+    }
+
+    async function exportChartImage(chartId) {
+      showToast('A preparar imagem...', 'info');
+      const element = document.getElementById(chartId);
+      
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 3,
+          backgroundColor: '#FFFFFF',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `${chartId}-HD.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Gráfico exportado em HD', 'success');
+      } catch (e) {
+        showToast('Erro ao exportar gráfico', 'error');
+      }
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 25;
+
+      // Header
+      const addHeader = (pageNum) => {
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('IS Matrizes GE McKinsey', margin, 10);
+        doc.text(`Página ${pageNum}`, pageWidth - margin - 15, 10);
+        doc.setDrawColor(200);
+        doc.line(margin, 13, pageWidth - margin, 13);
+      };
+
+      // Footer
+      const addFooter = () => {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Gerado em ${new Date().toLocaleDateString('pt-PT')}`, margin, pageHeight - 8);
+      };
+
+      let pageNum = 1;
+      addHeader(pageNum);
+
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(30, 136, 229);
+      doc.text(document.getElementById('scenarioTitle').value || 'Análise GE McKinsey', margin, yPos);
+      yPos += 15;
+
+      // Business Units Table
+      if (businessUnits.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(60);
+        doc.text('Unidades de Negócio', margin, yPos);
+        yPos += 8;
+
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        const headers = ['Nome', 'Atratividade', 'Força', 'Tamanho'];
+        const colWidths = [60, 35, 35, 35];
+        let xPos = margin;
+        
+        headers.forEach((h, i) => {
+          doc.text(h, xPos, yPos);
+          xPos += colWidths[i];
+        });
+        yPos += 6;
+
+        doc.setTextColor(60);
+        businessUnits.forEach(unit => {
+          if (yPos > pageHeight - 30) {
+            addFooter();
+            doc.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            yPos = 25;
+          }
+          xPos = margin;
+          doc.text(unit.name.substring(0, 25), xPos, yPos);
+          doc.text(unit.attractiveness.toString(), xPos + colWidths[0], yPos);
+          doc.text(unit.strength.toString(), xPos + colWidths[0] + colWidths[1], yPos);
+          doc.text(unit.size + '%', xPos + colWidths[0] + colWidths[1] + colWidths[2], yPos);
+          yPos += 6;
+        });
+        yPos += 10;
+      }
+
+      // Matrix Chart
+      try {
+        document.querySelectorAll('.export-hide').forEach(el => el.style.visibility = 'hidden');
+        const matrixCanvas = await html2canvas(document.getElementById('matrixChart'), { scale: 2, backgroundColor: '#FFFFFF' });
+        const matrixImg = matrixCanvas.toDataURL('image/png');
+        
+        if (yPos > pageHeight - 80) {
+          addFooter();
+          doc.addPage();
+          pageNum++;
+          addHeader(pageNum);
+          yPos = 25;
+        }
+        
+        doc.setFontSize(12);
+        doc.setTextColor(60);
+        doc.text('Matriz GE McKinsey', margin, yPos);
+        yPos += 5;
+        doc.addImage(matrixImg, 'PNG', margin, yPos, 80, 80);
+        yPos += 90;
+        document.querySelectorAll('.export-hide').forEach(el => el.style.visibility = '');
+      } catch (e) {
+        console.error('Error adding matrix to PDF:', e);
+      }
+
+      // Recommendations
+      if (yPos > pageHeight - 60) {
+        addFooter();
+        doc.addPage();
+        pageNum++;
+        addHeader(pageNum);
+        yPos = 25;
+      }
+
+      doc.setFontSize(12);
+      doc.setTextColor(60);
+      doc.text('Recomendações Estratégicas', margin, yPos);
+      yPos += 8;
+
+      const invest = businessUnits.filter(u => u.attractiveness >= 7 && u.strength >= 7);
+      const selective = businessUnits.filter(u => (u.attractiveness >= 4 && u.attractiveness < 7) || (u.strength >= 4 && u.strength < 7));
+      const harvest = businessUnits.filter(u => u.attractiveness < 4 || u.strength < 4);
+
+      doc.setFontSize(10);
+      doc.setTextColor(76, 175, 80);
+      doc.text('Investir/Crescer:', margin, yPos);
+      doc.setTextColor(80);
+      doc.text(invest.length > 0 ? invest.map(u => u.name).join(', ') : 'Nenhuma', margin + 35, yPos);
+      yPos += 6;
+
+      doc.setTextColor(255, 193, 7);
+      doc.text('Selectividade:', margin, yPos);
+      doc.setTextColor(80);
+      doc.text(selective.length > 0 ? selective.map(u => u.name).join(', ') : 'Nenhuma', margin + 35, yPos);
+      yPos += 6;
+
+      doc.setTextColor(244, 67, 54);
+      doc.text('Colher/Desinvestir:', margin, yPos);
+      doc.setTextColor(80);
+      doc.text(harvest.length > 0 ? harvest.map(u => u.name).join(', ') : 'Nenhuma', margin + 40, yPos);
+
+      addFooter();
+      doc.save(`GE-McKinsey-${document.getElementById('scenarioTitle').value || 'Relatorio'}.pdf`);
+      showToast('PDF exportado com sucesso', 'success');
+    }
+
+    function exportJSON() {
+      const data = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        currentScenario: {
+          title: document.getElementById('scenarioTitle').value,
+          businessUnits
+        },
+        savedScenarios,
+        nextScenarioNumber
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `GE-McKinsey-Export-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados em JSON', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.currentScenario) {
+            businessUnits = data.currentScenario.businessUnits || [];
+            document.getElementById('scenarioTitle').value = data.currentScenario.title || 'Cenário Importado';
+          }
+          if (data.savedScenarios) {
+            savedScenarios = data.savedScenarios;
+          }
+          if (data.nextScenarioNumber) {
+            nextScenarioNumber = data.nextScenarioNumber;
+          }
+          renderBusinessUnits();
+          renderMatrix();
+          renderCharts();
+          renderRecommendations();
+          renderScenarios();
+          saveToLocalStorage();
+          showToast('Dados importados com sucesso', 'success');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-orange-500'
+      };
+      const icons = {
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ${colors[type]}`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg>
+        <span class="text-sm font-medium">${message}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Element SDK Integration
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...config, ...newConfig };
+          document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['app_title', cfg.app_title || defaultConfig.app_title]
+        ])
+      });
+    }
+
+    // Initialize app
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d400552471b06e3',t:'MTc3MjExNDk3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

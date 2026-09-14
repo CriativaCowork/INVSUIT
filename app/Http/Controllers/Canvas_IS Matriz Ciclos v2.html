@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matrizes Ciclos</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'inter': ['Inter', 'sans-serif']
+          },
+          colors: {
+            primary: '#66CFF5',
+            secondary: '#F8F9FA',
+            border: '#E0E0E0',
+            gold: '#FFC107',
+            success: '#4CAF50',
+            error: '#F44336',
+            warning: '#FF9800'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      border-left: 4px solid #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .btn-primary {
+      background: #66CFF5;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-secondary {
+      background: #F8F9FA;
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #E0E0E0;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .input-field {
+      border: 1px solid #E0E0E0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .phase-intro { border-left-color: #9C27B0; }
+    .phase-growth { border-left-color: #4CAF50; }
+    .phase-maturity { border-left-color: #66CFF5; }
+    .phase-decline { border-left-color: #F44336; }
+    .export-hide { }
+    .exporting .export-hide { display: none !important; }
+    .chart-container { position: relative; min-height: 250px; }
+    .mini-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    @media print {
+      .export-hide { display: none !important; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-secondary">
+  <div id="app" class="h-full flex flex-col overflow-auto">
+   <!-- Header -->
+   <header class="bg-white border-b border-border px-4 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+     <svg class="w-8 h-8 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+     </svg>
+     <h1 id="appTitle" class="text-xl font-semibold text-gray-800" style="display: none; display: none;">IS Matrizes Ciclos</h1>
+    </div>
+    <div class="flex items-center gap-2 export-hide">
+     <button onclick="exportAllImage()" class="btn-secondary flex items-center gap-1 text-sm">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+      </svg> Imagem </button> <button onclick="exportPDF()" class="btn-secondary flex items-center gap-1 text-sm">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+      </svg> PDF </button> <button onclick="exportJSON()" class="btn-secondary flex items-center gap-1 text-sm">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+      </svg> Exportar </button> <button onclick="document.getElementById('importInput').click()" class="btn-secondary flex items-center gap-1 text-sm">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+      </svg> Importar </button> <input type="file" id="importInput" accept=".json" onchange="importJSON(event)" class="hidden">
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-border px-4 flex-shrink-0 overflow-x-auto">
+    <div class="flex gap-1">
+     <button onclick="switchTab('produto')" id="tab-produto" class="px-4 py-3 text-sm font-medium flex items-center gap-2 tab-active transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      </svg> Produto </button> <button onclick="switchTab('servico')" id="tab-servico" class="px-4 py-3 text-sm font-medium flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg> Serviço </button> <button onclick="switchTab('empresa')" id="tab-empresa" class="px-4 py-3 text-sm font-medium flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+      </svg> Empresa </button> <button onclick="switchTab('cenarios')" id="tab-cenarios" class="px-4 py-3 text-sm font-medium flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+      </svg> Cenários </button> <button onclick="switchTab('moedas')" id="tab-moedas" class="px-4 py-3 text-sm font-medium flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v12M15 9.5c-.5-1-1.5-1.5-3-1.5s-2.5.5-3 1.5 0 2 1.5 2.5 3 1 3.5 2-.5 2-2 2-2.5-.5-3-1.5" />
+      </svg> Moedas </button> <button onclick="switchTab('ajuda')" id="tab-ajuda" class="px-4 py-3 text-sm font-medium flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-all">
+      <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Filter Bar -->
+   <div class="bg-white border-b border-border px-4 py-2 flex items-center gap-4 export-hide flex-shrink-0">
+    <div class="flex items-center gap-2 flex-1">
+     <svg class="w-4 h-4 text-gray-400" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+     </svg><input type="text" id="globalFilter" placeholder="Filtrar dados..." class="input-field text-sm" oninput="applyGlobalFilter()">
+    </div><select id="phaseFilter" class="input-field text-sm w-auto" onchange="applyGlobalFilter()"> <option value="">Todas as fases</option> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+   </div><!-- Main Content -->
+   <main class="flex-1 p-4 overflow-auto">
+    <!-- Produto Tab -->
+    <div id="content-produto" class="tab-content">
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <!-- Input Form -->
+      <div class="card p-4 export-hide">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" />
+        </svg> Novo Registro - Produto</h3>
+       <div class="space-y-3">
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Nome do Produto</label> <input type="text" id="prod-nome" class="input-field text-sm" placeholder="Ex: Smartphone XYZ">
+        </div>
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="prod-fase" class="input-field text-sm"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Receita (AOA)</label> <input type="number" id="prod-receita" class="input-field text-sm" placeholder="0">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Custos (AOA)</label> <input type="number" id="prod-custos" class="input-field text-sm" placeholder="0">
+         </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Quota Mercado (%)</label> <input type="number" id="prod-quota" class="input-field text-sm" placeholder="0" min="0" max="100">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="prod-periodo" class="input-field text-sm">
+         </div>
+        </div><button onclick="addProdutoRecord()" class="btn-primary w-full text-sm">Adicionar Registro</button>
+       </div>
+      </div><!-- Summary Cards -->
+      <div class="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
+       <div class="card p-4 phase-intro">
+        <div class="text-xs text-gray-500 mb-1">
+         Introdução
+        </div>
+        <div id="prod-intro-count" class="text-2xl font-bold text-purple-600">
+         0
+        </div>
+        <div id="prod-intro-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-growth">
+        <div class="text-xs text-gray-500 mb-1">
+         Crescimento
+        </div>
+        <div id="prod-growth-count" class="text-2xl font-bold text-green-600">
+         0
+        </div>
+        <div id="prod-growth-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-maturity">
+        <div class="text-xs text-gray-500 mb-1">
+         Maturidade
+        </div>
+        <div id="prod-maturity-count" class="text-2xl font-bold text-blue-600">
+         0
+        </div>
+        <div id="prod-maturity-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-decline">
+        <div class="text-xs text-gray-500 mb-1">
+         Declínio
+        </div>
+        <div id="prod-decline-count" class="text-2xl font-bold text-red-600">
+         0
+        </div>
+        <div id="prod-decline-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Ciclo de Vida - Produto</h4><button onclick="exportChartImage('prodLifecycleChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="prodLifecycleChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Receita vs Custos</h4><button onclick="exportChartImage('prodRevenueChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="prodRevenueChart"></canvas>
+       </div>
+      </div>
+     </div><!-- Records Table -->
+     <div class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+       <h4 class="font-medium text-gray-700">Registros de Produtos</h4><button onclick="saveCurrentScenario('produto')" class="mini-btn btn-primary export-hide">
+        <svg class="w-3 h-3 inline mr-1" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+        </svg> Guardar Cenário </button>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="border-b border-border">
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Nome</th>
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Fase</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Receita</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Custos</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Lucro</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Quota</th>
+          <th class="text-center py-2 px-2 font-medium text-gray-600 export-hide">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="prod-table-body"></tbody>
+       </table>
+      </div>
+      <div id="prod-empty" class="text-center py-8 text-gray-400">
+       <svg class="w-12 h-12 mx-auto mb-2 opacity-50" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+       </svg> Nenhum produto registrado
+      </div>
+     </div>
+    </div><!-- Serviço Tab -->
+    <div id="content-servico" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div class="card p-4 export-hide">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" />
+        </svg> Novo Registro - Serviço</h3>
+       <div class="space-y-3">
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Nome do Serviço</label> <input type="text" id="serv-nome" class="input-field text-sm" placeholder="Ex: Consultoria IT">
+        </div>
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="serv-fase" class="input-field text-sm"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Receita (AOA)</label> <input type="number" id="serv-receita" class="input-field text-sm" placeholder="0">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Custos (AOA)</label> <input type="number" id="serv-custos" class="input-field text-sm" placeholder="0">
+         </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Satisfação (%)</label> <input type="number" id="serv-satisfacao" class="input-field text-sm" placeholder="0" min="0" max="100">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="serv-periodo" class="input-field text-sm">
+         </div>
+        </div><button onclick="addServicoRecord()" class="btn-primary w-full text-sm">Adicionar Registro</button>
+       </div>
+      </div>
+      <div class="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
+       <div class="card p-4 phase-intro">
+        <div class="text-xs text-gray-500 mb-1">
+         Introdução
+        </div>
+        <div id="serv-intro-count" class="text-2xl font-bold text-purple-600">
+         0
+        </div>
+        <div id="serv-intro-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-growth">
+        <div class="text-xs text-gray-500 mb-1">
+         Crescimento
+        </div>
+        <div id="serv-growth-count" class="text-2xl font-bold text-green-600">
+         0
+        </div>
+        <div id="serv-growth-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-maturity">
+        <div class="text-xs text-gray-500 mb-1">
+         Maturidade
+        </div>
+        <div id="serv-maturity-count" class="text-2xl font-bold text-blue-600">
+         0
+        </div>
+        <div id="serv-maturity-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-decline">
+        <div class="text-xs text-gray-500 mb-1">
+         Declínio
+        </div>
+        <div id="serv-decline-count" class="text-2xl font-bold text-red-600">
+         0
+        </div>
+        <div id="serv-decline-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Ciclo de Vida - Serviço</h4><button onclick="exportChartImage('servLifecycleChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="servLifecycleChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Satisfação do Cliente</h4><button onclick="exportChartImage('servSatisfactionChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="servSatisfactionChart"></canvas>
+       </div>
+      </div>
+     </div>
+     <div class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+       <h4 class="font-medium text-gray-700">Registros de Serviços</h4><button onclick="saveCurrentScenario('servico')" class="mini-btn btn-primary export-hide">
+        <svg class="w-3 h-3 inline mr-1" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+        </svg> Guardar Cenário </button>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="border-b border-border">
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Nome</th>
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Fase</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Receita</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Custos</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Lucro</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Satisfação</th>
+          <th class="text-center py-2 px-2 font-medium text-gray-600 export-hide">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="serv-table-body"></tbody>
+       </table>
+      </div>
+      <div id="serv-empty" class="text-center py-8 text-gray-400">
+       <svg class="w-12 h-12 mx-auto mb-2 opacity-50" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+       </svg> Nenhum serviço registrado
+      </div>
+     </div>
+    </div><!-- Empresa Tab -->
+    <div id="content-empresa" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div class="card p-4 export-hide">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" />
+        </svg> Novo Registro - Empresa</h3>
+       <div class="space-y-3">
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Nome da Empresa</label> <input type="text" id="emp-nome" class="input-field text-sm" placeholder="Ex: Tech Solutions Lda">
+        </div>
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="emp-fase" class="input-field text-sm"> <option value="introducao">Startup/Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio/Renovação</option> </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Faturação (AOA)</label> <input type="number" id="emp-faturacao" class="input-field text-sm" placeholder="0">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Despesas (AOA)</label> <input type="number" id="emp-despesas" class="input-field text-sm" placeholder="0">
+         </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Funcionários</label> <input type="number" id="emp-funcionarios" class="input-field text-sm" placeholder="0" min="0">
+         </div>
+         <div>
+          <label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="emp-periodo" class="input-field text-sm">
+         </div>
+        </div><button onclick="addEmpresaRecord()" class="btn-primary w-full text-sm">Adicionar Registro</button>
+       </div>
+      </div>
+      <div class="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
+       <div class="card p-4 phase-intro">
+        <div class="text-xs text-gray-500 mb-1">
+         Startup
+        </div>
+        <div id="emp-intro-count" class="text-2xl font-bold text-purple-600">
+         0
+        </div>
+        <div id="emp-intro-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-growth">
+        <div class="text-xs text-gray-500 mb-1">
+         Crescimento
+        </div>
+        <div id="emp-growth-count" class="text-2xl font-bold text-green-600">
+         0
+        </div>
+        <div id="emp-growth-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-maturity">
+        <div class="text-xs text-gray-500 mb-1">
+         Maturidade
+        </div>
+        <div id="emp-maturity-count" class="text-2xl font-bold text-blue-600">
+         0
+        </div>
+        <div id="emp-maturity-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+       <div class="card p-4 phase-decline">
+        <div class="text-xs text-gray-500 mb-1">
+         Renovação
+        </div>
+        <div id="emp-decline-count" class="text-2xl font-bold text-red-600">
+         0
+        </div>
+        <div id="emp-decline-revenue" class="text-xs text-gray-400">
+         0 AOA
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Ciclo de Vida - Empresa</h4><button onclick="exportChartImage('empLifecycleChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="empLifecycleChart"></canvas>
+       </div>
+      </div>
+      <div class="card p-4">
+       <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-700">Evolução de Funcionários</h4><button onclick="exportChartImage('empEmployeesChart')" class="mini-btn btn-secondary export-hide">
+         <svg class="w-3 h-3 inline" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="empEmployeesChart"></canvas>
+       </div>
+      </div>
+     </div>
+     <div class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+       <h4 class="font-medium text-gray-700">Registros de Empresas</h4><button onclick="saveCurrentScenario('empresa')" class="mini-btn btn-primary export-hide">
+        <svg class="w-3 h-3 inline mr-1" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+        </svg> Guardar Cenário </button>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="border-b border-border">
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Nome</th>
+          <th class="text-left py-2 px-2 font-medium text-gray-600">Fase</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Faturação</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Despesas</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Resultado</th>
+          <th class="text-right py-2 px-2 font-medium text-gray-600">Func.</th>
+          <th class="text-center py-2 px-2 font-medium text-gray-600 export-hide">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="emp-table-body"></tbody>
+       </table>
+      </div>
+      <div id="emp-empty" class="text-center py-8 text-gray-400">
+       <svg class="w-12 h-12 mx-auto mb-2 opacity-50" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+       </svg> Nenhuma empresa registrada
+      </div>
+     </div>
+    </div><!-- Cenários Tab -->
+    <div id="content-cenarios" class="tab-content hidden">
+     <div class="card p-4 mb-4 export-hide">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+       <div class="flex items-center gap-2 flex-1 min-w-64">
+        <svg class="w-4 h-4 text-gray-400" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+        </svg><input type="text" id="scenarioFilter" placeholder="Filtrar cenários..." class="input-field text-sm" oninput="filterScenarios()">
+       </div>
+       <div class="flex items-center gap-2">
+        <select id="scenarioTypeFilter" class="input-field text-sm w-auto" onchange="filterScenarios()"> <option value="">Todos os tipos</option> <option value="produto">Produto</option> <option value="servico">Serviço</option> <option value="empresa">Empresa</option> </select> <button onclick="createNewScenario()" class="btn-primary text-sm flex items-center gap-1">
+         <svg class="w-4 h-4" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" />
+         </svg> Novo Cenário </button>
+       </div>
+      </div>
+     </div><!-- Templates Section -->
+     <div class="card p-4 mb-4">
+      <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-gold" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+       </svg> Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+       <div class="border border-border rounded-lg p-3 hover:border-primary transition-all cursor-pointer" onclick="loadTemplate('produto-ciclo-completo')">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-purple-600" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          </svg>
+         </div><span class="font-medium text-sm">Ciclo Completo - Produto</span>
+        </div>
+        <p class="text-xs text-gray-500">Exemplo de produto passando por todas as 4 fases do ciclo de vida</p>
+       </div>
+       <div class="border border-border rounded-lg p-3 hover:border-primary transition-all cursor-pointer" onclick="loadTemplate('servico-saas')">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-green-600" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          </svg>
+         </div><span class="font-medium text-sm">Serviço SaaS</span>
+        </div>
+        <p class="text-xs text-gray-500">Modelo de serviço de software com métricas de satisfação</p>
+       </div>
+       <div class="border border-border rounded-lg p-3 hover:border-primary transition-all cursor-pointer" onclick="loadTemplate('startup-growth')">
+        <div class="flex items-center gap-2 mb-2">
+         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-blue-600" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+          </svg>
+         </div><span class="font-medium text-sm">Startup em Crescimento</span>
+        </div>
+        <p class="text-xs text-gray-500">Evolução típica de uma startup até a fase de maturidade</p>
+       </div>
+      </div>
+     </div><!-- Saved Scenarios -->
+     <div class="card p-4">
+      <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+       </svg> Cenários Guardados</h3>
+      <div id="scenarios-list" class="space-y-2"></div>
+      <div id="scenarios-empty" class="text-center py-8 text-gray-400">
+       <svg class="w-12 h-12 mx-auto mb-2 opacity-50" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" />
+       </svg> Nenhum cenário guardado
+      </div>
+     </div>
+    </div><!-- Moedas Tab -->
+    <div id="content-moedas" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v12M15 9.5c-.5-1-1.5-1.5-3-1.5s-2.5.5-3 1.5 0 2 1.5 2.5 3 1 3.5 2-.5 2-2 2-2.5-.5-3-1.5" />
+        </svg> Taxas de Câmbio CPLP</h3>
+       <p class="text-xs text-gray-500 mb-4">Base: 1 AOA (Kwanza Angolano)</p>
+       <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇦🇴 AOA</span> <span class="text-xs text-gray-500">Kwanza</span>
+         </div><span class="font-mono text-sm">1.00</span>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇧🇷 BRL</span> <span class="text-xs text-gray-500">Real</span>
+         </div><input type="number" id="rate-brl" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.0060" onchange="updateRates()">
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇵🇹 EUR</span> <span class="text-xs text-gray-500">Euro</span>
+         </div><input type="number" id="rate-eur" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.0011" onchange="updateRates()">
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇲🇿 MZN</span> <span class="text-xs text-gray-500">Metical</span>
+         </div><input type="number" id="rate-mzn" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.0760" onchange="updateRates()">
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇨🇻 CVE</span> <span class="text-xs text-gray-500">Escudo</span>
+         </div><input type="number" id="rate-cve" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.1218" onchange="updateRates()">
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇸🇹 STN</span> <span class="text-xs text-gray-500">Dobra</span>
+         </div><input type="number" id="rate-stn" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.0270" onchange="updateRates()">
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg export-hide">
+         <div class="flex items-center gap-2">
+          <span class="font-medium">🇺🇸 USD</span> <span class="text-xs text-gray-500">Dólar</span>
+         </div><input type="number" id="rate-usd" class="input-field w-24 text-right text-sm font-mono" step="0.0001" value="0.0012" onchange="updateRates()">
+        </div>
+       </div>
+      </div>
+      <div class="card p-4">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-success" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg> Conversor Rápido</h3>
+       <div class="space-y-4">
+        <div>
+         <label class="text-xs text-gray-500 mb-1 block">Valor em AOA</label> <input type="number" id="convert-amount" class="input-field text-lg font-mono" placeholder="1000000" oninput="convertCurrency()">
+        </div>
+        <div id="conversion-results" class="space-y-2">
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇧🇷 BRL</span> <span id="conv-brl" class="font-mono">-</span>
+         </div>
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇵🇹 EUR</span> <span id="conv-eur" class="font-mono">-</span>
+         </div>
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇲🇿 MZN</span> <span id="conv-mzn" class="font-mono">-</span>
+         </div>
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇨🇻 CVE</span> <span id="conv-cve" class="font-mono">-</span>
+         </div>
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇸🇹 STN</span> <span id="conv-stn" class="font-mono">-</span>
+         </div>
+         <div class="flex justify-between p-2 bg-gray-50 rounded">
+          <span>🇺🇸 USD</span> <span id="conv-usd" class="font-mono">-</span>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Ajuda Tab -->
+    <div id="content-ajuda" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto space-y-4">
+      <div class="card p-6">
+       <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-primary" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+        </svg> O que é o IS Matrizes Ciclos?</h2>
+       <p class="text-gray-600 leading-relaxed mb-4">O IS Matrizes Ciclos é um simulador avançado do ciclo de vida para produtos, serviços e empresas. Esta ferramenta permite-lhe visualizar, analisar e planear as diferentes fases de desenvolvimento de qualquer entidade empresarial, desde a introdução até ao eventual declínio ou renovação.</p>
+       <div class="bg-blue-50 border-l-4 border-primary p-4 rounded-r-lg">
+        <p class="text-sm text-blue-800"><strong>Desenvolvido para a CPLP:</strong> O simulador utiliza o Kwanza (AOA) como moeda base, com suporte para conversão para todas as moedas dos países lusófonos.</p>
+       </div>
+      </div>
+      <div class="card p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 As 4 Fases do Ciclo de Vida</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+         <h4 class="font-medium text-purple-800 mb-2">1. Introdução</h4>
+         <p class="text-sm text-purple-700">Lançamento no mercado. Investimentos elevados, baixas vendas, foco em criar consciência de marca.</p>
+        </div>
+        <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+         <h4 class="font-medium text-green-800 mb-2">2. Crescimento</h4>
+         <p class="text-sm text-green-700">Aumento rápido de vendas e lucros. Expansão do mercado, surgimento de concorrência.</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+         <h4 class="font-medium text-blue-800 mb-2">3. Maturidade</h4>
+         <p class="text-sm text-blue-700">Vendas estabilizam no pico. Mercado saturado, foco em diferenciação e eficiência.</p>
+        </div>
+        <div class="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+         <h4 class="font-medium text-red-800 mb-2">4. Declínio</h4>
+         <p class="text-sm text-red-700">Queda nas vendas. Momento de decisão: renovar, desinvestir ou retirar do mercado.</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">🚀 Como Utilizar</h3>
+       <ol class="space-y-3 text-gray-600">
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">1</span> <span>Selecione a aba correspondente (Produto, Serviço ou Empresa)</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">2</span> <span>Preencha os dados do formulário e adicione registros para cada período</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">3</span> <span>Observe os gráficos a atualizarem-se em tempo real</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">4</span> <span>Guarde cenários para comparar diferentes simulações</span></li>
+        <li class="flex gap-3"><span class="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">5</span> <span>Exporte os resultados em PDF, imagem ou JSON</span></li>
+       </ol>
+      </div>
+      <div class="card p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">💡 Melhores Práticas</h3>
+       <ul class="space-y-2 text-gray-600">
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" />
+         </svg><span>Registe dados consistentemente para cada período (mensal ou trimestral)</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" />
+         </svg><span>Compare cenários diferentes para identificar padrões e oportunidades</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" />
+         </svg><span>Utilize os templates de aprendizagem como referência inicial</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" />
+         </svg><span>Exporte e faça backup dos seus dados regularmente</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-success flex-shrink-0 mt-0.5" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" />
+         </svg><span>Atualize as taxas de câmbio para conversões precisas</span></li>
+       </ul>
+      </div>
+      <div class="card p-6 bg-gradient-to-r from-primary to-blue-600 text-white">
+       <h3 class="text-lg font-semibold mb-2">🌍 Comunidade CPLP</h3>
+       <p class="text-blue-100 text-sm">Este simulador foi desenvolvido especificamente para empreendedores, gestores e estudantes dos países de língua portuguesa: Angola, Brasil, Cabo Verde, Guiné-Bissau, Guiné Equatorial, Moçambique, Portugal, São Tomé e Príncipe e Timor-Leste.</p>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Notification -->
+   <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <span id="toast-message"></span>
+   </div><!-- Edit Record Modal -->
+   <div id="editRecordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 my-8">
+     <h3 class="text-lg font-semibold mb-4">Editar Registro</h3><input type="hidden" id="edit-record-type"> <input type="hidden" id="edit-record-id">
+     <div id="edit-record-fields" class="space-y-3"></div>
+     <div class="flex justify-end gap-2 mt-6"><button onclick="closeEditRecordModal()" class="btn-secondary">Cancelar</button> <button onclick="saveEditedRecord()" class="btn-primary">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Edit Scenario Modal -->
+   <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+     <h3 class="text-lg font-semibold mb-4">Editar Cenário</h3><input type="hidden" id="edit-scenario-id">
+     <div class="space-y-3">
+      <div>
+       <label class="text-xs text-gray-500 mb-1 block">Nome do Cenário</label> <input type="text" id="edit-scenario-name" class="input-field">
+      </div>
+     </div>
+     <div class="flex justify-end gap-2 mt-6">
+      <button onclick="closeEditModal()" class="btn-secondary">Cancelar</button> <button onclick="saveEditedScenario()" class="btn-primary">Guardar</button>
+     </div>
+    </div>
+   </div><!-- New Scenario Modal -->
+   <div id="newScenarioModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+     <h3 class="text-lg font-semibold mb-4">Novo Cenário</h3>
+     <div class="space-y-3">
+      <div>
+       <label class="text-xs text-gray-500 mb-1 block">Nome do Cenário</label> <input type="text" id="new-scenario-name" class="input-field" placeholder="Cenário X">
+      </div>
+      <div>
+       <label class="text-xs text-gray-500 mb-1 block">Tipo</label> <select id="new-scenario-type" class="input-field"> <option value="produto">Produto</option> <option value="servico">Serviço</option> <option value="empresa">Empresa</option> </select>
+      </div>
+     </div>
+     <div class="flex justify-end gap-2 mt-6">
+      <button onclick="closeNewScenarioModal()" class="btn-secondary">Cancelar</button> <button onclick="createEmptyScenario()" class="btn-primary">Criar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // App State
+    let appData = {
+      title: 'IS Matrizes Ciclos',
+      produtos: [],
+      servicos: [],
+      empresas: [],
+      scenarios: [],
+      rates: {
+        brl: 0.0060,
+        eur: 0.0011,
+        mzn: 0.0760,
+        cve: 0.1218,
+        stn: 0.0270,
+        usd: 0.0012
+      }
+    };
+
+    let charts = {};
+    let currentTab = 'produto';
+
+    // Initialize
+    function init() {
+      loadFromStorage();
+      initCharts();
+      renderAll();
+      updateRatesUI();
+
+      // Set default period to current month
+      const now = new Date();
+      const currentMonth = now.toISOString().slice(0, 7);
+      document.querySelectorAll('input[type="month"]').forEach(input => {
+        input.value = currentMonth;
+      });
+    }
+
+    // Storage
+    function loadFromStorage() {
+      try {
+        const saved = localStorage.getItem('isMatrizesCiclos');
+        if (saved) {
+          appData = { ...appData, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error('Error loading from storage:', e);
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem('isMatrizesCiclos', JSON.stringify(appData));
+      } catch (e) {
+        console.error('Error saving to storage:', e);
+      }
+    }
+
+    // Tab Switching
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-gray-500');
+      });
+      document.getElementById('content-' + tab).classList.remove('hidden');
+      document.getElementById('tab-' + tab).classList.add('tab-active');
+      document.getElementById('tab-' + tab).classList.remove('text-gray-500');
+
+      // Update charts when switching tabs
+      setTimeout(() => {
+        Object.values(charts).forEach(chart => {
+          if (chart) chart.resize();
+        });
+      }, 100);
+    }
+
+    // Charts Initialization
+    function initCharts() {
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Inter', size: 11 } }
+          }
+        }
+      };
+
+      // Produto Charts
+      charts.prodLifecycle = new Chart(document.getElementById('prodLifecycleChart'), {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Receita',
+            data: [],
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: { ...defaultOptions }
+      });
+
+      charts.prodRevenue = new Chart(document.getElementById('prodRevenueChart'), {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [
+            { label: 'Receita', data: [], backgroundColor: '#4CAF50' },
+            { label: 'Custos', data: [], backgroundColor: '#F44336' }
+          ]
+        },
+        options: { ...defaultOptions }
+      });
+
+      // Serviço Charts
+      charts.servLifecycle = new Chart(document.getElementById('servLifecycleChart'), {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Receita',
+            data: [],
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: { ...defaultOptions }
+      });
+
+      charts.servSatisfaction = new Chart(document.getElementById('servSatisfactionChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Satisfeitos', 'Insatisfeitos'],
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: ['#4CAF50', '#E0E0E0']
+          }]
+        },
+        options: { ...defaultOptions }
+      });
+
+      // Empresa Charts
+      charts.empLifecycle = new Chart(document.getElementById('empLifecycleChart'), {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Faturação',
+            data: [],
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: { ...defaultOptions }
+      });
+
+      charts.empEmployees = new Chart(document.getElementById('empEmployeesChart'), {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Funcionários',
+            data: [],
+            backgroundColor: '#FF9800'
+          }]
+        },
+        options: { ...defaultOptions }
+      });
+    }
+
+    // Add Records
+    function addProdutoRecord() {
+      const nome = document.getElementById('prod-nome').value.trim();
+      const fase = document.getElementById('prod-fase').value;
+      const receita = parseFloat(document.getElementById('prod-receita').value) || 0;
+      const custos = parseFloat(document.getElementById('prod-custos').value) || 0;
+      const quota = parseFloat(document.getElementById('prod-quota').value) || 0;
+      const periodo = document.getElementById('prod-periodo').value;
+
+      if (!nome) {
+        showToast('Por favor, insira o nome do produto', 'error');
+        return;
+      }
+
+      appData.produtos.push({
+        id: Date.now(),
+        nome, fase, receita, custos, quota, periodo,
+        lucro: receita - custos
+      });
+
+      saveToStorage();
+      renderProdutos();
+      clearForm('prod');
+      showToast('Produto adicionado com sucesso!');
+    }
+
+    function addServicoRecord() {
+      const nome = document.getElementById('serv-nome').value.trim();
+      const fase = document.getElementById('serv-fase').value;
+      const receita = parseFloat(document.getElementById('serv-receita').value) || 0;
+      const custos = parseFloat(document.getElementById('serv-custos').value) || 0;
+      const satisfacao = parseFloat(document.getElementById('serv-satisfacao').value) || 0;
+      const periodo = document.getElementById('serv-periodo').value;
+
+      if (!nome) {
+        showToast('Por favor, insira o nome do serviço', 'error');
+        return;
+      }
+
+      appData.servicos.push({
+        id: Date.now(),
+        nome, fase, receita, custos, satisfacao, periodo,
+        lucro: receita - custos
+      });
+
+      saveToStorage();
+      renderServicos();
+      clearForm('serv');
+      showToast('Serviço adicionado com sucesso!');
+    }
+
+    function addEmpresaRecord() {
+      const nome = document.getElementById('emp-nome').value.trim();
+      const fase = document.getElementById('emp-fase').value;
+      const faturacao = parseFloat(document.getElementById('emp-faturacao').value) || 0;
+      const despesas = parseFloat(document.getElementById('emp-despesas').value) || 0;
+      const funcionarios = parseInt(document.getElementById('emp-funcionarios').value) || 0;
+      const periodo = document.getElementById('emp-periodo').value;
+
+      if (!nome) {
+        showToast('Por favor, insira o nome da empresa', 'error');
+        return;
+      }
+
+      appData.empresas.push({
+        id: Date.now(),
+        nome, fase, faturacao, despesas, funcionarios, periodo,
+        resultado: faturacao - despesas
+      });
+
+      saveToStorage();
+      renderEmpresas();
+      clearForm('emp');
+      showToast('Empresa adicionada com sucesso!');
+    }
+
+    function clearForm(prefix) {
+      document.getElementById(prefix + '-nome').value = '';
+      if (prefix === 'prod') {
+        document.getElementById('prod-receita').value = '';
+        document.getElementById('prod-custos').value = '';
+        document.getElementById('prod-quota').value = '';
+      } else if (prefix === 'serv') {
+        document.getElementById('serv-receita').value = '';
+        document.getElementById('serv-custos').value = '';
+        document.getElementById('serv-satisfacao').value = '';
+      } else {
+        document.getElementById('emp-faturacao').value = '';
+        document.getElementById('emp-despesas').value = '';
+        document.getElementById('emp-funcionarios').value = '';
+      }
+    }
+
+    // Render Functions
+    function renderAll() {
+      renderProdutos();
+      renderServicos();
+      renderEmpresas();
+      renderScenarios();
+    }
+
+    function renderProdutos() {
+      const filter = document.getElementById('globalFilter').value.toLowerCase();
+      const phaseFilter = document.getElementById('phaseFilter').value;
+
+      let filtered = appData.produtos.filter(p => {
+        const matchesText = p.nome.toLowerCase().includes(filter);
+        const matchesPhase = !phaseFilter || p.fase === phaseFilter;
+        return matchesText && matchesPhase;
+      });
+
+      // Update summary cards - using FILTERED data
+      const phases = { introducao: [], crescimento: [], maturidade: [], declinio: [] };
+      filtered.forEach(p => phases[p.fase].push(p));
+
+      document.getElementById('prod-intro-count').textContent = phases.introducao.length;
+      document.getElementById('prod-intro-revenue').textContent = formatCurrency(phases.introducao.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('prod-growth-count').textContent = phases.crescimento.length;
+      document.getElementById('prod-growth-revenue').textContent = formatCurrency(phases.crescimento.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('prod-maturity-count').textContent = phases.maturidade.length;
+      document.getElementById('prod-maturity-revenue').textContent = formatCurrency(phases.maturidade.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('prod-decline-count').textContent = phases.declinio.length;
+      document.getElementById('prod-decline-revenue').textContent = formatCurrency(phases.declinio.reduce((s, p) => s + p.receita, 0));
+
+      // Update table
+      const tbody = document.getElementById('prod-table-body');
+      const empty = document.getElementById('prod-empty');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        tbody.innerHTML = filtered.map(p => `
+          <tr class="border-b border-border hover:bg-gray-50 transition-all data-row" data-fase="${p.fase}">
+            <td class="py-2 px-2">${p.nome}</td>
+            <td class="py-2 px-2"><span class="px-2 py-1 rounded text-xs ${getPhaseClass(p.fase)}">${getPhaseName(p.fase)}</span></td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(p.receita)}</td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(p.custos)}</td>
+            <td class="py-2 px-2 text-right font-mono ${p.lucro >= 0 ? 'text-success' : 'text-error'}">${formatCurrency(p.lucro)}</td>
+            <td class="py-2 px-2 text-right">${p.quota}%</td>
+            <td class="py-2 px-2 text-center export-hide">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editRecord('produtos', ${p.id})" class="text-primary hover:bg-blue-50 p-1 rounded transition-all" title="Editar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onclick="duplicateRecord('produtos', ${p.id})" class="text-warning hover:bg-yellow-50 p-1 rounded transition-all" title="Duplicar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <button onclick="deleteRecord('produtos', ${p.id})" class="text-error hover:bg-red-50 p-1 rounded transition-all" title="Eliminar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Update charts
+      const sorted = [...filtered].sort((a, b) => a.periodo.localeCompare(b.periodo));
+      charts.prodLifecycle.data.labels = sorted.map(p => p.periodo || p.nome);
+      charts.prodLifecycle.data.datasets[0].data = sorted.map(p => p.receita);
+      charts.prodLifecycle.update();
+
+      charts.prodRevenue.data.labels = sorted.map(p => p.nome);
+      charts.prodRevenue.data.datasets[0].data = sorted.map(p => p.receita);
+      charts.prodRevenue.data.datasets[1].data = sorted.map(p => p.custos);
+      charts.prodRevenue.update();
+    }
+
+    function renderServicos() {
+      const filter = document.getElementById('globalFilter').value.toLowerCase();
+      const phaseFilter = document.getElementById('phaseFilter').value;
+
+      let filtered = appData.servicos.filter(s => {
+        const matchesText = s.nome.toLowerCase().includes(filter);
+        const matchesPhase = !phaseFilter || s.fase === phaseFilter;
+        return matchesText && matchesPhase;
+      });
+
+      // Update summary cards - using FILTERED data
+      const phases = { introducao: [], crescimento: [], maturidade: [], declinio: [] };
+      filtered.forEach(s => phases[s.fase].push(s));
+
+      document.getElementById('serv-intro-count').textContent = phases.introducao.length;
+      document.getElementById('serv-intro-revenue').textContent = formatCurrency(phases.introducao.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('serv-growth-count').textContent = phases.crescimento.length;
+      document.getElementById('serv-growth-revenue').textContent = formatCurrency(phases.crescimento.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('serv-maturity-count').textContent = phases.maturidade.length;
+      document.getElementById('serv-maturity-revenue').textContent = formatCurrency(phases.maturidade.reduce((s, p) => s + p.receita, 0));
+      document.getElementById('serv-decline-count').textContent = phases.declinio.length;
+      document.getElementById('serv-decline-revenue').textContent = formatCurrency(phases.declinio.reduce((s, p) => s + p.receita, 0));
+
+      // Update table
+      const tbody = document.getElementById('serv-table-body');
+      const empty = document.getElementById('serv-empty');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        tbody.innerHTML = filtered.map(s => `
+          <tr class="border-b border-border hover:bg-gray-50 transition-all data-row" data-fase="${s.fase}">
+            <td class="py-2 px-2">${s.nome}</td>
+            <td class="py-2 px-2"><span class="px-2 py-1 rounded text-xs ${getPhaseClass(s.fase)}">${getPhaseName(s.fase)}</span></td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(s.receita)}</td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(s.custos)}</td>
+            <td class="py-2 px-2 text-right font-mono ${s.lucro >= 0 ? 'text-success' : 'text-error'}">${formatCurrency(s.lucro)}</td>
+            <td class="py-2 px-2 text-right">${s.satisfacao}%</td>
+            <td class="py-2 px-2 text-center export-hide">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editRecord('servicos', ${s.id})" class="text-primary hover:bg-blue-50 p-1 rounded transition-all" title="Editar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onclick="duplicateRecord('servicos', ${s.id})" class="text-warning hover:bg-yellow-50 p-1 rounded transition-all" title="Duplicar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <button onclick="deleteRecord('servicos', ${s.id})" class="text-error hover:bg-red-50 p-1 rounded transition-all" title="Eliminar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Update charts
+      const sorted = [...filtered].sort((a, b) => a.periodo.localeCompare(b.periodo));
+      charts.servLifecycle.data.labels = sorted.map(s => s.periodo || s.nome);
+      charts.servLifecycle.data.datasets[0].data = sorted.map(s => s.receita);
+      charts.servLifecycle.update();
+
+      const avgSatisfaction = filtered.length > 0 
+        ? filtered.reduce((s, p) => s + p.satisfacao, 0) / filtered.length 
+        : 0;
+      charts.servSatisfaction.data.labels = [`Satisfeitos (${avgSatisfaction.toFixed(1)}%)`, `Insatisfeitos (${(100 - avgSatisfaction).toFixed(1)}%)`];
+      charts.servSatisfaction.data.datasets[0].data = [avgSatisfaction, 100 - avgSatisfaction];
+      charts.servSatisfaction.update();
+    }
+
+    function renderEmpresas() {
+      const filter = document.getElementById('globalFilter').value.toLowerCase();
+      const phaseFilter = document.getElementById('phaseFilter').value;
+
+      let filtered = appData.empresas.filter(e => {
+        const matchesText = e.nome.toLowerCase().includes(filter);
+        const matchesPhase = !phaseFilter || e.fase === phaseFilter;
+        return matchesText && matchesPhase;
+      });
+
+      // Update summary cards - using FILTERED data
+      const phases = { introducao: [], crescimento: [], maturidade: [], declinio: [] };
+      filtered.forEach(e => phases[e.fase].push(e));
+
+      document.getElementById('emp-intro-count').textContent = phases.introducao.length;
+      document.getElementById('emp-intro-revenue').textContent = formatCurrency(phases.introducao.reduce((s, e) => s + e.faturacao, 0));
+      document.getElementById('emp-growth-count').textContent = phases.crescimento.length;
+      document.getElementById('emp-growth-revenue').textContent = formatCurrency(phases.crescimento.reduce((s, e) => s + e.faturacao, 0));
+      document.getElementById('emp-maturity-count').textContent = phases.maturidade.length;
+      document.getElementById('emp-maturity-revenue').textContent = formatCurrency(phases.maturidade.reduce((s, e) => s + e.faturacao, 0));
+      document.getElementById('emp-decline-count').textContent = phases.declinio.length;
+      document.getElementById('emp-decline-revenue').textContent = formatCurrency(phases.declinio.reduce((s, e) => s + e.faturacao, 0));
+
+      // Update table
+      const tbody = document.getElementById('emp-table-body');
+      const empty = document.getElementById('emp-empty');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        tbody.innerHTML = filtered.map(e => `
+          <tr class="border-b border-border hover:bg-gray-50 transition-all data-row" data-fase="${e.fase}">
+            <td class="py-2 px-2">${e.nome}</td>
+            <td class="py-2 px-2"><span class="px-2 py-1 rounded text-xs ${getPhaseClass(e.fase)}">${getPhaseName(e.fase)}</span></td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(e.faturacao)}</td>
+            <td class="py-2 px-2 text-right font-mono">${formatCurrency(e.despesas)}</td>
+            <td class="py-2 px-2 text-right font-mono ${e.resultado >= 0 ? 'text-success' : 'text-error'}">${formatCurrency(e.resultado)}</td>
+            <td class="py-2 px-2 text-right">${e.funcionarios}</td>
+            <td class="py-2 px-2 text-center export-hide">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editRecord('empresas', ${e.id})" class="text-primary hover:bg-blue-50 p-1 rounded transition-all" title="Editar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onclick="duplicateRecord('empresas', ${e.id})" class="text-warning hover:bg-yellow-50 p-1 rounded transition-all" title="Duplicar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <button onclick="deleteRecord('empresas', ${e.id})" class="text-error hover:bg-red-50 p-1 rounded transition-all" title="Eliminar">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Update charts
+      const sorted = [...filtered].sort((a, b) => a.periodo.localeCompare(b.periodo));
+      charts.empLifecycle.data.labels = sorted.map(e => e.periodo || e.nome);
+      charts.empLifecycle.data.datasets[0].data = sorted.map(e => e.faturacao);
+      charts.empLifecycle.update();
+
+      charts.empEmployees.data.labels = sorted.map(e => e.nome);
+      charts.empEmployees.data.datasets[0].data = sorted.map(e => e.funcionarios);
+      charts.empEmployees.update();
+    }
+
+    function deleteRecord(type, id) {
+      appData[type] = appData[type].filter(item => item.id !== id);
+      saveToStorage();
+      renderAll();
+      showToast('Registro eliminado!');
+    }
+
+    function editRecord(type, id) {
+      const record = appData[type].find(r => r.id === id);
+      if (!record) return;
+
+      document.getElementById('edit-record-type').value = type;
+      document.getElementById('edit-record-id').value = id;
+
+      const fieldsContainer = document.getElementById('edit-record-fields');
+      let fieldsHTML = '';
+
+      if (type === 'produtos') {
+        fieldsHTML = `
+          <div><label class="text-xs text-gray-500 mb-1 block">Nome do Produto</label> <input type="text" id="edit-field-nome" class="input-field text-sm" value="${record.nome}"></div>
+          <div><label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="edit-field-fase" class="input-field text-sm">
+            <option value="introducao" ${record.fase === 'introducao' ? 'selected' : ''}>Introdução</option>
+            <option value="crescimento" ${record.fase === 'crescimento' ? 'selected' : ''}>Crescimento</option>
+            <option value="maturidade" ${record.fase === 'maturidade' ? 'selected' : ''}>Maturidade</option>
+            <option value="declinio" ${record.fase === 'declinio' ? 'selected' : ''}>Declínio</option>
+          </select></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Receita (AOA)</label> <input type="number" id="edit-field-receita" class="input-field text-sm" value="${record.receita}"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Custos (AOA)</label> <input type="number" id="edit-field-custos" class="input-field text-sm" value="${record.custos}"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Quota Mercado (%)</label> <input type="number" id="edit-field-quota" class="input-field text-sm" value="${record.quota}" min="0" max="100"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="edit-field-periodo" class="input-field text-sm" value="${record.periodo}"></div>
+          </div>
+        `;
+      } else if (type === 'servicos') {
+        fieldsHTML = `
+          <div><label class="text-xs text-gray-500 mb-1 block">Nome do Serviço</label> <input type="text" id="edit-field-nome" class="input-field text-sm" value="${record.nome}"></div>
+          <div><label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="edit-field-fase" class="input-field text-sm">
+            <option value="introducao" ${record.fase === 'introducao' ? 'selected' : ''}>Introdução</option>
+            <option value="crescimento" ${record.fase === 'crescimento' ? 'selected' : ''}>Crescimento</option>
+            <option value="maturidade" ${record.fase === 'maturidade' ? 'selected' : ''}>Maturidade</option>
+            <option value="declinio" ${record.fase === 'declinio' ? 'selected' : ''}>Declínio</option>
+          </select></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Receita (AOA)</label> <input type="number" id="edit-field-receita" class="input-field text-sm" value="${record.receita}"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Custos (AOA)</label> <input type="number" id="edit-field-custos" class="input-field text-sm" value="${record.custos}"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Satisfação (%)</label> <input type="number" id="edit-field-satisfacao" class="input-field text-sm" value="${record.satisfacao}" min="0" max="100"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="edit-field-periodo" class="input-field text-sm" value="${record.periodo}"></div>
+          </div>
+        `;
+      } else if (type === 'empresas') {
+        fieldsHTML = `
+          <div><label class="text-xs text-gray-500 mb-1 block">Nome da Empresa</label> <input type="text" id="edit-field-nome" class="input-field text-sm" value="${record.nome}"></div>
+          <div><label class="text-xs text-gray-500 mb-1 block">Fase do Ciclo</label> <select id="edit-field-fase" class="input-field text-sm">
+            <option value="introducao" ${record.fase === 'introducao' ? 'selected' : ''}>Startup/Introdução</option>
+            <option value="crescimento" ${record.fase === 'crescimento' ? 'selected' : ''}>Crescimento</option>
+            <option value="maturidade" ${record.fase === 'maturidade' ? 'selected' : ''}>Maturidade</option>
+            <option value="declinio" ${record.fase === 'declinio' ? 'selected' : ''}>Declínio/Renovação</option>
+          </select></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Faturação (AOA)</label> <input type="number" id="edit-field-faturacao" class="input-field text-sm" value="${record.faturacao}"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Despesas (AOA)</label> <input type="number" id="edit-field-despesas" class="input-field text-sm" value="${record.despesas}"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-xs text-gray-500 mb-1 block">Funcionários</label> <input type="number" id="edit-field-funcionarios" class="input-field text-sm" value="${record.funcionarios}" min="0"></div>
+            <div><label class="text-xs text-gray-500 mb-1 block">Período</label> <input type="month" id="edit-field-periodo" class="input-field text-sm" value="${record.periodo}"></div>
+          </div>
+        `;
+      }
+
+      fieldsContainer.innerHTML = fieldsHTML;
+      document.getElementById('editRecordModal').classList.remove('hidden');
+      document.getElementById('editRecordModal').classList.add('flex');
+    }
+
+    function closeEditRecordModal() {
+      document.getElementById('editRecordModal').classList.add('hidden');
+      document.getElementById('editRecordModal').classList.remove('flex');
+    }
+
+    function saveEditedRecord() {
+      const type = document.getElementById('edit-record-type').value;
+      const id = parseInt(document.getElementById('edit-record-id').value);
+      const record = appData[type].find(r => r.id === id);
+
+      if (!record) return;
+
+      if (type === 'produtos') {
+        record.nome = document.getElementById('edit-field-nome').value.trim();
+        record.fase = document.getElementById('edit-field-fase').value;
+        record.receita = parseFloat(document.getElementById('edit-field-receita').value) || 0;
+        record.custos = parseFloat(document.getElementById('edit-field-custos').value) || 0;
+        record.quota = parseFloat(document.getElementById('edit-field-quota').value) || 0;
+        record.periodo = document.getElementById('edit-field-periodo').value;
+        record.lucro = record.receita - record.custos;
+      } else if (type === 'servicos') {
+        record.nome = document.getElementById('edit-field-nome').value.trim();
+        record.fase = document.getElementById('edit-field-fase').value;
+        record.receita = parseFloat(document.getElementById('edit-field-receita').value) || 0;
+        record.custos = parseFloat(document.getElementById('edit-field-custos').value) || 0;
+        record.satisfacao = parseFloat(document.getElementById('edit-field-satisfacao').value) || 0;
+        record.periodo = document.getElementById('edit-field-periodo').value;
+        record.lucro = record.receita - record.custos;
+      } else if (type === 'empresas') {
+        record.nome = document.getElementById('edit-field-nome').value.trim();
+        record.fase = document.getElementById('edit-field-fase').value;
+        record.faturacao = parseFloat(document.getElementById('edit-field-faturacao').value) || 0;
+        record.despesas = parseFloat(document.getElementById('edit-field-despesas').value) || 0;
+        record.funcionarios = parseInt(document.getElementById('edit-field-funcionarios').value) || 0;
+        record.periodo = document.getElementById('edit-field-periodo').value;
+        record.resultado = record.faturacao - record.despesas;
+      }
+
+      saveToStorage();
+      renderAll();
+      closeEditRecordModal();
+      showToast('Registro atualizado!');
+    }
+
+    function duplicateRecord(type, id) {
+      const record = appData[type].find(r => r.id === id);
+      if (!record) return;
+
+      const newRecord = {
+        ...JSON.parse(JSON.stringify(record)),
+        id: Date.now()
+      };
+
+      appData[type].push(newRecord);
+      saveToStorage();
+      renderAll();
+      showToast('Registro duplicado!');
+    }
+
+    // Scenarios
+    function saveCurrentScenario(type) {
+      const count = appData.scenarios.filter(s => s.type === type).length + 1;
+      const scenario = {
+        id: Date.now(),
+        name: `Cenário ${count}`,
+        type: type,
+        data: JSON.parse(JSON.stringify(appData[type + 's'] || appData[type === 'empresa' ? 'empresas' : type + 's'])),
+        createdAt: new Date().toISOString()
+      };
+
+      appData.scenarios.push(scenario);
+      saveToStorage();
+      renderScenarios();
+      showToast('Cenário guardado!');
+    }
+
+    function renderScenarios() {
+      const filter = document.getElementById('scenarioFilter')?.value.toLowerCase() || '';
+      const typeFilter = document.getElementById('scenarioTypeFilter')?.value || '';
+
+      let filtered = appData.scenarios.filter(s => {
+        const matchesText = s.name.toLowerCase().includes(filter);
+        const matchesType = !typeFilter || s.type === typeFilter;
+        return matchesText && matchesType;
+      });
+
+      const container = document.getElementById('scenarios-list');
+      const empty = document.getElementById('scenarios-empty');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        container.innerHTML = filtered.map(s => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center ${getTypeColorClass(s.type)}">
+                ${getTypeIcon(s.type)}
+              </div>
+              <div>
+                <div class="font-medium">${s.name}</div>
+                <div class="text-xs text-gray-500">${getTypeName(s.type)} • ${s.data.length} registros • ${formatDate(s.createdAt)}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 export-hide">
+              <button onclick="loadScenario(${s.id})" class="btn-secondary mini-btn" title="Carregar">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              </button>
+              <button onclick="cloneScenario(${s.id})" class="btn-secondary mini-btn" title="Clonar">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button onclick="editScenario(${s.id})" class="btn-secondary mini-btn" title="Editar">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteScenario(${s.id})" class="text-error hover:bg-red-50 p-1 rounded transition-all" title="Eliminar">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function loadScenario(id) {
+      const scenario = appData.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+
+      const key = scenario.type === 'empresa' ? 'empresas' : scenario.type + 's';
+      appData[key] = JSON.parse(JSON.stringify(scenario.data));
+      saveToStorage();
+      renderAll();
+      switchTab(scenario.type);
+      showToast('Cenário carregado!');
+    }
+
+    function cloneScenario(id) {
+      const scenario = appData.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+
+      const count = appData.scenarios.filter(s => s.type === scenario.type).length + 1;
+      const clone = {
+        ...JSON.parse(JSON.stringify(scenario)),
+        id: Date.now(),
+        name: `${scenario.name} (cópia)`,
+        createdAt: new Date().toISOString()
+      };
+
+      appData.scenarios.push(clone);
+      saveToStorage();
+      renderScenarios();
+      showToast('Cenário clonado!');
+    }
+
+    function editScenario(id) {
+      const scenario = appData.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+
+      document.getElementById('edit-scenario-id').value = id;
+      document.getElementById('edit-scenario-name').value = scenario.name;
+      document.getElementById('editModal').classList.remove('hidden');
+      document.getElementById('editModal').classList.add('flex');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      document.getElementById('editModal').classList.remove('flex');
+    }
+
+    function saveEditedScenario() {
+      const id = parseInt(document.getElementById('edit-scenario-id').value);
+      const name = document.getElementById('edit-scenario-name').value.trim();
+
+      const scenario = appData.scenarios.find(s => s.id === id);
+      if (scenario && name) {
+        scenario.name = name;
+        saveToStorage();
+        renderScenarios();
+        closeEditModal();
+        showToast('Cenário atualizado!');
+      }
+    }
+
+    function deleteScenario(id) {
+      appData.scenarios = appData.scenarios.filter(s => s.id !== id);
+      saveToStorage();
+      renderScenarios();
+      showToast('Cenário eliminado!');
+    }
+
+    function filterScenarios() {
+      renderScenarios();
+    }
+
+    function createNewScenario() {
+      document.getElementById('newScenarioModal').classList.remove('hidden');
+      document.getElementById('newScenarioModal').classList.add('flex');
+    }
+
+    function closeNewScenarioModal() {
+      document.getElementById('newScenarioModal').classList.add('hidden');
+      document.getElementById('newScenarioModal').classList.remove('flex');
+    }
+
+    function createEmptyScenario() {
+      const name = document.getElementById('new-scenario-name').value.trim();
+      const type = document.getElementById('new-scenario-type').value;
+
+      if (!name) {
+        const count = appData.scenarios.filter(s => s.type === type).length + 1;
+        document.getElementById('new-scenario-name').value = `Cenário ${count}`;
+      }
+
+      const scenario = {
+        id: Date.now(),
+        name: document.getElementById('new-scenario-name').value || `Cenário ${appData.scenarios.length + 1}`,
+        type: type,
+        data: [],
+        createdAt: new Date().toISOString()
+      };
+
+      appData.scenarios.push(scenario);
+      saveToStorage();
+      renderScenarios();
+      closeNewScenarioModal();
+      document.getElementById('new-scenario-name').value = '';
+      showToast('Cenário criado!');
+    }
+
+    // Templates
+    function loadTemplate(templateId) {
+      const templates = {
+        'produto-ciclo-completo': {
+          type: 'produto',
+          data: [
+            { id: 1, nome: 'Smartphone Alpha', fase: 'introducao', receita: 500000, custos: 800000, quota: 2, periodo: '2024-01', lucro: -300000 },
+            { id: 2, nome: 'Smartphone Alpha', fase: 'crescimento', receita: 2000000, custos: 1200000, quota: 15, periodo: '2024-04', lucro: 800000 },
+            { id: 3, nome: 'Smartphone Alpha', fase: 'maturidade', receita: 5000000, custos: 2500000, quota: 35, periodo: '2024-07', lucro: 2500000 },
+            { id: 4, nome: 'Smartphone Alpha', fase: 'declinio', receita: 1500000, custos: 1000000, quota: 10, periodo: '2024-10', lucro: 500000 }
+          ]
+        },
+        'servico-saas': {
+          type: 'servico',
+          data: [
+            { id: 1, nome: 'CloudApp Pro', fase: 'introducao', receita: 200000, custos: 500000, satisfacao: 85, periodo: '2024-01', lucro: -300000 },
+            { id: 2, nome: 'CloudApp Pro', fase: 'crescimento', receita: 1500000, custos: 800000, satisfacao: 90, periodo: '2024-04', lucro: 700000 },
+            { id: 3, nome: 'CloudApp Pro', fase: 'maturidade', receita: 3000000, custos: 1200000, satisfacao: 88, periodo: '2024-07', lucro: 1800000 }
+          ]
+        },
+        'startup-growth': {
+          type: 'empresa',
+          data: [
+            { id: 1, nome: 'TechStart Lda', fase: 'introducao', faturacao: 100000, despesas: 300000, funcionarios: 3, periodo: '2024-01', resultado: -200000 },
+            { id: 2, nome: 'TechStart Lda', fase: 'crescimento', faturacao: 800000, despesas: 500000, funcionarios: 12, periodo: '2024-04', resultado: 300000 },
+            { id: 3, nome: 'TechStart Lda', fase: 'crescimento', faturacao: 2000000, despesas: 1200000, funcionarios: 25, periodo: '2024-07', resultado: 800000 },
+            { id: 4, nome: 'TechStart Lda', fase: 'maturidade', faturacao: 4000000, despesas: 2500000, funcionarios: 45, periodo: '2024-10', resultado: 1500000 }
+          ]
+        }
+      };
+
+      const template = templates[templateId];
+      if (!template) return;
+
+      const key = template.type === 'empresa' ? 'empresas' : template.type + 's';
+      appData[key] = template.data.map(item => ({ ...item, id: Date.now() + Math.random() * 1000 }));
+      saveToStorage();
+      renderAll();
+      switchTab(template.type);
+      showToast('Template carregado!');
+    }
+
+    // Currency
+    function updateRates() {
+      appData.rates = {
+        brl: parseFloat(document.getElementById('rate-brl').value) || 0,
+        eur: parseFloat(document.getElementById('rate-eur').value) || 0,
+        mzn: parseFloat(document.getElementById('rate-mzn').value) || 0,
+        cve: parseFloat(document.getElementById('rate-cve').value) || 0,
+        stn: parseFloat(document.getElementById('rate-stn').value) || 0,
+        usd: parseFloat(document.getElementById('rate-usd').value) || 0
+      };
+      saveToStorage();
+      convertCurrency();
+    }
+
+    function updateRatesUI() {
+      document.getElementById('rate-brl').value = appData.rates.brl;
+      document.getElementById('rate-eur').value = appData.rates.eur;
+      document.getElementById('rate-mzn').value = appData.rates.mzn;
+      document.getElementById('rate-cve').value = appData.rates.cve;
+      document.getElementById('rate-stn').value = appData.rates.stn;
+      document.getElementById('rate-usd').value = appData.rates.usd;
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
+      document.getElementById('conv-brl').textContent = (amount * appData.rates.brl).toFixed(2);
+      document.getElementById('conv-eur').textContent = (amount * appData.rates.eur).toFixed(2);
+      document.getElementById('conv-mzn').textContent = (amount * appData.rates.mzn).toFixed(2);
+      document.getElementById('conv-cve').textContent = (amount * appData.rates.cve).toFixed(2);
+      document.getElementById('conv-stn').textContent = (amount * appData.rates.stn).toFixed(2);
+      document.getElementById('conv-usd').textContent = (amount * appData.rates.usd).toFixed(2);
+    }
+
+    // Filters
+    function applyGlobalFilter() {
+      renderProdutos();
+      renderServicos();
+      renderEmpresas();
+    }
+
+    // Export Functions
+    async function exportAllImage() {
+      showToast('A preparar imagem...');
+      const app = document.getElementById('app');
+      app.classList.add('exporting');
+
+      try {
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#F8F9FA'
+        });
+
+        const link = document.createElement('a');
+        link.download = `is-matrizes-ciclos-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada!');
+      } catch (e) {
+        showToast('Erro ao exportar imagem', 'error');
+      } finally {
+        app.classList.remove('exporting');
+      }
+    }
+
+    async function exportChartImage(chartId) {
+      const chartCanvas = document.getElementById(chartId);
+      if (!chartCanvas) return;
+
+      const link = document.createElement('a');
+      link.download = `grafico-${chartId}-${Date.now()}.png`;
+      link.href = chartCanvas.toDataURL('image/png', 1.0);
+      link.click();
+      showToast('Gráfico exportado!');
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let currentY = 20;
+
+      // Header
+      function addHeader(pageNum) {
+        doc.setFillColor(30, 136, 229);
+        doc.rect(0, 0, pageWidth, 15, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.text('IS Matrizes Ciclos', 10, 10);
+        doc.setFontSize(8);
+        doc.text(`Exportado: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth - 50, 10);
+      }
+
+      // Footer
+      function addFooter(pageNum) {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('IS Matrizes Ciclos - Simulador de Ciclo de Vida', 10, pageHeight - 4);
+        doc.text(`Página ${pageNum}`, pageWidth - 20, pageHeight - 4);
+      }
+
+      let pageNum = 1;
+      addHeader(pageNum);
+      addFooter(pageNum);
+      currentY = 25;
+
+      // Title
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(16);
+      doc.text(appData.title || 'IS Matrizes Ciclos', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 15;
+
+      // Products Section
+      if (appData.produtos.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(30, 136, 229);
+        doc.text('Produtos', 10, currentY);
+        currentY += 8;
+
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        appData.produtos.forEach(p => {
+          if (currentY > pageHeight - 30) {
+            doc.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            addFooter(pageNum);
+            currentY = 25;
+          }
+          doc.text(`• ${p.nome} - ${getPhaseName(p.fase)} - Receita: ${formatCurrency(p.receita)} - Lucro: ${formatCurrency(p.lucro)}`, 15, currentY);
+          currentY += 5;
+        });
+        currentY += 5;
+
+        // Add chart
+        const prodChart = document.getElementById('prodLifecycleChart');
+        if (prodChart) {
+          const chartImg = prodChart.toDataURL('image/png');
+          if (currentY > pageHeight - 60) {
+            doc.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            addFooter(pageNum);
+            currentY = 25;
+          }
+          doc.addImage(chartImg, 'PNG', 10, currentY, 80, 40);
+          currentY += 50;
+        }
+      }
+
+      // Services Section
+      if (appData.servicos.length > 0) {
+        if (currentY > pageHeight - 40) {
+          doc.addPage();
+          pageNum++;
+          addHeader(pageNum);
+          addFooter(pageNum);
+          currentY = 25;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(30, 136, 229);
+        doc.text('Serviços', 10, currentY);
+        currentY += 8;
+
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        appData.servicos.forEach(s => {
+          if (currentY > pageHeight - 30) {
+            doc.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            addFooter(pageNum);
+            currentY = 25;
+          }
+          doc.text(`• ${s.nome} - ${getPhaseName(s.fase)} - Receita: ${formatCurrency(s.receita)} - Satisfação: ${s.satisfacao}%`, 15, currentY);
+          currentY += 5;
+        });
+        currentY += 5;
+      }
+
+      // Companies Section
+      if (appData.empresas.length > 0) {
+        if (currentY > pageHeight - 40) {
+          doc.addPage();
+          pageNum++;
+          addHeader(pageNum);
+          addFooter(pageNum);
+          currentY = 25;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(30, 136, 229);
+        doc.text('Empresas', 10, currentY);
+        currentY += 8;
+
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        appData.empresas.forEach(e => {
+          if (currentY > pageHeight - 30) {
+            doc.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            addFooter(pageNum);
+            currentY = 25;
+          }
+          doc.text(`• ${e.nome} - ${getPhaseName(e.fase)} - Faturação: ${formatCurrency(e.faturacao)} - Funcionários: ${e.funcionarios}`, 15, currentY);
+          currentY += 5;
+        });
+      }
+
+      doc.save(`is-matrizes-ciclos-${Date.now()}.pdf`);
+      showToast('PDF exportado!');
+    }
+
+    function exportJSON() {
+      const dataStr = JSON.stringify(appData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `is-matrizes-ciclos-${Date.now()}.json`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados!');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          appData = { ...appData, ...imported };
+          saveToStorage();
+          renderAll();
+          updateRatesUI();
+          showToast('Dados importados com sucesso!');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Utility Functions
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value) + ' AOA';
+    }
+
+    function formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('pt-PT', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    function getPhaseName(phase) {
+      const names = {
+        introducao: 'Introdução',
+        crescimento: 'Crescimento',
+        maturidade: 'Maturidade',
+        declinio: 'Declínio'
+      };
+      return names[phase] || phase;
+    }
+
+    function getPhaseClass(phase) {
+      const classes = {
+        introducao: 'bg-purple-100 text-purple-800',
+        crescimento: 'bg-green-100 text-green-800',
+        maturidade: 'bg-blue-100 text-blue-800',
+        declinio: 'bg-red-100 text-red-800'
+      };
+      return classes[phase] || '';
+    }
+
+    function getTypeName(type) {
+      const names = { produto: 'Produto', servico: 'Serviço', empresa: 'Empresa' };
+      return names[type] || type;
+    }
+
+    function getTypeColorClass(type) {
+      const classes = {
+        produto: 'bg-purple-100',
+        servico: 'bg-green-100',
+        empresa: 'bg-blue-100'
+      };
+      return classes[type] || 'bg-gray-100';
+    }
+
+    function getTypeIcon(type) {
+      const icons = {
+        produto: '<svg class="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>',
+        servico: '<svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+        empresa: '<svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>'
+      };
+      return icons[type] || '';
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toast-message');
+      toastMessage.textContent = message;
+      toast.className = 'fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 z-50';
+
+      if (type === 'error') {
+        toast.classList.add('bg-error', 'text-white');
+      } else {
+        toast.classList.add('bg-gray-800', 'text-white');
+      }
+
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+
+      setTimeout(() => {
+        toast.style.transform = 'translateY(20px)';
+        toast.style.opacity = '0';
+      }, 3000);
+    }
+
+    // Element SDK Integration
+    const defaultConfig = {
+      app_title: 'IS Matrizes Ciclos'
+    };
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+          appData.title = config.app_title || defaultConfig.app_title;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['app_title', config.app_title || defaultConfig.app_title]
+        ])
+      });
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dc28d0746513eac',t:'MTc3MzQ4MzY4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

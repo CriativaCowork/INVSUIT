@@ -1,0 +1,2208 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Juros Compostos CPLP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .gradient-header {
+      background: linear-gradient(135deg, #66CFF5 0%, #0D47A1 100%);
+    }
+    
+    .card-shadow {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .result-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+      border-left: 4px solid #66CFF5;
+    }
+    
+    .highlight-card {
+      background: linear-gradient(145deg, #E0F4FD 0%, #BBDEFB 100%);
+    }
+    
+    .tip-card {
+      background: linear-gradient(145deg, #FFF8E1 0%, #FFECB3 100%);
+      border-left: 4px solid #FFC107;
+    }
+    
+    .input-focus:focus {
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+      outline: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #66CFF5 0%, #1976D2 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1976D2 0%, #33BEF2 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 136, 229, 0.4);
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
+      transform: translateY(-1px);
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .tab-active {
+      background-color: #66CFF5;
+      color: white;
+      border-bottom: 3px solid #0D47A1;
+    }
+    
+    .tab-inactive {
+      background-color: transparent;
+      color: #78909C;
+    }
+    
+    .tab-inactive:hover {
+      background-color: #E0F4FD;
+      color: #66CFF5;
+    }
+    
+    .progress-bar {
+      height: 10px;
+      border-radius: 5px;
+      background: #E0E0E0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66CFF5 0%, #4CAF50 100%);
+      transition: width 0.5s ease;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .toast-success { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+    .toast-error { background: linear-gradient(135deg, #F44336, #C62828); }
+    .toast-warning { background: linear-gradient(135deg, #FF9800, #F57C00); }
+    
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 350px;
+      width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .chart-container {
+        height: 280px;
+      }
+    }
+    
+    .number-input::-webkit-inner-spin-button,
+    .number-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .number-input {
+      -moz-appearance: textfield;
+    }
+    
+    /* Currency Option */
+    .currency-option {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #E0E0E0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .currency-option:hover {
+      background: #F5F5F5;
+      border-color: #66CFF5;
+      transform: translateX(4px);
+    }
+    
+    .currency-option.selected {
+      background: #E0F4FD;
+      border-color: #66CFF5;
+      box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+    }
+    
+    .currency-option.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .currency-option.disabled:hover {
+      background: white;
+      border-color: #E0E0E0;
+      transform: none;
+    }
+    
+    /* Scenario Cards */
+    .scenario-card {
+      border: 2px solid #E0E0E0;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .scenario-card:hover {
+      border-color: #66CFF5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 136, 229, 0.15);
+    }
+    
+    .scenario-card.selected {
+      border-color: #66CFF5;
+      background: #E0F4FD;
+    }
+    
+    /* Education Tabs */
+    .education-tab {
+      padding: 14px 24px;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .education-tab:hover {
+      background: #F5F5F5;
+    }
+    
+    .education-tab.active {
+      border-bottom-color: #66CFF5;
+      color: #66CFF5;
+    }
+    
+    /* Formula Display */
+    .formula-box {
+      background: #F5F5F5;
+      border: 2px dashed #66CFF5;
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      text-align: center;
+      margin: 16px 0;
+    }
+    
+    .formula-var {
+      color: #66CFF5;
+      font-weight: bold;
+    }
+    
+    /* Collapsible Section */
+    .collapsible-header {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+    
+    .collapsible-header:hover {
+      background: #F5F5F5;
+    }
+    
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .collapsible-content.open {
+      max-height: 2000px;
+    }
+    
+    /* Custom Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F5F5F5;
+      border-radius: 10px;
+    }
+    
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #BDBDBD;
+      border-radius: 10px;
+    }
+    
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #9E9E9E;
+    }
+    
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .badge-primary { background: #E0F4FD; color: #66CFF5; }
+    .badge-success { background: #E8F5E9; color: #4CAF50; }
+    .badge-warning { background: #FFF8E1; color: #FFC107; }
+    .badge-info { background: #E0F2F1; color: #00897B; }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 text-gray-800">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="gradient-header text-white py-6 px-4 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto">
+     <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+       <h1 id="app-title" class="text-2xl md:text-3xl font-bold" style="display: none; display: none;">💰 Simulador de Juros Compostos</h1>
+       <p id="app-subtitle" class="text-blue-100 mt-1 text-sm md:text-base" style="display: none; display: none;">Planeje seu futuro financeiro na CPLP</p>
+      </div>
+      <div class="flex gap-2"><button id="currency-selector-btn" class="bg-white/20 hover:bg-white/30 px-4 py-3 rounded-xl transition-colors flex items-center gap-2" title="Selecionar Moeda"> <span id="current-currency-flag" class="text-xl">🇦🇴</span> <span id="current-currency-code" class="font-semibold">AOA</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg></button> <button id="settings-btn" class="bg-white/20 hover:bg-white/30 p-3 rounded-xl transition-colors" title="Configurações">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg></button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Main Navigation Tabs -->
+   <div class="bg-white border-b border-gray-200 sticky top-24 z-30">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex overflow-x-auto custom-scroll"><button class="education-tab active" data-tab="simulator"> <span class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        </svg> Simulador </span> </button> <button class="education-tab" data-tab="scenarios"> <span class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg> Cenários </span> </button> <button class="education-tab" data-tab="education"> <span class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg> Educação </span> </button> <button class="education-tab" data-tab="about"> <span class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg> Sobre </span> </button>
+     </div>
+    </div>
+   </div>
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Simulator Tab -->
+    <div id="simulator-tab" class="tab-content">
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><!-- Input Form -->
+      <div class="lg:col-span-1">
+       <div class="bg-white rounded-xl card-shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+         </svg> Dados do Investimento</h2>
+        <form id="calculator-form" class="space-y-4"><!-- Initial Value -->
+         <div><label for="initial-value" class="block text-sm font-medium text-gray-700 mb-1"> Valor Inicial <span id="currency-label-1" class="text-gray-500">(AOA)</span> </label> <input type="text" id="initial-value" inputmode="decimal" class="number-input w-full px-4 py-3 border border-gray-200 rounded-lg input-focus transition-all" placeholder="100.000" value="100000">
+         </div><!-- Monthly Contribution -->
+         <div><label for="monthly-contribution" class="block text-sm font-medium text-gray-700 mb-1"> Aporte Mensal <span id="currency-label-2" class="text-gray-500">(AOA)</span> <span class="text-gray-400 text-xs">(opcional)</span> </label> <input type="text" id="monthly-contribution" inputmode="decimal" class="number-input w-full px-4 py-3 border border-gray-200 rounded-lg input-focus transition-all" placeholder="10.000" value="10000">
+         </div><!-- Interest Rate -->
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Taxa de Juros</label>
+          <div class="flex gap-2"><input type="text" id="interest-rate" inputmode="decimal" class="number-input flex-1 px-4 py-3 border border-gray-200 rounded-lg input-focus transition-all" placeholder="1.0" value="1.0"> <select id="rate-type" class="px-3 py-2 border border-gray-200 rounded-lg input-focus bg-white"> <option value="monthly">% ao mês</option> <option value="annual">% ao ano</option> </select>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Taxa convertida: <span id="converted-rate">1.0% ao mês | 12.68% ao ano</span></p>
+         </div><!-- Period -->
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Período de Investimento</label>
+          <div class="flex gap-2"><input type="text" id="period" inputmode="numeric" class="number-input flex-1 px-4 py-3 border border-gray-200 rounded-lg input-focus transition-all" placeholder="12" value="24"> <select id="period-type" class="px-3 py-2 border border-gray-200 rounded-lg input-focus bg-white"> <option value="months">Meses</option> <option value="years">Anos</option> </select>
+          </div>
+         </div><!-- Inflation Toggle -->
+         <div class="border-t pt-4 mt-4">
+          <div class="flex items-center justify-between mb-2"><label class="text-sm font-medium text-gray-700">Incluir Inflação</label> <button type="button" id="inflation-toggle" class="relative w-12 h-6 bg-gray-200 rounded-full transition-colors"> <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform shadow"></span> </button>
+          </div>
+          <div id="inflation-section" class="hidden space-y-2"><select id="country-inflation" class="w-full px-3 py-2 border border-gray-200 rounded-lg input-focus bg-white text-sm"> <option value="custom">Personalizado</option> <option value="AO" selected>🇦🇴 Angola (~21% a.a.)</option> <option value="BR">🇧🇷 Brasil (~4.5% a.a.)</option> <option value="PT">��🇹 Portugal (~3% a.a.)</option> <option value="MZ">🇲🇿 Moçambique (~7% a.a.)</option> <option value="ST">🇸🇹 São Tomé (~15% a.a.)</option> <option value="CV">🇨🇻 Cabo Verde (~4% a.a.)</option> <option value="US">🇺🇸 EUA (~3.5% a.a.)</option> </select> <input type="text" id="custom-inflation" inputmode="decimal" class="number-input w-full px-3 py-2 border border-gray-200 rounded-lg input-focus text-sm hidden" placeholder="Taxa de inflação anual (%)">
+          </div>
+         </div><!-- Calculate Button --> <button type="submit" class="btn-primary w-full py-3 text-white font-semibold rounded-lg shadow-lg"> <span class="flex items-center justify-center gap-2">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+           </svg> Calcular </span> </button>
+        </form><!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 mt-4"><button id="save-scenario-btn" class="btn-secondary py-2 text-white text-sm rounded-lg"> 💾 Guardar </button> <button id="compare-btn" class="btn-secondary py-2 text-white text-sm rounded-lg"> 📊 Comparar </button>
+        </div><!-- Import/Export -->
+        <div class="grid grid-cols-2 gap-2 mt-2"><button id="export-json-btn" class="border border-gray-300 py-2 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"> 📤 Exportar </button> <label class="border border-gray-300 py-2 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-center"> 📥 Importar <input type="file" id="import-json" accept=".json" class="hidden"> </label>
+        </div>
+       </div><!-- Saved Scenarios -->
+       <div id="saved-scenarios-container" class="bg-white rounded-xl card-shadow p-4 mt-4 hidden">
+        <h3 class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+         <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+         </svg> Cenários Guardados</h3>
+        <div id="saved-scenarios-list" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
+       </div>
+      </div><!-- Results -->
+      <div class="lg:col-span-2 space-y-6"><!-- Results Cards -->
+       <div id="results-section" class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+        <div class="result-card rounded-xl p-4">
+         <p class="text-sm text-gray-500">Montante Final Bruto</p>
+         <p id="final-amount" class="text-2xl font-bold text-blue-600">AOA 0</p>
+        </div>
+        <div class="result-card rounded-xl p-4">
+         <p class="text-sm text-gray-500">Total Investido</p>
+         <p id="total-invested" class="text-2xl font-bold text-gray-700">AOA 0</p>
+        </div>
+        <div class="result-card rounded-xl p-4">
+         <p class="text-sm text-gray-500">Juros Acumulados</p>
+         <p id="total-interest" class="text-2xl font-bold text-green-600">AOA 0</p>
+         <p id="interest-percentage" class="text-xs text-green-500">+0% de rendimento</p>
+        </div>
+        <div id="inflation-result" class="result-card rounded-xl p-4 hidden">
+         <p class="text-sm text-gray-500">Valor Real (ajustado)</p>
+         <p id="real-value" class="text-2xl font-bold text-amber-600">AOA 0</p>
+         <p id="purchasing-power" class="text-xs text-amber-500">Poder de compra atual</p>
+        </div>
+       </div><!-- Progress Indicator -->
+       <div class="bg-white rounded-xl card-shadow p-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-2"><span>Progresso: Capital vs Juros</span> <span id="progress-percentage">0% juros</span>
+        </div>
+        <div class="progress-bar">
+         <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 mt-1"><span>Capital investido</span> <span>Juros compostos</span>
+        </div>
+       </div><!-- Chart -->
+       <div class="bg-white rounded-xl card-shadow p-4">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="font-semibold text-gray-800">Evolução do Patrimônio</h3>
+         <div class="flex gap-1"><button id="chart-line-btn" class="px-3 py-1 text-xs rounded tab-active transition-colors">Linha</button> <button id="chart-bar-btn" class="px-3 py-1 text-xs rounded tab-inactive transition-colors">Barras</button>
+         </div>
+        </div>
+        <div class="chart-container">
+         <canvas id="growth-chart"></canvas>
+        </div>
+       </div><!-- Comparison Section -->
+       <div id="comparison-section" class="bg-white rounded-xl card-shadow p-4 hidden">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+         </svg> Comparação de Cenários</h3>
+        <div id="comparison-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"></div>
+        <div class="chart-container">
+         <canvas id="comparison-chart"></canvas>
+        </div>
+       </div><!-- Export Buttons -->
+       <div class="flex flex-wrap gap-2"><button id="export-pdf-btn" class="flex-1 min-w-32 btn-primary py-2 text-white text-sm rounded-lg flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+         </svg> Exportar PDF </button> <button id="export-image-btn" class="flex-1 min-w-32 btn-secondary py-2 text-white text-sm rounded-lg flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+         </svg> Exportar Imagem </button>
+       </div>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="scenarios-tab" class="tab-content hidden">
+     <div class="mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">📚 Cenários de Aprendizagem</h2>
+      <p class="text-gray-600">Explore 10 cenários práticos para entender o poder dos juros compostos em diferentes situações</p>
+     </div>
+     <div id="scenarios-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div><!-- Education Tab -->
+    <div id="education-tab" class="tab-content hidden">
+     <div class="mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">🎓 Educação Financeira</h2>
+      <p class="text-gray-600">Aprenda os conceitos fundamentais para dominar suas finanças</p>
+     </div><!-- Tips Section -->
+     <div class="bg-white rounded-xl card-shadow mb-6">
+      <div class="collapsible-header p-4 flex items-center justify-between" data-collapsible="tips">
+       <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2"><span class="text-2xl">💡</span> Dicas de Educação Financeira</h3>
+       <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+       </svg>
+      </div>
+      <div class="collapsible-content" id="tips-content">
+       <div class="p-4 pt-0 space-y-3" id="tips-list"></div>
+      </div>
+     </div><!-- Key Concepts -->
+     <div class="bg-white rounded-xl card-shadow mb-6">
+      <div class="collapsible-header p-4 flex items-center justify-between" data-collapsible="concepts">
+       <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2"><span class="text-2xl">📖</span> Conceitos-Chave</h3>
+       <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+       </svg>
+      </div>
+      <div class="collapsible-content" id="concepts-content">
+       <div class="p-4 pt-0 space-y-4" id="concepts-list"></div>
+      </div>
+     </div><!-- Formulas -->
+     <div class="bg-white rounded-xl card-shadow mb-6">
+      <div class="collapsible-header p-4 flex items-center justify-between" data-collapsible="formulas">
+       <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2"><span class="text-2xl">🔢</span> Fórmulas de Cálculo</h3>
+       <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+       </svg>
+      </div>
+      <div class="collapsible-content" id="formulas-content">
+       <div class="p-4 pt-0 space-y-6" id="formulas-list"></div>
+      </div>
+     </div><!-- Theories -->
+     <div class="bg-white rounded-xl card-shadow">
+      <div class="collapsible-header p-4 flex items-center justify-between" data-collapsible="theories">
+       <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2"><span class="text-2xl">🧠</span> Teorias e Fundamentos</h3>
+       <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+       </svg>
+      </div>
+      <div class="collapsible-content" id="theories-content">
+       <div class="p-4 pt-0 space-y-4" id="theories-list"></div>
+      </div>
+     </div>
+    </div><!-- About Tab -->
+    <div id="about-tab" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl card-shadow p-8">
+       <h2 class="text-3xl font-bold text-gray-800 mb-4">ℹ️ Sobre o Simulador</h2>
+       <div class="space-y-6">
+        <div>
+         <h3 class="text-xl font-semibold text-blue-600 mb-2">Propósito</h3>
+         <p class="text-gray-700 leading-relaxed">Este simulador foi desenvolvido especialmente para cidadãos da Comunidade dos Países de L��ngua Portuguesa (CPLP), com o objetivo de democratizar o acesso à educação financeira e ao planejamento patrimonial. Nossa missão é capacitar famílias a alcançarem autonomia financeira, especialmente aquelas que sonham em sair do aluguel e garantir moradia própria.</p>
+        </div>
+        <div>
+         <h3 class="text-xl font-semibold text-blue-600 mb-2">Por que Juros Compostos?</h3>
+         <p class="text-gray-700 leading-relaxed mb-3">Os juros compostos são uma das forças mais poderosas nas finanças. Diferente dos juros simples, onde os rendimentos são calculados apenas sobre o capital inicial, nos juros compostos os rendimentos de cada período são incorporados ao capital, gerando "juros sobre juros".</p>
+         <p class="text-gray-700 leading-relaxed">Albert Einstein supostamente chamou os juros compostos de "a oitava maravilha do mundo", dizendo: <em>"Quem entende, ganha; quem não entende, paga."</em></p>
+        </div>
+        <div>
+         <h3 class="text-xl font-semibold text-blue-600 mb-2">Funcionalidades</h3>
+         <ul class="space-y-2 text-gray-700">
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Suporte a 7 moedas da CPLP e USD:</strong> AOA, BRL, EUR, MZN, STN, CVE e USD com configuração manual de símbolos e formatação</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Cálculos em tempo real:</strong> Veja imediatamente como suas decisões afetam seu patrimônio futuro</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Ajuste por inflação:</strong> Entenda o poder de compra real do seu investimento</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>10 cenários educacionais:</strong> Aprenda com exemplos práticos do dia a dia</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Comparação de cenários:</strong> Analise diferentes estratégias lado a lado</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Exportação completa:</strong> PDF, imagem e JSON para guardar suas simulações</span></li>
+          <li class="flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> <span><strong>Conteúdo educacional:</strong> Aprenda conceitos, fórmulas e teorias fundamentais</span></li>
+         </ul>
+        </div>
+        <div>
+         <h3 class="text-xl font-semibold text-blue-600 mb-2">Contexto Regional</h3>
+         <p class="text-gray-700 leading-relaxed">Reconhecemos as diferentes realidades econômicas dos países da CPLP. Por isso, incluímos taxas de inflação regionais e exemplos contextualizados para cada país, sempre respeitando as especificidades locais. O kwanza angolano (AOA) é a moeda padrão, refletindo a sede de desenvolvimento em Angola.</p>
+        </div>
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
+         <p class="text-sm text-amber-800"><strong>⚠️ Aviso Importante:</strong> Este simulador é apenas uma ferramenta educativa. Não constitui recomendação de investimento ou consultoria financeira. Sempre consulte um profissional qualificado antes de tomar decisões financeiras importantes.</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-gray-100 border-t border-gray-200 py-6 px-4 mt-12">
+    <div class="max-w-7xl mx-auto text-center">
+     <p class="text-sm text-gray-600">Este simulador é apenas educativo. Não constitui recomendação de investimento.</p>
+     <p class="text-sm text-gray-500 mt-2">Desenvolvido para a Comunidade dos Países de Língua Portuguesa (CPLP) 🌍</p>
+     <p class="text-xs text-gray-400 mt-2">v2.0 - 2024</p>
+    </div>
+   </footer><!-- Currency Selector Modal -->
+   <div id="currency-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl card-shadow max-w-md w-full p-6 animate-fade-in">
+     <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-800">💱 Selecionar Moeda</h3><button id="close-currency-modal" class="text-gray-400 hover:text-gray-600 p-2">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+     </div>
+     <div class="space-y-2" id="currency-options-list"></div>
+    </div>
+   </div><!-- Settings Modal -->
+   <div id="settings-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl card-shadow max-w-2xl w-full p-6 animate-fade-in max-h-[90%] overflow-y-auto custom-scroll">
+     <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-bold text-gray-800">⚙️ Configurações</h3><button id="close-settings" class="text-gray-400 hover:text-gray-600 p-2">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+       </svg></button>
+     </div>
+     <div class="space-y-6"><!-- Currency Configuration -->
+      <div>
+       <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2"><span>💱</span> Configuração de Moedas</h4>
+       <div id="currency-config-list" class="space-y-3"></div>
+      </div><!-- Number Format -->
+      <div>
+       <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2"><span>🔢</span> Formato de Números</h4>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Separador de Milhares</label> <select id="thousand-separator" class="w-full px-3 py-2 border border-gray-200 rounded-lg input-focus"> <option value=".">Ponto (.)</option> <option value=",">Vírgula (,)</option> <option value=" ">Espaço ( )</option> <option value="">Nenhum</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Separador Decimal</label> <select id="decimal-separator" class="w-full px-3 py-2 border border-gray-200 rounded-lg input-focus"> <option value=",">Vírgula (,)</option> <option value=".">Ponto (.)</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Casas Decimais</label> <input type="number" id="decimal-places" min="0" max="4" value="2" class="w-full px-3 py-2 border border-gray-200 rounded-lg input-focus">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Posição do Símbolo</label> <select id="symbol-position" class="w-full px-3 py-2 border border-gray-200 rounded-lg input-focus"> <option value="before">Antes (AOA 100)</option> <option value="after">Depois (100 AOA)</option> </select>
+        </div>
+       </div>
+       <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+        <p class="text-sm text-blue-700"><strong>Pré-visualização:</strong> <span id="format-preview">AOA 1.234,56</span></p>
+       </div>
+      </div><!-- Data Management -->
+      <div>
+       <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2"><span>💾</span> Gerenciamento de Dados</h4><button id="clear-data-btn" class="w-full py-3 text-red-600 border-2 border-red-200 rounded-lg hover:bg-red-50 transition-colors font-medium"> 🗑️ Limpar Todos os Dados Salvos </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Delete Confirmation Modal -->
+   <div id="delete-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl card-shadow max-w-sm w-full p-6 animate-fade-in">
+     <div class="text-center">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+       <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+       </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirmar Exclusão</h3>
+      <p id="delete-message" class="text-sm text-gray-600 mb-6">Tem certeza que deseja excluir? Esta ação não pode ser desfeita.</p>
+      <div class="flex gap-3"><button id="cancel-delete" class="flex-1 py-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium">Cancelar</button> <button id="confirm-delete" class="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">Excluir</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Configuration and State
+    const defaultConfig = {
+      app_title: 'Simulador de Juros Compostos',
+      subtitle: 'Planeje seu futuro financeiro na CPLP',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#1F2937',
+      accent_color: '#4CAF50',
+      font_family: 'Poppins',
+      font_size: 16
+    };
+
+    let config = { ...defaultConfig };
+
+    // Currency Data with manual configuration
+    let currencySettings = {
+      AOA: { symbol: 'AOA', name: 'Kwanza Angolano', flag: '🇦🇴', enabled: true },
+      BRL: { symbol: 'R$', name: 'Real Brasileiro', flag: '🇧🇷', enabled: true },
+      EUR: { symbol: '€', name: 'Euro', flag: '🇪🇺', enabled: true },
+      MZN: { symbol: 'MZN', name: 'Metical Moçambicano', flag: '🇲🇿', enabled: true },
+      STN: { symbol: 'STN', name: 'Dobra', flag: '🇸🇹', enabled: true },
+      CVE: { symbol: 'CVE', name: 'Escudo Cabo-verdiano', flag: '🇨🇻', enabled: true },
+      USD: { symbol: '$', name: 'Dólar Americano', flag: '🇺🇸', enabled: true }
+    };
+
+    // Number formatting settings
+    let formatSettings = {
+      thousandSeparator: '.',
+      decimalSeparator: ',',
+      decimalPlaces: 2,
+      symbolPosition: 'before'
+    };
+
+    // Inflation Data
+    const inflationRates = {
+      AO: 21, BR: 4.5, PT: 3, MZ: 7, ST: 15, CV: 4, US: 3.5
+    };
+
+    // Educational Tips
+    const educationalTips = [
+      {
+        icon: '🎯',
+        title: 'Começar Cedo é Fundamental',
+        content: 'O tempo é seu maior aliado. Investir 10.000 AOA por mês aos 25 anos pode render muito mais do que 50.000 AOA por mês aos 45 anos, graças aos juros compostos.'
+      },
+      {
+        icon: '📈',
+        title: 'A Regra dos 72',
+        content: 'Divida 72 pela taxa de juros anual para saber em quantos anos seu dinheiro dobra. Ex: com 12% ao ano, 72 ÷ 12 = 6 anos para dobrar.'
+      },
+      {
+        icon: '💳',
+        title: 'Quite Dívidas Primeiro',
+        content: 'Antes de investir, quite dívidas com juros altos. Os mesmos juros compostos que multiplicam investimentos também multiplicam dívidas.'
+      },
+      {
+        icon: '🏠',
+        title: 'O Sonho da Casa Própria',
+        content: 'Sair do aluguel significa parar de pagar juros e começar a construir patrimônio. Use este simulador para planejar a entrada da sua casa.'
+      },
+      {
+        icon: '🔄',
+        title: 'Consistência Vence Talento',
+        content: 'Aportes mensais pequenos mas consistentes superam investimentos grandes e esporádicos. A disciplina é mais importante que o valor.'
+      },
+      {
+        icon: '🛡️',
+        title: 'Reserve de Emergência',
+        content: 'Mantenha 3 a 6 meses de despesas guardados antes de investir a longo prazo. Isso evita que você precise resgatar investimentos em momentos ruins.'
+      },
+      {
+        icon: '📚',
+        title: 'Eduque Seus Filhos',
+        content: 'Hábitos financeiros saudáveis começam na infância. Ensine seus filhos sobre poupar, investir e o valor do dinheiro desde cedo.'
+      },
+      {
+        icon: '🎪',
+        title: 'Cuidado com Promessas Milagrosas',
+        content: 'Se parece bom demais para ser verdade, provavelmente é. Desconfie de retornos muito altos sem risco. Sempre pesquise antes de investir.'
+      },
+      {
+        icon: '🌍',
+        title: 'Diversifique seus Investimentos',
+        content: 'Não coloque todos os ovos na mesma cesta. Distribua seus investimentos entre diferentes tipos de aplicações para reduzir riscos.'
+      },
+      {
+        icon: '💪',
+        title: 'Inflação é Inimiga Silenciosa',
+        content: 'O dinheiro parado perde valor com o tempo. Por isso é essencial investir em aplicações que rendam acima da inflação.'
+      }
+    ];
+
+    // Key Concepts
+    const keyConcepts = [
+      {
+        term: 'Juros Compostos',
+        definition: 'Juros calculados sobre o montante acumulado (capital inicial + juros anteriores), gerando "juros sobre juros". É a base do crescimento exponencial do patrimônio.'
+      },
+      {
+        term: 'Montante Final',
+        definition: 'O valor total acumulado ao final do período, incluindo capital investido e todos os juros ganhos.'
+      },
+      {
+        term: 'Aporte Mensal',
+        definition: 'Valor adicional investido regularmente (mensalmente) além do capital inicial. Aportes consistentes aceleram significativamente o crescimento.'
+      },
+      {
+        term: 'Taxa de Juros',
+        definition: 'Percentual que determina quanto seu investimento vai render em cada período. Pode ser expressa mensalmente ou anualmente.'
+      },
+      {
+        term: 'Inflação',
+        definition: 'Aumento geral dos preços ao longo do tempo, que reduz o poder de compra do dinheiro. É crucial investir acima da inflação para ganhar dinheiro real.'
+      },
+      {
+        term: 'Valor Real (Ajustado)',
+        definition: 'O montante final corrigido pela inflação, mostrando o poder de compra real do seu dinheiro no futuro em valores de hoje.'
+      },
+      {
+        term: 'Horizonte de Investimento',
+        definition: 'O período de tempo que você planeja manter o investimento. Quanto maior o horizonte, maior o efeito dos juros compostos.'
+      },
+      {
+        term: 'Liquidez',
+        definition: 'Facilidade de converter um investimento em dinheiro sem perder valor. Investimentos l��quidos podem ser resgatados rapidamente.'
+      }
+    ];
+
+    // Formulas
+    const formulas = [
+      {
+        name: 'Juros Compostos Simples',
+        formula: 'M = C × (1 + i)ⁿ',
+        variables: [
+          'M = Montante Final',
+          'C = Capital Inicial',
+          'i = Taxa de juros (decimal)',
+          'n = Número de períodos'
+        ],
+        example: 'Se investir 100.000 AOA a 1% ao mês por 24 meses:<br>M = 100.000 × (1 + 0,01)²⁴ = 126.973 AOA'
+      },
+      {
+        name: 'Juros Compostos com Aportes',
+        formula: 'M = C × (1 + i)ⁿ + PMT × [((1 + i)ⁿ - 1) / i]',
+        variables: [
+          'M = Montante Final',
+          'C = Capital Inicial',
+          'PMT = Aporte Mensal',
+          'i = Taxa de juros (decimal)',
+          'n = Número de períodos'
+        ],
+        example: '100.000 AOA inicial + 10.000 AOA/mês a 1% por 24 meses:<br>M = 100.000 × 1,01²⁴ + 10.000 × [(1,01²⁴ - 1) / 0,01] ≈ 396.890 AOA'
+      },
+      {
+        name: 'Conversão de Taxa Anual para Mensal',
+        formula: 'i_mensal = (1 + i_anual)^(1/12) - 1',
+        variables: [
+          'i_mensal = Taxa mensal (decimal)',
+          'i_anual = Taxa anual (decimal)'
+        ],
+        example: 'Taxa anual de 12%:<br>i_mensal = (1 + 0,12)^(1/12) - 1 ≈ 0,0095 = 0,95% ao mês'
+      },
+      {
+        name: 'Ajuste pela Inflação',
+        formula: 'Valor_Real = Valor_Nominal / (1 + inf)ⁿ',
+        variables: [
+          'Valor_Real = Poder de compra em valores atuais',
+          'Valor_Nominal = Valor futuro sem ajuste',
+          'inf = Taxa de inflação (decimal)',
+          'n = Número de períodos'
+        ],
+        example: '500.000 AOA em 2 anos com inflação de 21% a.a.:<br>Valor_Real = 500.000 / (1,21)² ≈ 341.800 AOA (em valores de hoje)'
+      },
+      {
+        name: 'Tempo para Dobrar o Capital (Regra 72)',
+        formula: 'n = 72 / taxa_percentual',
+        variables: [
+          'n = Anos para dobrar',
+          'taxa_percentual = Taxa de juros anual em %'
+        ],
+        example: 'Com 12% ao ano:<br>n = 72 / 12 = 6 anos para dobrar o capital'
+      }
+    ];
+
+    // Theories
+    const theories = [
+      {
+        title: 'Valor do Dinheiro no Tempo',
+        content: 'Um dos princípios fundamentais das finanças: o dinheiro disponível hoje vale mais do que a mesma quantia no futuro, porque pode ser investido e render juros. Por isso, receber 100.000 AOA hoje é melhor que receber 100.000 AOA daqui a um ano.'
+      },
+      {
+        title: 'Efeito Bola de Neve',
+        content: 'Os juros compostos criam um efeito exponencial: nos primeiros anos, o crescimento parece lento, mas com o tempo acelera dramaticamente. É como uma bola de neve descendo uma montanha – começa pequena mas vai ficando cada vez maior e mais rápida.'
+      },
+      {
+        title: 'Custo de Oportunidade',
+        content: 'Cada escolha financeira tem um custo de oportunidade – o benefício que você deixa de receber ao escolher uma alternativa. Se você gasta 50.000 AOA hoje em vez de investir, está abrindo mão de quanto esse dinheiro renderia no futuro.'
+      },
+      {
+        title: 'Risco vs Retorno',
+        content: 'Investimentos com maiores retornos geralmente têm maiores riscos. É importante equilibrar: buscar bons retornos mas sem assumir riscos que você não pode suportar. Nunca invista todo seu dinheiro em uma única aplicação.'
+      },
+      {
+        title: 'Poder da Disciplina',
+        content: 'Estudos mostram que investidores disciplinados que fazem aportes regulares superam aqueles que tentam "acertar o momento certo". A consistência e o longo prazo são mais importantes que timing perfeito.'
+      }
+    ];
+
+    // Example Scenarios
+    const exampleScenarios = [
+      {
+        id: 1,
+        name: 'Entrada da Casa',
+        subtitle: 'Poupar para casa própria',
+        badge: 'Moradia',
+        badgeClass: 'badge-primary',
+        description: 'Junte entrada de 20% para uma casa de 10 milhões AOA em 5 anos',
+        params: {
+          initialValue: 200000,
+          monthlyContribution: 25000,
+          interestRate: 0.8,
+          rateType: 'monthly',
+          period: 60,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 2,
+        name: 'Fundo de Emergência',
+        subtitle: 'Reserve de segurança',
+        badge: 'Segurança',
+        badgeClass: 'badge-success',
+        description: 'Crie reserva de 6 meses de despesas (1,2 milhões AOA) em 2 anos',
+        params: {
+          initialValue: 100000,
+          monthlyContribution: 40000,
+          interestRate: 0.5,
+          rateType: 'monthly',
+          period: 24,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 3,
+        name: 'Aposentadoria Jovem',
+        subtitle: 'Começar aos 25 anos',
+        badge: 'Longo Prazo',
+        badgeClass: 'badge-info',
+        description: 'Veja o poder de começar cedo: 20.000 AOA/mês por 30 anos',
+        params: {
+          initialValue: 50000,
+          monthlyContribution: 20000,
+          interestRate: 10,
+          rateType: 'annual',
+          period: 30,
+          periodType: 'years'
+        }
+      },
+      {
+        id: 4,
+        name: 'Educação dos Filhos',
+        subtitle: 'Universidade em 10 anos',
+        badge: 'Educação',
+        badgeClass: 'badge-warning',
+        description: 'Planeje os estudos universitários dos seus filhos',
+        params: {
+          initialValue: 300000,
+          monthlyContribution: 30000,
+          interestRate: 0.7,
+          rateType: 'monthly',
+          period: 10,
+          periodType: 'years'
+        }
+      },
+      {
+        id: 5,
+        name: 'Pequeno Negócio',
+        subtitle: 'Capital inicial',
+        badge: 'Empreendedor',
+        badgeClass: 'badge-success',
+        description: 'Junte capital para abrir seu próprio negócio em 3 anos',
+        params: {
+          initialValue: 500000,
+          monthlyContribution: 50000,
+          interestRate: 1,
+          rateType: 'monthly',
+          period: 36,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 6,
+        name: 'Viagem dos Sonhos',
+        subtitle: 'Europa em família',
+        badge: 'Lazer',
+        badgeClass: 'badge-warning',
+        description: 'Realize a viagem em família sem comprometer o orçamento',
+        params: {
+          initialValue: 100000,
+          monthlyContribution: 15000,
+          interestRate: 0.6,
+          rateType: 'monthly',
+          period: 24,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 7,
+        name: 'Carro Novo',
+        subtitle: 'Compra à vista',
+        badge: 'Transporte',
+        badgeClass: 'badge-info',
+        description: 'Economize para comprar carro à vista e evite juros de financiamento',
+        params: {
+          initialValue: 1000000,
+          monthlyContribution: 80000,
+          interestRate: 0.75,
+          rateType: 'monthly',
+          period: 30,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 8,
+        name: 'Liberdade Financeira',
+        subtitle: 'Renda passiva',
+        badge: 'Independência',
+        badgeClass: 'badge-primary',
+        description: 'Construa patrimônio que gere renda passiva suficiente para viver',
+        params: {
+          initialValue: 2000000,
+          monthlyContribution: 100000,
+          interestRate: 12,
+          rateType: 'annual',
+          period: 20,
+          periodType: 'years'
+        }
+      },
+      {
+        id: 9,
+        name: 'Casamento',
+        subtitle: 'Cerimônia em 18 meses',
+        badge: 'Evento',
+        badgeClass: 'badge-warning',
+        description: 'Planeje o casamento dos sonhos sem dívidas',
+        params: {
+          initialValue: 200000,
+          monthlyContribution: 35000,
+          interestRate: 0.5,
+          rateType: 'monthly',
+          period: 18,
+          periodType: 'months'
+        }
+      },
+      {
+        id: 10,
+        name: 'Aposentadoria Tardia',
+        subtitle: 'Começar aos 45 anos',
+        badge: 'Recuperação',
+        badgeClass: 'badge-info',
+        description: 'Nunca é tarde: veja quanto precisará poupar mensalmente',
+        params: {
+          initialValue: 500000,
+          monthlyContribution: 100000,
+          interestRate: 10,
+          rateType: 'annual',
+          period: 15,
+          periodType: 'years'
+        }
+      }
+    ];
+
+    let currentCurrency = 'AOA';
+    let savedScenarios = [];
+    let comparisonScenarios = [];
+    let lastCalculation = null;
+    let deleteCallback = null;
+    let growthChart = null;
+    let comparisonChart = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFromLocalStorage();
+      initializeElements();
+      setupEventListeners();
+      renderEducationContent();
+      renderScenarios();
+      calculate();
+    });
+
+    // Element SDK Integration
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          applyConfig();
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.primary_color || defaultConfig.primary_color,
+              set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }
+            },
+            {
+              get: () => cfg.secondary_color || defaultConfig.secondary_color,
+              set: (v) => { cfg.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); }
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (v) => { cfg.text_color = v; window.elementSdk.setConfig({ text_color: v }); }
+            },
+            {
+              get: () => cfg.accent_color || defaultConfig.accent_color,
+              set: (v) => { cfg.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => cfg.font_family || defaultConfig.font_family,
+            set: (v) => { cfg.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+          },
+          fontSizeable: {
+            get: () => cfg.font_size || defaultConfig.font_size,
+            set: (v) => { cfg.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+          }
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['app_title', cfg.app_title || defaultConfig.app_title],
+          ['subtitle', cfg.subtitle || defaultConfig.subtitle]
+        ])
+      });
+    }
+
+    function applyConfig() {
+      const title = document.getElementById('app-title');
+      const subtitle = document.getElementById('app-subtitle');
+      
+      if (title) title.textContent = '💰 ' + (config.app_title || defaultConfig.app_title);
+      if (subtitle) subtitle.textContent = config.subtitle || defaultConfig.subtitle;
+      
+      document.body.style.fontFamily = `${config.font_family || defaultConfig.font_family}, sans-serif`;
+      document.body.style.fontSize = `${config.font_size || defaultConfig.font_size}px`;
+      document.body.style.color = config.text_color || defaultConfig.text_color;
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('compoundInterestSimulatorV2');
+        if (saved) {
+          const data = JSON.parse(saved);
+          savedScenarios = data.scenarios || [];
+          currentCurrency = data.currency || 'AOA';
+          
+          if (data.currencySettings) {
+            currencySettings = { ...currencySettings, ...data.currencySettings };
+          }
+          
+          if (data.formatSettings) {
+            formatSettings = { ...formatSettings, ...data.formatSettings };
+          }
+          
+          if (data.lastInputs) {
+            setTimeout(() => {
+              document.getElementById('initial-value').value = data.lastInputs.initialValue || '100000';
+              document.getElementById('monthly-contribution').value = data.lastInputs.monthlyContribution || '10000';
+              document.getElementById('interest-rate').value = data.lastInputs.interestRate || '1.0';
+              document.getElementById('rate-type').value = data.lastInputs.rateType || 'monthly';
+              document.getElementById('period').value = data.lastInputs.period || '24';
+              document.getElementById('period-type').value = data.lastInputs.periodType || 'months';
+            }, 0);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
+      }
+    }
+
+    function saveToLocalStorage() {
+      try {
+        const data = {
+          scenarios: savedScenarios,
+          currency: currentCurrency,
+          currencySettings,
+          formatSettings,
+          lastInputs: {
+            initialValue: document.getElementById('initial-value').value,
+            monthlyContribution: document.getElementById('monthly-contribution').value,
+            interestRate: document.getElementById('interest-rate').value,
+            rateType: document.getElementById('rate-type').value,
+            period: document.getElementById('period').value,
+            periodType: document.getElementById('period-type').value
+          }
+        };
+        localStorage.setItem('compoundInterestSimulatorV2', JSON.stringify(data));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+    }
+
+    function initializeElements() {
+      updateCurrencyButtons();
+      updateCurrencyLabels();
+      renderCurrencyConfig();
+      updateFormatPreview();
+      renderSavedScenarios();
+      
+      // Apply format settings
+      document.getElementById('thousand-separator').value = formatSettings.thousandSeparator;
+      document.getElementById('decimal-separator').value = formatSettings.decimalSeparator;
+      document.getElementById('decimal-places').value = formatSettings.decimalPlaces;
+      document.getElementById('symbol-position').value = formatSettings.symbolPosition;
+    }
+
+    function setupEventListeners() {
+      // Form submission
+      document.getElementById('calculator-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        calculate();
+      });
+
+      // Real-time calculation
+      ['initial-value', 'monthly-contribution', 'interest-rate', 'period'].forEach(id => {
+        document.getElementById(id).addEventListener('input', debounce(calculate, 300));
+      });
+
+      ['rate-type', 'period-type', 'country-inflation'].forEach(id => {
+        document.getElementById(id).addEventListener('change', calculate);
+      });
+
+      // Currency selector modal
+      document.getElementById('currency-selector-btn').addEventListener('click', () => {
+        renderCurrencyOptions();
+        document.getElementById('currency-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('close-currency-modal').addEventListener('click', () => {
+        document.getElementById('currency-modal').classList.add('hidden');
+      });
+
+      document.getElementById('currency-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'currency-modal') {
+          document.getElementById('currency-modal').classList.add('hidden');
+        }
+      });
+
+      // Tab navigation
+      document.querySelectorAll('.education-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const targetTab = tab.dataset.tab;
+          switchTab(targetTab);
+        });
+      });
+
+      // Collapsible sections
+      document.querySelectorAll('.collapsible-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const target = header.dataset.collapsible;
+          const content = document.getElementById(`${target}-content`);
+          const icon = header.querySelector('svg');
+          
+          content.classList.toggle('open');
+          icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0)';
+        });
+      });
+
+      // Settings modal
+      document.getElementById('settings-btn').addEventListener('click', () => {
+        document.getElementById('settings-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('close-settings').addEventListener('click', () => {
+        document.getElementById('settings-modal').classList.add('hidden');
+      });
+
+      document.getElementById('settings-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'settings-modal') {
+          document.getElementById('settings-modal').classList.add('hidden');
+        }
+      });
+
+      // Format settings
+      ['thousand-separator', 'decimal-separator', 'decimal-places', 'symbol-position'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => {
+          formatSettings.thousandSeparator = document.getElementById('thousand-separator').value;
+          formatSettings.decimalSeparator = document.getElementById('decimal-separator').value;
+          formatSettings.decimalPlaces = parseInt(document.getElementById('decimal-places').value);
+          formatSettings.symbolPosition = document.getElementById('symbol-position').value;
+          
+          updateFormatPreview();
+          calculate();
+          saveToLocalStorage();
+        });
+      });
+
+      // Inflation toggle
+      document.getElementById('inflation-toggle').addEventListener('click', toggleInflation);
+
+      document.getElementById('country-inflation').addEventListener('change', (e) => {
+        const customInput = document.getElementById('custom-inflation');
+        if (e.target.value === 'custom') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+        calculate();
+      });
+
+      document.getElementById('custom-inflation').addEventListener('input', debounce(calculate, 300));
+
+      // Actions
+      document.getElementById('save-scenario-btn').addEventListener('click', saveScenario);
+      document.getElementById('compare-btn').addEventListener('click', toggleComparison);
+      document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+      document.getElementById('import-json').addEventListener('change', importJSON);
+      document.getElementById('export-pdf-btn').addEventListener('click', exportPDF);
+      document.getElementById('export-image-btn').addEventListener('click', exportImage);
+
+      // Chart type toggle
+      document.getElementById('chart-line-btn').addEventListener('click', () => {
+        document.getElementById('chart-line-btn').classList.replace('tab-inactive', 'tab-active');
+        document.getElementById('chart-bar-btn').classList.replace('tab-active', 'tab-inactive');
+        updateChart('line');
+      });
+
+      document.getElementById('chart-bar-btn').addEventListener('click', () => {
+        document.getElementById('chart-bar-btn').classList.replace('tab-inactive', 'tab-active');
+        document.getElementById('chart-line-btn').classList.replace('tab-active', 'tab-inactive');
+        updateChart('bar');
+      });
+
+      // Rate conversion
+      document.getElementById('interest-rate').addEventListener('input', updateRateConversion);
+      document.getElementById('rate-type').addEventListener('change', updateRateConversion);
+
+      // Clear data
+      document.getElementById('clear-data-btn').addEventListener('click', () => {
+        showDeleteConfirmation('Tem certeza que deseja excluir todos os dados salvos? Esta ação não pode ser desfeita.', () => {
+          localStorage.removeItem('compoundInterestSimulatorV2');
+          savedScenarios = [];
+          comparisonScenarios = [];
+          renderSavedScenarios();
+          document.getElementById('comparison-section').classList.add('hidden');
+          showToast('Dados excluídos com sucesso', 'success');
+        });
+      });
+
+      // Delete modal
+      document.getElementById('cancel-delete').addEventListener('click', () => {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteCallback = null;
+      });
+
+      document.getElementById('confirm-delete').addEventListener('click', () => {
+        if (deleteCallback) {
+          deleteCallback();
+          deleteCallback = null;
+        }
+        document.getElementById('delete-modal').classList.add('hidden');
+      });
+
+      document.getElementById('delete-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'delete-modal') {
+          document.getElementById('delete-modal').classList.add('hidden');
+          deleteCallback = null;
+        }
+      });
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    function parseNumber(value) {
+      if (!value) return 0;
+      const cleaned = value.toString().replace(/[^\d.,\-]/g, '').replace(/,/g, '.');
+      return parseFloat(cleaned) || 0;
+    }
+
+    function formatCurrency(value, currency = currentCurrency) {
+      const settings = currencySettings[currency];
+      if (!settings) return `${value}`;
+      
+      // Format number
+      const absValue = Math.abs(value);
+      const sign = value < 0 ? '-' : '';
+      const integerPart = Math.floor(absValue);
+      const decimalPart = (absValue - integerPart).toFixed(formatSettings.decimalPlaces).slice(2);
+      
+      // Add thousand separators
+      const integerStr = integerPart.toString().replace(/\B(?=(\d{3})+(?!\d))/g, formatSettings.thousandSeparator);
+      
+      // Combine
+      const numberStr = formatSettings.decimalPlaces > 0 
+        ? `${integerStr}${formatSettings.decimalSeparator}${decimalPart}`
+        : integerStr;
+      
+      // Add symbol
+      const result = formatSettings.symbolPosition === 'before'
+        ? `${settings.symbol} ${numberStr}`
+        : `${numberStr} ${settings.symbol}`;
+      
+      return sign + result;
+    }
+
+    function formatNumber(value) {
+      return formatCurrency(value, currentCurrency).replace(currencySettings[currentCurrency].symbol, '').trim();
+    }
+
+    function updateCurrencyButtons() {
+      // Update header button display
+      const settings = currencySettings[currentCurrency];
+      if (settings) {
+        document.getElementById('current-currency-flag').textContent = settings.flag;
+        document.getElementById('current-currency-code').textContent = currentCurrency;
+      }
+    }
+
+    function renderCurrencyOptions() {
+      const container = document.getElementById('currency-options-list');
+      container.innerHTML = Object.entries(currencySettings).map(([code, data]) => {
+        const isSelected = code === currentCurrency;
+        const isDisabled = !data.enabled;
+        const classes = `currency-option ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`;
+        
+        return `
+          <div class="${classes}" data-currency="${code}" ${isDisabled ? '' : 'onclick="selectCurrency(\'' + code + '\')"'}>
+            <span class="text-2xl">${data.flag}</span>
+            <div class="flex-1">
+              <p class="font-semibold text-gray-800">${data.name}</p>
+              <p class="text-sm text-gray-500">${data.symbol}</p>
+            </div>
+            ${isSelected ? '<svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectCurrency(code) {
+      if (!currencySettings[code].enabled) return;
+      
+      currentCurrency = code;
+      updateCurrencyButtons();
+      updateCurrencyLabels();
+      calculate();
+      saveToLocalStorage();
+      document.getElementById('currency-modal').classList.add('hidden');
+      showToast(`Moeda alterada para ${currencySettings[code].name}`, 'success');
+    }
+
+    function updateCurrencyLabels() {
+      const symbol = currencySettings[currentCurrency].symbol;
+      document.getElementById('currency-label-1').textContent = `(${symbol})`;
+      document.getElementById('currency-label-2').textContent = `(${symbol})`;
+    }
+
+    function updateFormatPreview() {
+      document.getElementById('format-preview').textContent = formatCurrency(1234.56);
+    }
+
+    function renderCurrencyConfig() {
+      const container = document.getElementById('currency-config-list');
+      container.innerHTML = Object.entries(currencySettings).map(([code, data]) => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <span class="text-2xl">${data.flag}</span>
+          <div class="flex-1">
+            <p class="font-medium text-sm">${data.name}</p>
+            <input type="text" value="${data.symbol}" 
+              data-currency="${code}" 
+              class="currency-symbol-input mt-1 px-2 py-1 text-sm border border-gray-200 rounded input-focus w-20"
+              placeholder="Símbolo">
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" ${data.enabled ? 'checked' : ''} 
+              data-currency-toggle="${code}"
+              class="w-4 h-4 text-blue-600 rounded input-focus">
+            <span class="text-sm text-gray-600">Ativo</span>
+          </label>
+        </div>
+      `).join('');
+      
+      // Add event listeners
+      container.querySelectorAll('.currency-symbol-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const code = e.target.dataset.currency;
+          currencySettings[code].symbol = e.target.value;
+          updateFormatPreview();
+          calculate();
+          saveToLocalStorage();
+        });
+      });
+      
+      container.querySelectorAll('[data-currency-toggle]').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          const code = e.target.dataset.currencyToggle;
+          currencySettings[code].enabled = e.target.checked;
+          updateCurrencyButtons();
+          saveToLocalStorage();
+        });
+      });
+    }
+
+    function renderEducationContent() {
+      // Tips
+      const tipsList = document.getElementById('tips-list');
+      tipsList.innerHTML = educationalTips.map(tip => `
+        <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+          <h4 class="font-semibold text-amber-800 mb-1 flex items-center gap-2">
+            <span class="text-xl">${tip.icon}</span>
+            ${tip.title}
+          </h4>
+          <p class="text-sm text-amber-700">${tip.content}</p>
+        </div>
+      `).join('');
+      
+      // Concepts
+      const conceptsList = document.getElementById('concepts-list');
+      conceptsList.innerHTML = keyConcepts.map(concept => `
+        <div class="p-4 bg-blue-50 rounded-lg">
+          <h4 class="font-semibold text-blue-800 mb-1">${concept.term}</h4>
+          <p class="text-sm text-blue-700">${concept.definition}</p>
+        </div>
+      `).join('');
+      
+      // Formulas
+      const formulasList = document.getElementById('formulas-list');
+      formulasList.innerHTML = formulas.map(formula => `
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800 mb-2">${formula.name}</h4>
+          <div class="formula-box">${formula.formula.replace(/([A-Z]+|PMT)/g, '<span class="formula-var">$1</span>')}</div>
+          <div class="space-y-1 mb-3">
+            ${formula.variables.map(v => `<p class="text-sm text-gray-600">• ${v}</p>`).join('')}
+          </div>
+          <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+            <p class="text-sm font-medium text-green-800 mb-1">Exemplo:</p>
+            <p class="text-sm text-green-700">${formula.example}</p>
+          </div>
+        </div>
+      `).join('');
+      
+      // Theories
+      const theoriesList = document.getElementById('theories-list');
+      theoriesList.innerHTML = theories.map(theory => `
+        <div class="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+          <h4 class="font-semibold text-purple-800 mb-2">${theory.title}</h4>
+          <p class="text-sm text-purple-700">${theory.content}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderScenarios() {
+      const grid = document.getElementById('scenarios-grid');
+      grid.innerHTML = exampleScenarios.map(scenario => `
+        <div class="scenario-card bg-white rounded-xl p-5 card-shadow" data-scenario-id="${scenario.id}">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="badge ${scenario.badgeClass}">${scenario.badge}</span>
+              <h3 class="font-bold text-gray-800 mt-2">${scenario.name}</h3>
+              <p class="text-xs text-gray-500">${scenario.subtitle}</p>
+            </div>
+            <span class="text-3xl">📊</span>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">${scenario.description}</p>
+          <button class="load-scenario-btn btn-primary w-full py-2 text-white text-sm rounded-lg font-medium" data-scenario-id="${scenario.id}">
+            Carregar Cenário
+          </button>
+        </div>
+      `).join('');
+      
+      // Add event listeners
+      grid.querySelectorAll('.load-scenario-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = parseInt(btn.dataset.scenarioId);
+          loadExampleScenario(id);
+        });
+      });
+      
+      grid.querySelectorAll('.scenario-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = parseInt(card.dataset.scenarioId);
+          loadExampleScenario(id);
+        });
+      });
+    }
+
+    function loadExampleScenario(id) {
+      const scenario = exampleScenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      document.getElementById('initial-value').value = scenario.params.initialValue;
+      document.getElementById('monthly-contribution').value = scenario.params.monthlyContribution;
+      document.getElementById('interest-rate').value = scenario.params.interestRate;
+      document.getElementById('rate-type').value = scenario.params.rateType;
+      document.getElementById('period').value = scenario.params.period;
+      document.getElementById('period-type').value = scenario.params.periodType;
+      
+      switchTab('simulator');
+      
+      // Calculate and preserve the scenario name for when user saves
+      calculate();
+      
+      // Store the scenario name in lastCalculation so it can be used when saving
+      if (lastCalculation) {
+        lastCalculation.scenarioName = scenario.name;
+      }
+      
+      showToast(`Cenário "${scenario.name}" carregado`, 'success');
+    }
+
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.education-tab').forEach(tab => {
+        if (tab.dataset.tab === tabName) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+      
+      // Show/hide content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      
+      document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    }
+
+    function updateRateConversion() {
+      const rate = parseNumber(document.getElementById('interest-rate').value);
+      const rateType = document.getElementById('rate-type').value;
+      
+      let monthlyRate, annualRate;
+      if (rateType === 'monthly') {
+        monthlyRate = rate;
+        annualRate = ((Math.pow(1 + rate / 100, 12) - 1) * 100);
+      } else {
+        annualRate = rate;
+        monthlyRate = ((Math.pow(1 + rate / 100, 1/12) - 1) * 100);
+      }
+      
+      document.getElementById('converted-rate').textContent = 
+        `${monthlyRate.toFixed(2)}% ao mês | ${annualRate.toFixed(2)}% ao ano`;
+    }
+
+    function toggleInflation() {
+      const toggle = document.getElementById('inflation-toggle');
+      const section = document.getElementById('inflation-section');
+      const isActive = toggle.classList.contains('bg-blue-500');
+      
+      if (isActive) {
+        toggle.classList.remove('bg-blue-500');
+        toggle.classList.add('bg-gray-200');
+        toggle.querySelector('span').classList.remove('translate-x-6');
+        section.classList.add('hidden');
+        document.getElementById('inflation-result').classList.add('hidden');
+      } else {
+        toggle.classList.add('bg-blue-500');
+        toggle.classList.remove('bg-gray-200');
+        toggle.querySelector('span').classList.add('translate-x-6');
+        section.classList.remove('hidden');
+      }
+      calculate();
+    }
+
+    function getInflationRate() {
+      const toggle = document.getElementById('inflation-toggle');
+      if (!toggle.classList.contains('bg-blue-500')) return 0;
+      
+      const country = document.getElementById('country-inflation').value;
+      if (country === 'custom') {
+        return parseNumber(document.getElementById('custom-inflation').value);
+      }
+      return inflationRates[country] || 0;
+    }
+
+    function calculate() {
+      const initialValue = parseNumber(document.getElementById('initial-value').value);
+      const monthlyContribution = parseNumber(document.getElementById('monthly-contribution').value);
+      const interestRate = parseNumber(document.getElementById('interest-rate').value);
+      const rateType = document.getElementById('rate-type').value;
+      const period = parseNumber(document.getElementById('period').value);
+      const periodType = document.getElementById('period-type').value;
+      
+      // Convert to monthly values
+      let monthlyRate = rateType === 'monthly' ? interestRate / 100 : (Math.pow(1 + interestRate / 100, 1/12) - 1);
+      const totalMonths = periodType === 'months' ? period : period * 12;
+      
+      // Calculate compound interest with monthly contributions
+      const monthlyData = [];
+      let balance = initialValue;
+      let totalContributions = initialValue;
+      
+      for (let month = 0; month <= totalMonths; month++) {
+        if (month > 0) {
+          balance = balance * (1 + monthlyRate) + monthlyContribution;
+          totalContributions += monthlyContribution;
+        }
+        monthlyData.push({
+          month,
+          balance,
+          contributions: totalContributions,
+          interest: balance - totalContributions
+        });
+      }
+      
+      const finalAmount = balance;
+      const totalInvested = totalContributions;
+      const totalInterest = finalAmount - totalInvested;
+      const interestPercentage = totalInvested > 0 ? (totalInterest / totalInvested) * 100 : 0;
+      
+      // Inflation adjustment
+      const annualInflation = getInflationRate() / 100;
+      const monthlyInflation = Math.pow(1 + annualInflation, 1/12) - 1;
+      const inflationFactor = Math.pow(1 + monthlyInflation, totalMonths);
+      const realValue = finalAmount / inflationFactor;
+      
+      // Update UI
+      document.getElementById('final-amount').textContent = formatCurrency(finalAmount);
+      document.getElementById('total-invested').textContent = formatCurrency(totalInvested);
+      document.getElementById('total-interest').textContent = formatCurrency(totalInterest);
+      document.getElementById('interest-percentage').textContent = `+${formatNumber(interestPercentage)}% de rendimento`;
+      
+      if (annualInflation > 0) {
+        document.getElementById('inflation-result').classList.remove('hidden');
+        document.getElementById('real-value').textContent = formatCurrency(realValue);
+        const purchasingPower = ((realValue / finalAmount) * 100).toFixed(1);
+        document.getElementById('purchasing-power').textContent = `${purchasingPower}% do poder de compra`;
+      }
+      
+      // Progress bar
+      const interestRatio = totalInterest / finalAmount * 100;
+      document.getElementById('progress-fill').style.width = `${interestRatio}%`;
+      document.getElementById('progress-percentage').textContent = `${formatNumber(interestRatio)}% juros`;
+      
+      // Store calculation
+      lastCalculation = {
+        initialValue,
+        monthlyContribution,
+        interestRate,
+        rateType,
+        period,
+        periodType,
+        finalAmount,
+        totalInvested,
+        totalInterest,
+        realValue,
+        currency: currentCurrency,
+        monthlyData
+      };
+      
+      // Update chart
+      renderChart(monthlyData);
+      
+      // Save to localStorage
+      saveToLocalStorage();
+      
+      // Update rate conversion
+      updateRateConversion();
+    }
+
+    function renderChart(data, type = 'line') {
+      const ctx = document.getElementById('growth-chart').getContext('2d');
+      
+      const step = Math.max(1, Math.floor(data.length / 24));
+      const filteredData = data.filter((_, i) => i % step === 0 || i === data.length - 1);
+      
+      const labels = filteredData.map(d => {
+        if (d.month === 0) return 'Início';
+        if (d.month < 12) return `${d.month}m`;
+        const years = Math.floor(d.month / 12);
+        const months = d.month % 12;
+        return months > 0 ? `${years}a ${months}m` : `${years}a`;
+      });
+      
+      const balanceData = filteredData.map(d => d.balance);
+      const contributionsData = filteredData.map(d => d.contributions);
+      
+      if (growthChart) {
+        growthChart.destroy();
+      }
+      
+      growthChart = new Chart(ctx, {
+        type: type,
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Montante Total',
+              data: balanceData,
+              borderColor: '#66CFF5',
+              backgroundColor: type === 'bar' ? '#66CFF5' : 'rgba(30, 136, 229, 0.1)',
+              fill: type === 'line',
+              tension: 0.4
+            },
+            {
+              label: 'Total Investido',
+              data: contributionsData,
+              borderColor: '#78909C',
+              backgroundColor: type === 'bar' ? '#78909C' : 'rgba(120, 144, 156, 0.1)',
+              fill: type === 'line',
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15,
+                font: { family: 'Poppins', weight: '500' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => formatCurrency(value)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChart(type) {
+      if (lastCalculation) {
+        renderChart(lastCalculation.monthlyData, type);
+      }
+    }
+
+    function saveScenario() {
+      if (!lastCalculation) {
+        showToast('Faça um cálculo primeiro', 'warning');
+        return;
+      }
+      
+      if (savedScenarios.length >= 10) {
+        showToast('Máximo de 10 cenários. Exclua um para adicionar novo.', 'warning');
+        return;
+      }
+      
+      // Use the name from lastCalculation if it came from an example scenario, otherwise use default
+      const scenarioName = lastCalculation.scenarioName || `Cenário ${savedScenarios.length + 1}`;
+      
+      const scenario = {
+        id: Date.now(),
+        name: scenarioName,
+        ...lastCalculation,
+        savedAt: new Date().toISOString()
+      };
+      
+      savedScenarios.push(scenario);
+      saveToLocalStorage();
+      renderSavedScenarios();
+      showToast('Cenário guardado com sucesso', 'success');
+    }
+
+    function renderSavedScenarios() {
+      const container = document.getElementById('saved-scenarios-container');
+      const list = document.getElementById('saved-scenarios-list');
+      
+      if (savedScenarios.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      
+      container.classList.remove('hidden');
+      list.innerHTML = savedScenarios.map(s => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm hover:bg-gray-100 transition-colors">
+          <div class="flex-1 min-w-0">
+            <input type="text" value="${s.name}" 
+              data-scenario-id="${s.id}" 
+              class="scenario-name-input font-medium truncate w-full bg-transparent border-none focus:outline-none focus:bg-white focus:px-2 focus:py-1 focus:border focus:border-blue-300 focus:rounded transition-all" 
+              maxlength="50">
+            <p class="text-xs text-gray-500 mt-1">${formatCurrency(s.finalAmount, s.currency)}</p>
+          </div>
+          <div class="flex gap-1 ml-2">
+            <button onclick="loadScenario(${s.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Carregar">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+            </button>
+            <button onclick="addToComparison(${s.id})" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors" title="Comparar">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </button>
+            <button onclick="deleteScenario(${s.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add event listeners for name editing
+      list.querySelectorAll('.scenario-name-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const id = parseInt(e.target.dataset.scenarioId);
+          const newName = e.target.value.trim() || 'Sem nome';
+          updateScenarioName(id, newName);
+        });
+        
+        input.addEventListener('blur', (e) => {
+          const id = parseInt(e.target.dataset.scenarioId);
+          const newName = e.target.value.trim() || 'Sem nome';
+          updateScenarioName(id, newName);
+        });
+        
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
+        });
+      });
+    }
+
+    function loadScenario(id) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      document.getElementById('initial-value').value = scenario.initialValue;
+      document.getElementById('monthly-contribution').value = scenario.monthlyContribution;
+      document.getElementById('interest-rate').value = scenario.interestRate;
+      document.getElementById('rate-type').value = scenario.rateType;
+      document.getElementById('period').value = scenario.period;
+      document.getElementById('period-type').value = scenario.periodType;
+      currentCurrency = scenario.currency;
+      updateCurrencyButtons();
+      updateCurrencyLabels();
+      calculate();
+      showToast('Cenário carregado', 'success');
+    }
+    
+    function updateScenarioName(id, newName) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (scenario && scenario.name !== newName) {
+        scenario.name = newName;
+        saveToLocalStorage();
+        
+        // Update comparison scenarios if this scenario is in comparison
+        const comparisonScenario = comparisonScenarios.find(s => s.id === id);
+        if (comparisonScenario) {
+          comparisonScenario.name = newName;
+          renderComparison();
+        }
+      }
+    }
+
+    function deleteScenario(id) {
+      showDeleteConfirmation('Tem certeza que deseja excluir este cenário?', () => {
+        savedScenarios = savedScenarios.filter(s => s.id !== id);
+        comparisonScenarios = comparisonScenarios.filter(s => s.id !== id);
+        saveToLocalStorage();
+        renderSavedScenarios();
+        renderComparison();
+        showToast('Cenário excluído', 'success');
+      });
+    }
+
+    function showDeleteConfirmation(message, callback) {
+      document.getElementById('delete-message').textContent = message;
+      document.getElementById('delete-modal').classList.remove('hidden');
+      deleteCallback = callback;
+    }
+
+    function toggleComparison() {
+      const section = document.getElementById('comparison-section');
+      if (section.classList.contains('hidden')) {
+        if (lastCalculation && comparisonScenarios.length === 0) {
+          comparisonScenarios.push({
+            id: Date.now(),
+            name: 'Cenário Atual',
+            ...lastCalculation
+          });
+        }
+        section.classList.remove('hidden');
+        renderComparison();
+      } else {
+        section.classList.add('hidden');
+      }
+    }
+
+    function addToComparison(id) {
+      const scenario = savedScenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      if (comparisonScenarios.find(s => s.id === id)) {
+        showToast('Cenário já está na comparação', 'warning');
+        return;
+      }
+      
+      if (comparisonScenarios.length >= 4) {
+        showToast('Máximo de 4 cenários para comparação', 'warning');
+        return;
+      }
+      
+      comparisonScenarios.push(scenario);
+      document.getElementById('comparison-section').classList.remove('hidden');
+      renderComparison();
+      showToast('Cenário adicionado à comparação', 'success');
+    }
+
+    function removeFromComparison(id) {
+      comparisonScenarios = comparisonScenarios.filter(s => s.id !== id);
+      renderComparison();
+      if (comparisonScenarios.length === 0) {
+        document.getElementById('comparison-section').classList.add('hidden');
+      }
+    }
+
+    function renderComparison() {
+      const cardsContainer = document.getElementById('comparison-cards');
+      const colors = ['#66CFF5', '#4CAF50', '#FFC107', '#F44336'];
+      
+      cardsContainer.innerHTML = comparisonScenarios.map((s, i) => `
+        <div class="bg-white rounded-lg p-4 border-2 relative" style="border-color: ${colors[i]}">
+          <button onclick="removeFromComparison(${s.id})" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          <div class="w-4 h-4 rounded-full mb-2" style="background: ${colors[i]}"></div>
+          <p class="font-semibold text-sm">${s.name}</p>
+          <p class="text-xl font-bold mt-1" style="color: ${colors[i]}">${formatCurrency(s.finalAmount, s.currency)}</p>
+          <p class="text-xs text-gray-500 mt-1">Investido: ${formatCurrency(s.totalInvested, s.currency)}</p>
+          <p class="text-xs text-green-600">Juros: ${formatCurrency(s.totalInterest, s.currency)}</p>
+        </div>
+      `).join('');
+      
+      renderComparisonChart(colors);
+    }
+
+    function renderComparisonChart(colors) {
+      const ctx = document.getElementById('comparison-chart').getContext('2d');
+      
+      if (comparisonChart) {
+        comparisonChart.destroy();
+      }
+      
+      if (comparisonScenarios.length === 0) return;
+      
+      const maxMonths = Math.max(...comparisonScenarios.map(s => s.monthlyData.length));
+      const step = Math.max(1, Math.floor(maxMonths / 24));
+      const months = Array.from({ length: Math.ceil(maxMonths / step) }, (_, i) => i * step);
+      
+      const datasets = comparisonScenarios.map((s, i) => ({
+        label: s.name,
+        data: months.map(m => {
+          const dataPoint = s.monthlyData[Math.min(m, s.monthlyData.length - 1)];
+          return dataPoint ? dataPoint.balance : null;
+        }),
+        borderColor: colors[i],
+        backgroundColor: 'transparent',
+        tension: 0.4
+      }));
+      
+      comparisonChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months.map(m => {
+            if (m === 0) return 'Início';
+            if (m < 12) return `${m}m`;
+            const years = Math.floor(m / 12);
+            const remainingMonths = m % 12;
+            return remainingMonths > 0 ? `${years}a ${remainingMonths}m` : `${years}a`;
+          }),
+          datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, font: { family: 'Poppins' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (value) => formatCurrency(value) }
+            }
+          }
+        }
+      });
+    }
+
+    function exportJSON() {
+      const data = {
+        version: '2.0',
+        exportDate: new Date().toISOString(),
+        currentCalculation: lastCalculation,
+        savedScenarios,
+        currencySettings,
+        formatSettings,
+        settings: {
+          currency: currentCurrency
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `simulador-juros-compostos-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados com sucesso', 'success');
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          
+          if (data.savedScenarios) {
+            savedScenarios = [...savedScenarios, ...data.savedScenarios].slice(0, 10);
+          }
+          
+          if (data.currencySettings) {
+            currencySettings = { ...currencySettings, ...data.currencySettings };
+          }
+          
+          if (data.formatSettings) {
+            formatSettings = { ...formatSettings, ...data.formatSettings };
+          }
+          
+          if (data.settings?.currency) {
+            currentCurrency = data.settings.currency;
+            updateCurrencyButtons();
+            updateCurrencyLabels();
+          }
+          
+          if (data.currentCalculation) {
+            document.getElementById('initial-value').value = data.currentCalculation.initialValue;
+            document.getElementById('monthly-contribution').value = data.currentCalculation.monthlyContribution;
+            document.getElementById('interest-rate').value = data.currentCalculation.interestRate;
+            document.getElementById('rate-type').value = data.currentCalculation.rateType;
+            document.getElementById('period').value = data.currentCalculation.period;
+            document.getElementById('period-type').value = data.currentCalculation.periodType;
+          }
+          
+          saveToLocalStorage();
+          renderSavedScenarios();
+          renderCurrencyConfig();
+          initializeElements();
+          calculate();
+          showToast('Dados importados com sucesso', 'success');
+        } catch (err) {
+          showToast('Erro ao importar arquivo', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    async function exportPDF() {
+      showToast('Gerando PDF...', 'warning');
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        pdf.setFontSize(20);
+        pdf.setTextColor(30, 136, 229);
+        pdf.text('Simulador de Juros Compostos', 20, 20);
+        
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+        pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 20, 28);
+        
+        if (lastCalculation) {
+          pdf.setFontSize(14);
+          pdf.setTextColor(0);
+          pdf.text('Resultados da Simulação', 20, 45);
+          
+          pdf.setFontSize(11);
+          const results = [
+            `Montante Final: ${formatCurrency(lastCalculation.finalAmount, lastCalculation.currency)}`,
+            `Total Investido: ${formatCurrency(lastCalculation.totalInvested, lastCalculation.currency)}`,
+            `Juros Acumulados: ${formatCurrency(lastCalculation.totalInterest, lastCalculation.currency)}`,
+            ``,
+            `Parâmetros:`,
+            `• Valor Inicial: ${formatCurrency(lastCalculation.initialValue, lastCalculation.currency)}`,
+            `• Aporte Mensal: ${formatCurrency(lastCalculation.monthlyContribution, lastCalculation.currency)}`,
+            `• Taxa de Juros: ${lastCalculation.interestRate}% ${lastCalculation.rateType === 'monthly' ? 'ao mês' : 'ao ano'}`,
+            `• Período: ${lastCalculation.period} ${lastCalculation.periodType === 'months' ? 'meses' : 'anos'}`
+          ];
+          
+          let y = 55;
+          results.forEach(line => {
+            pdf.text(line, 20, y);
+            y += 7;
+          });
+          
+          const chartCanvas = document.getElementById('growth-chart');
+          const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+          pdf.addImage(chartImage, 'PNG', 20, 130, 170, 100);
+        }
+        
+        pdf.setFontSize(8);
+        pdf.setTextColor(150);
+        pdf.text('Este documento é apenas educativo e não constitui recomendação de investimento.', 20, 280);
+        
+        pdf.save(`simulador-juros-compostos-${new Date().toISOString().slice(0,10)}.pdf`);
+        showToast('PDF exportado com sucesso', 'success');
+      } catch (err) {
+        showToast('Erro ao gerar PDF', 'error');
+      }
+    }
+
+    async function exportImage() {
+      showToast('Gerando imagem...', 'warning');
+      
+      try {
+        const resultsSection = document.getElementById('results-section');
+        const chartContainer = document.querySelector('.chart-container').parentElement;
+        
+        const wrapper = document.createElement('div');
+        wrapper.style.padding = '20px';
+        wrapper.style.background = 'white';
+        wrapper.style.width = '800px';
+        
+        const title = document.createElement('h2');
+        title.textContent = '💰 Simulador de Juros Compostos - Resultados';
+        title.style.color = '#66CFF5';
+        title.style.marginBottom = '20px';
+        title.style.fontFamily = 'Poppins, sans-serif';
+        wrapper.appendChild(title);
+        
+        const resultsClone = resultsSection.cloneNode(true);
+        wrapper.appendChild(resultsClone);
+        
+        const chartClone = chartContainer.cloneNode(true);
+        chartClone.style.marginTop = '20px';
+        wrapper.appendChild(chartClone);
+        
+        document.body.appendChild(wrapper);
+        
+        const canvas = await html2canvas(wrapper, {
+          scale: 2,
+          backgroundColor: '#ffffff'
+        });
+        
+        document.body.removeChild(wrapper);
+        
+        const link = document.createElement('a');
+        link.download = `simulador-juros-compostos-${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada com sucesso', 'success');
+      } catch (err) {
+        showToast('Erro ao gerar imagem', 'error');
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) existingToast.remove();
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Initialize SDK config
+    applyConfig();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bcbc87070dc1b23',t:'MTc2ODIxMTc3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

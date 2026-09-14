@@ -1,0 +1,1523 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matriz Maturidade Ágil</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+        * { font-family: 'Inter', sans-serif; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+        .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+        .phase-card { border-left: 4px solid; }
+        .phase-1 { border-left-color: #F44336; }
+        .phase-2 { border-left-color: #FF9800; }
+        .phase-3 { border-left-color: #FFC107; }
+        .phase-4 { border-left-color: #4CAF50; }
+        .btn-primary { background: #66CFF5; color: white; transition: all 0.2s ease; }
+        .btn-primary:hover { background: #33BEF2; }
+        .btn-secondary { background: #E0E0E0; color: #424242; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: #BDBDBD; }
+        .input-field { border: 1px solid #E0E0E0; border-radius: 8px; padding: 8px 12px; transition: all 0.2s ease; }
+        .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+        .hide-for-export { }
+        .exporting .hide-for-export { display: none !important; }
+        .chart-container { position: relative; }
+        @media print { .hide-for-export { display: none !important; } }
+        .toast { animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .modal-overlay { background: rgba(0,0,0,0.5); animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #F8F9FA; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+    </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 overflow-auto">
+  <div id="app" class="h-full flex flex-col"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Matriz Maturidade Ágil</h1>
+       <p class="text-sm text-gray-500" style="display: none;">Funções e Responsabilidades de Negócios Ágeis</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2 hide-for-export"><button onclick="exportJSON()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+       </svg> Exportar </button> <button onclick="document.getElementById('importInput').click()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+       </svg> Importar </button> <input type="file" id="importInput" accept=".json" class="hidden" onchange="importJSON(event)"> <button onclick="exportImage()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+       </svg> Imagem </button> <button onclick="exportPDF()" class="btn-primary px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> PDF </button>
+     </div>
+    </div>
+   </header><!-- Tabs Navigation -->
+   <nav class="bg-white border-b border-gray-200 px-6 flex-shrink-0 overflow-x-auto">
+    <div class="flex gap-1"><button onclick="switchTab('avaliacao')" id="tab-avaliacao" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap tab-active">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg> Avaliação </button> <button onclick="switchTab('matriz')" id="tab-matriz" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg> Matriz </button> <button onclick="switchTab('graficos')" id="tab-graficos" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+      </svg> Gráficos </button> <button onclick="switchTab('cenarios')" id="tab-cenarios" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg> Cenários </button> <button onclick="switchTab('moedas')" id="tab-moedas" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('templates')" id="tab-templates" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg> Templates </button> <button onclick="switchTab('ajuda')" id="tab-ajuda" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-6" id="mainContent"><!-- Avaliação Tab -->
+    <div id="content-avaliacao" class="tab-content">
+     <div class="max-w-6xl mx-auto"><!-- Filter Bar -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 hide-for-export">
+       <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-64"><input type="text" id="filterAvaliacao" placeholder="Filtrar avaliações..." class="input-field w-full" oninput="filterData()">
+        </div><select id="filterPhase" class="input-field" onchange="filterData()"> <option value="">Todas as Fases</option> <option value="1">Fase 1 - Aprendizagem</option> <option value="2">Fase 2 - Desenvolvimento</option> <option value="3">Fase 3 - Maturação</option> <option value="4">Fase 4 - Escalonamento</option> </select> <button onclick="openNewEvaluation()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Nova Avaliação </button>
+       </div>
+      </div><!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-lg border border-gray-200 p-4 card-hover phase-card phase-1">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500">Fase 1</p>
+          <p class="text-2xl font-bold text-gray-800" id="count-phase1">0</p>
+          <p class="text-xs text-gray-400">Aprendizagem</p>
+         </div>
+         <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg border border-gray-200 p-4 card-hover phase-card phase-2">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500">Fase 2</p>
+          <p class="text-2xl font-bold text-gray-800" id="count-phase2">0</p>
+          <p class="text-xs text-gray-400">Desenvolvimento</p>
+         </div>
+         <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg border border-gray-200 p-4 card-hover phase-card phase-3">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500">Fase 3</p>
+          <p class="text-2xl font-bold text-gray-800" id="count-phase3">0</p>
+          <p class="text-xs text-gray-400">Maturação</p>
+         </div>
+         <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg border border-gray-200 p-4 card-hover phase-card phase-4">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500">Fase 4</p>
+          <p class="text-2xl font-bold text-gray-800" id="count-phase4">0</p>
+          <p class="text-xs text-gray-400">Escalonamento</p>
+         </div>
+         <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+         </div>
+        </div>
+       </div>
+      </div><!-- Evaluations List -->
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+       <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Avaliações Registadas</h3><span class="text-sm text-gray-500" id="evalCount">0 avaliações</span>
+       </div>
+       <div id="evaluationsList" class="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin">
+        <div class="p-8 text-center text-gray-400">
+         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+         </svg>
+         <p>Nenhuma avaliação registada</p>
+         <p class="text-sm">Clique em "Nova Avaliação" para começar</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Matriz Tab -->
+    <div id="content-matriz" class="tab-content hidden">
+     <div class="max-w-6xl mx-auto">
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4">Matriz de Maturidade Ágil</h2>
+       <p class="text-gray-600 mb-6">A matriz avalia o nível de maturidade da organização em relação às práticas Agile e a clareza das funções e responsabilidades.</p>
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- Phase 1 -->
+        <div class="bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-200 p-5 phase-card phase-1">
+         <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0"><span class="text-white font-bold text-lg">1</span>
+          </div>
+          <div>
+           <h3 class="font-semibold text-gray-800 text-lg">Fase de Aprendizagem</h3>
+           <p class="text-sm text-gray-600 mt-2">Início da jornada Agile. As equipas estão a aprender os conceitos básicos e a experimentar práticas ágeis.</p>
+           <ul class="mt-3 space-y-1 text-sm text-gray-500">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>Funções não claramente definidas</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>Responsabilidades sobrepostas</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>Processos em experimentação</li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- Phase 2 -->
+        <div class="bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200 p-5 phase-card phase-2">
+         <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0"><span class="text-white font-bold text-lg">2</span>
+          </div>
+          <div>
+           <h3 class="font-semibold text-gray-800 text-lg">Fase de Desenvolvimento</h3>
+           <p class="text-sm text-gray-600 mt-2">Consolidação das práticas. As equipas começam a ter processos mais estruturados.</p>
+           <ul class="mt-3 space-y-1 text-sm text-gray-500">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>Funções em definição</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>Responsabilidades a clarificar</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>Processos em melhoria</li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- Phase 3 -->
+        <div class="bg-gradient-to-br from-yellow-50 to-white rounded-lg border border-yellow-200 p-5 phase-card phase-3">
+         <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0"><span class="text-white font-bold text-lg">3</span>
+          </div>
+          <div>
+           <h3 class="font-semibold text-gray-800 text-lg">Fase de Maturação</h3>
+           <p class="text-sm text-gray-600 mt-2">Práticas consolidadas. As equipas têm funções claras e processos eficientes.</p>
+           <ul class="mt-3 space-y-1 text-sm text-gray-500">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>Funções bem definidas</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>Responsabilidades claras</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>Processos otimizados</li>
+           </ul>
+          </div>
+         </div>
+        </div><!-- Phase 4 -->
+        <div class="bg-gradient-to-br from-green-50 to-white rounded-lg border border-green-200 p-5 phase-card phase-4">
+         <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0"><span class="text-white font-bold text-lg">4</span>
+          </div>
+          <div>
+           <h3 class="font-semibold text-gray-800 text-lg">Fase de Escalonamento</h3>
+           <p class="text-sm text-gray-600 mt-2">Excelência ágil. A organização está pronta para escalar as práticas.</p>
+           <ul class="mt-3 space-y-1 text-sm text-gray-500">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Funções exemplares</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Responsabilidades autónomas</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Processos de referência</li>
+           </ul>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- Roles Matrix -->
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+       <div class="p-4 border-b border-gray-200">
+        <h3 class="font-semibold text-gray-800">Funções e Responsabilidades por Fase</h3>
+       </div>
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead class="bg-gray-50">
+          <tr>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Função</th>
+           <th class="px-4 py-3 text-center font-semibold text-red-600">Fase 1</th>
+           <th class="px-4 py-3 text-center font-semibold text-orange-600">Fase 2</th>
+           <th class="px-4 py-3 text-center font-semibold text-yellow-600">Fase 3</th>
+           <th class="px-4 py-3 text-center font-semibold text-green-600">Fase 4</th>
+          </tr>
+         </thead>
+         <tbody class="divide-y divide-gray-100">
+          <tr>
+           <td class="px-4 py-3 font-medium text-gray-800">Product Owner</td>
+           <td class="px-4 py-3 text-center text-gray-600">Em formação</td>
+           <td class="px-4 py-3 text-center text-gray-600">Ativo</td>
+           <td class="px-4 py-3 text-center text-gray-600">Estratégico</td>
+           <td class="px-4 py-3 text-center text-gray-600">Visionário</td>
+          </tr>
+          <tr>
+           <td class="px-4 py-3 font-medium text-gray-800">Scrum Master</td>
+           <td class="px-4 py-3 text-center text-gray-600">Facilitador</td>
+           <td class="px-4 py-3 text-center text-gray-600">Coach</td>
+           <td class="px-4 py-3 text-center text-gray-600">Mentor</td>
+           <td class="px-4 py-3 text-center text-gray-600">Agente de Mudança</td>
+          </tr>
+          <tr>
+           <td class="px-4 py-3 font-medium text-gray-800">Equipa de Desenvolvimento</td>
+           <td class="px-4 py-3 text-center text-gray-600">Dependente</td>
+           <td class="px-4 py-3 text-center text-gray-600">Colaborativa</td>
+           <td class="px-4 py-3 text-center text-gray-600">Auto-organizada</td>
+           <td class="px-4 py-3 text-center text-gray-600">Autónoma</td>
+          </tr>
+          <tr>
+           <td class="px-4 py-3 font-medium text-gray-800">Stakeholders</td>
+           <td class="px-4 py-3 text-center text-gray-600">Observadores</td>
+           <td class="px-4 py-3 text-center text-gray-600">Participantes</td>
+           <td class="px-4 py-3 text-center text-gray-600">Colaboradores</td>
+           <td class="px-4 py-3 text-center text-gray-600">Parceiros</td>
+          </tr>
+          <tr>
+           <td class="px-4 py-3 font-medium text-gray-800">Gestão</td>
+           <td class="px-4 py-3 text-center text-gray-600">Controladora</td>
+           <td class="px-4 py-3 text-center text-gray-600">Apoiante</td>
+           <td class="px-4 py-3 text-center text-gray-600">Facilitadora</td>
+           <td class="px-4 py-3 text-center text-gray-600">Servidora</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div><!-- Gráficos Tab -->
+    <div id="content-graficos" class="tab-content hidden">
+     <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- Pie Chart -->
+       <div class="bg-white rounded-lg border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="font-semibold text-gray-800">Distribuição por Fase</h3><button onclick="exportChartImage('phaseChart')" class="hide-for-export p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Exportar imagem HD">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container" style="height: 280px;">
+         <canvas id="phaseChart"></canvas>
+        </div>
+       </div><!-- Bar Chart -->
+       <div class="bg-white rounded-lg border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="font-semibold text-gray-800">Pontuação por Área</h3><button onclick="exportChartImage('areaChart')" class="hide-for-export p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Exportar imagem HD">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container" style="height: 280px;">
+         <canvas id="areaChart"></canvas>
+        </div>
+       </div><!-- Radar Chart -->
+       <div class="bg-white rounded-lg border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="font-semibold text-gray-800">Radar de Maturidade</h3><button onclick="exportChartImage('radarChart')" class="hide-for-export p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Exportar imagem HD">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container" style="height: 280px;">
+         <canvas id="radarChart"></canvas>
+        </div>
+       </div><!-- Line Chart -->
+       <div class="bg-white rounded-lg border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="font-semibold text-gray-800">Evolução Temporal</h3><button onclick="exportChartImage('evolutionChart')" class="hide-for-export p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Exportar imagem HD">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container" style="height: 280px;">
+         <canvas id="evolutionChart"></canvas>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Cenários Tab -->
+    <div id="content-cenarios" class="tab-content hidden">
+     <div class="max-w-6xl mx-auto"><!-- Filter & Actions -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 hide-for-export">
+       <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-64"><input type="text" id="filterCenarios" placeholder="Filtrar cenários..." class="input-field w-full" oninput="filterScenarios()">
+        </div><button onclick="saveCurrentScenario()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário Atual </button> <button onclick="createNewScenario()" class="btn-secondary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo do Zero </button>
+       </div>
+      </div><!-- Scenarios List -->
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+       <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Cenários Guardados</h3><span class="text-sm text-gray-500" id="scenarioCount">0 cenários</span>
+       </div>
+       <div id="scenariosList" class="divide-y divide-gray-100 max-h-96 overflow-y-auto scrollbar-thin">
+        <div class="p-8 text-center text-gray-400">
+         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+         </svg>
+         <p>Nenhum cenário guardado</p>
+         <p class="text-sm">Guarde o cenário atual para reutilizar depois</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Moedas Tab -->
+    <div id="content-moedas" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4">Taxas de Câmbio CPLP + USD</h2>
+       <p class="text-gray-600 mb-6">Configure as taxas de câmbio em relação ao Kwanza (AOA) como moeda base.</p>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="currencyRates"><!-- Currency inputs will be rendered here -->
+       </div>
+       <div class="mt-6 flex justify-end hide-for-export"><button onclick="saveCurrencyRates()" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg> Guardar Taxas </button>
+       </div>
+      </div><!-- Currency Converter -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+       <h3 class="font-semibold text-gray-800 mb-4">Conversor de Moedas</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end hide-for-export">
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Valor</label> <input type="number" id="convertAmount" value="1000" class="input-field w-full" oninput="convertCurrency()">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">De</label> <select id="convertFrom" class="input-field w-full" onchange="convertCurrency()"> <option value="AOA">AOA - Kwanza</option> <option value="BRL">BRL - Real</option> <option value="CVE">CVE - Escudo</option> <option value="XOF">XOF - Franco CFA</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="EUR">EUR - Euro</option> <option value="USD">USD - Dólar</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Para</label> <select id="convertTo" class="input-field w-full" onchange="convertCurrency()"> <option value="AOA">AOA - Kwanza</option> <option value="BRL" selected>BRL - Real</option> <option value="CVE">CVE - Escudo</option> <option value="XOF">XOF - Franco CFA</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="EUR">EUR - Euro</option> <option value="USD">USD - Dólar</option> </select>
+        </div>
+       </div>
+       <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+        <p class="text-center text-lg font-semibold text-blue-800" id="conversionResult">1.000,00 AOA = 12,05 BRL</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Templates Tab -->
+    <div id="content-templates" class="tab-content hidden">
+     <div class="max-w-6xl mx-auto">
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <h2 class="text-lg font-semibold text-gray-800 mb-2">Templates de Aprendizagem</h2>
+       <p class="text-gray-600">Utilize estes templates pré-configurados para iniciar rapidamente a sua avaliação de maturidade.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="templatesList"><!-- Templates will be rendered here -->
+      </div>
+     </div>
+    </div><!-- Ajuda Tab -->
+    <div id="content-ajuda" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto"><!-- Introduction -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+         <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+        <div>
+         <h2 class="text-lg font-semibold text-gray-800 mb-2">O que é a Matriz de Maturidade Ágil?</h2>
+         <p class="text-gray-600">A Matriz de Maturidade Ágil é uma ferramenta que ajuda organizações a avaliar o seu nível de maturidade em relação às práticas Agile e a clareza das funções e responsabilidades nas suas equipas. A matriz é classificada em quatro fases, desde a aprendizagem até ao escalonamento.</p>
+        </div>
+       </div>
+      </div><!-- How to Use -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Como Utilizar</h3>
+       <div class="space-y-4">
+        <div class="flex items-start gap-3"><span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">1</span>
+         <div>
+          <p class="font-medium text-gray-800">Criar Avaliações</p>
+          <p class="text-sm text-gray-600">No separador "Avaliação", clique em "Nova Avaliação" para registar uma nova avaliação de maturidade para uma equipa ou área.</p>
+         </div>
+        </div>
+        <div class="flex items-start gap-3"><span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">2</span>
+         <div>
+          <p class="font-medium text-gray-800">Consultar a Matriz</p>
+          <p class="text-sm text-gray-600">No separador "Matriz", consulte os critérios de cada fase e as responsabilidades esperadas para cada função.</p>
+         </div>
+        </div>
+        <div class="flex items-start gap-3"><span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">3</span>
+         <div>
+          <p class="font-medium text-gray-800">Analisar Gráficos</p>
+          <p class="text-sm text-gray-600">No separador "Gráficos", visualize a distribuição das avaliações e a evolução da maturidade ao longo do tempo.</p>
+         </div>
+        </div>
+        <div class="flex items-start gap-3"><span class="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">4</span>
+         <div>
+          <p class="font-medium text-gray-800">Guardar Cenários</p>
+          <p class="text-sm text-gray-600">No separador "Cenários", guarde o estado atual para comparação futura ou carregue cenários anteriores.</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Best Practices -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Melhores Práticas</h3>
+       <ul class="space-y-3">
+        <li class="flex items-start gap-3">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span class="text-gray-600">Realize avaliações regulares (mensais ou trimestrais) para acompanhar a evolução</span></li>
+        <li class="flex items-start gap-3">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span class="text-gray-600">Envolva toda a equipa no processo de avaliação para obter perspetivas diversas</span></li>
+        <li class="flex items-start gap-3">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span class="text-gray-600">Use os templates como ponto de partida, adaptando-os à realidade da sua organização</span></li>
+        <li class="flex items-start gap-3">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span class="text-gray-600">Compare cenários diferentes para identificar áreas de melhoria prioritárias</span></li>
+        <li class="flex items-start gap-3">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span class="text-gray-600">Exporte relatórios em PDF para partilhar com stakeholders e documentar o progresso</span></li>
+       </ul>
+      </div><!-- Importance -->
+      <div class="bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200 p-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg> Importância da Avaliação de Maturidade</h3>
+       <p class="text-gray-600 mb-4">A avaliação regular da maturidade ágil permite:</p>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-lg border border-gray-200">
+         <p class="font-medium text-gray-800 mb-1">Identificar Gaps</p>
+         <p class="text-sm text-gray-600">Descobrir áreas que necessitam de desenvolvimento e formação adicional.</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-gray-200">
+         <p class="font-medium text-gray-800 mb-1">Medir Progresso</p>
+         <p class="text-sm text-gray-600">Acompanhar a evolução das equipas ao longo do tempo com dados concretos.</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-gray-200">
+         <p class="font-medium text-gray-800 mb-1">Alinhar Expectativas</p>
+         <p class="text-sm text-gray-600">Clarificar funções e responsabilidades para toda a organização.</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-gray-200">
+         <p class="font-medium text-gray-800 mb-1">Planear Melhorias</p>
+         <p class="text-sm text-gray-600">Definir ações concretas para avançar para a próxima fase de maturidade.</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div><!-- Modal Container -->
+   <div id="modalContainer" class="fixed inset-0 z-50 hidden"></div>
+  </div>
+  <script>
+        // Application State
+        let appState = {
+            title: 'IS Matriz Maturidade Ágil',
+            evaluations: [],
+            scenarios: [],
+            currencies: {
+                AOA: 1,
+                BRL: 0.01205,
+                CVE: 0.188,
+                XOF: 1.183,
+                MZN: 0.154,
+                STN: 0.0442,
+                EUR: 0.00191,
+                USD: 0.00203
+            },
+            currentTab: 'avaliacao'
+        };
+
+        // Charts instances
+        let charts = {};
+
+        // Templates Data
+        const templates = [
+            { id: 1, name: 'Startup Tecnológica', description: 'Ideal para startups em fase inicial de adoção Agile', phase: 1, areas: { productOwner: 1, scrumMaster: 1, devTeam: 1, stakeholders: 1, management: 1 } },
+            { id: 2, name: 'PME em Transição', description: 'Para pequenas e médias empresas a iniciar a transformação', phase: 1, areas: { productOwner: 2, scrumMaster: 1, devTeam: 1, stakeholders: 1, management: 1 } },
+            { id: 3, name: 'Equipa Scrum Básica', description: 'Configuração básica para uma equipa Scrum nova', phase: 2, areas: { productOwner: 2, scrumMaster: 2, devTeam: 2, stakeholders: 1, management: 2 } },
+            { id: 4, name: 'Departamento TI', description: 'Para departamentos de TI com múltiplas equipas', phase: 2, areas: { productOwner: 2, scrumMaster: 2, devTeam: 2, stakeholders: 2, management: 2 } },
+            { id: 5, name: 'Produto Digital', description: 'Equipa focada em produto digital com práticas consolidadas', phase: 3, areas: { productOwner: 3, scrumMaster: 3, devTeam: 3, stakeholders: 2, management: 2 } },
+            { id: 6, name: 'Agile Maduro', description: 'Organização com práticas Agile bem estabelecidas', phase: 3, areas: { productOwner: 3, scrumMaster: 3, devTeam: 3, stakeholders: 3, management: 3 } },
+            { id: 7, name: 'Centro de Excelência', description: 'Equipa de referência para práticas Agile', phase: 4, areas: { productOwner: 4, scrumMaster: 4, devTeam: 3, stakeholders: 3, management: 3 } },
+            { id: 8, name: 'SAFe Básico', description: 'Configuração para início de implementação SAFe', phase: 2, areas: { productOwner: 2, scrumMaster: 2, devTeam: 2, stakeholders: 2, management: 2 } },
+            { id: 9, name: 'Kanban Inicial', description: 'Para equipas a iniciar com metodologia Kanban', phase: 1, areas: { productOwner: 1, scrumMaster: 1, devTeam: 2, stakeholders: 1, management: 1 } },
+            { id: 10, name: 'Escala Empresarial', description: 'Configuração para escalonamento organizacional', phase: 4, areas: { productOwner: 4, scrumMaster: 4, devTeam: 4, stakeholders: 4, management: 4 } }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromStorage();
+            renderAll();
+            initCharts();
+            initElementSDK();
+        });
+
+        // Element SDK Integration
+        function initElementSDK() {
+            if (window.elementSdk) {
+                const defaultConfig = { app_title: 'IS Matriz Maturidade Ágil' };
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange: async (config) => {
+                        const title = config.app_title || defaultConfig.app_title;
+                        document.getElementById('appTitle').textContent = title;
+                        appState.title = title;
+                        saveToStorage();
+                    },
+                    mapToCapabilities: (config) => ({
+                        recolorables: [],
+                        borderables: [],
+                        fontEditable: undefined,
+                        fontSizeable: undefined
+                    }),
+                    mapToEditPanelValues: (config) => new Map([
+                        ['app_title', config.app_title || defaultConfig.app_title]
+                    ])
+                });
+            }
+        }
+
+        // Storage Functions
+        function saveToStorage() {
+            localStorage.setItem('agileMaturityApp', JSON.stringify(appState));
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('agileMaturityApp');
+            if (saved) {
+                appState = { ...appState, ...JSON.parse(saved) };
+            }
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+            
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('tab-active');
+            
+            appState.currentTab = tabId;
+            
+            if (tabId === 'graficos') {
+                setTimeout(() => updateCharts(), 100);
+            }
+        }
+
+        // Render Functions
+        function renderAll() {
+            renderEvaluations();
+            renderScenarios();
+            renderCurrencies();
+            renderTemplates();
+            updateCounts();
+            document.getElementById('appTitle').textContent = appState.title;
+        }
+
+        function renderEvaluations() {
+            const container = document.getElementById('evaluationsList');
+            const filter = document.getElementById('filterAvaliacao')?.value?.toLowerCase() || '';
+            const phaseFilter = document.getElementById('filterPhase')?.value || '';
+            
+            let filtered = appState.evaluations;
+            if (filter) {
+                filtered = filtered.filter(e => 
+                    e.name.toLowerCase().includes(filter) || 
+                    e.team.toLowerCase().includes(filter)
+                );
+            }
+            if (phaseFilter) {
+                filtered = filtered.filter(e => e.phase.toString() === phaseFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <p>Nenhuma avaliação encontrada</p>
+                        <p class="text-sm">Clique em "Nova Avaliação" para começar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(eval => `
+                <div class="p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center ${getPhaseColor(eval.phase)}">
+                                <span class="font-bold text-white">${eval.phase}</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">${eval.name}</p>
+                                <p class="text-sm text-gray-500">${eval.team} • ${new Date(eval.date).toLocaleDateString('pt-PT')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 hide-for-export">
+                            <button onclick="editEvaluation('${eval.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="deleteEvaluation('${eval.id}')" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderScenarios() {
+            const container = document.getElementById('scenariosList');
+            const filter = document.getElementById('filterCenarios')?.value?.toLowerCase() || '';
+            
+            let filtered = appState.scenarios;
+            if (filter) {
+                filtered = filtered.filter(s => s.name.toLowerCase().includes(filter));
+            }
+
+            document.getElementById('scenarioCount').textContent = `${appState.scenarios.length} cenários`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <p>Nenhum cenário encontrado</p>
+                        <p class="text-sm">Guarde o cenário atual para reutilizar depois</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(scenario => `
+                <div class="p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-gray-800">${scenario.name}</p>
+                            <p class="text-sm text-gray-500">${scenario.evaluations.length} avaliações • ${new Date(scenario.date).toLocaleDateString('pt-PT')}</p>
+                        </div>
+                        <div class="flex items-center gap-2 hide-for-export">
+                            <button onclick="loadScenario('${scenario.id}')" class="btn-primary px-3 py-1.5 rounded text-xs">Carregar</button>
+                            <button onclick="cloneScenario('${scenario.id}')" class="btn-secondary px-3 py-1.5 rounded text-xs">Clonar</button>
+                            <button onclick="editScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="deleteScenario('${scenario.id}')" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCurrencies() {
+            const container = document.getElementById('currencyRates');
+            const currencies = [
+                { code: 'BRL', name: 'Real Brasileiro', flag: '🇧🇷' },
+                { code: 'CVE', name: 'Escudo Cabo-verdiano', flag: '🇨🇻' },
+                { code: 'XOF', name: 'Franco CFA (Guiné-Bissau)', flag: '🇬🇼' },
+                { code: 'MZN', name: 'Metical Moçambicano', flag: '🇲🇿' },
+                { code: 'STN', name: 'Dobra (São Tomé)', flag: '🇸🇹' },
+                { code: 'EUR', name: 'Euro (Portugal/Timor)', flag: '🇵🇹' },
+                { code: 'USD', name: 'Dólar Americano', flag: '🇺🇸' }
+            ];
+
+            container.innerHTML = currencies.map(curr => `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xl">${curr.flag}</span>
+                        <div>
+                            <p class="font-medium text-gray-800">${curr.code}</p>
+                            <p class="text-xs text-gray-500">${curr.name}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 hide-for-export">
+                        <span class="text-sm text-gray-500">1 AOA =</span>
+                        <input type="number" step="0.00001" value="${appState.currencies[curr.code]}" 
+                            onchange="updateCurrencyRate('${curr.code}', this.value)"
+                            class="input-field flex-1 text-sm">
+                        <span class="text-sm text-gray-500">${curr.code}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            convertCurrency();
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById('templatesList');
+            container.innerHTML = templates.map(template => `
+                <div class="bg-white rounded-lg border border-gray-200 p-5 card-hover phase-card phase-${template.phase}">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${template.name}</h4>
+                            <p class="text-sm text-gray-500">${template.description}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded ${getPhaseColor(template.phase)} text-white">Fase ${template.phase}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-4 hide-for-export">
+                        <button onclick="applyTemplate(${template.id})" class="btn-primary px-3 py-1.5 rounded text-sm flex-1">Aplicar Template</button>
+                        <button onclick="previewTemplate(${template.id})" class="btn-secondary px-3 py-1.5 rounded text-sm">Ver Detalhes</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCounts() {
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+            appState.evaluations.forEach(e => counts[e.phase]++);
+            
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`count-phase${i}`).textContent = counts[i];
+            }
+            
+            document.getElementById('evalCount').textContent = `${appState.evaluations.length} avaliações`;
+        }
+
+        // Chart Functions
+        function initCharts() {
+            // Phase Distribution Pie Chart
+            const phaseCtx = document.getElementById('phaseChart').getContext('2d');
+            charts.phase = new Chart(phaseCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Fase 1 - Aprendizagem', 'Fase 2 - Desenvolvimento', 'Fase 3 - Maturação', 'Fase 4 - Escalonamento'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#F44336', '#FF9800', '#FFC107', '#4CAF50']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Area Bar Chart
+            const areaCtx = document.getElementById('areaChart').getContext('2d');
+            charts.area = new Chart(areaCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Product Owner', 'Scrum Master', 'Equipa Dev', 'Stakeholders', 'Gestão'],
+                    datasets: [{
+                        label: 'Pontuação Média',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: '#66CFF5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 4 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Radar Chart
+            const radarCtx = document.getElementById('radarChart').getContext('2d');
+            charts.radar = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Product Owner', 'Scrum Master', 'Equipa Dev', 'Stakeholders', 'Gestão'],
+                    datasets: [{
+                        label: 'Maturidade Atual',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(30, 136, 229, 0.2)',
+                        borderColor: '#66CFF5',
+                        pointBackgroundColor: '#66CFF5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { beginAtZero: true, max: 4 } }
+                }
+            });
+
+            // Evolution Line Chart
+            const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+            charts.evolution = new Chart(evolutionCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Maturidade Média',
+                        data: [],
+                        borderColor: '#66CFF5',
+                        backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 4 } }
+                }
+            });
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+            const areas = { productOwner: [], scrumMaster: [], devTeam: [], stakeholders: [], management: [] };
+            
+            appState.evaluations.forEach(e => {
+                counts[e.phase]++;
+                if (e.areas) {
+                    areas.productOwner.push(e.areas.productOwner || 0);
+                    areas.scrumMaster.push(e.areas.scrumMaster || 0);
+                    areas.devTeam.push(e.areas.devTeam || 0);
+                    areas.stakeholders.push(e.areas.stakeholders || 0);
+                    areas.management.push(e.areas.management || 0);
+                }
+            });
+
+            // Update pie chart
+            charts.phase.data.datasets[0].data = [counts[1], counts[2], counts[3], counts[4]];
+            charts.phase.update();
+
+            // Calculate averages
+            const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+            const areaAvgs = [
+                avg(areas.productOwner),
+                avg(areas.scrumMaster),
+                avg(areas.devTeam),
+                avg(areas.stakeholders),
+                avg(areas.management)
+            ];
+
+            // Update bar chart
+            charts.area.data.datasets[0].data = areaAvgs;
+            charts.area.update();
+
+            // Update radar chart
+            charts.radar.data.datasets[0].data = areaAvgs;
+            charts.radar.update();
+
+            // Update evolution chart
+            const sortedEvals = [...appState.evaluations].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const labels = sortedEvals.map(e => new Date(e.date).toLocaleDateString('pt-PT', { month: 'short', day: 'numeric' }));
+            const values = sortedEvals.map(e => e.phase);
+            
+            charts.evolution.data.labels = labels;
+            charts.evolution.data.datasets[0].data = values;
+            charts.evolution.update();
+        }
+
+        // Evaluation Functions
+        function openNewEvaluation() {
+            showModal('Nova Avaliação', `
+                <form id="evalForm" onsubmit="saveEvaluation(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Avaliação</label>
+                            <input type="text" name="name" required class="input-field w-full" placeholder="Ex: Avaliação Q1 2024">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Equipa</label>
+                            <input type="text" name="team" required class="input-field w-full" placeholder="Ex: Equipa Alpha">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fase de Maturidade</label>
+                            <select name="phase" required class="input-field w-full">
+                                <option value="1">Fase 1 - Aprendizagem</option>
+                                <option value="2">Fase 2 - Desenvolvimento</option>
+                                <option value="3">Fase 3 - Maturação</option>
+                                <option value="4">Fase 4 - Escalonamento</option>
+                            </select>
+                        </div>
+                        <div class="border-t pt-4">
+                            <p class="text-sm font-medium text-gray-700 mb-3">Pontuação por Área (1-4)</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Product Owner</label>
+                                    <input type="number" name="productOwner" min="1" max="4" value="1" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Scrum Master</label>
+                                    <input type="number" name="scrumMaster" min="1" max="4" value="1" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Equipa Dev</label>
+                                    <input type="number" name="devTeam" min="1" max="4" value="1" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Stakeholders</label>
+                                    <input type="number" name="stakeholders" min="1" max="4" value="1" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Gestão</label>
+                                    <input type="number" name="management" min="1" max="4" value="1" class="input-field w-full">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-6">
+                        <button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                        <button type="submit" class="btn-primary px-4 py-2 rounded-lg">Guardar</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function saveEvaluation(event) {
+            event.preventDefault();
+            const form = event.target;
+            const evaluation = {
+                id: Date.now().toString(),
+                name: form.name.value,
+                team: form.team.value,
+                phase: parseInt(form.phase.value),
+                date: new Date().toISOString(),
+                areas: {
+                    productOwner: parseInt(form.productOwner.value),
+                    scrumMaster: parseInt(form.scrumMaster.value),
+                    devTeam: parseInt(form.devTeam.value),
+                    stakeholders: parseInt(form.stakeholders.value),
+                    management: parseInt(form.management.value)
+                }
+            };
+            
+            appState.evaluations.push(evaluation);
+            saveToStorage();
+            renderAll();
+            updateCharts();
+            closeModal();
+            showToast('Avaliação guardada com sucesso!', 'success');
+        }
+
+        function editEvaluation(id) {
+            const eval = appState.evaluations.find(e => e.id === id);
+            if (!eval) return;
+
+            showModal('Editar Avaliação', `
+                <form id="evalForm" onsubmit="updateEvaluation(event, '${id}')">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Avaliação</label>
+                            <input type="text" name="name" required class="input-field w-full" value="${eval.name}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Equipa</label>
+                            <input type="text" name="team" required class="input-field w-full" value="${eval.team}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fase de Maturidade</label>
+                            <select name="phase" required class="input-field w-full">
+                                <option value="1" ${eval.phase === 1 ? 'selected' : ''}>Fase 1 - Aprendizagem</option>
+                                <option value="2" ${eval.phase === 2 ? 'selected' : ''}>Fase 2 - Desenvolvimento</option>
+                                <option value="3" ${eval.phase === 3 ? 'selected' : ''}>Fase 3 - Maturação</option>
+                                <option value="4" ${eval.phase === 4 ? 'selected' : ''}>Fase 4 - Escalonamento</option>
+                            </select>
+                        </div>
+                        <div class="border-t pt-4">
+                            <p class="text-sm font-medium text-gray-700 mb-3">Pontuação por Área (1-4)</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Product Owner</label>
+                                    <input type="number" name="productOwner" min="1" max="4" value="${eval.areas?.productOwner || 1}" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Scrum Master</label>
+                                    <input type="number" name="scrumMaster" min="1" max="4" value="${eval.areas?.scrumMaster || 1}" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Equipa Dev</label>
+                                    <input type="number" name="devTeam" min="1" max="4" value="${eval.areas?.devTeam || 1}" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Stakeholders</label>
+                                    <input type="number" name="stakeholders" min="1" max="4" value="${eval.areas?.stakeholders || 1}" class="input-field w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Gestão</label>
+                                    <input type="number" name="management" min="1" max="4" value="${eval.areas?.management || 1}" class="input-field w-full">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-6">
+                        <button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                        <button type="submit" class="btn-primary px-4 py-2 rounded-lg">Atualizar</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function updateEvaluation(event, id) {
+            event.preventDefault();
+            const form = event.target;
+            const index = appState.evaluations.findIndex(e => e.id === id);
+            if (index === -1) return;
+
+            appState.evaluations[index] = {
+                ...appState.evaluations[index],
+                name: form.name.value,
+                team: form.team.value,
+                phase: parseInt(form.phase.value),
+                areas: {
+                    productOwner: parseInt(form.productOwner.value),
+                    scrumMaster: parseInt(form.scrumMaster.value),
+                    devTeam: parseInt(form.devTeam.value),
+                    stakeholders: parseInt(form.stakeholders.value),
+                    management: parseInt(form.management.value)
+                }
+            };
+
+            saveToStorage();
+            renderAll();
+            updateCharts();
+            closeModal();
+            showToast('Avaliação atualizada!', 'success');
+        }
+
+        function deleteEvaluation(id) {
+            showConfirmModal('Eliminar Avaliação', 'Tem a certeza que deseja eliminar esta avaliação?', () => {
+                appState.evaluations = appState.evaluations.filter(e => e.id !== id);
+                saveToStorage();
+                renderAll();
+                updateCharts();
+                showToast('Avaliação eliminada!', 'success');
+            });
+        }
+
+        // Scenario Functions
+        function saveCurrentScenario() {
+            const scenarioNumber = appState.scenarios.length + 1;
+            const scenario = {
+                id: Date.now().toString(),
+                name: `Cenário ${scenarioNumber}`,
+                date: new Date().toISOString(),
+                evaluations: [...appState.evaluations]
+            };
+            
+            appState.scenarios.push(scenario);
+            saveToStorage();
+            renderScenarios();
+            showToast(`Cenário ${scenarioNumber} guardado!`, 'success');
+        }
+
+        function createNewScenario() {
+            appState.evaluations = [];
+            saveToStorage();
+            renderAll();
+            updateCharts();
+            showToast('Novo cenário criado - dados limpos!', 'success');
+        }
+
+        function loadScenario(id) {
+            const scenario = appState.scenarios.find(s => s.id === id);
+            if (!scenario) return;
+            
+            appState.evaluations = [...scenario.evaluations];
+            saveToStorage();
+            renderAll();
+            updateCharts();
+            showToast(`Cenário "${scenario.name}" carregado!`, 'success');
+        }
+
+        function cloneScenario(id) {
+            const scenario = appState.scenarios.find(s => s.id === id);
+            if (!scenario) return;
+
+            const clone = {
+                id: Date.now().toString(),
+                name: `${scenario.name} (Cópia)`,
+                date: new Date().toISOString(),
+                evaluations: [...scenario.evaluations]
+            };
+
+            appState.scenarios.push(clone);
+            saveToStorage();
+            renderScenarios();
+            showToast('Cenário clonado!', 'success');
+        }
+
+        function editScenario(id) {
+            const scenario = appState.scenarios.find(s => s.id === id);
+            if (!scenario) return;
+
+            showModal('Editar Cenário', `
+                <form onsubmit="updateScenario(event, '${id}')">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cenário</label>
+                            <input type="text" name="name" required class="input-field w-full" value="${scenario.name}">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-6">
+                        <button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                        <button type="submit" class="btn-primary px-4 py-2 rounded-lg">Atualizar</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function updateScenario(event, id) {
+            event.preventDefault();
+            const form = event.target;
+            const index = appState.scenarios.findIndex(s => s.id === id);
+            if (index === -1) return;
+
+            appState.scenarios[index].name = form.name.value;
+            saveToStorage();
+            renderScenarios();
+            closeModal();
+            showToast('Cenário atualizado!', 'success');
+        }
+
+        function deleteScenario(id) {
+            showConfirmModal('Eliminar Cenário', 'Tem a certeza que deseja eliminar este cenário?', () => {
+                appState.scenarios = appState.scenarios.filter(s => s.id !== id);
+                saveToStorage();
+                renderScenarios();
+                showToast('Cenário eliminado!', 'success');
+            });
+        }
+
+        function filterScenarios() {
+            renderScenarios();
+        }
+
+        // Currency Functions
+        function updateCurrencyRate(code, value) {
+            appState.currencies[code] = parseFloat(value);
+            saveToStorage();
+            convertCurrency();
+        }
+
+        function saveCurrencyRates() {
+            saveToStorage();
+            showToast('Taxas de câmbio guardadas!', 'success');
+        }
+
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('convertAmount')?.value) || 0;
+            const from = document.getElementById('convertFrom')?.value || 'AOA';
+            const to = document.getElementById('convertTo')?.value || 'BRL';
+
+            const inAOA = from === 'AOA' ? amount : amount / appState.currencies[from];
+            const result = to === 'AOA' ? inAOA : inAOA * appState.currencies[to];
+
+            const resultEl = document.getElementById('conversionResult');
+            if (resultEl) {
+                resultEl.textContent = `${amount.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} ${from} = ${result.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} ${to}`;
+            }
+        }
+
+        // Template Functions
+        function applyTemplate(templateId) {
+            const template = templates.find(t => t.id === templateId);
+            if (!template) return;
+
+            const evaluation = {
+                id: Date.now().toString(),
+                name: `Avaliação - ${template.name}`,
+                team: 'Equipa Principal',
+                phase: template.phase,
+                date: new Date().toISOString(),
+                areas: { ...template.areas }
+            };
+
+            appState.evaluations.push(evaluation);
+            saveToStorage();
+            renderAll();
+            updateCharts();
+            switchTab('avaliacao');
+            showToast(`Template "${template.name}" aplicado!`, 'success');
+        }
+
+        function previewTemplate(templateId) {
+            const template = templates.find(t => t.id === templateId);
+            if (!template) return;
+
+            const areaLabels = {
+                productOwner: 'Product Owner',
+                scrumMaster: 'Scrum Master',
+                devTeam: 'Equipa Dev',
+                stakeholders: 'Stakeholders',
+                management: 'Gestão'
+            };
+
+            showModal(template.name, `
+                <div class="space-y-4">
+                    <p class="text-gray-600">${template.description}</p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm font-medium text-gray-700 mb-3">Configuração de Áreas:</p>
+                        <div class="space-y-2">
+                            ${Object.entries(template.areas).map(([key, value]) => `
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">${areaLabels[key]}</span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded ${getPhaseColor(value)} text-white">Nível ${value}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Fechar</button>
+                    <button onclick="closeModal(); applyTemplate(${templateId});" class="btn-primary px-4 py-2 rounded-lg">Aplicar Template</button>
+                </div>
+            `);
+        }
+
+        // Filter Functions
+        function filterData() {
+            renderEvaluations();
+        }
+
+        // Export/Import Functions
+        function exportJSON() {
+            const data = JSON.stringify(appState, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `matriz-maturidade-agil-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Dados exportados com sucesso!', 'success');
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    appState = { ...appState, ...data };
+                    saveToStorage();
+                    renderAll();
+                    updateCharts();
+                    showToast('Dados importados com sucesso!', 'success');
+                } catch (err) {
+                    showToast('Erro ao importar ficheiro!', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        async function exportImage() {
+            const app = document.getElementById('app');
+            app.classList.add('exporting');
+            
+            try {
+                const canvas = await html2canvas(app, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA' });
+                const link = document.createElement('a');
+                link.download = `matriz-maturidade-agil-${new Date().toISOString().split('T')[0]}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Imagem exportada com sucesso!', 'success');
+            } catch (err) {
+                showToast('Erro ao exportar imagem!', 'error');
+            } finally {
+                app.classList.remove('exporting');
+            }
+        }
+
+        async function exportChartImage(chartId) {
+            const canvas = document.getElementById(chartId);
+            const link = document.createElement('a');
+            link.download = `grafico-${chartId}-${new Date().toISOString().split('T')[0]}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+            showToast('Gráfico exportado em HD!', 'success');
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            let yPos = 25;
+
+            // Header
+            doc.setFontSize(18);
+            doc.setTextColor(30, 136, 229);
+            doc.text(appState.title, margin, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, margin, yPos);
+
+            // Summary
+            yPos += 15;
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('Resumo de Maturidade', margin, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(10);
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+            appState.evaluations.forEach(e => counts[e.phase]++);
+            
+            const phases = ['Aprendizagem', 'Desenvolvimento', 'Maturação', 'Escalonamento'];
+            phases.forEach((phase, i) => {
+                doc.text(`Fase ${i + 1} - ${phase}: ${counts[i + 1]} avaliações`, margin, yPos);
+                yPos += 6;
+            });
+
+            // Charts (smaller size)
+            yPos += 10;
+            const chartSize = 60;
+            
+            for (const [name, chart] of Object.entries(charts)) {
+                if (yPos + chartSize > pageHeight - 30) {
+                    doc.addPage();
+                    yPos = 25;
+                }
+                
+                const imgData = chart.canvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', margin, yPos, chartSize, chartSize * 0.75);
+                yPos += chartSize * 0.75 + 10;
+            }
+
+            // Evaluations List
+            if (appState.evaluations.length > 0) {
+                doc.addPage();
+                yPos = 25;
+                doc.setFontSize(14);
+                doc.text('Avaliações Detalhadas', margin, yPos);
+                yPos += 10;
+
+                appState.evaluations.forEach((eval, i) => {
+                    if (yPos > pageHeight - 30) {
+                        doc.addPage();
+                        yPos = 25;
+                    }
+                    doc.setFontSize(10);
+                    doc.text(`${i + 1}. ${eval.name} - ${eval.team} (Fase ${eval.phase})`, margin, yPos);
+                    yPos += 6;
+                });
+            }
+
+            // Footer on each page
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(appState.title, margin, pageHeight - 10);
+                doc.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 10);
+            }
+
+            doc.save(`matriz-maturidade-agil-${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast('PDF exportado com sucesso!', 'success');
+        }
+
+        // Modal Functions
+        function showModal(title, content) {
+            const container = document.getElementById('modalContainer');
+            container.innerHTML = `
+                <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90%] overflow-y-auto">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-800">${title}</h3>
+                            <button onclick="closeModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <div class="p-4">${content}</div>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            showModal(title, `
+                <p class="text-gray-600 mb-6">${message}</p>
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeModal()" class="btn-secondary px-4 py-2 rounded-lg">Cancelar</button>
+                    <button onclick="closeModal(); (${onConfirm})();" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">Eliminar</button>
+                </div>
+            `);
+        }
+
+        function closeModal() {
+            document.getElementById('modalContainer').classList.add('hidden');
+        }
+
+        // Toast Functions
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+            toast.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : 
+                      type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'}
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Helper Functions
+        function getPhaseColor(phase) {
+            const colors = {
+                1: 'bg-red-500',
+                2: 'bg-orange-500',
+                3: 'bg-yellow-500',
+                4: 'bg-green-500'
+            };
+            return colors[phase] || 'bg-gray-500';
+        }
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d627732923a77d9',t:'MTc3MjQ3NjE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

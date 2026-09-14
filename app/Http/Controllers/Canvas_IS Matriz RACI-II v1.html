@@ -1,0 +1,1436 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matriz RACI - Gestão de Financiamento</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+    .raci-cell { min-width: 80px; text-align: center; }
+    .raci-R { background: rgba(30, 136, 229, 0.2); color: #66CFF5; }
+    .raci-A { background: rgba(255, 193, 7, 0.2); color: #F57C00; }
+    .raci-C { background: rgba(76, 175, 80, 0.2); color: #388E3C; }
+    .raci-I { background: rgba(158, 158, 158, 0.2); color: #616161; }
+    .export-hidden { display: none !important; }
+    @media print { .no-print { display: none !important; } }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #F8F9FA; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50 text-gray-800">
+  <div id="app" class="h-full flex flex-col overflow-hidden"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Matriz RACI</h1>
+       <p class="text-sm text-gray-500" style="display: none;">Gestão de Financiamento e Responsabilidades</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-3 no-print export-hide"><input type="text" id="globalFilter" placeholder="Filtrar dados..." class="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 w-64"> <button onclick="exportImage()" class="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Exportar Imagem">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+       </svg></button> <button onclick="exportPDF()" class="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Exportar PDF">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg></button> <button onclick="showImportExportModal()" class="p-2 text-gray-500 hover:text-green-500 hover:bg-green-50 rounded-lg transition-all" title="Importar/Exportar JSON">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+       </svg></button>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-6 flex-shrink-0 overflow-x-auto scrollbar-thin">
+    <div class="flex gap-1"><button onclick="switchTab('matriz')" id="tab-matriz" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all tab-active">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg> Matriz RACI </button> <button onclick="switchTab('graficos')" id="tab-graficos" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+      </svg> Gráficos </button> <button onclick="switchTab('moedas')" id="tab-moedas" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('cenarios')" id="tab-cenarios" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg> Cenários </button> <button onclick="switchTab('templates')" id="tab-templates" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+      </svg> Templates </button> <button onclick="switchTab('ajuda')" id="tab-ajuda" class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-500 border-b-3 border-transparent transition-all">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-6 scrollbar-thin" id="mainContent"><!-- Matriz RACI Tab -->
+    <div id="content-matriz" class="tab-content">
+     <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #66CFF5;">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+       <div class="flex items-center gap-3">
+        <h2 class="text-lg font-semibold text-gray-800">Matriz de Responsabilidades</h2><input type="text" id="matrizTitle" placeholder="Título do projeto..." class="export-hide px-3 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" value="Projeto de Financiamento">
+       </div>
+       <div class="flex gap-2 export-hide"><button onclick="addColumn()" class="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Coluna </button> <button onclick="addRow()" class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Linha </button> <button onclick="saveScenario()" class="flex items-center gap-1 px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded-lg text-sm font-medium hover:bg-yellow-100 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar </button>
+       </div>
+      </div>
+      <div class="overflow-auto scrollbar-thin">
+       <table class="w-full" id="raciTable">
+        <thead class="bg-gray-50">
+         <tr id="headerRow">
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-64 border-r border-gray-200">Atividade / Tarefa</th>
+         </tr>
+        </thead>
+        <tbody id="raciBody"></tbody>
+       </table>
+      </div>
+      <div class="p-4 bg-gray-50 border-t border-gray-100">
+       <div class="flex flex-wrap gap-4 text-sm"><span class="flex items-center gap-2"><span class="w-6 h-6 rounded raci-R flex items-center justify-center font-bold">R</span> Responsável</span> <span class="flex items-center gap-2"><span class="w-6 h-6 rounded raci-A flex items-center justify-center font-bold">A</span> Aprovador</span> <span class="flex items-center gap-2"><span class="w-6 h-6 rounded raci-C flex items-center justify-center font-bold">C</span> Consultado</span> <span class="flex items-center gap-2"><span class="w-6 h-6 rounded raci-I flex items-center justify-center font-bold">I</span> Informado</span>
+       </div>
+      </div>
+     </div>
+    </div><!-- Gráficos Tab -->
+    <div id="content-graficos" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- Distribuição RACI -->
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #4CAF50;">
+       <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Distribuição RACI por Função</h3><button onclick="exportChartImage('raciDistChart')" class="export-hide p-2 text-gray-400 hover:text-blue-500 rounded-lg transition-all" title="Exportar HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="p-4" style="height: 300px;">
+        <canvas id="raciDistChart"></canvas>
+       </div>
+      </div><!-- Pizza de Responsabilidades -->
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #FFC107;">
+       <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Responsabilidades por Tipo</h3><button onclick="exportChartImage('raciPieChart')" class="export-hide p-2 text-gray-400 hover:text-blue-500 rounded-lg transition-all" title="Exportar HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="p-4" style="height: 300px;">
+        <canvas id="raciPieChart"></canvas>
+       </div>
+      </div><!-- Carga por Membro -->
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #66CFF5;">
+       <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Carga de Trabalho por Membro</h3><button onclick="exportChartImage('workloadChart')" class="export-hide p-2 text-gray-400 hover:text-blue-500 rounded-lg transition-all" title="Exportar HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="p-4" style="height: 300px;">
+        <canvas id="workloadChart"></canvas>
+       </div>
+      </div><!-- Valores por Atividade -->
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #FF9800;">
+       <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Orçamento por Atividade (AOA)</h3><button onclick="exportChartImage('budgetChart')" class="export-hide p-2 text-gray-400 hover:text-blue-500 rounded-lg transition-all" title="Exportar HD">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+       </div>
+       <div class="p-4" style="height: 300px;">
+        <canvas id="budgetChart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- Moedas Tab -->
+    <div id="content-moedas" class="tab-content hidden">
+     <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #4CAF50;">
+      <div class="p-4 border-b border-gray-100">
+       <h2 class="text-lg font-semibold text-gray-800">Taxas de Câmbio CPLP + USD</h2>
+       <p class="text-sm text-gray-500 mt-1">Base: Kwanza Angolano (AOA)</p>
+      </div>
+      <div class="p-4">
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="currencyGrid"></div>
+      </div>
+      <div class="p-4 border-t border-gray-100 bg-gray-50">
+       <h3 class="font-semibold text-gray-700 mb-3">Conversor Rápido</h3>
+       <div class="flex flex-wrap gap-4 items-end">
+        <div><label class="block text-sm text-gray-600 mb-1">Valor (AOA)</label> <input type="number" id="convertAmount" value="1000000" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 w-40">
+        </div>
+        <div><label class="block text-sm text-gray-600 mb-1">Para</label> <select id="convertTo" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"> <option value="USD">USD - Dólar</option> <option value="EUR">EUR - Euro</option> <option value="BRL">BRL - Real</option> <option value="CVE">CVE - Escudo CV</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="XOF">XOF - Franco CFA</option> <option value="MOP">MOP - Pataca</option> <option value="TPE">TPE - Dólar TL</option> </select>
+        </div><button onclick="convertCurrency()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">Converter</button>
+        <div id="conversionResult" class="px-4 py-2 bg-green-50 text-green-700 rounded-lg font-semibold hidden"></div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Cenários Tab -->
+    <div id="content-cenarios" class="tab-content hidden">
+     <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #FF9800;">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+       <div>
+        <h2 class="text-lg font-semibold text-gray-800">Cenários Guardados</h2>
+        <p class="text-sm text-gray-500 mt-1">Gerencie e reutilize simulações</p>
+       </div>
+       <div class="flex gap-2 export-hide"><input type="text" id="scenarioFilter" placeholder="Filtrar cenários..." class="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 w-48" oninput="filterScenarios()"> <button onclick="createNewScenario()" class="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo Cenário </button>
+       </div>
+      </div>
+      <div class="p-4">
+       <div id="scenariosList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+       <div id="noScenarios" class="text-center py-12 text-gray-500 hidden">
+        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <p>Nenhum cenário guardado</p>
+        <p class="text-sm mt-1">Guarde um cenário na aba Matriz RACI</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Templates Tab -->
+    <div id="content-templates" class="tab-content hidden">
+     <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #9C27B0;">
+      <div class="p-4 border-b border-gray-100">
+       <h2 class="text-lg font-semibold text-gray-800">Templates de Aprendizagem</h2>
+       <p class="text-sm text-gray-500 mt-1">10 modelos prontos para diferentes cenários de financiamento</p>
+      </div>
+      <div class="p-4">
+       <div id="templatesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+     </div>
+    </div><!-- Ajuda Tab -->
+    <div id="content-ajuda" class="tab-content hidden">
+     <div class="space-y-6">
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #66CFF5;">
+       <div class="p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800">O que é a Matriz RACI?</h2>
+       </div>
+       <div class="p-6">
+        <p class="text-gray-600 leading-relaxed mb-4">A Matriz RACI é uma ferramenta de gestão de projetos que define claramente as funções e responsabilidades de cada membro da equipe em relação às atividades do projeto. O acrónimo RACI representa:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h3 class="font-semibold text-blue-800 mb-2">R - Responsável (Responsible)</h3>
+          <p class="text-sm text-blue-700">Quem executa a tarefa. É a pessoa que faz o trabalho para completar a atividade.</p>
+         </div>
+         <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+          <h3 class="font-semibold text-yellow-800 mb-2">A - Aprovador (Accountable)</h3>
+          <p class="text-sm text-yellow-700">Quem tem autoridade final. É responsável pela aprovação e responde pelo resultado.</p>
+         </div>
+         <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <h3 class="font-semibold text-green-800 mb-2">C - Consultado (Consulted)</h3>
+          <p class="text-sm text-green-700">Quem fornece informações. São especialistas consultados antes das decisões.</p>
+         </div>
+         <div class="p-4 bg-gray-100 rounded-lg border-l-4 border-gray-500">
+          <h3 class="font-semibold text-gray-800 mb-2">I - Informado (Informed)</h3>
+          <p class="text-sm text-gray-700">Quem precisa saber. Recebe atualizações sobre o progresso e decisões.</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #4CAF50;">
+       <div class="p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800">Importância no Financiamento</h2>
+       </div>
+       <div class="p-6">
+        <ul class="space-y-3 text-gray-600">
+         <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg><span><strong>Clareza nas decisões:</strong> Define quem aprova investimentos, contratos e desembolsos.</span></li>
+         <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg><span><strong>Redução de riscos:</strong> Evita erros de comunicação em processos financeiros críticos.</span></li>
+         <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg><span><strong>Compliance:</strong> Garante conformidade com regulamentos e políticas internas.</span></li>
+         <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg><span><strong>Eficiência:</strong> Acelera processos ao eliminar ambiguidades sobre responsabilidades.</span></li>
+         <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg><span><strong>Auditoria:</strong> Facilita trilhas de auditoria e prestação de contas.</span></li>
+        </ul>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #FFC107;">
+       <div class="p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800">Melhores Práticas</h2>
+       </div>
+       <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div>
+          <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2"><span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm">✓</span> Faça</h3>
+          <ul class="space-y-2 text-sm text-gray-600">
+           <li>• Apenas um "A" por atividade</li>
+           <li>• Revise periodicamente a matriz</li>
+           <li>• Envolva a equipe na criação</li>
+           <li>• Documente decisões e mudanças</li>
+           <li>• Use cenários para simulações</li>
+          </ul>
+         </div>
+         <div>
+          <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2"><span class="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm">✗</span> Evite</h3>
+          <ul class="space-y-2 text-sm text-gray-600">
+           <li>• Múltiplos aprovadores</li>
+           <li>• Atividades sem responsável</li>
+           <li>• Matrizes desatualizadas</li>
+           <li>• Complexidade excessiva</li>
+           <li>• Ignorar stakeholders</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 card-hover overflow-hidden" style="border-left: 4px solid #FF9800;">
+       <div class="p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800">Como Usar Esta Aplicação</h2>
+       </div>
+       <div class="p-6">
+        <div class="space-y-4">
+         <div class="flex items-start gap-4"><span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">1</span>
+          <div>
+           <h4 class="font-semibold text-gray-800">Configure a Matriz</h4>
+           <p class="text-sm text-gray-600">Adicione colunas (funções/pessoas) e linhas (atividades) conforme seu projeto.</p>
+          </div>
+         </div>
+         <div class="flex items-start gap-4"><span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">2</span>
+          <div>
+           <h4 class="font-semibold text-gray-800">Atribua Responsabilidades</h4>
+           <p class="text-sm text-gray-600">Clique nas células para alternar entre R, A, C, I ou vazio.</p>
+          </div>
+         </div>
+         <div class="flex items-start gap-4"><span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">3</span>
+          <div>
+           <h4 class="font-semibold text-gray-800">Analise os Gráficos</h4>
+           <p class="text-sm text-gray-600">Visualize a distribuição de responsabilidades e carga de trabalho.</p>
+          </div>
+         </div>
+         <div class="flex items-start gap-4"><span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">4</span>
+          <div>
+           <h4 class="font-semibold text-gray-800">Guarde Cenários</h4>
+           <p class="text-sm text-gray-600">Salve diferentes configurações para comparar e reutilizar.</p>
+          </div>
+         </div>
+         <div class="flex items-start gap-4"><span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">5</span>
+          <div>
+           <h4 class="font-semibold text-gray-800">Exporte e Partilhe</h4>
+           <p class="text-sm text-gray-600">Exporte como PDF, imagem ou JSON para partilhar com a equipe.</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div><!-- Modal Container -->
+   <div id="modalContainer" class="fixed inset-0 z-50 hidden"></div>
+  </div>
+  <script>
+    // State Management
+    let state = {
+      appTitle: 'IS Matriz RACI',
+      columns: ['Gestor Projeto', 'Analista Financeiro', 'Diretor', 'Consultor'],
+      rows: [
+        { activity: 'Análise de Viabilidade', cells: ['R', 'C', 'A', 'C'], budget: 500000 },
+        { activity: 'Elaboração de Proposta', cells: ['A', 'R', 'I', 'C'], budget: 250000 },
+        { activity: 'Negociação de Termos', cells: ['R', 'C', 'A', 'I'], budget: 100000 },
+        { activity: 'Aprovação de Crédito', cells: ['I', 'C', 'A', 'I'], budget: 0 },
+        { activity: 'Desembolso de Fundos', cells: ['R', 'R', 'A', 'I'], budget: 1500000 }
+      ],
+      scenarios: [],
+      currencies: {
+        USD: { name: 'Dólar Americano', rate: 0.0012, symbol: '$' },
+        EUR: { name: 'Euro', rate: 0.0011, symbol: '€' },
+        BRL: { name: 'Real Brasileiro', rate: 0.0061, symbol: 'R$' },
+        CVE: { name: 'Escudo Cabo-verdiano', rate: 0.12, symbol: '$' },
+        MZN: { name: 'Metical Moçambicano', rate: 0.076, symbol: 'MT' },
+        STN: { name: 'Dobra São-tomense', rate: 0.027, symbol: 'Db' },
+        XOF: { name: 'Franco CFA (Guiné-Bissau)', rate: 0.72, symbol: 'CFA' },
+        MOP: { name: 'Pataca Macaense', rate: 0.0097, symbol: 'MOP$' },
+        TPE: { name: 'Dólar Timorense', rate: 0.0012, symbol: '$' }
+      },
+      currentTab: 'matriz'
+    };
+
+    // Templates
+    const templates = [
+      {
+        id: 1,
+        name: 'Financiamento Bancário',
+        description: 'Processo completo de solicitação de crédito bancário',
+        columns: ['Gestor', 'Analista', 'Banco', 'Jurídico'],
+        rows: [
+          { activity: 'Preparação de Documentos', cells: ['R', 'C', 'I', 'C'], budget: 50000 },
+          { activity: 'Análise de Crédito', cells: ['I', 'R', 'A', 'I'], budget: 0 },
+          { activity: 'Negociação de Taxas', cells: ['R', 'C', 'A', 'C'], budget: 0 },
+          { activity: 'Assinatura de Contrato', cells: ['A', 'I', 'R', 'R'], budget: 100000 }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Capital de Risco',
+        description: 'Captação de investimento para startups',
+        columns: ['CEO', 'CFO', 'Investidor', 'Advogado'],
+        rows: [
+          { activity: 'Pitch Deck', cells: ['R', 'C', 'I', 'I'], budget: 25000 },
+          { activity: 'Due Diligence', cells: ['C', 'R', 'A', 'R'], budget: 200000 },
+          { activity: 'Termo de Compromisso', cells: ['A', 'C', 'R', 'R'], budget: 50000 },
+          { activity: 'Fechamento', cells: ['A', 'R', 'A', 'R'], budget: 150000 }
+        ]
+      },
+      {
+        id: 3,
+        name: 'Financiamento Público',
+        description: 'Acesso a fundos governamentais e subsídios',
+        columns: ['Coordenador', 'Técnico', 'Entidade', 'Auditor'],
+        rows: [
+          { activity: 'Candidatura', cells: ['R', 'R', 'I', 'I'], budget: 30000 },
+          { activity: 'Avaliação', cells: ['I', 'C', 'R', 'I'], budget: 0 },
+          { activity: 'Contratação', cells: ['A', 'R', 'A', 'C'], budget: 20000 },
+          { activity: 'Execução', cells: ['A', 'R', 'I', 'C'], budget: 500000 },
+          { activity: 'Prestação de Contas', cells: ['A', 'R', 'I', 'R'], budget: 50000 }
+        ]
+      },
+      {
+        id: 4,
+        name: 'Microcrédito',
+        description: 'Processo de microfinanciamento para pequenos negócios',
+        columns: ['Beneficiário', 'Agente', 'Supervisor', 'Comité'],
+        rows: [
+          { activity: 'Solicitação', cells: ['R', 'C', 'I', 'I'], budget: 5000 },
+          { activity: 'Avaliação de Perfil', cells: ['C', 'R', 'A', 'I'], budget: 0 },
+          { activity: 'Aprovação', cells: ['I', 'C', 'C', 'A'], budget: 0 },
+          { activity: 'Desembolso', cells: ['I', 'R', 'A', 'I'], budget: 100000 }
+        ]
+      },
+      {
+        id: 5,
+        name: 'Leasing/Locação',
+        description: 'Aquisição de equipamentos via leasing',
+        columns: ['Compras', 'Financeiro', 'Fornecedor', 'Direção'],
+        rows: [
+          { activity: 'Especificação', cells: ['R', 'C', 'C', 'I'], budget: 10000 },
+          { activity: 'Cotação', cells: ['R', 'C', 'R', 'I'], budget: 0 },
+          { activity: 'Análise Financeira', cells: ['C', 'R', 'I', 'A'], budget: 15000 },
+          { activity: 'Contratação', cells: ['R', 'R', 'R', 'A'], budget: 50000 }
+        ]
+      },
+      {
+        id: 6,
+        name: 'Emissão de Obrigações',
+        description: 'Processo de emissão de títulos de dívida',
+        columns: ['Tesouraria', 'Jurídico', 'Regulador', 'Banco Líder'],
+        rows: [
+          { activity: 'Estruturação', cells: ['R', 'C', 'I', 'R'], budget: 500000 },
+          { activity: 'Documentação Legal', cells: ['C', 'R', 'A', 'C'], budget: 300000 },
+          { activity: 'Roadshow', cells: ['R', 'I', 'I', 'R'], budget: 200000 },
+          { activity: 'Colocação', cells: ['C', 'I', 'A', 'R'], budget: 100000 }
+        ]
+      },
+      {
+        id: 7,
+        name: 'Crowdfunding',
+        description: 'Financiamento coletivo online',
+        columns: ['Promotor', 'Marketing', 'Plataforma', 'Backers'],
+        rows: [
+          { activity: 'Criação de Campanha', cells: ['R', 'R', 'C', 'I'], budget: 20000 },
+          { activity: 'Validação', cells: ['C', 'I', 'R', 'I'], budget: 0 },
+          { activity: 'Promoção', cells: ['C', 'R', 'C', 'I'], budget: 50000 },
+          { activity: 'Entrega de Recompensas', cells: ['R', 'C', 'I', 'A'], budget: 100000 }
+        ]
+      },
+      {
+        id: 8,
+        name: 'Parceria Público-Privada',
+        description: 'Estruturação de PPP para infraestrutura',
+        columns: ['Governo', 'Privado', 'SPV', 'Financiador'],
+        rows: [
+          { activity: 'Estudo de Viabilidade', cells: ['R', 'C', 'I', 'C'], budget: 1000000 },
+          { activity: 'Concurso Público', cells: ['R', 'R', 'I', 'I'], budget: 200000 },
+          { activity: 'Negociação', cells: ['R', 'R', 'C', 'C'], budget: 150000 },
+          { activity: 'Financial Close', cells: ['A', 'A', 'R', 'R'], budget: 500000 },
+          { activity: 'Construção', cells: ['I', 'A', 'R', 'C'], budget: 10000000 }
+        ]
+      },
+      {
+        id: 9,
+        name: 'Factoring',
+        description: 'Antecipação de recebíveis',
+        columns: ['Comercial', 'Financeiro', 'Factor', 'Cliente'],
+        rows: [
+          { activity: 'Seleção de Faturas', cells: ['R', 'C', 'I', 'I'], budget: 5000 },
+          { activity: 'Submissão', cells: ['C', 'R', 'I', 'I'], budget: 0 },
+          { activity: 'Análise de Risco', cells: ['I', 'C', 'R', 'I'], budget: 0 },
+          { activity: 'Adiantamento', cells: ['I', 'R', 'R', 'I'], budget: 0 },
+          { activity: 'Cobrança', cells: ['I', 'I', 'R', 'A'], budget: 0 }
+        ]
+      },
+      {
+        id: 10,
+        name: 'Financiamento de Projeto',
+        description: 'Project Finance para grandes investimentos',
+        columns: ['Sponsor', 'SPV', 'Bancos', 'Consultores'],
+        rows: [
+          { activity: 'Estruturação', cells: ['R', 'C', 'C', 'R'], budget: 2000000 },
+          { activity: 'Modelagem Financeira', cells: ['C', 'R', 'C', 'R'], budget: 500000 },
+          { activity: 'Term Sheet', cells: ['A', 'C', 'R', 'C'], budget: 100000 },
+          { activity: 'Due Diligence', cells: ['C', 'R', 'R', 'R'], budget: 1000000 },
+          { activity: 'Documentação', cells: ['C', 'R', 'R', 'R'], budget: 800000 },
+          { activity: 'First Drawdown', cells: ['I', 'R', 'A', 'I'], budget: 0 }
+        ]
+      }
+    ];
+
+    // Charts
+    let charts = {};
+
+    // Initialize
+    function init() {
+      loadState();
+      renderMatrix();
+      renderCurrencies();
+      renderScenarios();
+      renderTemplates();
+      initCharts();
+      setupEventListeners();
+      
+      // Element SDK initialization
+      if (window.elementSdk) {
+        const defaultConfig = { app_title: 'IS Matriz RACI' };
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            if (config.app_title) {
+              document.getElementById('appTitle').textContent = config.app_title;
+              state.appTitle = config.app_title;
+              saveState();
+            }
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([['app_title', config.app_title || defaultConfig.app_title]])
+        });
+      }
+    }
+
+    // Local Storage
+    function saveState() {
+      localStorage.setItem('isMatrizRaci', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('isMatrizRaci');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state = { ...state, ...parsed };
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+      
+      document.getElementById(`content-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-${tabId}`).classList.add('tab-active');
+      
+      state.currentTab = tabId;
+      
+      if (tabId === 'graficos') {
+        setTimeout(updateCharts, 100);
+      }
+    }
+
+    // Matrix Functions
+    function renderMatrix() {
+      const headerRow = document.getElementById('headerRow');
+      const body = document.getElementById('raciBody');
+      
+      // Clear existing
+      headerRow.innerHTML = '<th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-64 border-r border-gray-200">Atividade / Tarefa</th>';
+      body.innerHTML = '';
+      
+      // Add column headers
+      state.columns.forEach((col, idx) => {
+        const th = document.createElement('th');
+        th.className = 'px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-32 border-r border-gray-200 last:border-r-0';
+        th.innerHTML = `
+          <div class="flex items-center justify-center gap-2">
+            <input type="text" value="${col}" class="export-hide w-28 text-center bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none" onchange="updateColumn(${idx}, this.value)">
+            <span class="export-show hidden">${col}</span>
+            <button onclick="removeColumn(${idx})" class="export-hide p-1 text-gray-400 hover:text-red-500 rounded transition-all" title="Remover coluna">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        `;
+        headerRow.appendChild(th);
+      });
+      
+      // Add budget column header
+      const budgetTh = document.createElement('th');
+      budgetTh.className = 'px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-32 bg-yellow-50';
+      budgetTh.textContent = 'Orçamento (AOA)';
+      headerRow.appendChild(budgetTh);
+      
+      // Add rows
+      state.rows.forEach((row, rowIdx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-all';
+        
+        // Activity cell
+        const activityTd = document.createElement('td');
+        activityTd.className = 'px-4 py-3 border-r border-gray-200';
+        activityTd.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="text" value="${row.activity}" class="export-hide flex-1 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-sm" onchange="updateActivity(${rowIdx}, this.value)">
+            <span class="export-show hidden text-sm">${row.activity}</span>
+            <button onclick="removeRow(${rowIdx})" class="export-hide p-1 text-gray-400 hover:text-red-500 rounded transition-all" title="Remover linha">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        `;
+        tr.appendChild(activityTd);
+        
+        // RACI cells
+        row.cells.forEach((cell, cellIdx) => {
+          const td = document.createElement('td');
+          td.className = `px-4 py-3 text-center border-r border-gray-200 last:border-r-0 cursor-pointer transition-all raci-cell ${cell ? 'raci-' + cell : ''}`;
+          td.innerHTML = `<span class="font-bold text-lg">${cell || '-'}</span>`;
+          td.onclick = () => cycleRaciValue(rowIdx, cellIdx);
+          tr.appendChild(td);
+        });
+        
+        // Budget cell
+        const budgetTd = document.createElement('td');
+        budgetTd.className = 'px-4 py-3 text-center bg-yellow-50';
+        budgetTd.innerHTML = `
+          <input type="number" value="${row.budget || 0}" class="export-hide w-28 text-center bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none text-sm" onchange="updateBudget(${rowIdx}, this.value)">
+          <span class="export-show hidden text-sm">${formatCurrency(row.budget || 0)}</span>
+        `;
+        tr.appendChild(budgetTd);
+        
+        body.appendChild(tr);
+      });
+      
+      document.getElementById('matrizTitle').value = state.appTitle || 'Projeto de Financiamento';
+    }
+
+    function cycleRaciValue(rowIdx, cellIdx) {
+      const values = ['', 'R', 'A', 'C', 'I'];
+      const current = state.rows[rowIdx].cells[cellIdx] || '';
+      const currentIndex = values.indexOf(current);
+      const nextIndex = (currentIndex + 1) % values.length;
+      state.rows[rowIdx].cells[cellIdx] = values[nextIndex];
+      saveState();
+      renderMatrix();
+      updateCharts();
+    }
+
+    function addColumn() {
+      const name = `Função ${state.columns.length + 1}`;
+      state.columns.push(name);
+      state.rows.forEach(row => row.cells.push(''));
+      saveState();
+      renderMatrix();
+      updateCharts();
+      showToast('Coluna adicionada', 'success');
+    }
+
+    function removeColumn(idx) {
+      if (state.columns.length <= 1) {
+        showToast('Deve haver pelo menos uma coluna', 'error');
+        return;
+      }
+      state.columns.splice(idx, 1);
+      state.rows.forEach(row => row.cells.splice(idx, 1));
+      saveState();
+      renderMatrix();
+      updateCharts();
+      showToast('Coluna removida', 'success');
+    }
+
+    function updateColumn(idx, value) {
+      state.columns[idx] = value;
+      saveState();
+      updateCharts();
+    }
+
+    function addRow() {
+      state.rows.push({
+        activity: `Atividade ${state.rows.length + 1}`,
+        cells: state.columns.map(() => ''),
+        budget: 0
+      });
+      saveState();
+      renderMatrix();
+      updateCharts();
+      showToast('Linha adicionada', 'success');
+    }
+
+    function removeRow(idx) {
+      if (state.rows.length <= 1) {
+        showToast('Deve haver pelo menos uma linha', 'error');
+        return;
+      }
+      state.rows.splice(idx, 1);
+      saveState();
+      renderMatrix();
+      updateCharts();
+      showToast('Linha removida', 'success');
+    }
+
+    function updateActivity(idx, value) {
+      state.rows[idx].activity = value;
+      saveState();
+      updateCharts();
+    }
+
+    function updateBudget(idx, value) {
+      state.rows[idx].budget = parseFloat(value) || 0;
+      saveState();
+      updateCharts();
+    }
+
+    // Currency Functions
+    function renderCurrencies() {
+      const grid = document.getElementById('currencyGrid');
+      grid.innerHTML = '';
+      
+      Object.entries(state.currencies).forEach(([code, currency]) => {
+        const card = document.createElement('div');
+        card.className = 'p-4 border border-gray-200 rounded-lg card-hover';
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-gray-800">${code}</span>
+            <span class="text-sm text-gray-500">${currency.symbol}</span>
+          </div>
+          <p class="text-sm text-gray-600 mb-2">${currency.name}</p>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">Taxa:</span>
+            <input type="number" step="0.0001" value="${currency.rate}" class="export-hide flex-1 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500" onchange="updateCurrencyRate('${code}', this.value)">
+            <span class="export-show hidden text-sm font-medium">${currency.rate}</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">1 AOA = ${currency.rate} ${code}</p>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function updateCurrencyRate(code, value) {
+      state.currencies[code].rate = parseFloat(value) || 0;
+      saveState();
+      renderCurrencies();
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convertAmount').value) || 0;
+      const targetCode = document.getElementById('convertTo').value;
+      const rate = state.currencies[targetCode].rate;
+      const result = amount * rate;
+      
+      const resultEl = document.getElementById('conversionResult');
+      resultEl.textContent = `${formatCurrency(amount)} AOA = ${state.currencies[targetCode].symbol} ${result.toFixed(2)} ${targetCode}`;
+      resultEl.classList.remove('hidden');
+    }
+
+    // Scenario Functions
+    function saveScenario() {
+      const scenarioNumber = state.scenarios.length + 1;
+      const scenario = {
+        id: Date.now(),
+        name: `Cenário ${scenarioNumber}`,
+        date: new Date().toISOString(),
+        title: state.appTitle,
+        columns: [...state.columns],
+        rows: JSON.parse(JSON.stringify(state.rows))
+      };
+      state.scenarios.push(scenario);
+      saveState();
+      renderScenarios();
+      showToast(`Cenário ${scenarioNumber} guardado`, 'success');
+    }
+
+    function renderScenarios() {
+      const list = document.getElementById('scenariosList');
+      const noScenarios = document.getElementById('noScenarios');
+      const filter = document.getElementById('scenarioFilter')?.value?.toLowerCase() || '';
+      
+      const filtered = state.scenarios.filter(s => 
+        s.name.toLowerCase().includes(filter) || 
+        s.title?.toLowerCase().includes(filter)
+      );
+      
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        noScenarios.classList.remove('hidden');
+        return;
+      }
+      
+      noScenarios.classList.add('hidden');
+      list.innerHTML = filtered.map(scenario => `
+        <div class="p-4 border border-gray-200 rounded-lg card-hover">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <input type="text" value="${scenario.name}" class="export-hide font-semibold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none" onchange="updateScenarioName(${scenario.id}, this.value)">
+              <span class="export-show hidden font-semibold text-gray-800">${scenario.name}</span>
+            </div>
+            <span class="text-xs text-gray-400">${new Date(scenario.date).toLocaleDateString('pt-PT')}</span>
+          </div>
+          <p class="text-sm text-gray-600 mb-3">${scenario.title || 'Sem título'}</p>
+          <p class="text-xs text-gray-500 mb-3">${scenario.columns.length} funções • ${scenario.rows.length} atividades</p>
+          <div class="flex gap-2 export-hide">
+            <button onclick="loadScenario(${scenario.id})" class="flex-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded text-sm font-medium hover:bg-blue-100 transition-all">Carregar</button>
+            <button onclick="cloneScenario(${scenario.id})" class="flex-1 px-3 py-1.5 bg-green-50 text-green-600 rounded text-sm font-medium hover:bg-green-100 transition-all">Clonar</button>
+            <button onclick="deleteScenario(${scenario.id})" class="px-3 py-1.5 bg-red-50 text-red-600 rounded text-sm font-medium hover:bg-red-100 transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterScenarios() {
+      renderScenarios();
+    }
+
+    function loadScenario(id) {
+      const scenario = state.scenarios.find(s => s.id === id);
+      if (scenario) {
+        state.columns = [...scenario.columns];
+        state.rows = JSON.parse(JSON.stringify(scenario.rows));
+        state.appTitle = scenario.title || state.appTitle;
+        saveState();
+        renderMatrix();
+        updateCharts();
+        switchTab('matriz');
+        showToast('Cenário carregado', 'success');
+      }
+    }
+
+    function cloneScenario(id) {
+      const scenario = state.scenarios.find(s => s.id === id);
+      if (scenario) {
+        const clone = {
+          ...JSON.parse(JSON.stringify(scenario)),
+          id: Date.now(),
+          name: `${scenario.name} (Cópia)`,
+          date: new Date().toISOString()
+        };
+        state.scenarios.push(clone);
+        saveState();
+        renderScenarios();
+        showToast('Cenário clonado', 'success');
+      }
+    }
+
+    function deleteScenario(id) {
+      showConfirmModal(
+        'Eliminar Cenário',
+        'Tem certeza que deseja eliminar este cenário? Esta ação não pode ser desfeita.',
+        () => {
+          state.scenarios = state.scenarios.filter(s => s.id !== id);
+          saveState();
+          renderScenarios();
+          showToast('Cenário eliminado', 'success');
+        }
+      );
+    }
+
+    function updateScenarioName(id, name) {
+      const scenario = state.scenarios.find(s => s.id === id);
+      if (scenario) {
+        scenario.name = name;
+        saveState();
+      }
+    }
+
+    function createNewScenario() {
+      state.columns = ['Função 1', 'Função 2', 'Função 3'];
+      state.rows = [{ activity: 'Nova Atividade', cells: ['', '', ''], budget: 0 }];
+      saveState();
+      renderMatrix();
+      updateCharts();
+      switchTab('matriz');
+      showToast('Novo cenário criado', 'success');
+    }
+
+    // Templates Functions
+    function renderTemplates() {
+      const list = document.getElementById('templatesList');
+      list.innerHTML = templates.map(template => `
+        <div class="p-4 border border-gray-200 rounded-lg card-hover" style="border-left: 4px solid #9C27B0;">
+          <div class="flex items-start justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">${template.name}</h3>
+            <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Template ${template.id}</span>
+          </div>
+          <p class="text-sm text-gray-600 mb-3">${template.description}</p>
+          <p class="text-xs text-gray-500 mb-3">${template.columns.length} funções • ${template.rows.length} atividades</p>
+          <button onclick="loadTemplate(${template.id})" class="w-full px-3 py-1.5 bg-purple-50 text-purple-600 rounded text-sm font-medium hover:bg-purple-100 transition-all export-hide">
+            Usar Template
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function loadTemplate(id) {
+      const template = templates.find(t => t.id === id);
+      if (template) {
+        state.columns = [...template.columns];
+        state.rows = JSON.parse(JSON.stringify(template.rows));
+        state.appTitle = template.name;
+        saveState();
+        renderMatrix();
+        updateCharts();
+        switchTab('matriz');
+        showToast(`Template "${template.name}" carregado`, 'success');
+      }
+    }
+
+    // Charts Functions
+    function initCharts() {
+      const raciDistCtx = document.getElementById('raciDistChart')?.getContext('2d');
+      const raciPieCtx = document.getElementById('raciPieChart')?.getContext('2d');
+      const workloadCtx = document.getElementById('workloadChart')?.getContext('2d');
+      const budgetCtx = document.getElementById('budgetChart')?.getContext('2d');
+
+      if (raciDistCtx) {
+        charts.raciDist = new Chart(raciDistCtx, {
+          type: 'bar',
+          data: { labels: [], datasets: [] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+          }
+        });
+      }
+
+      if (raciPieCtx) {
+        charts.raciPie = new Chart(raciPieCtx, {
+          type: 'pie',
+          data: { labels: [], datasets: [] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right' },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const value = context.raw;
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${context.label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      if (workloadCtx) {
+        charts.workload = new Chart(workloadCtx, {
+          type: 'bar',
+          data: { labels: [], datasets: [] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+          }
+        });
+      }
+
+      if (budgetCtx) {
+        charts.budget = new Chart(budgetCtx, {
+          type: 'doughnut',
+          data: { labels: [], datasets: [] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right' },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const value = context.raw;
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${context.label}: ${formatCurrency(value)} AOA (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      updateCharts();
+    }
+
+    function updateCharts() {
+      // RACI Distribution by Role
+      if (charts.raciDist) {
+        const raciCounts = state.columns.map((col, idx) => {
+          return {
+            R: state.rows.filter(r => r.cells[idx] === 'R').length,
+            A: state.rows.filter(r => r.cells[idx] === 'A').length,
+            C: state.rows.filter(r => r.cells[idx] === 'C').length,
+            I: state.rows.filter(r => r.cells[idx] === 'I').length
+          };
+        });
+
+        charts.raciDist.data.labels = state.columns;
+        charts.raciDist.data.datasets = [
+          { label: 'Responsável', data: raciCounts.map(c => c.R), backgroundColor: 'rgba(30, 136, 229, 0.7)' },
+          { label: 'Aprovador', data: raciCounts.map(c => c.A), backgroundColor: 'rgba(255, 193, 7, 0.7)' },
+          { label: 'Consultado', data: raciCounts.map(c => c.C), backgroundColor: 'rgba(76, 175, 80, 0.7)' },
+          { label: 'Informado', data: raciCounts.map(c => c.I), backgroundColor: 'rgba(158, 158, 158, 0.7)' }
+        ];
+        charts.raciDist.update();
+      }
+
+      // RACI Pie Chart
+      if (charts.raciPie) {
+        const totals = { R: 0, A: 0, C: 0, I: 0 };
+        state.rows.forEach(row => {
+          row.cells.forEach(cell => {
+            if (cell && totals.hasOwnProperty(cell)) totals[cell]++;
+          });
+        });
+
+        charts.raciPie.data.labels = ['Responsável (R)', 'Aprovador (A)', 'Consultado (C)', 'Informado (I)'];
+        charts.raciPie.data.datasets = [{
+          data: [totals.R, totals.A, totals.C, totals.I],
+          backgroundColor: ['rgba(30, 136, 229, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(76, 175, 80, 0.7)', 'rgba(158, 158, 158, 0.7)']
+        }];
+        charts.raciPie.update();
+      }
+
+      // Workload Chart
+      if (charts.workload) {
+        const workloads = state.columns.map((col, idx) => {
+          return state.rows.filter(r => r.cells[idx] === 'R' || r.cells[idx] === 'A').length;
+        });
+
+        charts.workload.data.labels = state.columns;
+        charts.workload.data.datasets = [{
+          data: workloads,
+          backgroundColor: 'rgba(30, 136, 229, 0.7)'
+        }];
+        charts.workload.update();
+      }
+
+      // Budget Chart
+      if (charts.budget) {
+        const activitiesWithBudget = state.rows.filter(r => r.budget > 0);
+        
+        charts.budget.data.labels = activitiesWithBudget.map(r => r.activity);
+        charts.budget.data.datasets = [{
+          data: activitiesWithBudget.map(r => r.budget),
+          backgroundColor: [
+            'rgba(30, 136, 229, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(76, 175, 80, 0.7)',
+            'rgba(255, 152, 0, 0.7)',
+            'rgba(156, 39, 176, 0.7)',
+            'rgba(244, 67, 54, 0.7)',
+            'rgba(0, 188, 212, 0.7)',
+            'rgba(139, 195, 74, 0.7)'
+          ]
+        }];
+        charts.budget.update();
+      }
+    }
+
+    // Export Functions
+    async function exportImage() {
+      showToast('A gerar imagem...', 'info');
+      
+      // Hide export elements
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.add('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.remove('hidden'));
+      
+      try {
+        const element = document.getElementById('app');
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#F8F9FA'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `${state.appTitle || 'IS-Matriz-RACI'}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada com sucesso', 'success');
+      } catch (error) {
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      // Restore export elements
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.remove('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.add('hidden'));
+    }
+
+    async function exportChartImage(chartId) {
+      const canvas = document.getElementById(chartId);
+      if (!canvas) return;
+      
+      const link = document.createElement('a');
+      link.download = `${chartId}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      
+      showToast('Gráfico exportado', 'success');
+    }
+
+    async function exportPDF() {
+      showToast('A gerar PDF...', 'info');
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        let yPos = margin;
+
+        // Helper function to add header/footer
+        const addHeaderFooter = (pageNum, totalPages) => {
+          pdf.setFontSize(8);
+          pdf.setTextColor(128);
+          pdf.text(state.appTitle || 'IS Matriz RACI', margin, 8);
+          pdf.text(`Página ${pageNum} de ${totalPages}`, pageWidth - margin, 8, { align: 'right' });
+          pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth / 2, pageHeight - 5, { align: 'center' });
+        };
+
+        // Title
+        pdf.setFontSize(18);
+        pdf.setTextColor(30, 136, 229);
+        pdf.text(state.appTitle || 'IS Matriz RACI', margin, yPos + 10);
+        yPos += 20;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+        pdf.text('Gestão de Financiamento e Responsabilidades', margin, yPos);
+        yPos += 15;
+
+        // Matrix Table
+        pdf.setFontSize(12);
+        pdf.setTextColor(0);
+        pdf.text('Matriz de Responsabilidades', margin, yPos);
+        yPos += 8;
+
+        // Table header
+        const colWidth = (pageWidth - 2 * margin - 50) / (state.columns.length + 1);
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+        
+        pdf.setFontSize(8);
+        pdf.setTextColor(60);
+        pdf.text('Atividade', margin + 2, yPos + 5);
+        state.columns.forEach((col, idx) => {
+          pdf.text(col.substring(0, 12), margin + 50 + idx * colWidth, yPos + 5);
+        });
+        pdf.text('Orçamento', margin + 50 + state.columns.length * colWidth, yPos + 5);
+        yPos += 10;
+
+        // Table rows
+        state.rows.forEach((row, idx) => {
+          if (yPos > pageHeight - 30) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          
+          pdf.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 249, idx % 2 === 0 ? 255 : 250);
+          pdf.rect(margin, yPos - 2, pageWidth - 2 * margin, 8, 'F');
+          
+          pdf.setTextColor(60);
+          pdf.text(row.activity.substring(0, 25), margin + 2, yPos + 3);
+          
+          row.cells.forEach((cell, cellIdx) => {
+            if (cell) {
+              pdf.setTextColor(cell === 'R' ? 30 : cell === 'A' ? 255 : cell === 'C' ? 76 : 100,
+                              cell === 'R' ? 136 : cell === 'A' ? 152 : cell === 'C' ? 175 : 100,
+                              cell === 'R' ? 229 : cell === 'A' ? 0 : cell === 'C' ? 80 : 100);
+              pdf.text(cell, margin + 55 + cellIdx * colWidth, yPos + 3);
+            }
+          });
+          
+          pdf.setTextColor(60);
+          pdf.text(formatCurrency(row.budget || 0), margin + 50 + state.columns.length * colWidth, yPos + 3);
+          yPos += 8;
+        });
+
+        yPos += 10;
+
+        // Charts (smaller size)
+        const chartSize = 60;
+        const chartsPerRow = 2;
+        const chartIds = ['raciDistChart', 'raciPieChart', 'workloadChart', 'budgetChart'];
+        
+        for (let i = 0; i < chartIds.length; i++) {
+          if (yPos > pageHeight - chartSize - 20) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          
+          const canvas = document.getElementById(chartIds[i]);
+          if (canvas) {
+            const imgData = canvas.toDataURL('image/png', 0.8);
+            const xPos = margin + (i % chartsPerRow) * (chartSize + 20);
+            
+            if (i % chartsPerRow === 0 && i > 0) {
+              yPos += chartSize + 15;
+            }
+            
+            pdf.addImage(imgData, 'PNG', xPos, yPos, chartSize, chartSize * 0.75);
+          }
+        }
+
+        // Add page numbers
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          addHeaderFooter(i, totalPages);
+        }
+
+        pdf.save(`${state.appTitle || 'IS-Matriz-RACI'}_${new Date().toISOString().split('T')[0]}.pdf`);
+        showToast('PDF exportado com sucesso', 'success');
+      } catch (error) {
+        console.error('PDF export error:', error);
+        showToast('Erro ao exportar PDF', 'error');
+      }
+    }
+
+    function showImportExportModal() {
+      const modal = document.getElementById('modalContainer');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Importar / Exportar Dados</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <h4 class="font-medium text-gray-700 mb-2">Exportar JSON</h4>
+                <p class="text-sm text-gray-500 mb-2">Descarregue todos os dados incluindo matriz, cenários e configurações.</p>
+                <button onclick="exportJSON()" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">
+                  Exportar JSON
+                </button>
+              </div>
+              
+              <hr class="border-gray-200">
+              
+              <div>
+                <h4 class="font-medium text-gray-700 mb-2">Importar JSON</h4>
+                <p class="text-sm text-gray-500 mb-2">Carregue um ficheiro JSON exportado anteriormente.</p>
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)">
+                <button onclick="document.getElementById('importFile').click()" class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                  Selecionar Ficheiro
+                </button>
+              </div>
+            </div>
+            
+            <button onclick="closeModal()" class="mt-6 w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+              Fechar
+            </button>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function exportJSON() {
+      const data = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        appTitle: state.appTitle,
+        columns: state.columns,
+        rows: state.rows,
+        scenarios: state.scenarios,
+        currencies: state.currencies
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${state.appTitle || 'IS-Matriz-RACI'}_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      closeModal();
+      showToast('Dados exportados com sucesso', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (data.columns && data.rows) {
+            state.appTitle = data.appTitle || state.appTitle;
+            state.columns = data.columns;
+            state.rows = data.rows;
+            state.scenarios = data.scenarios || state.scenarios;
+            state.currencies = data.currencies || state.currencies;
+            
+            saveState();
+            renderMatrix();
+            renderCurrencies();
+            renderScenarios();
+            updateCharts();
+            
+            closeModal();
+            showToast('Dados importados com sucesso', 'success');
+          } else {
+            throw new Error('Formato inválido');
+          }
+        } catch (error) {
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Modal Functions
+    function showConfirmModal(title, message, onConfirm) {
+      const modal = document.getElementById('modalContainer');
+      modal.innerHTML = `
+        <div class="modal-overlay fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">${title}</h3>
+            <p class="text-gray-600 mb-6">${message}</p>
+            <div class="flex gap-3">
+              <button onclick="closeModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+                Cancelar
+              </button>
+              <button onclick="confirmModalAction()" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      window.pendingModalAction = onConfirm;
+    }
+
+    function confirmModalAction() {
+      if (window.pendingModalAction) {
+        window.pendingModalAction();
+        window.pendingModalAction = null;
+      }
+      closeModal();
+    }
+
+    function closeModal() {
+      document.getElementById('modalContainer').classList.add('hidden');
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast px-4 py-3 rounded-lg text-white shadow-lg flex items-center gap-2 ${colors[type]}`;
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Utility Functions
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    // Event Listeners
+    function setupEventListeners() {
+      document.getElementById('globalFilter').addEventListener('input', (e) => {
+        const filter = e.target.value.toLowerCase();
+        
+        // Filter matrix rows
+        const visibleRows = state.rows.filter(row => 
+          row.activity.toLowerCase().includes(filter)
+        );
+        
+        // Apply filter visual (simplified - just highlight matching)
+        document.querySelectorAll('#raciBody tr').forEach((tr, idx) => {
+          const activity = state.rows[idx]?.activity?.toLowerCase() || '';
+          tr.style.opacity = filter === '' || activity.includes(filter) ? '1' : '0.3';
+        });
+      });
+
+      document.getElementById('matrizTitle').addEventListener('change', (e) => {
+        state.appTitle = e.target.value;
+        document.getElementById('appTitle').textContent = e.target.value;
+        saveState();
+      });
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d62590ad55c77d9',t:'MTc3MjQ3NDkxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

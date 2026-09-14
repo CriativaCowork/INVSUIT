@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Calculadora Inflação</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#aaa}
+
+.app-wrap{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.app-header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.app-header h1{font-size:18px;font-weight:700;color:#66CFF5}
+.app-header p{font-size:12px;color:#888;margin-top:2px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.header-actions button{background:none;border:1px solid #E0E0E0;border-radius:6px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;color:#555;transition:all .2s ease;font-family:'Inter',sans-serif}
+.header-actions button:hover{border-color:#66CFF5;color:#66CFF5;box-shadow:0 2px 8px rgba(30,136,229,.12)}
+
+.tab-bar{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #E0E0E0;display:flex;overflow-x:auto;flex-shrink:0;padding:0 12px}
+.tab-btn{padding:10px 16px;font-size:12px;font-weight:500;color:#888;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s ease;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn svg,.tab-btn i{width:14px;height:14px}
+
+.tab-content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:12px;transition:all .2s ease;position:relative;border-left:3px solid #66CFF5}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card.gold{border-left-color:#FFC107}
+.card.green{border-left-color:#4CAF50}
+.card.red{border-left-color:#F44336}
+.card.orange{border-left-color:#FF9800}
+
+.card-title{font-size:13px;font-weight:600;color:#333;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title i{width:16px;height:16px;color:#66CFF5}
+
+label{display:block;font-size:11px;font-weight:500;color:#666;margin-bottom:4px}
+input[type="text"],input[type="number"],select,textarea{width:100%;padding:8px 10px;border:1px solid #E0E0E0;border-radius:6px;font-size:12px;font-family:'Inter',sans-serif;transition:all .2s ease;background:#fff;color:#333}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,.1)}
+textarea{resize:vertical;min-height:60px}
+
+.btn{padding:8px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .2s ease;display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2;box-shadow:0 2px 8px rgba(30,136,229,.3)}
+.btn-secondary{background:#fff;color:#555;border:1px solid #E0E0E0}
+.btn-secondary:hover{border-color:#66CFF5;color:#66CFF5}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn-xs{padding:3px 7px;font-size:10px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+.badge-blue{background:rgba(30,136,229,.1);color:#66CFF5}
+.badge-green{background:rgba(76,175,80,.1);color:#4CAF50}
+.badge-red{background:rgba(244,67,54,.1);color:#F44336}
+.badge-orange{background:rgba(255,152,0,.1);color:#FF9800}
+
+.chart-container{position:relative;width:100%;max-height:250px;margin:8px 0}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5;background:rgba(255,255,255,.9);border:1px solid #E0E0E0;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;color:#888;transition:all .2s ease;display:flex;align-items:center;gap:3px}
+.chart-export-btn:hover{color:#66CFF5;border-color:#66CFF5}
+
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#4CAF50}
+.toast.error{background:#F44336}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:10px;max-width:500px;width:100%;max-height:80%;overflow-y:auto;padding:20px}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:12px;color:#333}
+
+.search-box{position:relative}
+.search-box input{padding-left:30px}
+.search-box i{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#aaa}
+
+.scenario-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #E0E0E0;border-radius:6px;margin-bottom:6px;transition:all .2s ease;border-left:3px solid #66CFF5}
+.scenario-item:hover{box-shadow:0 2px 8px rgba(30,136,229,.1)}
+
+.exportable-area .btn,.exportable-area input,.exportable-area select,.exportable-area textarea,.exportable-area .btn-primary,.exportable-area .btn-secondary,.exportable-area .header-actions,.exportable-area .chart-export-btn,.exportable-area .search-box,.exportable-area .no-export{display:none !important}
+
+.info-box{background:rgba(30,136,229,.05);border:1px solid rgba(30,136,229,.15);border-radius:6px;padding:12px;margin-bottom:10px;font-size:12px;color:#555;line-height:1.6}
+.info-box strong{color:#66CFF5}
+
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.stat-value{font-size:22px;font-weight:700;color:#66CFF5}
+.stat-label{font-size:11px;color:#888;margin-top:2px}
+.stat-sub{font-size:10px;color:#aaa}
+
+.currency-row{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #E0E0E0;border-radius:6px;margin-bottom:6px}
+.currency-row input{flex:1;min-width:0}
+.currency-flag{font-size:18px}
+
+.template-card{border:1px solid #E0E0E0;border-radius:8px;padding:12px;cursor:pointer;transition:all .2s ease;border-left:3px solid #FFC107}
+.template-card:hover{box-shadow:0 4px 12px rgba(255,193,7,.15);border-left-color:#FF9800}
+.template-card h4{font-size:13px;font-weight:600;margin-bottom:4px}
+.template-card p{font-size:11px;color:#888;line-height:1.4}
+
+.confirm-inline{display:flex;align-items:center;gap:6px;margin-top:6px}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrap" id="appWrap"><!-- Header -->
+   <header class="app-header" id="appHeader">
+    <div>
+     <h1 id="appTitle" style="display: none; display: none;">IS Calculadora Inflação</h1>
+     <p id="appDesc" style="display: none; display: none;">Simulador de impacto inflacionário para países CPLP</p>
+    </div>
+    <div class="header-actions no-export"><button onclick="exportImage()" title="Exportar Imagem"><i data-lucide="image"></i><span class="hide-mobile">Imagem</span></button> <button onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text"></i><span class="hide-mobile">PDF</span></button> <button onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download"></i><span class="hide-mobile">JSON</span></button> <button onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload"></i><span class="hide-mobile">Importar</span></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>
+   </header><!-- Tabs -->
+   <nav class="tab-bar no-export" id="tabBar"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator"></i> Simulador</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins"></i> Moedas</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="templates" onclick="switchTab('templates')"><i data-lucide="book-open"></i> Aprendizagem</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda')"><i data-lucide="help-circle"></i> Ajuda</button>
+   </nav><!-- Content -->
+   <div class="tab-content" id="mainContent"><!-- TAB: Simulador -->
+    <div class="tab-panel active" id="panel-simulador">
+     <div class="card">
+      <div class="card-title">
+       <i data-lucide="settings"></i> Parâmetros da Simulação
+      </div>
+      <div style="margin-bottom:8px"><label for="simTitle">Título da Simulação</label> <input type="text" id="simTitle" placeholder="Ex: Simulação Anual 2024" value="">
+      </div>
+      <div class="grid-3">
+       <div><label for="valorInicial">Valor Inicial (AOA)</label> <input type="number" id="valorInicial" value="100000" min="0" step="1000">
+       </div>
+       <div><label for="taxaInflacao">Taxa de Inflação Anual (%)</label> <input type="number" id="taxaInflacao" value="13.5" step="0.1">
+       </div>
+       <div><label for="periodo">Período (Anos)</label> <input type="number" id="periodo" value="5" min="1" max="50">
+       </div>
+      </div>
+      <div class="grid-3" style="margin-top:8px">
+       <div><label for="taxaJuros">Taxa de Juros/Rendimento (%)</label> <input type="number" id="taxaJuros" value="0" step="0.1">
+       </div>
+       <div><label for="moedaSim">Moeda de Referência</label> <select id="moedaSim"> <option value="AOA">AOA - Kwanza</option> <option value="BRL">BRL - Real</option> <option value="EUR">EUR - Euro</option> <option value="USD">USD - Dólar</option> <option value="CVE">CVE - Escudo CV</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="XOF">XOF - Franco CFA</option> <option value="MOP">MOP - Pataca</option> <option value="TPE">TPE - Dólar TL</option> </select>
+       </div>
+       <div><label for="tipoInflacao">Tipo de Inflação</label> <select id="tipoInflacao"> <option value="constante">Constante</option> <option value="crescente">Crescente (+0.5%/ano)</option> <option value="decrescente">Decrescente (-0.5%/ano)</option> <option value="volatil">Volátil (±2%)</option> </select>
+       </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="calcular()"><i data-lucide="play" style="width:13px;height:13px"></i> Calcular</button> <button class="btn btn-success" onclick="salvarCenario()"><i data-lucide="save" style="width:13px;height:13px"></i> Guardar Cenário</button> <button class="btn btn-secondary" onclick="limparSimulador()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Limpar</button>
+      </div>
+     </div><!-- Results -->
+     <div id="resultados" style="display:none" class="fade-in">
+      <div class="card green">
+       <div class="card-title">
+        <i data-lucide="bar-chart-3"></i> Resultados da Simulação
+       </div>
+       <div class="grid-3" id="statsGrid">
+        <div style="text-align:center">
+         <div class="stat-value" id="statValorFinal">
+          --
+         </div>
+         <div class="stat-label">
+          Valor Final Nominal
+         </div>
+        </div>
+        <div style="text-align:center">
+         <div class="stat-value" id="statPoderCompra" style="color:#F44336">
+          --
+         </div>
+         <div class="stat-label">
+          Poder de Compra Real
+         </div>
+        </div>
+        <div style="text-align:center">
+         <div class="stat-value" id="statPerda" style="color:#FF9800">
+          --
+         </div>
+         <div class="stat-label">
+          Perda Acumulada
+         </div>
+        </div>
+       </div>
+       <div class="grid-2" style="margin-top:10px">
+        <div style="text-align:center">
+         <div class="stat-value" style="font-size:16px;color:#4CAF50" id="statRendimento">
+          --
+         </div>
+         <div class="stat-label">
+          Rendimento Acumulado
+         </div>
+        </div>
+        <div style="text-align:center">
+         <div class="stat-value" style="font-size:16px;color:#66CFF5" id="statRealReturn">
+          --
+         </div>
+         <div class="stat-label">
+          Retorno Real (Líquido)
+         </div>
+        </div>
+       </div>
+      </div><!-- Chart: Evolução -->
+      <div class="card">
+       <div class="card-title">
+        <i data-lucide="trending-down"></i> Evolução do Poder de Compra
+       </div>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('chartEvolucao')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+        <canvas id="chartEvolucao"></canvas>
+       </div>
+      </div><!-- Chart: Comparativo -->
+      <div class="card gold">
+       <div class="card-title">
+        <i data-lucide="pie-chart"></i> Distribuição do Impacto
+       </div>
+       <div class="chart-container" style="max-height:220px"><button class="chart-export-btn no-export" onclick="exportChartImage('chartDistribuicao')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+        <canvas id="chartDistribuicao"></canvas>
+       </div>
+      </div><!-- Chart: Taxa Anual -->
+      <div class="card orange">
+       <div class="card-title">
+        <i data-lucide="activity"></i> Taxa de Inflação por Ano
+       </div>
+       <div class="chart-container"><button class="chart-export-btn no-export" onclick="exportChartImage('chartTaxaAnual')"><i data-lucide="download" style="width:11px;height:11px"></i> HD</button>
+        <canvas id="chartTaxaAnual"></canvas>
+       </div>
+      </div><!-- Tabela -->
+      <div class="card">
+       <div class="card-title">
+        <i data-lucide="table"></i> Tabela Detalhada
+       </div>
+       <div style="overflow-x:auto">
+        <table id="tabelaResultados" style="width:100%;border-collapse:collapse;font-size:11px">
+         <thead>
+          <tr style="background:#F8F9FA">
+           <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #E0E0E0;font-weight:600;color:#555">Ano</th>
+           <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #E0E0E0;font-weight:600;color:#555">Inflação %</th>
+           <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #E0E0E0;font-weight:600;color:#555">Valor Nominal</th>
+           <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #E0E0E0;font-weight:600;color:#555">Poder Compra</th>
+           <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #E0E0E0;font-weight:600;color:#555">Perda Acum.</th>
+          </tr>
+         </thead>
+         <tbody id="tabelaBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: Moedas -->
+    <div class="tab-panel" id="panel-moedas">
+     <div class="card gold">
+      <div class="card-title">
+       <i data-lucide="coins"></i> Taxas de Câmbio (Base: 1 AOA)
+      </div>
+      <p style="font-size:11px;color:#888;margin-bottom:10px">Configure as taxas de câmbio das moedas CPLP e USD em relação ao Kwanza.</p>
+      <div id="currencyList"></div>
+      <div style="margin-top:10px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="salvarMoedas()"><i data-lucide="save" style="width:12px;height:12px"></i> Guardar</button> <button class="btn btn-secondary btn-sm" onclick="resetMoedas()"><i data-lucide="rotate-ccw" style="width:12px;height:12px"></i> Repor Padrão</button>
+      </div>
+     </div>
+     <div class="card">
+      <div class="card-title">
+       <i data-lucide="repeat"></i> Conversor Rápido
+      </div>
+      <div class="grid-3">
+       <div><label for="convValor">Valor</label> <input type="number" id="convValor" value="1000" min="0">
+       </div>
+       <div><label for="convDe">De</label> <select id="convDe"></select>
+       </div>
+       <div><label for="convPara">Para</label> <select id="convPara"></select>
+       </div>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px"><button class="btn btn-primary btn-sm" onclick="converter()"><i data-lucide="arrow-right" style="width:12px;height:12px"></i> Converter</button> <span id="convResultado" style="font-size:14px;font-weight:600;color:#66CFF5"></span>
+      </div>
+     </div>
+    </div><!-- TAB: Cenários -->
+    <div class="tab-panel" id="panel-cenarios">
+     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <div class="search-box" style="flex:1;min-width:180px"><i data-lucide="search"></i> <input type="text" id="cenarioSearch" placeholder="Filtrar cenários..." oninput="renderCenarios()">
+      </div><button class="btn btn-primary btn-sm" onclick="novoCenarioDoZero()"><i data-lucide="plus" style="width:12px;height:12px"></i> Novo</button>
+     </div>
+     <div id="cenariosList"></div>
+     <div id="emptyScenarios" style="text-align:center;padding:40px 20px;color:#aaa;font-size:13px;display:none"><i data-lucide="inbox" style="width:40px;height:40px;margin-bottom:10px;color:#ddd"></i>
+      <p>Nenhum cenário guardado</p>
+      <p style="font-size:11px;margin-top:4px">Crie uma simulação e guarde-a como cenário</p>
+     </div>
+    </div><!-- TAB: Templates -->
+    <div class="tab-panel" id="panel-templates">
+     <div class="card gold">
+      <div class="card-title">
+       <i data-lucide="lightbulb"></i> Templates de Aprendizagem
+      </div>
+      <p style="font-size:11px;color:#888;margin-bottom:12px">Cenários pré-configurados para compreender o impacto da inflação em diferentes contextos.</p>
+      <div class="grid-2" id="templateGrid"></div>
+     </div>
+     <div class="card">
+      <div class="card-title">
+       <i data-lucide="graduation-cap"></i> Melhores Práticas
+      </div>
+      <div class="info-box"><strong>1. Diversifique investimentos:</strong> Não mantenha todo o capital parado. Procure instrumentos que superem a inflação.
+      </div>
+      <div class="info-box"><strong>2. Acompanhe a inflação real:</strong> A inflação oficial pode diferir da inflação percebida nos bens essenciais.
+      </div>
+      <div class="info-box"><strong>3. Pense a longo prazo:</strong> O efeito composto da inflação é devastador. 10% ao ano significa perder metade do poder de compra em ~7 anos.
+      </div>
+      <div class="info-box"><strong>4. Considere moedas fortes:</strong> Parte da poupança pode ser convertida em moedas mais estáveis como USD ou EUR.
+      </div>
+      <div class="info-box"><strong>5. Use simulações:</strong> Antes de qualquer decisão financeira, simule cenários otimistas e pessimistas.
+      </div>
+     </div>
+    </div><!-- TAB: Ajuda -->
+    <div class="tab-panel" id="panel-ajuda">
+     <div class="card">
+      <div class="card-title">
+       <i data-lucide="info"></i> Sobre a Calculadora
+      </div>
+      <div class="info-box"><strong>IS Calculadora de Inflação</strong> é uma ferramenta essencial para cidadãos dos países da CPLP compreenderem o impacto real da inflação no seu dinheiro. Permite simular cenários, comparar moedas e planear decisões financeiras informadas.
+      </div>
+     </div>
+     <div class="card green">
+      <div class="card-title">
+       <i data-lucide="book-open"></i> Como Usar
+      </div>
+      <div class="info-box"><strong>Passo 1:</strong> No separador <strong>Simulador</strong>, insira o valor inicial, a taxa de inflação estimada e o período desejado.<br><br><strong>Passo 2:</strong> Opcionalmente, defina uma taxa de rendimento (juros) para comparar com a inflação.<br><br><strong>Passo 3:</strong> Clique em <strong>Calcular</strong> para ver os resultados, gráficos e a tabela detalhada.<br><br><strong>Passo 4:</strong> Guarde a simulação como cenário para referência futura ou comparação.<br><br><strong>Passo 5:</strong> Use o separador <strong>Moedas</strong> para converter valores entre moedas CPLP.<br><br><strong>Passo 6:</strong> Exporte os seus dados em JSON, PDF ou imagem.
+      </div>
+     </div>
+     <div class="card gold">
+      <div class="card-title">
+       <i data-lucide="alert-triangle"></i> Importância da Literacia Financeira
+      </div>
+      <div class="info-box">
+       Nos países da CPLP, a inflação pode variar drasticamente. Angola, Moçambique e o Brasil historicamente enfrentam taxas elevadas. Compreender como a inflação corrói o poder de compra é fundamental para:<br><br>
+        • <strong>Proteger poupanças</strong> contra a desvalorização<br>
+        • <strong>Tomar decisões</strong> de investimento informadas<br>
+        • <strong>Negociar salários</strong> que acompanhem o custo de vida<br>
+        • <strong>Planear reformas</strong> e objectivos de longo prazo
+      </div>
+     </div>
+     <div class="card">
+      <div class="card-title">
+       <i data-lucide="shield"></i> Melhores Práticas
+      </div>
+      <div class="info-box">
+       • Simule sempre cenários <strong>optimista, realista e pessimista</strong><br>
+        • Compare o retorno dos seus investimentos com a inflação<br>
+        • Actualize as taxas de câmbio regularmente no separador Moedas<br>
+        • Guarde cenários diferentes para acompanhar a evolução<br>
+        • Exporte relatórios PDF para documentação e partilha
+      </div>
+     </div>
+    </div>
+   </div><!-- end tab-content --> <!-- Toast -->
+   <div class="toast" id="toast"></div><!-- Edit Modal -->
+   <div class="modal-overlay" id="editModal">
+    <div class="modal">
+     <h3 id="editModalTitle">Editar Cenário</h3>
+     <div style="margin-bottom:8px"><label for="editName">Nome</label> <input type="text" id="editName">
+     </div>
+     <div class="grid-2" style="margin-bottom:8px">
+      <div>
+       <label for="editValor">Valor Inicial</label><input type="number" id="editValor">
+      </div>
+      <div>
+       <label for="editTaxa">Taxa Inflação (%)</label><input type="number" id="editTaxa" step="0.1">
+      </div>
+     </div>
+     <div class="grid-2" style="margin-bottom:8px">
+      <div>
+       <label for="editPeriodo">Período (Anos)</label><input type="number" id="editPeriodo">
+      </div>
+      <div>
+       <label for="editJuros">Taxa Juros (%)</label><input type="number" id="editJuros" step="0.1">
+      </div>
+     </div>
+     <div class="grid-2" style="margin-bottom:12px">
+      <div><label for="editMoeda">Moeda</label> <select id="editMoeda"> <option value="AOA">AOA</option><option value="BRL">BRL</option><option value="EUR">EUR</option> <option value="USD">USD</option><option value="CVE">CVE</option><option value="MZN">MZN</option> <option value="STN">STN</option><option value="XOF">XOF</option><option value="MOP">MOP</option><option value="TPE">TPE</option> </select>
+      </div>
+      <div><label for="editTipo">Tipo Inflação</label> <select id="editTipo"> <option value="constante">Constante</option><option value="crescente">Crescente</option> <option value="decrescente">Decrescente</option><option value="volatil">Volátil</option> </select>
+      </div>
+     </div>
+     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button> <button class="btn btn-primary" onclick="saveEditModal()">Guardar</button>
+     </div>
+    </div>
+   </div>
+  </div><!-- end app-wrap -->
+  <script>
+// ====== STATE ======
+let state = {
+  cenarios: [],
+  moedas: {
+    AOA: {nome:'Kwanza',flag:'🇦🇴',taxa:1},
+    BRL: {nome:'Real',flag:'🇧🇷',taxa:0.006},
+    EUR: {nome:'Euro',flag:'🇪🇺',taxa:0.0011},
+    USD: {nome:'Dólar',flag:'🇺🇸',taxa:0.0012},
+    CVE: {nome:'Escudo CV',flag:'🇨🇻',taxa:0.12},
+    MZN: {nome:'Metical',flag:'🇲🇿',taxa:0.076},
+    STN: {nome:'Dobra',flag:'🇸🇹',taxa:0.027},
+    XOF: {nome:'Franco CFA',flag:'🇬🇼',taxa:0.72},
+    MOP: {nome:'Pataca',flag:'🇲🇴',taxa:0.0097},
+    TPE: {nome:'Dólar TL',flag:'🇹🇱',taxa:0.0012}
+  },
+  ultimaSimulacao: null,
+  nextCenarioNum: 1
+};
+let charts = {};
+let editingCenarioId = null;
+
+// ====== PERSISTENCE (localStorage) ======
+function saveState(){
+  try{localStorage.setItem('is_calc_inflacao',JSON.stringify(state))}catch(e){}
+}
+function loadState(){
+  try{
+    const d=localStorage.getItem('is_calc_inflacao');
+    if(d){const p=JSON.parse(d);Object.assign(state,p)}
+  }catch(e){}
+}
+
+// ====== TOAST ======
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type||'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ====== TABS ======
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab)});
+  document.querySelectorAll('.tab-panel').forEach(p=>{p.classList.toggle('active',p.id==='panel-'+tab)});
+  if(tab==='cenarios')renderCenarios();
+  lucide.createIcons();
+}
+
+// ====== FORMAT ======
+function fmt(n,decimals=2){return new Intl.NumberFormat('pt-AO',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(n)}
+function fmtMoeda(n,moeda='AOA'){return fmt(n)+' '+moeda}
+
+// ====== INFLAÇÃO CALC ======
+function getTaxasAnuais(base,tipo,anos){
+  const taxas=[];
+  for(let i=0;i<anos;i++){
+    let t=base;
+    if(tipo==='crescente')t=base+i*0.5;
+    else if(tipo==='decrescente')t=Math.max(0,base-i*0.5);
+    else if(tipo==='volatil')t=base+(Math.random()*4-2);
+    taxas.push(Math.round(t*100)/100);
+  }
+  return taxas;
+}
+
+function calcular(){
+  const vi=parseFloat(document.getElementById('valorInicial').value)||0;
+  const ti=parseFloat(document.getElementById('taxaInflacao').value)||0;
+  const p=parseInt(document.getElementById('periodo').value)||1;
+  const tj=parseFloat(document.getElementById('taxaJuros').value)||0;
+  const moeda=document.getElementById('moedaSim').value;
+  const tipo=document.getElementById('tipoInflacao').value;
+
+  if(vi<=0){showToast('Insira um valor inicial válido','error');return}
+
+  const taxas=getTaxasAnuais(ti,tipo,p);
+  const dados=[];
+  let poderCompra=vi;
+  let valorNominal=vi;
+
+  for(let i=0;i<p;i++){
+    const taxa=taxas[i];
+    poderCompra=poderCompra/(1+taxa/100);
+    valorNominal=valorNominal*(1+tj/100);
+    const perdaAcum=((1-poderCompra/vi)*100);
+    dados.push({ano:i+1,taxa,valorNominal:Math.round(valorNominal*100)/100,poderCompra:Math.round(poderCompra*100)/100,perdaAcum:Math.round(perdaAcum*100)/100});
+  }
+
+  const ultimo=dados[dados.length-1];
+  const rendAcum=valorNominal-vi;
+  const retornoReal=valorNominal-vi-(vi-poderCompra);
+
+  document.getElementById('statValorFinal').textContent=fmtMoeda(ultimo.valorNominal,moeda);
+  document.getElementById('statPoderCompra').textContent=fmtMoeda(ultimo.poderCompra,moeda);
+  document.getElementById('statPerda').textContent='-'+fmt(ultimo.perdaAcum)+'%';
+  document.getElementById('statRendimento').textContent=fmtMoeda(rendAcum,moeda);
+  document.getElementById('statRealReturn').textContent=fmtMoeda(retornoReal,moeda);
+
+  document.getElementById('resultados').style.display='block';
+
+  renderCharts(dados,moeda,vi);
+  renderTabela(dados,moeda);
+
+  state.ultimaSimulacao={
+    titulo:document.getElementById('simTitle').value||'Sem título',
+    valorInicial:vi,taxaInflacao:ti,periodo:p,taxaJuros:tj,moeda,tipo,dados,
+    dataCriacao:new Date().toISOString()
+  };
+  saveState();
+  showToast('Simulação calculada com sucesso','success');
+}
+
+// ====== CHARTS ======
+function destroyChart(name){if(charts[name]){charts[name].destroy();delete charts[name]}}
+
+function renderCharts(dados,moeda,vi){
+  const labels=dados.map(d=>'Ano '+d.ano);
+
+  // Evolução
+  destroyChart('evolucao');
+  const ctx1=document.getElementById('chartEvolucao').getContext('2d');
+  charts.evolucao=new Chart(ctx1,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Valor Nominal ('+moeda+')',data:dados.map(d=>d.valorNominal),borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,.1)',fill:true,tension:.3,pointRadius:3},
+        {label:'Poder de Compra ('+moeda+')',data:dados.map(d=>d.poderCompra),borderColor:'#F44336',backgroundColor:'rgba(244,67,54,.1)',fill:true,tension:.3,pointRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:10}}}},scales:{y:{beginAtZero:false,ticks:{font:{family:'Inter',size:10},callback:v=>fmt(v,0)}},x:{ticks:{font:{family:'Inter',size:10}}}}}
+  });
+
+  // Distribuição (Donut)
+  destroyChart('distribuicao');
+  const ultimo=dados[dados.length-1];
+  const mantido=ultimo.poderCompra;
+  const perdido=vi-ultimo.poderCompra;
+  const totalD=mantido+perdido;
+  const ctx2=document.getElementById('chartDistribuicao').getContext('2d');
+  charts.distribuicao=new Chart(ctx2,{
+    type:'doughnut',
+    data:{
+      labels:[`Poder Mantido (${fmt(mantido/totalD*100,1)}%)`,`Perda Inflacionária (${fmt(perdido/totalD*100,1)}%)`],
+      datasets:[{data:[mantido,perdido],backgroundColor:['#4CAF50','#F44336'],borderWidth:2}]
+    },
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:10}}}}}
+  });
+
+  // Taxa Anual
+  destroyChart('taxaAnual');
+  const ctx3=document.getElementById('chartTaxaAnual').getContext('2d');
+  charts.taxaAnual=new Chart(ctx3,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{label:'Taxa de Inflação (%)',data:dados.map(d=>d.taxa),backgroundColor:dados.map(d=>d.taxa>15?'#F44336':d.taxa>10?'#FF9800':'#FFC107'),borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{family:'Inter',size:10},callback:v=>v+'%'}},x:{ticks:{font:{family:'Inter',size:10}}}}}
+  });
+
+  setTimeout(()=>lucide.createIcons(),100);
+}
+
+function renderTabela(dados,moeda){
+  const tbody=document.getElementById('tabelaBody');
+  tbody.innerHTML=dados.map(d=>`
+    <tr style="border-bottom:1px solid #f0f0f0">
+      <td style="padding:6px 8px;font-weight:500">${d.ano}</td>
+      <td style="padding:6px 8px;text-align:right"><span class="badge ${d.taxa>15?'badge-red':d.taxa>10?'badge-orange':'badge-blue'}">${fmt(d.taxa,1)}%</span></td>
+      <td style="padding:6px 8px;text-align:right">${fmtMoeda(d.valorNominal,moeda)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#F44336">${fmtMoeda(d.poderCompra,moeda)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#FF9800">-${fmt(d.perdaAcum,1)}%</td>
+    </tr>
+  `).join('');
+}
+
+// ====== CENÁRIOS ======
+function salvarCenario(){
+  if(!state.ultimaSimulacao){showToast('Calcule primeiro uma simulação','error');return}
+  const nome=state.ultimaSimulacao.titulo||('Cenário '+state.nextCenarioNum);
+  const cenario={
+    id:Date.now().toString(),
+    nome:nome.startsWith('Cenário')?nome:'Cenário '+state.nextCenarioNum+' - '+nome,
+    ...state.ultimaSimulacao,
+    dataCriacao:new Date().toISOString()
+  };
+  if(!cenario.nome.startsWith('Cenário'))cenario.nome='Cenário '+state.nextCenarioNum+' - '+cenario.nome;
+  state.cenarios.push(cenario);
+  state.nextCenarioNum++;
+  saveState();
+  showToast('Cenário guardado','success');
+}
+
+function renderCenarios(){
+  const filter=(document.getElementById('cenarioSearch')?.value||'').toLowerCase();
+  const list=document.getElementById('cenariosList');
+  const empty=document.getElementById('emptyScenarios');
+  const filtered=state.cenarios.filter(c=>c.nome.toLowerCase().includes(filter));
+
+  if(filtered.length===0){
+    list.innerHTML='';empty.style.display='block';
+    lucide.createIcons();return;
+  }
+  empty.style.display='none';
+  list.innerHTML=filtered.map(c=>`
+    <div class="scenario-item fade-in" data-id="${c.id}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nome}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px">${fmtMoeda(c.valorInicial,c.moeda)} · ${c.taxaInflacao}% · ${c.periodo} anos · ${new Date(c.dataCriacao).toLocaleDateString('pt-PT')}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-xs btn-primary" onclick="carregarCenario('${c.id}')" title="Carregar"><i data-lucide="play" style="width:11px;height:11px"></i></button>
+        <button class="btn btn-xs btn-secondary" onclick="editarCenario('${c.id}')" title="Editar"><i data-lucide="edit" style="width:11px;height:11px"></i></button>
+        <button class="btn btn-xs btn-secondary" onclick="clonarCenario('${c.id}')" title="Clonar"><i data-lucide="copy" style="width:11px;height:11px"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="confirmarRemover('${c.id}',this)" title="Remover"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function carregarCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);if(!c)return;
+  document.getElementById('simTitle').value=c.titulo||c.nome;
+  document.getElementById('valorInicial').value=c.valorInicial;
+  document.getElementById('taxaInflacao').value=c.taxaInflacao;
+  document.getElementById('periodo').value=c.periodo;
+  document.getElementById('taxaJuros').value=c.taxaJuros||0;
+  document.getElementById('moedaSim').value=c.moeda||'AOA';
+  document.getElementById('tipoInflacao').value=c.tipo||'constante';
+  switchTab('simulador');
+  calcular();
+  showToast('Cenário carregado','success');
+}
+
+function editarCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);if(!c)return;
+  editingCenarioId=id;
+  document.getElementById('editModalTitle').textContent='Editar Cenário';
+  document.getElementById('editName').value=c.nome;
+  document.getElementById('editValor').value=c.valorInicial;
+  document.getElementById('editTaxa').value=c.taxaInflacao;
+  document.getElementById('editPeriodo').value=c.periodo;
+  document.getElementById('editJuros').value=c.taxaJuros||0;
+  document.getElementById('editMoeda').value=c.moeda||'AOA';
+  document.getElementById('editTipo').value=c.tipo||'constante';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal(){document.getElementById('editModal').classList.remove('show');editingCenarioId=null}
+
+function saveEditModal(){
+  if(!editingCenarioId)return;
+  const c=state.cenarios.find(x=>x.id===editingCenarioId);if(!c)return;
+  c.nome=document.getElementById('editName').value;
+  c.valorInicial=parseFloat(document.getElementById('editValor').value);
+  c.taxaInflacao=parseFloat(document.getElementById('editTaxa').value);
+  c.periodo=parseInt(document.getElementById('editPeriodo').value);
+  c.taxaJuros=parseFloat(document.getElementById('editJuros').value);
+  c.moeda=document.getElementById('editMoeda').value;
+  c.tipo=document.getElementById('editTipo').value;
+  saveState();closeEditModal();renderCenarios();
+  showToast('Cenário actualizado','success');
+}
+
+function clonarCenario(id){
+  const c=state.cenarios.find(x=>x.id===id);if(!c)return;
+  const clone={...c,id:Date.now().toString(),nome:'Cenário '+state.nextCenarioNum+' (cópia)',dataCriacao:new Date().toISOString()};
+  state.cenarios.push(clone);state.nextCenarioNum++;
+  saveState();renderCenarios();
+  showToast('Cenário clonado','success');
+}
+
+function confirmarRemover(id,btn){
+  const parent=btn.closest('.scenario-item');
+  if(parent.querySelector('.confirm-inline'))return;
+  const div=document.createElement('div');
+  div.className='confirm-inline';
+  div.innerHTML=`<span style="font-size:10px;color:#F44336">Confirmar?</span>
+    <button class="btn btn-xs btn-danger" onclick="removerCenario('${id}')">Sim</button>
+    <button class="btn btn-xs btn-secondary" onclick="this.parentElement.remove()">Não</button>`;
+  parent.appendChild(div);
+}
+
+function removerCenario(id){
+  state.cenarios=state.cenarios.filter(x=>x.id!==id);
+  saveState();renderCenarios();
+  showToast('Cenário removido','success');
+}
+
+function novoCenarioDoZero(){
+  switchTab('simulador');
+  limparSimulador();
+  showToast('Crie uma nova simulação','');
+}
+
+// ====== MOEDAS ======
+function renderMoedas(){
+  const list=document.getElementById('currencyList');
+  list.innerHTML=Object.entries(state.moedas).map(([code,m])=>`
+    <div class="currency-row">
+      <span class="currency-flag">${m.flag}</span>
+      <span style="font-size:11px;font-weight:600;min-width:36px">${code}</span>
+      <span style="font-size:10px;color:#888;min-width:70px">${m.nome}</span>
+      <input type="number" step="0.0001" value="${m.taxa}" data-moeda="${code}" style="text-align:right" ${code==='AOA'?'disabled':''}>
+    </div>
+  `).join('');
+
+  // Populate converter selects
+  const opts=Object.entries(state.moedas).map(([c,m])=>`<option value="${c}">${m.flag} ${c}</option>`).join('');
+  document.getElementById('convDe').innerHTML=opts;
+  document.getElementById('convPara').innerHTML=opts;
+  document.getElementById('convPara').value='USD';
+}
+
+function salvarMoedas(){
+  document.querySelectorAll('.currency-row input[data-moeda]').forEach(inp=>{
+    const code=inp.dataset.moeda;
+    if(code!=='AOA')state.moedas[code].taxa=parseFloat(inp.value)||0;
+  });
+  saveState();showToast('Taxas guardadas','success');
+}
+
+function resetMoedas(){
+  state.moedas={AOA:{nome:'Kwanza',flag:'🇦🇴',taxa:1},BRL:{nome:'Real',flag:'🇧🇷',taxa:0.006},EUR:{nome:'Euro',flag:'🇪🇺',taxa:0.0011},USD:{nome:'Dólar',flag:'🇺🇸',taxa:0.0012},CVE:{nome:'Escudo CV',flag:'🇨🇻',taxa:0.12},MZN:{nome:'Metical',flag:'🇲🇿',taxa:0.076},STN:{nome:'Dobra',flag:'🇸🇹',taxa:0.027},XOF:{nome:'Franco CFA',flag:'🇬🇼',taxa:0.72},MOP:{nome:'Pataca',flag:'🇲🇴',taxa:0.0097},TPE:{nome:'Dólar TL',flag:'🇹🇱',taxa:0.0012}};
+  saveState();renderMoedas();showToast('Taxas repostas','success');
+}
+
+function converter(){
+  const v=parseFloat(document.getElementById('convValor').value)||0;
+  const de=document.getElementById('convDe').value;
+  const para=document.getElementById('convPara').value;
+  const taxaDe=state.moedas[de].taxa;
+  const taxaPara=state.moedas[para].taxa;
+  if(taxaDe===0){document.getElementById('convResultado').textContent='Taxa inválida';return}
+  const aoaVal=v/taxaDe;
+  const result=aoaVal*taxaPara;
+  document.getElementById('convResultado').textContent=fmt(v)+' '+de+' = '+fmt(result,4)+' '+para;
+}
+
+// ====== TEMPLATES ======
+function renderTemplates(){
+  const templates=[
+    {nome:'Inflação Moderada',desc:'Cenário europeu típico: 2% ao ano durante 10 anos sobre 50.000 AOA.',params:{valorInicial:50000,taxaInflacao:2,periodo:10,taxaJuros:0,moeda:'AOA',tipo:'constante'}},
+    {nome:'Hiperinflação',desc:'Cenário extremo: 50% ao ano durante 5 anos. Impacto devastador.',params:{valorInicial:100000,taxaInflacao:50,periodo:5,taxaJuros:0,moeda:'AOA',tipo:'constante'}},
+    {nome:'Poupança vs Inflação',desc:'Compare 100.000 AOA com juros de 8% contra inflação de 13%.',params:{valorInicial:100000,taxaInflacao:13,periodo:10,taxaJuros:8,moeda:'AOA',tipo:'constante'}},
+    {nome:'Inflação Crescente',desc:'Cenário pessimista: inflação a subir 0.5% por ano a partir de 10%.',params:{valorInicial:200000,taxaInflacao:10,periodo:8,taxaJuros:0,moeda:'AOA',tipo:'crescente'}},
+    {nome:'Investidor em EUR',desc:'5.000 EUR com inflação europeia de 3% durante 15 anos.',params:{valorInicial:5000,taxaInflacao:3,periodo:15,taxaJuros:1,moeda:'EUR',tipo:'constante'}},
+    {nome:'Salário em BRL',desc:'Impacto de 6% inflação anual num salário de 5.000 BRL ao longo de 5 anos.',params:{valorInicial:5000,taxaInflacao:6,periodo:5,taxaJuros:0,moeda:'BRL',tipo:'volatil'}}
+  ];
+  document.getElementById('templateGrid').innerHTML=templates.map((t,i)=>`
+    <div class="template-card" onclick="aplicarTemplate(${i})">
+      <h4>${t.nome}</h4>
+      <p>${t.desc}</p>
+    </div>
+  `).join('');
+  window._templates=templates;
+}
+
+function aplicarTemplate(i){
+  const t=window._templates[i];
+  document.getElementById('simTitle').value=t.nome;
+  document.getElementById('valorInicial').value=t.params.valorInicial;
+  document.getElementById('taxaInflacao').value=t.params.taxaInflacao;
+  document.getElementById('periodo').value=t.params.periodo;
+  document.getElementById('taxaJuros').value=t.params.taxaJuros;
+  document.getElementById('moedaSim').value=t.params.moeda;
+  document.getElementById('tipoInflacao').value=t.params.tipo;
+  switchTab('simulador');
+  calcular();
+  showToast('Template aplicado','success');
+}
+
+// ====== LIMPAR ======
+function limparSimulador(){
+  document.getElementById('simTitle').value='';
+  document.getElementById('valorInicial').value='100000';
+  document.getElementById('taxaInflacao').value='13.5';
+  document.getElementById('periodo').value='5';
+  document.getElementById('taxaJuros').value='0';
+  document.getElementById('moedaSim').value='AOA';
+  document.getElementById('tipoInflacao').value='constante';
+  document.getElementById('resultados').style.display='none';
+  state.ultimaSimulacao=null;
+}
+
+// ====== EXPORTS ======
+async function exportImage(){
+  showToast('A gerar imagem...','');
+  const el=document.getElementById('mainContent');
+  el.classList.add('exportable-area');
+  try{
+    const canvas=await html2canvas(el,{scale:2,backgroundColor:'#F8F9FA',useCORS:true});
+    el.classList.remove('exportable-area');
+    const link=document.createElement('a');
+    link.download='IS_Calculadora_Inflacao_'+new Date().toISOString().slice(0,10)+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('Imagem exportada','success');
+  }catch(e){el.classList.remove('exportable-area');showToast('Erro ao exportar','error')}
+}
+
+async function exportChartImage(canvasId){
+  const c=document.getElementById(canvasId);
+  if(!c)return;
+  try{
+    const tempCanvas=document.createElement('canvas');
+    const scale=3;
+    tempCanvas.width=c.width*scale;
+    tempCanvas.height=c.height*scale;
+    const ctx=tempCanvas.getContext('2d');
+    ctx.scale(scale,scale);
+    ctx.fillStyle='#fff';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(c,0,0,c.width,c.height);
+    const link=document.createElement('a');
+    link.download=canvasId+'_HD_'+new Date().toISOString().slice(0,10)+'.png';
+    link.href=tempCanvas.toDataURL('image/png',1.0);
+    link.click();
+    showToast('Gráfico exportado em HD','success');
+  }catch(e){showToast('Erro ao exportar gráfico','error')}
+}
+
+async function exportPDF(){
+  showToast('A gerar PDF...','');
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const pw=doc.internal.pageSize.getWidth();
+    const ph=doc.internal.pageSize.getHeight();
+    const margin=15;
+    const dataStr=new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+    const footerText='Gerado por IS Calculadora Inflação · '+dataStr+' · www.investesuite.com';
+
+    function addHeader(pageNum,totalPages){
+      doc.setFillColor(30,136,229);
+      doc.rect(0,0,pw,18,  'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.text('IS Calculadora Inflação',margin,12);
+      doc.setFontSize(7);
+      doc.text('Relatório de Simulação',pw-margin,12,{align:'right'});
+    }
+    function addFooter(pageNum,totalPages){
+      doc.setDrawColor(200);
+      doc.line(margin,ph-12,pw-margin,ph-12);
+      doc.setTextColor(150);
+      doc.setFontSize(7);
+      doc.setFont('helvetica','normal');
+      doc.text(footerText,margin,ph-7);
+      doc.text('Página '+pageNum+' de '+totalPages,pw-margin,ph-7,{align:'right'});
+    }
+
+    // Page 1
+    addHeader(1,2);
+    let y=26;
+    doc.setTextColor(51);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.text(state.ultimaSimulacao?.titulo||'Simulação',margin,y);
+    y+=8;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text('Data: '+dataStr,margin,y);y+=10;
+
+    if(state.ultimaSimulacao){
+      const s=state.ultimaSimulacao;
+      doc.setTextColor(51);doc.setFontSize(10);doc.setFont('helvetica','bold');
+      doc.text('Parâmetros',margin,y);y+=6;
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80);
+      const params=[
+        'Valor Inicial: '+fmtMoeda(s.valorInicial,s.moeda),
+        'Taxa de Inflação: '+s.taxaInflacao+'% ('+s.tipo+')',
+        'Período: '+s.periodo+' anos',
+        'Taxa de Juros: '+s.taxaJuros+'%',
+        'Moeda: '+s.moeda
+      ];
+      params.forEach(p=>{doc.text('• '+p,margin+2,y);y+=5});
+      y+=6;
+
+      // Results
+      if(s.dados&&s.dados.length){
+        const ult=s.dados[s.dados.length-1];
+        doc.setTextColor(51);doc.setFont('helvetica','bold');doc.setFontSize(10);
+        doc.text('Resultados',margin,y);y+=6;
+        doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80);
+        doc.text('• Poder de Compra Final: '+fmtMoeda(ult.poderCompra,s.moeda),margin+2,y);y+=5;
+        doc.text('• Perda Acumulada: -'+fmt(ult.perdaAcum,1)+'%',margin+2,y);y+=5;
+        doc.text('• Valor Nominal Final: '+fmtMoeda(ult.valorNominal,s.moeda),margin+2,y);y+=10;
+
+        // Charts small
+        const chartIds=['chartEvolucao','chartDistribuicao','chartTaxaAnual'];
+        for(const cid of chartIds){
+          const canvas=document.getElementById(cid);
+          if(!canvas)continue;
+          try{
+            const imgData=canvas.toDataURL('image/png');
+            const cw=pw-margin*2;
+            const ch=50;
+            if(y+ch+10>ph-20){doc.addPage();addHeader(2,2);y=26}
+            doc.addImage(imgData,'PNG',margin,y,cw,ch);
+            y+=ch+8;
+          }catch(e){}
+        }
+
+        // Table
+        if(y+40>ph-20){doc.addPage();addHeader(2,2);y=26}
+        doc.setTextColor(51);doc.setFont('helvetica','bold');doc.setFontSize(10);
+        doc.text('Tabela Detalhada',margin,y);y+=6;
+        doc.setFontSize(7);doc.setFont('helvetica','normal');
+        const cols=['Ano','Inflação %','Valor Nominal','Poder Compra','Perda Acum.'];
+        const colW=[15,22,40,40,30];
+        doc.setFillColor(248,249,250);
+        doc.rect(margin,y-3,pw-margin*2,6,'F');
+        doc.setTextColor(100);doc.setFont('helvetica','bold');
+        let cx=margin;
+        cols.forEach((c,i)=>{doc.text(c,cx+1,y);cx+=colW[i]});
+        y+=5;doc.setFont('helvetica','normal');doc.setTextColor(80);
+        s.dados.forEach(d=>{
+          if(y>ph-20){doc.addPage();addHeader(2,2);y=26}
+          cx=margin;
+          const row=[d.ano.toString(),fmt(d.taxa,1)+'%',fmtMoeda(d.valorNominal,s.moeda),fmtMoeda(d.poderCompra,s.moeda),'-'+fmt(d.perdaAcum,1)+'%'];
+          row.forEach((v,i)=>{doc.text(v,cx+1,y);cx+=colW[i]});
+          y+=4;
+        });
+      }
+    }
+
+    const totalPages=doc.internal.getNumberOfPages();
+    for(let i=1;i<=totalPages;i++){
+      doc.setPage(i);
+      addFooter(i,totalPages);
+    }
+
+    doc.save('IS_Calculadora_Inflacao_'+new Date().toISOString().slice(0,10)+'.pdf');
+    showToast('PDF exportado','success');
+  }catch(e){showToast('Erro ao gerar PDF','error');console.error(e)}
+}
+
+function exportJSON(){
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const link=document.createElement('a');
+  link.download='IS_Calculadora_Inflacao_'+new Date().toISOString().slice(0,10)+'.json';
+  link.href=URL.createObjectURL(blob);
+  link.click();
+  showToast('JSON exportado','success');
+}
+
+function importJSON(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.moedas)state.moedas=data.moedas;
+      if(data.cenarios)state.cenarios=data.cenarios;
+      if(data.nextCenarioNum)state.nextCenarioNum=data.nextCenarioNum;
+      saveState();
+      renderMoedas();renderCenarios();
+      showToast('Dados importados com sucesso','success');
+    }catch(err){showToast('Ficheiro inválido','error')}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+// ====== ELEMENT SDK ======
+const defaultConfig={
+  app_title:'IS Calculadora Inflação',
+  app_description:'Simulador de impacto inflacionário para países CPLP',
+  background_color:'#F8F9FA',
+  surface_color:'#FFFFFF',
+  text_color:'#333333',
+  primary_color:'#66CFF5',
+  accent_color:'#FFC107',
+  font_family:'Inter',
+  font_size:13
+};
+
+function applyConfig(config){
+  const bg=config.background_color||defaultConfig.background_color;
+  const sf=config.surface_color||defaultConfig.surface_color;
+  const tc=config.text_color||defaultConfig.text_color;
+  const pc=config.primary_color||defaultConfig.primary_color;
+  const ac=config.accent_color||defaultConfig.accent_color;
+  const ff=config.font_family||defaultConfig.font_family;
+  const fs=config.font_size||defaultConfig.font_size;
+
+  document.body.style.background=bg;
+  document.body.style.fontFamily=ff+', Inter, sans-serif';
+  document.body.style.color=tc;
+
+  document.querySelectorAll('.card').forEach(c=>{c.style.backgroundColor=sf;c.style.color=tc});
+  document.querySelectorAll('.app-header').forEach(h=>{h.style.backgroundColor=sf});
+  document.querySelectorAll('.tab-bar').forEach(t=>{t.style.backgroundColor=sf});
+  document.querySelectorAll('.app-header h1').forEach(h=>{h.style.color=pc});
+  document.querySelectorAll('.tab-btn.active').forEach(b=>{b.style.color=pc;b.style.borderBottomColor=pc});
+  document.querySelectorAll('.btn-primary').forEach(b=>{b.style.backgroundColor=pc});
+
+  const title=document.getElementById('appTitle');
+  const desc=document.getElementById('appDesc');
+  if(title)title.textContent=config.app_title||defaultConfig.app_title;
+  if(desc)desc.textContent=config.app_description||defaultConfig.app_description;
+
+  document.querySelectorAll('.card-title,.stat-value,.badge-blue,label,h1,h2,h3,h4,p,span,td,th').forEach(el=>{
+    el.style.fontFamily=ff+', Inter, sans-serif';
+  });
+
+  const base=fs;
+  document.querySelectorAll('.card-title').forEach(e=>e.style.fontSize=base+'px');
+  document.querySelectorAll('.stat-value').forEach(e=>e.style.fontSize=(base*1.7)+'px');
+  document.querySelectorAll('.stat-label').forEach(e=>e.style.fontSize=(base*0.85)+'px');
+}
+
+if(window.elementSdk){
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange:async(config)=>applyConfig(config),
+    mapToCapabilities:(config)=>({
+      recolorables:[
+        {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+        {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+        {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+        {get:()=>config.primary_color||defaultConfig.primary_color,set:v=>{config.primary_color=v;window.elementSdk.setConfig({primary_color:v})}},
+        {get:()=>config.accent_color||defaultConfig.accent_color,set:v=>{config.accent_color=v;window.elementSdk.setConfig({accent_color:v})}}
+      ],
+      borderables:[],
+      fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+      fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+    }),
+    mapToEditPanelValues:(config)=>new Map([
+      ['app_title',config.app_title||defaultConfig.app_title],
+      ['app_description',config.app_description||defaultConfig.app_description]
+    ])
+  });
+}
+
+// ====== INIT ======
+loadState();
+renderMoedas();
+renderTemplates();
+renderCenarios();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddb3050672f1b23',t:'MTc3Mzc0MjAyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

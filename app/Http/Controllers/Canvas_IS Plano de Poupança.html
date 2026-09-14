@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Plano de Poupança</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'] },
+          colors: {
+            primary: '#66CFF5',
+            secondary: '#F8F9FA',
+            border: '#E0E0E0',
+            gold: '#FFC107',
+            success: '#4CAF50',
+            error: '#F44336',
+            warning: '#FF9800'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-2px); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; font-weight: 600; }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .accordion-content.open { max-height: 2000px; }
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .tooltip { position: relative; }
+    .tooltip-text { visibility: hidden; position: absolute; z-index: 50; background: #333; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; }
+    .tooltip:hover .tooltip-text { visibility: visible; }
+    .chart-bar { transition: all 0.3s ease; }
+    .chart-bar:hover { opacity: 0.8; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade { animation: fadeIn 0.3s ease; }
+    .loading-spinner { border: 3px solid #E0E0E0; border-top: 3px solid #66CFF5; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full bg-secondary">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="bg-primary text-white p-4 shadow-lg sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h1 id="app-title" class="text-xl font-bold" style="display: none; display: none;">IS Plano de Poupança</h1>
+     </div>
+     <div class="flex items-center gap-2"><select id="currency-select" class="bg-white/20 text-white border border-white/30 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/50"> <option value="AOA">AOA - Kwanza</option> <option value="BRL">BRL - Real</option> <option value="EUR">EUR - Euro</option> <option value="MZN">MZN - Metical</option> <option value="STN">STN - Dobra</option> <option value="CVE">CVE - Escudo</option> <option value="USD">USD - Dólar</option> </select> <button id="currency-settings-btn" class="p-2 hover:bg-white/20 rounded-lg transition-all" title="Configurar Moedas">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+       </svg></button>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-border sticky top-16 z-30">
+    <div class="max-w-6xl mx-auto flex overflow-x-auto"><button class="tab-btn tab-active px-4 py-3 text-sm whitespace-nowrap" data-tab="simulator"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Simulador </span> </button> <button class="tab-btn px-4 py-3 text-sm text-gray-600 whitespace-nowrap hover:text-primary transition-all" data-tab="scenarios"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+       </svg> Cenários </span> </button> <button class="tab-btn px-4 py-3 text-sm text-gray-600 whitespace-nowrap hover:text-primary transition-all" data-tab="examples"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+       </svg> Exemplos </span> </button> <button class="tab-btn px-4 py-3 text-sm text-gray-600 whitespace-nowrap hover:text-primary transition-all" data-tab="education"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Educação </span> </button> <button class="tab-btn px-4 py-3 text-sm text-gray-600 whitespace-nowrap hover:text-primary transition-all" data-tab="about"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Sobre </span> </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-6xl mx-auto p-4"><!-- Simulator Tab -->
+    <div id="tab-simulator" class="tab-content animate-fade">
+     <div class="grid lg:grid-cols-2 gap-6"><!-- Input Section -->
+      <div class="space-y-4">
+       <div class="bg-white rounded-lg p-5 shadow-sm border border-border card-hover">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+         </svg> Dados de Entrada</h2>
+        <div class="space-y-4">
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Renda Mensal Líquida</label>
+          <div class="relative"><span id="currency-symbol" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Kz</span> <input type="number" id="income" value="500000" min="0" step="1000" class="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+          </div>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Despesas Básicas (%)</label>
+          <div class="flex items-center gap-3"><input type="range" id="basic-expenses-range" min="0" max="100" value="50" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-error"> <input type="number" id="basic-expenses" value="50" min="0" max="100" class="w-20 px-3 py-2 border border-border rounded-lg text-center focus:ring-2 focus:ring-primary/30 focus:border-primary"> <span class="text-gray-500">%</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Necessidades: alimentação, saúde, água, luz, transporte</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Estilo de Vida (%)</label>
+          <div class="flex items-center gap-3"><input type="range" id="lifestyle-range" min="0" max="100" value="30" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-warning"> <input type="number" id="lifestyle" value="30" min="0" max="100" class="w-20 px-3 py-2 border border-border rounded-lg text-center focus:ring-2 focus:ring-primary/30 focus:border-primary"> <span class="text-gray-500">%</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Desejos: lazer, restaurantes, viagens, luxos</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Investir (%)</label>
+          <div class="flex items-center gap-3">
+           <div class="flex-1 h-2 bg-success/30 rounded-lg relative">
+            <div id="invest-bar" class="h-full bg-success rounded-lg transition-all" style="width: 20%"></div>
+           </div><span id="invest-percent" class="w-20 px-3 py-2 bg-success/10 border border-success/30 rounded-lg text-center text-success font-semibold">20%</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Calculado automaticamente (100% - despesas - estilo)</p>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Rentabilidade Mensal (% acima da inflação)</label>
+          <div class="flex items-center gap-3"><input type="range" id="return-rate-range" min="0" max="5" value="0.5" step="0.1" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"> <input type="number" id="return-rate" value="0.5" min="0" max="10" step="0.1" class="w-20 px-3 py-2 border border-border rounded-lg text-center focus:ring-2 focus:ring-primary/30 focus:border-primary"> <span class="text-gray-500">%</span>
+          </div>
+         </div>
+         <div><label class="block text-sm font-medium text-gray-700 mb-1">Objetivo de Poupança</label>
+          <div class="relative"><span id="currency-symbol-goal" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Kz</span> <input type="number" id="goal" value="10000000" min="0" step="100000" class="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+          </div>
+         </div>
+        </div>
+       </div><!-- Budget Summary -->
+       <div class="bg-white rounded-lg p-5 shadow-sm border border-border card-hover">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg> Resumo do Orçamento</h2>
+        <div class="space-y-3">
+         <div class="flex justify-between items-center p-3 bg-error/10 rounded-lg"><span class="text-sm font-medium text-gray-700">Despesas Básicas</span> <span id="basic-value" class="font-semibold text-error">Kz 250.000</span>
+         </div>
+         <div class="flex justify-between items-center p-3 bg-warning/10 rounded-lg"><span class="text-sm font-medium text-gray-700">Estilo de Vida</span> <span id="lifestyle-value" class="font-semibold text-warning">Kz 150.000</span>
+         </div>
+         <div class="flex justify-between items-center p-3 bg-success/10 rounded-lg"><span class="text-sm font-medium text-gray-700">Investir</span> <span id="invest-value" class="font-semibold text-success">Kz 100.000</span>
+         </div>
+         <div class="flex justify-between items-center p-3 bg-primary/10 rounded-lg border-2 border-primary/30"><span class="text-sm font-bold text-gray-800">Renda Total</span> <span id="total-value" class="font-bold text-primary">Kz 500.000</span>
+         </div>
+        </div><!-- Visual Bar -->
+        <div class="mt-4 h-6 rounded-full overflow-hidden flex" id="budget-bar">
+         <div class="bg-error h-full transition-all" style="width: 50%"></div>
+         <div class="bg-warning h-full transition-all" style="width: 30%"></div>
+         <div class="bg-success h-full transition-all" style="width: 20%"></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2"><span>Básicas: 50%</span> <span>Estilo: 30%</span> <span>Investir: 20%</span>
+        </div>
+       </div><!-- Action Buttons -->
+       <div class="flex flex-wrap gap-3"><button id="save-scenario-btn" class="flex-1 min-w-[140px] bg-primary text-white px-4 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário </button> <button id="export-pdf-btn" class="flex-1 min-w-[140px] bg-error text-white px-4 py-2.5 rounded-lg font-medium hover:bg-error/90 transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg> Exportar PDF </button> <button id="export-json-btn" class="flex-1 min-w-[140px] bg-success text-white px-4 py-2.5 rounded-lg font-medium hover:bg-success/90 transition-all flex items-center justify-center gap-2">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+         </svg> Exportar JSON </button> <label class="flex-1 min-w-[140px] bg-warning text-white px-4 py-2.5 rounded-lg font-medium hover:bg-warning/90 transition-all flex items-center justify-center gap-2 cursor-pointer">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+         </svg> Importar JSON <input type="file" id="import-json" accept=".json" class="hidden"> </label>
+       </div>
+      </div><!-- Results Section -->
+      <div class="space-y-4"><!-- Simulation Results -->
+       <div class="bg-white rounded-lg p-5 shadow-sm border border-border card-hover">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg> Resultados da Simulação</h2>
+        <div id="results-content">
+         <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-lg">
+           <p class="text-xs text-gray-600 mb-1">Total Poupado</p>
+           <p id="result-saved" class="text-lg font-bold text-primary">Kz 0</p>
+          </div>
+          <div class="bg-gradient-to-br from-success/10 to-success/5 p-4 rounded-lg">
+           <p class="text-xs text-gray-600 mb-1">Ganho de Juros</p>
+           <p id="result-interest" class="text-lg font-bold text-success">Kz 0</p>
+          </div>
+          <div class="bg-gradient-to-br from-warning/10 to-warning/5 p-4 rounded-lg">
+           <p class="text-xs text-gray-600 mb-1">Meses de Espera</p>
+           <p id="result-months" class="text-lg font-bold text-warning">0</p>
+          </div>
+          <div class="bg-gradient-to-br from-error/10 to-error/5 p-4 rounded-lg">
+           <p class="text-xs text-gray-600 mb-1">Anos de Espera</p>
+           <p id="result-years" class="text-lg font-bold text-error">0</p>
+          </div>
+         </div>
+         <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-700 mb-2">Composição do Objetivo:</p>
+          <div class="flex h-4 rounded-full overflow-hidden">
+           <div id="composition-savings" class="bg-primary h-full transition-all" style="width: 0%"></div>
+           <div id="composition-interest" class="bg-success h-full transition-all" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between text-xs mt-2"><span class="text-primary">Poupança: <span id="savings-percent">0%</span></span> <span class="text-success">Juros: <span id="interest-percent">0%</span></span>
+          </div>
+         </div><!-- Insights -->
+         <div id="insights" class="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+          <h3 class="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg> Insights em Tempo Real</h3>
+          <p id="insight-text" class="text-sm text-gray-700">Configure os valores para ver os insights.</p>
+         </div>
+        </div>
+        <div id="results-error" class="hidden p-4 bg-error/10 border border-error/30 rounded-lg">
+         <p class="text-sm text-error font-medium flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg><span id="error-message">Erro na simulação</span></p>
+        </div>
+       </div><!-- Charts -->
+       <div class="bg-white rounded-lg p-5 shadow-sm border border-border card-hover">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+         </svg> Gráficos Dinâmicos</h2>
+        <div class="flex gap-2 mb-4"><button class="chart-tab px-3 py-1.5 text-sm bg-primary text-white rounded-lg" data-chart="bar">Barras</button> <button class="chart-tab px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300" data-chart="pie">Pizza</button> <button class="chart-tab px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300" data-chart="evolution">Evolução</button>
+        </div>
+        <div id="chart-container" class="h-64 relative"><!-- Bar Chart -->
+         <div id="chart-bar" class="chart-view h-full">
+          <div class="flex items-end justify-around h-full pb-8 gap-4">
+           <div class="tooltip flex flex-col items-center flex-1">
+            <div id="bar-basic" class="w-full bg-error rounded-t-lg chart-bar" style="height: 50%"></div><span class="text-xs mt-2 text-gray-600">Básicas</span> <span class="tooltip-text" id="bar-basic-tooltip">50% - Kz 250.000</span>
+           </div>
+           <div class="tooltip flex flex-col items-center flex-1">
+            <div id="bar-lifestyle" class="w-full bg-warning rounded-t-lg chart-bar" style="height: 30%"></div><span class="text-xs mt-2 text-gray-600">Estilo</span> <span class="tooltip-text" id="bar-lifestyle-tooltip">30% - Kz 150.000</span>
+           </div>
+           <div class="tooltip flex flex-col items-center flex-1">
+            <div id="bar-invest" class="w-full bg-success rounded-t-lg chart-bar" style="height: 20%"></div><span class="text-xs mt-2 text-gray-600">Investir</span> <span class="tooltip-text" id="bar-invest-tooltip">20% - Kz 100.000</span>
+           </div>
+          </div>
+         </div><!-- Pie Chart -->
+         <div id="chart-pie" class="chart-view hidden h-full flex items-center justify-center">
+          <div class="relative">
+           <svg id="pie-svg" width="200" height="200" viewbox="0 0 200 200"></svg>
+           <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center">
+             <p class="text-xs text-gray-500">Total</p>
+             <p id="pie-total" class="text-sm font-bold text-gray-800">100%</p>
+            </div>
+           </div>
+          </div>
+          <div id="pie-legend" class="ml-4 space-y-2"></div>
+         </div><!-- Evolution Chart -->
+         <div id="chart-evolution" class="chart-view hidden h-full">
+          <svg id="evolution-svg" class="w-full h-full"></svg>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="tab-scenarios" class="tab-content hidden animate-fade">
+     <div class="bg-white rounded-lg p-5 shadow-sm border border-border">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg> Gestão de Cenários</h2><span id="scenario-count" class="text-sm text-gray-500">0 cenários guardados</span>
+      </div>
+      <div id="scenarios-list" class="space-y-3">
+       <div class="text-center py-8 text-gray-500">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p>Nenhum cenário guardado ainda</p>
+        <p class="text-sm mt-1">Use o simulador para criar e guardar cenários</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Examples Tab -->
+    <div id="tab-examples" class="tab-content hidden animate-fade">
+     <div class="bg-white rounded-lg p-5 shadow-sm border border-border">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+       </svg> 10 Cenários Exemplares</h2>
+      <p class="text-gray-600 mb-4">Clique em qualquer cenário para carregar no simulador e aprender:</p>
+      <div id="examples-list" class="grid md:grid-cols-2 gap-4"></div>
+     </div>
+    </div><!-- Education Tab -->
+    <div id="tab-education" class="tab-content hidden animate-fade">
+     <div class="space-y-4">
+      <div class="bg-white rounded-lg p-5 shadow-sm border border-border">
+       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg> Educação Financeira</h2>
+       <div id="education-content" class="space-y-3"></div>
+      </div>
+     </div>
+    </div><!-- About Tab -->
+    <div id="tab-about" class="tab-content hidden animate-fade">
+     <div class="bg-white rounded-lg p-5 shadow-sm border border-border">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg> Sobre o App</h2>
+      <div class="prose max-w-none">
+       <div class="bg-primary/5 p-4 rounded-lg mb-4">
+        <h3 class="font-semibold text-primary mb-2">IS Plano de Poupança</h3>
+        <p class="text-gray-700">Um simulador profissional de planeamento financeiro desenvolvido para a Comunidade dos Países de Língua Portuguesa (CPLP). Esta ferramenta ajuda-o a planear as suas finanças pessoais de forma inteligente e alcançar os seus objetivos financeiros.</p>
+       </div>
+       <h3 class="font-semibold text-gray-800 mt-6 mb-3">Como Usar</h3>
+       <div class="space-y-3">
+        <div class="flex gap-3 items-start"><span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+         <div>
+          <p class="font-medium text-gray-800">Configure a sua Renda</p>
+          <p class="text-sm text-gray-600">Insira o valor da sua renda mensal líquida (após impostos e descontos)</p>
+         </div>
+        </div>
+        <div class="flex gap-3 items-start"><span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+         <div>
+          <p class="font-medium text-gray-800">Distribua as Despesas</p>
+          <p class="text-sm text-gray-600">Ajuste os percentuais de despesas básicas e estilo de vida. O valor para investir é calculado automaticamente.</p>
+         </div>
+        </div>
+        <div class="flex gap-3 items-start"><span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+         <div>
+          <p class="font-medium text-gray-800">Defina a Rentabilidade</p>
+          <p class="text-sm text-gray-600">Indique a taxa de juros mensal esperada acima da inflação</p>
+         </div>
+        </div>
+        <div class="flex gap-3 items-start"><span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</span>
+         <div>
+          <p class="font-medium text-gray-800">Estabeleça o Objetivo</p>
+          <p class="text-sm text-gray-600">Digite o valor que deseja acumular</p>
+         </div>
+        </div>
+        <div class="flex gap-3 items-start"><span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">5</span>
+         <div>
+          <p class="font-medium text-gray-800">Analise os Resultados</p>
+          <p class="text-sm text-gray-600">Veja quanto tempo levará para atingir o seu objetivo e como os juros compostos trabalham a seu favor</p>
+         </div>
+        </div>
+       </div>
+       <h3 class="font-semibold text-gray-800 mt-6 mb-3">Funcionalidades</h3>
+       <div class="grid md:grid-cols-2 gap-3">
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Simulador completo com juros compostos</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Gráficos dinâmicos interativos</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Suporte a 7 moedas da CPLP</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Gestão de cenários personalizados</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Exportação para PDF</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Backup/Restauro via JSON</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Cenários exemplares para aprender</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+         <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Conteúdo educacional completo</span>
+        </div>
+       </div>
+       <h3 class="font-semibold text-gray-800 mt-6 mb-3">Moedas Suportadas</h3>
+       <div class="flex flex-wrap gap-2"><span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">🇦🇴 AOA - Kwanza</span> <span class="px-3 py-1 bg-success/10 text-success rounded-full text-sm">🇧🇷 BRL - Real</span> <span class="px-3 py-1 bg-warning/10 text-warning rounded-full text-sm">🇪🇺 EUR - Euro</span> <span class="px-3 py-1 bg-error/10 text-error rounded-full text-sm">🇲🇿 MZN - Metical</span> <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">🇸🇹 STN - Dobra</span> <span class="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm">🇨🇻 CVE - Escudo</span> <span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">🇺🇸 USD - Dólar</span>
+       </div>
+       <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600 text-center">Desenvolvido com ❤️ para a comunidade CPLP</p>
+        <p class="text-xs text-gray-500 text-center mt-1">Versão 1.0 • 2024</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Currency Settings Modal -->
+   <div id="currency-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full max-h-[90%] overflow-auto">
+     <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="font-semibold text-gray-800">Configurar Moedas</h3><button id="close-currency-modal" class="p-1 hover:bg-gray-100 rounded-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="p-4">
+      <p class="text-sm text-gray-600 mb-4">Edite as taxas de câmbio em relação ao Kwanza (AOA):</p>
+      <div id="currency-rates" class="space-y-3"></div>
+      <div class="mt-4 pt-4 border-t border-border"><label class="block text-sm font-medium text-gray-700 mb-2">Formato de Exibição</label> <select id="display-format" class="w-full px-3 py-2 border border-border rounded-lg"> <option value="symbol">Símbolo (Kz 1.000)</option> <option value="code">Código (1.000 AOA)</option> <option value="full">Completo (1.000 Kwanzas)</option> </select>
+      </div><button id="save-currency-settings" class="mt-4 w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-all"> Guardar Configurações </button>
+     </div>
+    </div>
+   </div><!-- Save Scenario Modal -->
+   <div id="save-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full">
+     <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="font-semibold text-gray-800">Guardar Cenário</h3><button id="close-save-modal" class="p-1 hover:bg-gray-100 rounded-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <div class="p-4"><label class="block text-sm font-medium text-gray-700 mb-2">Nome do Cenário</label> <input type="text" id="scenario-name" placeholder="Ex: Poupança para carro" class="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary"> <button id="confirm-save" class="mt-4 w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-all flex items-center justify-center gap-2"> <span>Guardar</span> </button>
+     </div>
+    </div>
+   </div><!-- Toast Container -->
+   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+  </div>
+  <script>
+    // App State
+    const state = {
+      scenarios: [],
+      currentCurrency: 'AOA',
+      displayFormat: 'symbol',
+      exchangeRates: {
+        AOA: 1,
+        BRL: 0.006,
+        EUR: 0.00095,
+        MZN: 0.077,
+        STN: 0.027,
+        CVE: 0.105,
+        USD: 0.0011
+      },
+      currencyInfo: {
+        AOA: { symbol: 'Kz', name: 'Kwanza', flag: '🇦🇴' },
+        BRL: { symbol: 'R$', name: 'Real', flag: '🇧🇷' },
+        EUR: { symbol: '€', name: 'Euro', flag: '🇪🇺' },
+        MZN: { symbol: 'MT', name: 'Metical', flag: '🇲🇿' },
+        STN: { symbol: 'Db', name: 'Dobra', flag: '🇸🇹' },
+        CVE: { symbol: '$', name: 'Escudo', flag: '🇨🇻' },
+        USD: { symbol: '$', name: 'Dólar', flag: '🇺🇸' }
+      }
+    };
+
+    // Default Config
+    const defaultConfig = {
+      app_title: 'IS Plano de Poupança'
+    };
+
+    // Example Scenarios
+    const exampleScenarios = [
+      { name: '💼 Jovem Profissional', income: 300000, basicExpenses: 55, lifestyle: 25, returnRate: 0.5, goal: 3000000, description: 'Recém-formado iniciando carreira' },
+      { name: '👨‍👩‍👧 Família Média', income: 800000, basicExpenses: 50, lifestyle: 30, returnRate: 0.4, goal: 15000000, description: 'Casal com um filho, renda estável' },
+      { name: '🎓 Estudante Universitário', income: 100000, basicExpenses: 70, lifestyle: 15, returnRate: 0.3, goal: 500000, description: 'Bolsa de estudos + trabalho parcial' },
+      { name: '👴 Aposentado Ativo', income: 450000, basicExpenses: 45, lifestyle: 35, returnRate: 0.6, goal: 5000000, description: 'Pensão + rendimentos extras' },
+      { name: '🚗 Meta: Carro Novo', income: 600000, basicExpenses: 40, lifestyle: 25, returnRate: 0.5, goal: 8000000, description: 'Foco em comprar um carro' },
+      { name: '🏠 Meta: Entrada Casa', income: 1000000, basicExpenses: 35, lifestyle: 20, returnRate: 0.7, goal: 50000000, description: 'Poupando para dar entrada num imóvel' },
+      { name: '✈️ Viagem dos Sonhos', income: 500000, basicExpenses: 50, lifestyle: 20, returnRate: 0.4, goal: 2500000, description: 'Viagem internacional em família' },
+      { name: '📚 Fundo de Emergência', income: 400000, basicExpenses: 55, lifestyle: 25, returnRate: 0.3, goal: 2400000, description: '6 meses de despesas guardados' },
+      { name: '👶 Poupança para Filho', income: 700000, basicExpenses: 45, lifestyle: 30, returnRate: 0.8, goal: 20000000, description: 'Investindo no futuro do filho' },
+      { name: '💰 Independência Financeira', income: 1500000, basicExpenses: 30, lifestyle: 20, returnRate: 1.0, goal: 100000000, description: 'Meta de longo prazo para liberdade' }
+    ];
+
+    // Education Content
+    const educationContent = [
+      {
+        title: '📖 Como Usar Esta Simulação',
+        content: `
+          <p class="mb-3">Este simulador utiliza a <strong>Regra 50-30-20</strong> como base, mas permite ajustes conforme a sua realidade:</p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Renda Mensal Líquida:</strong> O valor que efetivamente entra na sua conta após todos os descontos (impostos, INSS, etc.)</li>
+            <li><strong>Despesas Básicas:</strong> Percentual da renda para necessidades essenciais</li>
+            <li><strong>Estilo de Vida:</strong> Percentual para desejos e conforto</li>
+            <li><strong>Investir:</strong> O que sobra é automaticamente destinado aos investimentos</li>
+            <li><strong>Rentabilidade:</strong> Taxa de juros real (acima da inflação) esperada nos seus investimentos</li>
+            <li><strong>Objetivo:</strong> Valor total que deseja acumular</li>
+          </ul>
+        `
+      },
+      {
+        title: '🏠 Despesas Básicas (Sugestão: 50%)',
+        content: `
+          <p class="mb-3"><strong>Definição:</strong> Gastos absolutamente essenciais para a sobrevivência e manutenção da vida.</p>
+          <p class="mb-3"><strong>Exemplos:</strong></p>
+          <ul class="list-disc pl-5 space-y-1 mb-3">
+            <li>Alimentação (supermercado, feira)</li>
+            <li>Saúde (medicamentos, consultas, plano de saúde)</li>
+            <li>Moradia (renda, condomínio, IPTU)</li>
+            <li>Água, luz, gás</li>
+            <li>Transporte (combustível, transporte público)</li>
+            <li>Educação básica</li>
+          </ul>
+          <div class="bg-warning/10 p-3 rounded-lg">
+            <p class="text-sm"><strong>⚠️ Alerta:</strong> Famílias de baixa renda frequentemente comprometem mais de 50% com despesas básicas. Se este é o seu caso, o caminho é investir em qualificação profissional para aumentar a renda.</p>
+          </div>
+        `
+      },
+      {
+        title: '🎭 Estilo de Vida (Sugestão: 30%)',
+        content: `
+          <p class="mb-3"><strong>Definição:</strong> Gastos não essenciais que trazem conforto e prazer.</p>
+          <p class="mb-3"><strong>Exemplos:</strong></p>
+          <ul class="list-disc pl-5 space-y-1 mb-3">
+            <li>Moda e vestuário além do necessário</li>
+            <li>Salão de beleza, estética</li>
+            <li>Restaurantes e delivery</li>
+            <li>Lazer (cinema, shows, festas)</li>
+            <li>Viagens e turismo</li>
+            <li>Luxos e caprichos</li>
+            <li>Assinaturas (streaming, revistas)</li>
+          </ul>
+          <div class="bg-error/10 p-3 rounded-lg mb-3">
+            <p class="text-sm"><strong>🚨 Principal problema da classe média:</strong> Manter um estilo de vida incompatível com a renda real para "manter as aparências".</p>
+          </div>
+          <div class="bg-primary/10 p-3 rounded-lg">
+            <p class="text-sm"><strong>💡 Reflexão:</strong> Quantos dos seus gastos são para impressionar outras pessoas? Avalie se vale a pena comprometer o seu futuro financeiro por aprovação social.</p>
+          </div>
+        `
+      },
+      {
+        title: '💰 Investir (Sugestão: 20%)',
+        content: `
+          <p class="mb-3"><strong>Definição:</strong> O valor residual após despesas básicas e estilo de vida, destinado a construir patrimônio.</p>
+          <p class="mb-3"><strong>Importante:</strong></p>
+          <ul class="list-disc pl-5 space-y-2 mb-3">
+            <li>Só é possível investir quando as despesas são menores que a renda</li>
+            <li>Este valor é calculado automaticamente: 100% - Básicas - Estilo de Vida</li>
+            <li>Quanto maior este percentual, mais rápido atingirá os seus objetivos</li>
+          </ul>
+          <div class="bg-success/10 p-3 rounded-lg">
+            <p class="text-sm"><strong>✅ Dica:</strong> Pague-se primeiro! Assim que receber o salário, separe imediatamente o valor para investir antes de gastar com outras coisas.</p>
+          </div>
+        `
+      },
+      {
+        title: '📈 Juros Compostos - A 8ª Maravilha do Mundo',
+        content: `
+          <p class="mb-3">Albert Einstein teria dito: <em>"Os juros compostos são a oitava maravilha do mundo. Quem entende, ganha. Quem não entende, paga."</em></p>
+          <p class="mb-3"><strong>Fórmula utilizada:</strong></p>
+          <div class="bg-gray-100 p-3 rounded-lg font-mono text-sm mb-3">
+            VF = PMT × [((1 + i)^n - 1) / i] × (1 + i)
+          </div>
+          <p class="mb-3">Onde:</p>
+          <ul class="list-disc pl-5 space-y-1 mb-3">
+            <li><strong>VF</strong> = Valor Futuro (objetivo)</li>
+            <li><strong>PMT</strong> = Pagamento mensal (contribuição)</li>
+            <li><strong>i</strong> = Taxa de juros mensal</li>
+            <li><strong>n</strong> = Número de meses</li>
+          </ul>
+          <div class="bg-success/10 p-3 rounded-lg">
+            <p class="text-sm"><strong>✨ Magia dos Juros Compostos:</strong> O seu dinheiro trabalha para si, gerando rendimentos sobre os rendimentos anteriores. Quanto mais tempo, maior o efeito!</p>
+          </div>
+        `
+      },
+      {
+        title: '🎯 Dicas para Atingir Objetivos',
+        content: `
+          <ol class="list-decimal pl-5 space-y-3">
+            <li><strong>Seja específico:</strong> Defina valores e prazos concretos para os seus objetivos</li>
+            <li><strong>Automatize:</strong> Configure transferências automáticas no dia do pagamento</li>
+            <li><strong>Revise mensalmente:</strong> Acompanhe o progresso e ajuste quando necessário</li>
+            <li><strong>Celebre conquistas:</strong> Reconheça cada marco atingido</li>
+            <li><strong>Diversifique:</strong> Não coloque todos os ovos na mesma cesta</li>
+            <li><strong>Eduque-se:</strong> Continue aprendendo sobre finanças e investimentos</li>
+            <li><strong>Seja paciente:</strong> Enriquecimento sustentável leva tempo</li>
+            <li><strong>Evite dívidas:</strong> Juros compostos a seu favor, não contra si</li>
+          </ol>
+        `
+      },
+      {
+        title: '🌍 Contexto CPLP - Considerações',
+        content: `
+          <p class="mb-3">Cada país da CPLP tem as suas particularidades económicas:</p>
+          <ul class="list-disc pl-5 space-y-2 mb-3">
+            <li><strong>🇦🇴 Angola:</strong> Economia dependente do petróleo, inflação historicamente alta</li>
+            <li><strong>🇧🇷 Brasil:</strong> Maior economia da CPLP, mercado financeiro desenvolvido</li>
+            <li><strong>🇵🇹 Portugal:</strong> Economia europeia, taxas de juros mais baixas</li>
+            <li><strong>🇲🇿 Moçambique:</strong> Economia em crescimento, oportunidades emergentes</li>
+            <li><strong>🇨🇻 Cabo Verde:</strong> Economia pequena, moeda atrelada ao Euro</li>
+            <li><strong>🇸🇹 São Tomé:</strong> Economia muito pequena, dependente de ajuda externa</li>
+          </ul>
+          <div class="bg-primary/10 p-3 rounded-lg">
+            <p class="text-sm"><strong>💡 Importante:</strong> Sempre considere a inflação local ao definir a sua taxa de rentabilidade real. Juros nominais altos podem ser ilusórios se a inflação for ainda maior.</p>
+          </div>
+        `
+      }
+    ];
+
+    // Utility Functions
+    function formatCurrency(value, currency = state.currentCurrency) {
+      const info = state.currencyInfo[currency];
+      const rate = state.exchangeRates[currency];
+      const convertedValue = value * rate;
+      
+      const formatted = new Intl.NumberFormat('pt-AO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(convertedValue);
+
+      switch (state.displayFormat) {
+        case 'symbol':
+          return `${info.symbol} ${formatted}`;
+        case 'code':
+          return `${formatted} ${currency}`;
+        case 'full':
+          return `${formatted} ${info.name}${convertedValue !== 1 ? 's' : ''}`;
+        default:
+          return `${info.symbol} ${formatted}`;
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-success',
+        error: 'bg-error',
+        warning: 'bg-warning',
+        info: 'bg-primary'
+      };
+      toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : 
+            type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+        <span>${message}</span>
+      `;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Simulation Calculation
+    function calculateSimulation() {
+      const income = parseFloat(document.getElementById('income').value) || 0;
+      const basicExpenses = parseFloat(document.getElementById('basic-expenses').value) || 0;
+      const lifestyle = parseFloat(document.getElementById('lifestyle').value) || 0;
+      const returnRate = parseFloat(document.getElementById('return-rate').value) || 0;
+      const goal = parseFloat(document.getElementById('goal').value) || 0;
+
+      const invest = 100 - basicExpenses - lifestyle;
+
+      // Update invest display
+      document.getElementById('invest-percent').textContent = `${Math.max(0, invest)}%`;
+      document.getElementById('invest-bar').style.width = `${Math.max(0, invest)}%`;
+
+      // Validation
+      if (basicExpenses + lifestyle > 100) {
+        document.getElementById('results-content').classList.add('hidden');
+        document.getElementById('results-error').classList.remove('hidden');
+        document.getElementById('error-message').textContent = 'A soma das despesas não pode exceder 100%';
+        return;
+      }
+
+      if (invest <= 0) {
+        document.getElementById('results-content').classList.add('hidden');
+        document.getElementById('results-error').classList.remove('hidden');
+        document.getElementById('error-message').textContent = 'Não há margem para investir. Reduza as despesas.';
+        return;
+      }
+
+      document.getElementById('results-content').classList.remove('hidden');
+      document.getElementById('results-error').classList.add('hidden');
+
+      // Calculate values
+      const basicValue = income * (basicExpenses / 100);
+      const lifestyleValue = income * (lifestyle / 100);
+      const investValue = income * (invest / 100);
+
+      // Update budget summary
+      document.getElementById('basic-value').textContent = formatCurrency(basicValue);
+      document.getElementById('lifestyle-value').textContent = formatCurrency(lifestyleValue);
+      document.getElementById('invest-value').textContent = formatCurrency(investValue);
+      document.getElementById('total-value').textContent = formatCurrency(income);
+
+      // Update budget bar
+      const budgetBar = document.getElementById('budget-bar');
+      budgetBar.innerHTML = `
+        <div class="bg-error h-full transition-all tooltip" style="width: ${basicExpenses}%">
+          <span class="tooltip-text">${basicExpenses}% - ${formatCurrency(basicValue)}</span>
+        </div>
+        <div class="bg-warning h-full transition-all tooltip" style="width: ${lifestyle}%">
+          <span class="tooltip-text">${lifestyle}% - ${formatCurrency(lifestyleValue)}</span>
+        </div>
+        <div class="bg-success h-full transition-all tooltip" style="width: ${Math.max(0, invest)}%">
+          <span class="tooltip-text">${Math.max(0, invest)}% - ${formatCurrency(investValue)}</span>
+        </div>
+      `;
+
+      // Calculate months to reach goal
+      const monthlyRate = returnRate / 100;
+      let accumulated = 0;
+      let months = 0;
+      let totalContributions = 0;
+      const maxMonths = 1200; // 100 years max
+
+      const evolutionData = [];
+
+      while (accumulated < goal && months < maxMonths) {
+        months++;
+        accumulated = accumulated * (1 + monthlyRate) + investValue;
+        totalContributions += investValue;
+        
+        if (months % 12 === 0 || months <= 12 || accumulated >= goal) {
+          evolutionData.push({
+            month: months,
+            accumulated: Math.min(accumulated, goal),
+            contributions: totalContributions
+          });
+        }
+      }
+
+      const interestEarned = accumulated - totalContributions;
+      const years = months / 12;
+      const savingsPercent = (totalContributions / accumulated) * 100;
+      const interestPercent = (interestEarned / accumulated) * 100;
+
+      // Update results
+      document.getElementById('result-saved').textContent = formatCurrency(totalContributions);
+      document.getElementById('result-interest').textContent = formatCurrency(interestEarned);
+      document.getElementById('result-months').textContent = months >= maxMonths ? '1200+' : months;
+      document.getElementById('result-years').textContent = months >= maxMonths ? '100+' : years.toFixed(1);
+
+      // Update composition bar
+      document.getElementById('composition-savings').style.width = `${savingsPercent}%`;
+      document.getElementById('composition-interest').style.width = `${interestPercent}%`;
+      document.getElementById('savings-percent').textContent = `${savingsPercent.toFixed(1)}%`;
+      document.getElementById('interest-percent').textContent = `${interestPercent.toFixed(1)}%`;
+
+      // Update insights
+      updateInsights(invest, months, years, interestPercent, investValue, goal);
+
+      // Update charts
+      updateCharts(basicExpenses, lifestyle, invest, basicValue, lifestyleValue, investValue, evolutionData, goal);
+    }
+
+    function updateInsights(invest, months, years, interestPercent, monthlyInvest, goal) {
+      let insights = [];
+
+      if (invest >= 20) {
+        insights.push('✅ Excelente! Está a poupar pelo menos 20% da sua renda.');
+      } else if (invest >= 10) {
+        insights.push('⚠️ Bom começo, mas tente aumentar para 20% se possível.');
+      } else {
+        insights.push('🚨 Atenção: poupando menos de 10% da renda, o progresso será lento.');
+      }
+
+      if (years <= 1) {
+        insights.push('🎉 Atingirá o objetivo em menos de 1 ano!');
+      } else if (years <= 5) {
+        insights.push('📅 Meta alcançável em ' + years.toFixed(1) + ' anos - mantenha o foco!');
+      } else if (years <= 10) {
+        insights.push('⏰ Meta de longo prazo (' + years.toFixed(1) + ' anos). Considere aumentar o investimento mensal.');
+      } else {
+        insights.push('⌛ Meta muito distante. Reavalie o objetivo ou aumente a poupança.');
+      }
+
+      if (interestPercent > 30) {
+        insights.push('💰 Os juros compostos representarão ' + interestPercent.toFixed(0) + '% do total - o dinheiro trabalhando para si!');
+      }
+
+      document.getElementById('insight-text').innerHTML = insights.join('<br>');
+    }
+
+    function updateCharts(basicPercent, lifestylePercent, investPercent, basicValue, lifestyleValue, investValue, evolutionData, goal) {
+      // Update Bar Chart
+      document.getElementById('bar-basic').style.height = `${basicPercent}%`;
+      document.getElementById('bar-lifestyle').style.height = `${lifestylePercent}%`;
+      document.getElementById('bar-invest').style.height = `${Math.max(0, investPercent)}%`;
+      
+      document.getElementById('bar-basic-tooltip').textContent = `${basicPercent}% - ${formatCurrency(basicValue)}`;
+      document.getElementById('bar-lifestyle-tooltip').textContent = `${lifestylePercent}% - ${formatCurrency(lifestyleValue)}`;
+      document.getElementById('bar-invest-tooltip').textContent = `${investPercent}% - ${formatCurrency(investValue)}`;
+
+      // Update Pie Chart
+      updatePieChart(basicPercent, lifestylePercent, investPercent, basicValue, lifestyleValue, investValue);
+
+      // Update Evolution Chart
+      updateEvolutionChart(evolutionData, goal);
+    }
+
+    function updatePieChart(basic, lifestyle, invest) {
+      const svg = document.getElementById('pie-svg');
+      const legend = document.getElementById('pie-legend');
+      
+      const data = [
+        { value: basic, color: '#F44336', label: 'Básicas' },
+        { value: lifestyle, color: '#FF9800', label: 'Estilo' },
+        { value: Math.max(0, invest), color: '#4CAF50', label: 'Investir' }
+      ].filter(d => d.value > 0);
+
+      let cumulativePercent = 0;
+      let paths = '';
+
+      data.forEach((d, i) => {
+        const startAngle = cumulativePercent * 3.6 * (Math.PI / 180);
+        cumulativePercent += d.value;
+        const endAngle = cumulativePercent * 3.6 * (Math.PI / 180);
+
+        const x1 = 100 + 80 * Math.sin(startAngle);
+        const y1 = 100 - 80 * Math.cos(startAngle);
+        const x2 = 100 + 80 * Math.sin(endAngle);
+        const y2 = 100 - 80 * Math.cos(endAngle);
+
+        const largeArc = d.value > 50 ? 1 : 0;
+
+        paths += `<path d="M100,100 L${x1},${y1} A80,80 0 ${largeArc},1 ${x2},${y2} Z" fill="${d.color}" class="chart-bar cursor-pointer" data-label="${d.label}" data-value="${d.value}%"/>`;
+      });
+
+      // Add inner circle for donut effect
+      paths += '<circle cx="100" cy="100" r="50" fill="white"/>';
+
+      svg.innerHTML = paths;
+
+      // Update legend
+      legend.innerHTML = data.map(d => `
+        <div class="flex items-center gap-2 text-sm">
+          <div class="w-3 h-3 rounded" style="background: ${d.color}"></div>
+          <span>${d.label}: ${d.value.toFixed(0)}%</span>
+        </div>
+      `).join('');
+    }
+
+    function updateEvolutionChart(data, goal) {
+      if (data.length === 0) return;
+
+      const svg = document.getElementById('evolution-svg');
+      const width = svg.clientWidth || 400;
+      const height = svg.clientHeight || 200;
+      const padding = { top: 20, right: 20, bottom: 30, left: 60 };
+
+      const maxValue = Math.max(goal, ...data.map(d => d.accumulated));
+      const maxMonth = data[data.length - 1].month;
+
+      const xScale = (month) => padding.left + (month / maxMonth) * (width - padding.left - padding.right);
+      const yScale = (value) => height - padding.bottom - (value / maxValue) * (height - padding.top - padding.bottom);
+
+      // Create path for accumulated
+      let accPath = `M ${xScale(0)} ${yScale(0)}`;
+      data.forEach(d => {
+        accPath += ` L ${xScale(d.month)} ${yScale(d.accumulated)}`;
+      });
+
+      // Create path for contributions
+      let contPath = `M ${xScale(0)} ${yScale(0)}`;
+      data.forEach(d => {
+        contPath += ` L ${xScale(d.month)} ${yScale(d.contributions)}`;
+      });
+
+      // Goal line
+      const goalY = yScale(goal);
+
+      svg.innerHTML = `
+        <!-- Grid lines -->
+        <line x1="${padding.left}" y1="${goalY}" x2="${width - padding.right}" y2="${goalY}" stroke="#E0E0E0" stroke-dasharray="5,5"/>
+        
+        <!-- Area fills -->
+        <path d="${accPath} L ${xScale(maxMonth)} ${height - padding.bottom} L ${padding.left} ${height - padding.bottom} Z" fill="rgba(30, 136, 229, 0.1)"/>
+        <path d="${contPath} L ${xScale(maxMonth)} ${height - padding.bottom} L ${padding.left} ${height - padding.bottom} Z" fill="rgba(76, 175, 80, 0.1)"/>
+        
+        <!-- Lines -->
+        <path d="${accPath}" fill="none" stroke="#66CFF5" stroke-width="2"/>
+        <path d="${contPath}" fill="none" stroke="#4CAF50" stroke-width="2"/>
+        
+        <!-- Goal line -->
+        <line x1="${padding.left}" y1="${goalY}" x2="${width - padding.right}" y2="${goalY}" stroke="#F44336" stroke-width="2" stroke-dasharray="5,5"/>
+        
+        <!-- Labels -->
+        <text x="${width - padding.right}" y="${goalY - 5}" fill="#F44336" font-size="10" text-anchor="end">Meta</text>
+        <text x="${padding.left}" y="${height - 10}" fill="#666" font-size="10">0</text>
+        <text x="${width - padding.right}" y="${height - 10}" fill="#666" font-size="10" text-anchor="end">${maxMonth} meses</text>
+        
+        <!-- Legend -->
+        <rect x="${padding.left}" y="5" width="10" height="10" fill="#66CFF5"/>
+        <text x="${padding.left + 15}" y="14" fill="#666" font-size="10">Acumulado</text>
+        <rect x="${padding.left + 80}" y="5" width="10" height="10" fill="#4CAF50"/>
+        <text x="${padding.left + 95}" y="14" fill="#666" font-size="10">Contribuições</text>
+      `;
+    }
+
+    // Tab Management
+    function setupTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+          btn.classList.add('tab-active');
+          
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+          document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.chart-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.chart-tab').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-200', 'text-gray-700');
+          });
+          btn.classList.add('bg-primary', 'text-white');
+          btn.classList.remove('bg-gray-200', 'text-gray-700');
+          
+          document.querySelectorAll('.chart-view').forEach(c => c.classList.add('hidden'));
+          document.getElementById(`chart-${btn.dataset.chart}`).classList.remove('hidden');
+        });
+      });
+    }
+
+    // Input Event Listeners
+    function setupInputs() {
+      const inputs = ['income', 'basic-expenses', 'lifestyle', 'return-rate', 'goal'];
+      const ranges = ['basic-expenses-range', 'lifestyle-range', 'return-rate-range'];
+
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            // Sync range with number input
+            const rangeId = `${id}-range`;
+            const range = document.getElementById(rangeId);
+            if (range) range.value = el.value;
+            calculateSimulation();
+          });
+        }
+      });
+
+      ranges.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            // Sync number input with range
+            const inputId = id.replace('-range', '');
+            const input = document.getElementById(inputId);
+            if (input) input.value = el.value;
+            calculateSimulation();
+          });
+        }
+      });
+    }
+
+    // Currency Management
+    function setupCurrency() {
+      const select = document.getElementById('currency-select');
+      select.addEventListener('change', () => {
+        state.currentCurrency = select.value;
+        updateCurrencySymbols();
+        calculateSimulation();
+      });
+
+      document.getElementById('currency-settings-btn').addEventListener('click', () => {
+        document.getElementById('currency-modal').classList.remove('hidden');
+        renderCurrencyRates();
+      });
+
+      document.getElementById('close-currency-modal').addEventListener('click', () => {
+        document.getElementById('currency-modal').classList.add('hidden');
+      });
+
+      document.getElementById('save-currency-settings').addEventListener('click', () => {
+        // Save rates
+        document.querySelectorAll('.currency-rate-input').forEach(input => {
+          state.exchangeRates[input.dataset.currency] = parseFloat(input.value) || 1;
+        });
+        state.displayFormat = document.getElementById('display-format').value;
+        document.getElementById('currency-modal').classList.add('hidden');
+        calculateSimulation();
+        showToast('Configurações de moeda guardadas!');
+      });
+    }
+
+    function updateCurrencySymbols() {
+      const info = state.currencyInfo[state.currentCurrency];
+      document.getElementById('currency-symbol').textContent = info.symbol;
+      document.getElementById('currency-symbol-goal').textContent = info.symbol;
+    }
+
+    function renderCurrencyRates() {
+      const container = document.getElementById('currency-rates');
+      container.innerHTML = Object.entries(state.exchangeRates).map(([code, rate]) => {
+        const info = state.currencyInfo[code];
+        return `
+          <div class="flex items-center gap-3">
+            <span class="w-8">${info.flag}</span>
+            <span class="w-12 font-medium">${code}</span>
+            <input type="number" step="0.0001" value="${rate}" data-currency="${code}" class="currency-rate-input flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+        `;
+      }).join('');
+      document.getElementById('display-format').value = state.displayFormat;
+    }
+
+    // Scenario Management with Data SDK
+    let dataSdkInitialized = false;
+    let isLoading = false;
+
+    const dataHandler = {
+      onDataChanged(data) {
+        state.scenarios = data;
+        renderScenarios();
+      }
+    };
+
+    async function initDataSdk() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (result.isOk) {
+          dataSdkInitialized = true;
+        } else {
+          console.error('Failed to initialize Data SDK');
+        }
+      }
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenarios-list');
+      const countEl = document.getElementById('scenario-count');
+
+      if (state.scenarios.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+            <p>Nenhum cenário guardado ainda</p>
+            <p class="text-sm mt-1">Use o simulador para criar e guardar cenários</p>
+          </div>
+        `;
+        countEl.textContent = '0 cenários guardados';
+        return;
+      }
+
+      // Sort: favorites first, then by date
+      const sorted = [...state.scenarios].sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      container.innerHTML = sorted.map(scenario => `
+        <div class="p-4 border border-border rounded-lg hover:border-primary/50 transition-all card-hover" data-id="${scenario.__backendId}">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <h3 class="font-semibold text-gray-800">${scenario.name}</h3>
+                ${scenario.isFavorite ? '<svg class="w-4 h-4 text-gold fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+              </div>
+              <div class="text-sm text-gray-500 mt-1">
+                Renda: ${formatCurrency(scenario.income, scenario.currency)} | Meta: ${formatCurrency(scenario.goal, scenario.currency)}
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                ${scenario.basicExpenses}% básicas | ${scenario.lifestyle}% estilo | ${100 - scenario.basicExpenses - scenario.lifestyle}% investir
+              </div>
+            </div>
+            <div class="flex gap-1">
+              <button class="p-2 hover:bg-primary/10 rounded-lg transition-all load-scenario" data-id="${scenario.__backendId}" title="Carregar">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              </button>
+              <button class="p-2 hover:bg-gold/10 rounded-lg transition-all toggle-favorite" data-id="${scenario.__backendId}" title="${scenario.isFavorite ? 'Remover favorito' : 'Favoritar'}">
+                <svg class="w-4 h-4 ${scenario.isFavorite ? 'text-gold fill-current' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+              </button>
+              <button class="p-2 hover:bg-error/10 rounded-lg transition-all delete-scenario" data-id="${scenario.__backendId}" title="Eliminar">
+                <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      countEl.textContent = `${state.scenarios.length} cenário${state.scenarios.length !== 1 ? 's' : ''} guardado${state.scenarios.length !== 1 ? 's' : ''}`;
+
+      // Add event listeners
+      container.querySelectorAll('.load-scenario').forEach(btn => {
+        btn.addEventListener('click', () => loadScenario(btn.dataset.id));
+      });
+
+      container.querySelectorAll('.toggle-favorite').forEach(btn => {
+        btn.addEventListener('click', () => toggleFavorite(btn.dataset.id));
+      });
+
+      container.querySelectorAll('.delete-scenario').forEach(btn => {
+        btn.addEventListener('click', () => deleteScenario(btn.dataset.id));
+      });
+    }
+
+    async function saveScenario(name) {
+      if (!dataSdkInitialized || isLoading) return;
+      
+      if (state.scenarios.length >= 999) {
+        showToast('Limite máximo de 999 cenários atingido!', 'error');
+        return;
+      }
+
+      isLoading = true;
+      const btn = document.getElementById('confirm-save');
+      btn.innerHTML = '<span class="loading-spinner"></span>';
+      btn.disabled = true;
+
+      const scenario = {
+        name: name || 'Cenário sem nome',
+        income: parseFloat(document.getElementById('income').value) || 0,
+        basicExpenses: parseFloat(document.getElementById('basic-expenses').value) || 0,
+        lifestyle: parseFloat(document.getElementById('lifestyle').value) || 0,
+        returnRate: parseFloat(document.getElementById('return-rate').value) || 0,
+        goal: parseFloat(document.getElementById('goal').value) || 0,
+        currency: state.currentCurrency,
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(scenario);
+      
+      isLoading = false;
+      btn.innerHTML = '<span>Guardar</span>';
+      btn.disabled = false;
+
+      if (result.isOk) {
+        showToast('Cenário guardado com sucesso!');
+        document.getElementById('save-modal').classList.add('hidden');
+      } else {
+        showToast('Erro ao guardar cenário', 'error');
+      }
+    }
+
+    function loadScenario(id) {
+      const scenario = state.scenarios.find(s => s.__backendId === id);
+      if (!scenario) return;
+
+      document.getElementById('income').value = scenario.income;
+      document.getElementById('basic-expenses').value = scenario.basicExpenses;
+      document.getElementById('basic-expenses-range').value = scenario.basicExpenses;
+      document.getElementById('lifestyle').value = scenario.lifestyle;
+      document.getElementById('lifestyle-range').value = scenario.lifestyle;
+      document.getElementById('return-rate').value = scenario.returnRate;
+      document.getElementById('return-rate-range').value = scenario.returnRate;
+      document.getElementById('goal').value = scenario.goal;
+      document.getElementById('currency-select').value = scenario.currency;
+      state.currentCurrency = scenario.currency;
+      
+      updateCurrencySymbols();
+      calculateSimulation();
+
+      // Switch to simulator tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+      document.querySelector('[data-tab="simulator"]').classList.add('tab-active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById('tab-simulator').classList.remove('hidden');
+
+      showToast(`Cenário "${scenario.name}" carregado!`, 'info');
+    }
+
+    async function toggleFavorite(id) {
+      if (!dataSdkInitialized || isLoading) return;
+
+      const scenario = state.scenarios.find(s => s.__backendId === id);
+      if (!scenario) return;
+
+      isLoading = true;
+      const result = await window.dataSdk.update({
+        ...scenario,
+        isFavorite: !scenario.isFavorite
+      });
+      isLoading = false;
+
+      if (result.isOk) {
+        showToast(scenario.isFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'info');
+      }
+    }
+
+    async function deleteScenario(id) {
+      if (!dataSdkInitialized || isLoading) return;
+
+      const scenario = state.scenarios.find(s => s.__backendId === id);
+      if (!scenario) return;
+
+      // Two-step deletion - toggle confirmation state
+      const btn = document.querySelector(`.delete-scenario[data-id="${id}"]`);
+      if (btn.dataset.confirming !== 'true') {
+        btn.dataset.confirming = 'true';
+        btn.innerHTML = '<span class="text-xs font-bold">Confirmar?</span>';
+        btn.classList.add('bg-error/20');
+        
+        setTimeout(() => {
+          if (btn.dataset.confirming === 'true') {
+            btn.dataset.confirming = 'false';
+            btn.innerHTML = '<svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+            btn.classList.remove('bg-error/20');
+          }
+        }, 3000);
+        return;
+      }
+
+      isLoading = true;
+      btn.innerHTML = '<span class="loading-spinner"></span>';
+
+      const result = await window.dataSdk.delete(scenario);
+      isLoading = false;
+
+      if (result.isOk) {
+        showToast('Cenário eliminado!', 'warning');
+      } else {
+        showToast('Erro ao eliminar cenário', 'error');
+      }
+    }
+
+    // Export/Import Functions
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      const income = parseFloat(document.getElementById('income').value) || 0;
+      const basicExpenses = parseFloat(document.getElementById('basic-expenses').value) || 0;
+      const lifestyle = parseFloat(document.getElementById('lifestyle').value) || 0;
+      const invest = 100 - basicExpenses - lifestyle;
+      const returnRate = parseFloat(document.getElementById('return-rate').value) || 0;
+      const goal = parseFloat(document.getElementById('goal').value) || 0;
+
+      // Header
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.text('IS Plano de Poupança', 105, 18, { align: 'center' });
+
+      // Content
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.text('Relatório de Simulação', 20, 45);
+      
+      doc.setFontSize(10);
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-AO')}`, 20, 55);
+      doc.text(`Moeda: ${state.currentCurrency}`, 20, 62);
+
+      // Budget Section
+      doc.setFontSize(12);
+      doc.setTextColor(30, 136, 229);
+      doc.text('Orçamento Mensal', 20, 80);
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.text(`Renda Líquida: ${formatCurrency(income)}`, 25, 90);
+      doc.text(`Despesas Básicas (${basicExpenses}%): ${formatCurrency(income * basicExpenses / 100)}`, 25, 98);
+      doc.text(`Estilo de Vida (${lifestyle}%): ${formatCurrency(income * lifestyle / 100)}`, 25, 106);
+      doc.text(`Investir (${invest}%): ${formatCurrency(income * invest / 100)}`, 25, 114);
+
+      // Results Section
+      doc.setFontSize(12);
+      doc.setTextColor(30, 136, 229);
+      doc.text('Resultados da Simulação', 20, 132);
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.text(`Objetivo: ${formatCurrency(goal)}`, 25, 142);
+      doc.text(`Rentabilidade Mensal: ${returnRate}%`, 25, 150);
+      doc.text(`Total Poupado: ${document.getElementById('result-saved').textContent}`, 25, 158);
+      doc.text(`Ganho de Juros: ${document.getElementById('result-interest').textContent}`, 25, 166);
+      doc.text(`Tempo Estimado: ${document.getElementById('result-months').textContent} meses (${document.getElementById('result-years').textContent} anos)`, 25, 174);
+
+      // Footer
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 277, 210, 20, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text('IS Plano de Poupança - Simulador Financeiro CPLP', 105, 285, { align: 'center' });
+      doc.text('Página 1 de 1', 105, 292, { align: 'center' });
+
+      doc.save('plano-poupanca.pdf');
+      showToast('PDF exportado com sucesso!');
+    }
+
+    function exportToJSON() {
+      const data = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        settings: {
+          currency: state.currentCurrency,
+          displayFormat: state.displayFormat,
+          exchangeRates: state.exchangeRates
+        },
+        currentSimulation: {
+          income: parseFloat(document.getElementById('income').value) || 0,
+          basicExpenses: parseFloat(document.getElementById('basic-expenses').value) || 0,
+          lifestyle: parseFloat(document.getElementById('lifestyle').value) || 0,
+          returnRate: parseFloat(document.getElementById('return-rate').value) || 0,
+          goal: parseFloat(document.getElementById('goal').value) || 0
+        },
+        scenarios: state.scenarios.map(s => ({
+          name: s.name,
+          income: s.income,
+          basicExpenses: s.basicExpenses,
+          lifestyle: s.lifestyle,
+          returnRate: s.returnRate,
+          goal: s.goal,
+          currency: s.currency,
+          isFavorite: s.isFavorite,
+          createdAt: s.createdAt
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'plano-poupanca-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup JSON exportado!');
+    }
+
+    async function importFromJSON(file) {
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        if (!data.version) {
+          showToast('Ficheiro inválido', 'error');
+          return;
+        }
+
+        // Restore settings
+        if (data.settings) {
+          state.currentCurrency = data.settings.currency || 'AOA';
+          state.displayFormat = data.settings.displayFormat || 'symbol';
+          state.exchangeRates = { ...state.exchangeRates, ...data.settings.exchangeRates };
+          document.getElementById('currency-select').value = state.currentCurrency;
+          updateCurrencySymbols();
+        }
+
+        // Restore current simulation
+        if (data.currentSimulation) {
+          document.getElementById('income').value = data.currentSimulation.income;
+          document.getElementById('basic-expenses').value = data.currentSimulation.basicExpenses;
+          document.getElementById('basic-expenses-range').value = data.currentSimulation.basicExpenses;
+          document.getElementById('lifestyle').value = data.currentSimulation.lifestyle;
+          document.getElementById('lifestyle-range').value = data.currentSimulation.lifestyle;
+          document.getElementById('return-rate').value = data.currentSimulation.returnRate;
+          document.getElementById('return-rate-range').value = data.currentSimulation.returnRate;
+          document.getElementById('goal').value = data.currentSimulation.goal;
+        }
+
+        // Import scenarios
+        if (data.scenarios && data.scenarios.length > 0 && dataSdkInitialized) {
+          for (const scenario of data.scenarios) {
+            if (state.scenarios.length >= 999) break;
+            await window.dataSdk.create({
+              ...scenario,
+              createdAt: scenario.createdAt || new Date().toISOString()
+            });
+          }
+        }
+
+        calculateSimulation();
+        showToast('Backup importado com sucesso!');
+      } catch (e) {
+        showToast('Erro ao importar ficheiro', 'error');
+      }
+    }
+
+    // Examples Setup
+    function setupExamples() {
+      const container = document.getElementById('examples-list');
+      container.innerHTML = exampleScenarios.map((ex, i) => `
+        <div class="p-4 border border-border rounded-lg hover:border-primary/50 transition-all card-hover cursor-pointer example-card" data-index="${i}">
+          <h3 class="font-semibold text-gray-800 mb-1">${ex.name}</h3>
+          <p class="text-sm text-gray-600 mb-2">${ex.description}</p>
+          <div class="text-xs text-gray-500">
+            Renda: ${formatCurrency(ex.income)} | Meta: ${formatCurrency(ex.goal)}
+          </div>
+          <div class="text-xs text-gray-400 mt-1">
+            ${ex.basicExpenses}% básicas | ${ex.lifestyle}% estilo | ${100 - ex.basicExpenses - ex.lifestyle}% investir
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.example-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const ex = exampleScenarios[parseInt(card.dataset.index)];
+          document.getElementById('income').value = ex.income;
+          document.getElementById('basic-expenses').value = ex.basicExpenses;
+          document.getElementById('basic-expenses-range').value = ex.basicExpenses;
+          document.getElementById('lifestyle').value = ex.lifestyle;
+          document.getElementById('lifestyle-range').value = ex.lifestyle;
+          document.getElementById('return-rate').value = ex.returnRate;
+          document.getElementById('return-rate-range').value = ex.returnRate;
+          document.getElementById('goal').value = ex.goal;
+
+          calculateSimulation();
+
+          // Switch to simulator tab
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+          document.querySelector('[data-tab="simulator"]').classList.add('tab-active');
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+          document.getElementById('tab-simulator').classList.remove('hidden');
+
+          showToast(`Exemplo "${ex.name}" carregado!`, 'info');
+        });
+      });
+    }
+
+    // Education Setup
+    function setupEducation() {
+      const container = document.getElementById('education-content');
+      container.innerHTML = educationContent.map((item, i) => `
+        <div class="border border-border rounded-lg overflow-hidden">
+          <button class="accordion-btn w-full p-4 text-left font-medium text-gray-800 hover:bg-gray-50 transition-all flex items-center justify-between" data-index="${i}">
+            <span>${item.title}</span>
+            <svg class="w-5 h-5 text-gray-400 transition-transform accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-content">
+            <div class="p-4 pt-0 text-sm text-gray-700">
+              ${item.content}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.accordion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const content = btn.nextElementSibling;
+          const icon = btn.querySelector('.accordion-icon');
+          content.classList.toggle('open');
+          icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : '';
+        });
+      });
+    }
+
+    // Modal Setup
+    function setupModals() {
+      document.getElementById('save-scenario-btn').addEventListener('click', () => {
+        document.getElementById('scenario-name').value = '';
+        document.getElementById('save-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('close-save-modal').addEventListener('click', () => {
+        document.getElementById('save-modal').classList.add('hidden');
+      });
+
+      document.getElementById('confirm-save').addEventListener('click', () => {
+        const name = document.getElementById('scenario-name').value.trim();
+        saveScenario(name);
+      });
+
+      document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
+      document.getElementById('export-json-btn').addEventListener('click', exportToJSON);
+      document.getElementById('import-json').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          importFromJSON(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      // Close modals on backdrop click
+      document.getElementById('currency-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+        }
+      });
+
+      document.getElementById('save-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+        }
+      });
+    }
+
+    // Elements SDK Setup
+    async function initElementSdk() {
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    }
+
+    // Initialize App
+    async function init() {
+      await initElementSdk();
+      await initDataSdk();
+      setupTabs();
+      setupInputs();
+      setupCurrency();
+      setupModals();
+      setupExamples();
+      setupEducation();
+      calculateSimulation();
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cffa573e456d04e',t:'MTc3MTQzOTk1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

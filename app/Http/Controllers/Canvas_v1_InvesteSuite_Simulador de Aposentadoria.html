@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Aposentadoria CPLP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    .card-hover {
+      transition: all 0.2s ease;
+    }
+    .card-hover:hover {
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+      transform: translateY(-2px);
+    }
+    .btn-primary {
+      background-color: #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: #33BEF2;
+    }
+    .input-field {
+      transition: all 0.2s ease;
+      border: 1px solid #E0E0E0;
+    }
+    .input-field:focus {
+      border-color: #66CFF5;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+      outline: none;
+    }
+    .result-card {
+      background: linear-gradient(135deg, #66CFF5 0%, #33BEF2 100%);
+    }
+    .tooltip-container {
+      position: relative;
+    }
+    .tooltip-text {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      z-index: 50;
+      background-color: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 200px;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+    }
+    .tooltip-container:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+    .tab-active {
+      border-bottom: 2px solid #66CFF5;
+      color: #66CFF5;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    .scenario-item {
+      transition: all 0.2s ease;
+    }
+    .scenario-item:hover {
+      background-color: #F0F7FF;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-success { background-color: #4CAF50; }
+    .toast-error { background-color: #F44336; }
+    .toast-warning { background-color: #FF9800; }
+    .delete-confirm {
+      background-color: #F44336;
+      color: white;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Header -->
+   <header class="bg-white shadow-sm sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+     <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+       <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center" style="display: none;">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="main-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">Simulador de Aposentadoria</h1>
+        <p id="main-subtitle" class="text-sm text-gray-500" style="display: none; display: none;">CPLP Edition</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap"><select id="currency-select" class="input-field rounded-lg px-3 py-2 text-sm font-medium bg-white"> <option value="AOA">🇦🇴 AOA - Kwanza</option> <option value="BRL">🇧🇷 BRL - Real</option> <option value="EUR">🇵🇹 EUR - Euro</option> <option value="MZN">🇲🇿 MZN - Metical</option> <option value="STN">🇸🇹 STN - Dobra</option> <option value="CVE">🇨🇻 CVE - Escudo</option> </select> <button id="export-json-btn" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg> Exportar </button> <label class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg> Importar <input type="file" id="import-json-input" accept=".json" class="hidden"> </label>
+      </div>
+     </div>
+    </div>
+   </header>
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Tabs -->
+    <div class="flex gap-6 border-b border-gray-200 mb-6"><button class="tab-btn tab-active pb-3 font-medium text-sm" data-tab="simulator"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> Simulador </span> </button> <button class="tab-btn pb-3 font-medium text-sm text-gray-500" data-tab="scenarios"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+       </svg> Cenários Salvos <span id="scenarios-count" class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">0</span> </span> </button> <button class="tab-btn pb-3 font-medium text-sm text-gray-500" data-tab="education"> <span class="flex items-center gap-2">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+       </svg> Educação Financeira </span> </button>
+    </div><!-- Simulator Tab -->
+    <div id="tab-simulator" class="tab-content">
+     <div class="grid lg:grid-cols-3 gap-6"><!-- Input Section -->
+      <div class="lg:col-span-1 space-y-4"><!-- Basic Inputs Card -->
+       <div class="bg-white rounded-xl p-5 shadow-sm card-hover">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+         </svg> Dados Pessoais</h3>
+        <div class="space-y-3">
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Idade Atual</label> <input type="number" id="current-age" value="30" min="18" max="80" class="input-field w-full rounded-lg px-3 py-2">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Idade de Aposentadoria</label> <input type="number" id="retirement-age" value="65" min="40" max="80" class="input-field w-full rounded-lg px-3 py-2">
+         </div>
+         <div class="tooltip-container"><label class="block text-sm font-medium text-gray-600 mb-1">Expectativa de Vida</label> <input type="number" id="life-expectancy" value="85" min="60" max="110" class="input-field w-full rounded-lg px-3 py-2"> <span class="tooltip-text">A expectativa de vida média na CPLP varia entre 60 e 85 anos dependendo do país.</span>
+         </div>
+        </div>
+       </div><!-- Financial Inputs Card -->
+       <div class="bg-white rounded-xl p-5 shadow-sm card-hover">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+         <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg> Dados Financeiros</h3>
+        <div class="space-y-3">
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Renda Mensal Desejada</label> <input type="text" id="desired-income" value="50000" class="input-field w-full rounded-lg px-3 py-2" placeholder="50.000">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Patrimônio Atual</label> <input type="text" id="current-savings" value="100000" class="input-field w-full rounded-lg px-3 py-2" placeholder="100.000">
+         </div>
+         <div><label class="block text-sm font-medium text-gray-600 mb-1">Aporte Mensal</label> <input type="text" id="monthly-contribution" value="5000" class="input-field w-full rounded-lg px-3 py-2" placeholder="5.000">
+         </div>
+        </div>
+       </div><!-- Advanced Settings -->
+       <div class="bg-white rounded-xl p-5 shadow-sm card-hover"><button id="toggle-advanced" class="w-full flex items-center justify-between font-semibold text-gray-800"> <span class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg> Configurações Avançadas </span>
+         <svg id="advanced-arrow" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+         </svg></button>
+        <div id="advanced-panel" class="hidden mt-4 space-y-3 animate-fade-in">
+         <div class="tooltip-container"><label class="block text-sm font-medium text-gray-600 mb-1">Taxa de Retorno (Acumulação) %</label> <input type="number" id="accumulation-rate" value="8" min="0" max="30" step="0.5" class="input-field w-full rounded-lg px-3 py-2"> <span class="tooltip-text">Taxa de retorno anual esperada durante a fase de acumulação de patrimônio.</span>
+         </div>
+         <div class="tooltip-container"><label class="block text-sm font-medium text-gray-600 mb-1">Taxa de Retorno (Aposentadoria) %</label> <input type="number" id="retirement-rate" value="5" min="0" max="20" step="0.5" class="input-field w-full rounded-lg px-3 py-2"> <span class="tooltip-text">Taxa de retorno mais conservadora durante a fase de retiradas.</span>
+         </div>
+         <div class="tooltip-container"><label class="block text-sm font-medium text-gray-600 mb-1">Inflação Anual %</label> <input type="number" id="inflation-rate" value="3" min="0" max="20" step="0.5" class="input-field w-full rounded-lg px-3 py-2"> <span class="tooltip-text">Estimativa de inflação média anual para ajuste da renda.</span>
+         </div>
+        </div>
+       </div><!-- Action Buttons -->
+       <div class="flex gap-3"><button id="calculate-btn" class="btn-primary flex-1 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg> Calcular </button> <button id="save-scenario-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+         </svg> Salvar </button>
+       </div>
+      </div><!-- Results Section -->
+      <div class="lg:col-span-2 space-y-4"><!-- Summary Cards -->
+       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" id="summary-cards">
+        <div class="result-card rounded-xl p-4 text-white">
+         <p class="text-sm opacity-80 mb-1">Patrimônio Necessário</p>
+         <p id="result-needed" class="text-2xl font-bold">-</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-green-500">
+         <p class="text-sm text-gray-500 mb-1">Patrimônio Acumulado</p>
+         <p id="result-accumulated" class="text-2xl font-bold text-gray-800">-</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-red-500">
+         <p class="text-sm text-gray-500 mb-1">Déficit</p>
+         <p id="result-deficit" class="text-2xl font-bold text-gray-800">-</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-orange-500">
+         <p class="text-sm text-gray-500 mb-1">Aporte Necessário</p>
+         <p id="result-required-contribution" class="text-2xl font-bold text-gray-800">-</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-500">
+         <p class="text-sm text-gray-500 mb-1">Renda Ajustada (1º ano)</p>
+         <p id="result-adjusted-income" class="text-2xl font-bold text-gray-800">-</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-300">
+         <p class="text-sm text-gray-500 mb-1">Anos de Planejamento</p>
+         <p id="result-years" class="text-xl font-bold text-gray-800">-</p>
+        </div>
+       </div><!-- Status Message -->
+       <div id="status-message" class="hidden rounded-xl p-4 flex items-start gap-3">
+        <svg id="status-icon" class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"></svg>
+        <div>
+         <p id="status-title" class="font-semibold"></p>
+         <p id="status-text" class="text-sm opacity-90"></p>
+        </div>
+       </div><!-- Charts -->
+       <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm card-hover">
+         <h4 class="font-semibold text-gray-800 mb-3">Evolução do Patrimônio</h4>
+         <div class="h-64">
+          <canvas id="wealth-chart"></canvas>
+         </div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm card-hover">
+         <h4 class="font-semibold text-gray-800 mb-3">Composição do Patrimônio</h4>
+         <div class="h-64">
+          <canvas id="composition-chart"></canvas>
+         </div>
+        </div>
+       </div><!-- Export Buttons -->
+       <div class="flex gap-3 justify-end"><button id="export-pdf-btn" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg> Exportar PDF </button> <button id="export-image-btn" class="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-all">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> Exportar Imagem </button>
+       </div><!-- Country Example -->
+       <div id="country-example" class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-5">
+        <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg> Exemplo para <span id="country-name">Angola</span></h4>
+        <p id="country-example-text" class="text-sm text-gray-600"></p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="tab-scenarios" class="tab-content hidden">
+     <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h3 class="text-lg font-semibold text-gray-800">Seus Cenários Salvos</h3>
+       <p class="text-sm text-gray-500">Clique para carregar um cenário</p>
+      </div>
+      <div id="scenarios-list" class="space-y-3">
+       <div class="text-center py-12 text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+        <p>Nenhum cenário salvo ainda.</p>
+        <p class="text-sm">Use o botão "Salvar" no simulador para guardar cenários.</p>
+       </div>
+      </div>
+     </div>
+    </div><!-- Education Tab -->
+    <div id="tab-education" class="tab-content hidden">
+     <div class="grid md:grid-cols-2 gap-6"><!-- About Section -->
+      <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Sobre Planejamento de Aposentadoria</h3>
+       <p class="text-gray-600 mb-4">O planejamento de aposentadoria é essencial para garantir segurança financeira na terceira idade. Este simulador ajuda você a entender quanto precisa poupar para manter seu padrão de vida desejado.</p>
+       <div class="bg-blue-50 rounded-lg p-4">
+        <p class="text-sm text-blue-800"><strong>💡 Dica:</strong> Começar cedo reduz drasticamente o aporte mensal necessário graças ao poder dos juros compostos!</p>
+       </div>
+      </div><!-- Key Concepts -->
+      <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Conceitos-Chave</h3>
+       <div class="space-y-4">
+        <div>
+         <h4 class="font-medium text-gray-800">Fase de Acumulação</h4>
+         <p class="text-sm text-gray-600">Período em que você poupa e investe para construir patrimônio até a aposentadoria.</p>
+        </div>
+        <div>
+         <h4 class="font-medium text-gray-800">Regra dos 4%</h4>
+         <p class="text-sm text-gray-600">Princípio que sugere retirar até 4% do patrimônio anualmente para não esgotar os recursos.</p>
+        </div>
+        <div>
+         <h4 class="font-medium text-gray-800">Impacto da Inflação</h4>
+         <p class="text-sm text-gray-600">A inflação reduz o poder de compra. Sua renda na aposentadoria deve ser ajustada anualmente.</p>
+        </div>
+       </div>
+      </div><!-- Phases Explanation -->
+      <div class="bg-white rounded-xl shadow-sm p-6 card-hover md:col-span-2">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg> As Duas Fases do Planejamento</h3>
+       <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-green-50 rounded-lg p-4">
+         <h4 class="font-semibold text-green-800 mb-2">📈 Fase 1: Acumulação</h4>
+         <ul class="text-sm text-green-700 space-y-1 list-disc list-inside">
+          <li>Da idade atual até a aposentadoria</li>
+          <li>Foco em maximizar aportes mensais</li>
+          <li>Investimentos com maior potencial de retorno</li>
+          <li>Juros compostos trabalham a seu favor</li>
+         </ul>
+        </div>
+        <div class="bg-orange-50 rounded-lg p-4">
+         <h4 class="font-semibold text-orange-800 mb-2">📉 Fase 2: Aposentadoria</h4>
+         <ul class="text-sm text-orange-700 space-y-1 list-disc list-inside">
+          <li>Da aposentadoria até a expectativa de vida</li>
+          <li>Retiradas mensais do patrimônio</li>
+          <li>Investimentos mais conservadores</li>
+          <li>Renda ajustada pela inflação</li>
+         </ul>
+        </div>
+       </div>
+      </div><!-- Empathetic Message -->
+      <div class="md:col-span-2 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6">
+       <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center flex-shrink-0">
+         <svg class="w-6 h-6 text-amber-700" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+         </svg>
+        </div>
+        <div>
+         <h4 class="font-semibold text-amber-900 mb-2">Proteja sua família e garanta estabilidade na terceira idade</h4>
+         <p class="text-amber-800">Planejar a aposentadoria é um ato de amor próprio e responsabilidade familiar. Não importa sua idade atual — o melhor momento para começar é agora. Cada pequeno passo conta na construção do seu futuro financeiro.</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+    // State Management
+    let currentCurrency = 'AOA';
+    let scenarios = [];
+    let calculationResults = null;
+    let wealthChart = null;
+    let compositionChart = null;
+    let deleteConfirmId = null;
+
+    // Currency Configuration
+    const currencyConfig = {
+      AOA: { locale: 'pt-AO', symbol: 'Kz', country: 'Angola', example: 'Com um salário médio de 80.000 Kz e começando aos 25 anos, um trabalhador angolano pode acumular cerca de 15 milhões Kz aos 65 anos poupando apenas 10% da renda.' },
+      BRL: { locale: 'pt-BR', symbol: 'R$', country: 'Brasil', example: 'Um brasileiro de 30 anos que poupa R$ 500/mês com retorno de 8% a.a. pode acumular cerca de R$ 1,1 milhão aos 65 anos.' },
+      EUR: { locale: 'pt-PT', symbol: '€', country: 'Portugal', example: 'Em Portugal, recomenda-se ter 80% do último salário como renda na aposentadoria. Começar aos 25 anos permite aportes 60% menores que aos 40.' },
+      MZN: { locale: 'pt-MZ', symbol: 'MT', country: 'Moçambique', example: 'Moçambicanos podem complementar a aposentadoria pública poupando 15% da renda. Começar cedo faz diferença significativa.' },
+      STN: { locale: 'pt-ST', symbol: 'Db', country: 'São Tomé e Príncipe', example: 'Em São Tomé, pequenas poupanças regulares podem garantir segurança financeira. Consistência é mais importante que valor.' },
+      CVE: { locale: 'pt-CV', symbol: '$', country: 'Cabo Verde', example: 'Cabo-verdianos podem beneficiar de fundos de pensão complementares. Diversificar investimentos reduz riscos.' }
+    };
+
+    // Default Config
+    const defaultConfig = {
+      app_title: 'Simulador de Aposentadoria',
+      subtitle: 'CPLP Edition',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      text_color: '#1F2937',
+      accent_color: '#FFC107',
+      font_family: 'Inter'
+    };
+
+    // Format currency
+    function formatCurrency(value) {
+      const config = currencyConfig[currentCurrency];
+      try {
+        return new Intl.NumberFormat(config.locale, {
+          style: 'currency',
+          currency: currentCurrency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      } catch (e) {
+        return `${config.symbol} ${Math.round(value).toLocaleString(config.locale)}`;
+      }
+    }
+
+    // Parse currency input
+    function parseNumber(value) {
+      if (typeof value === 'number') return value;
+      return parseFloat(String(value).replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) existingToast.remove();
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Get form values
+    function getFormValues() {
+      return {
+        currentAge: parseInt(document.getElementById('current-age').value) || 30,
+        retirementAge: parseInt(document.getElementById('retirement-age').value) || 65,
+        lifeExpectancy: parseInt(document.getElementById('life-expectancy').value) || 85,
+        desiredIncome: parseNumber(document.getElementById('desired-income').value),
+        currentSavings: parseNumber(document.getElementById('current-savings').value),
+        monthlyContribution: parseNumber(document.getElementById('monthly-contribution').value),
+        accumulationRate: (parseFloat(document.getElementById('accumulation-rate').value) || 8) / 100,
+        retirementRate: (parseFloat(document.getElementById('retirement-rate').value) || 5) / 100,
+        inflationRate: (parseFloat(document.getElementById('inflation-rate').value) || 3) / 100
+      };
+    }
+
+    // Calculate retirement
+    function calculateRetirement(values) {
+      const { currentAge, retirementAge, lifeExpectancy, desiredIncome, currentSavings, monthlyContribution, accumulationRate, retirementRate, inflationRate } = values;
+      
+      const yearsToRetirement = retirementAge - currentAge;
+      const yearsInRetirement = lifeExpectancy - retirementAge;
+      const monthsToRetirement = yearsToRetirement * 12;
+      const monthsInRetirement = yearsInRetirement * 12;
+      
+      // Monthly rates
+      const monthlyAccRate = Math.pow(1 + accumulationRate, 1/12) - 1;
+      const monthlyRetRate = Math.pow(1 + retirementRate, 1/12) - 1;
+      const monthlyInflation = Math.pow(1 + inflationRate, 1/12) - 1;
+      
+      // Phase 1: Accumulation - Future Value calculation
+      let accumulated = currentSavings;
+      const accumulationData = [{age: currentAge, value: accumulated}];
+      
+      for (let month = 1; month <= monthsToRetirement; month++) {
+        accumulated = accumulated * (1 + monthlyAccRate) + monthlyContribution;
+        if (month % 12 === 0) {
+          accumulationData.push({age: currentAge + month/12, value: accumulated});
+        }
+      }
+      
+      // Phase 2: Calculate required nest egg for retirement
+      // Adjusted first year income for inflation
+      const adjustedFirstYearIncome = desiredIncome * Math.pow(1 + inflationRate, yearsToRetirement);
+      
+      // Calculate required nest egg using Present Value of growing annuity
+      let requiredNestEgg = 0;
+      let monthlyWithdrawal = adjustedFirstYearIncome;
+      
+      for (let month = 1; month <= monthsInRetirement; month++) {
+        requiredNestEgg += monthlyWithdrawal / Math.pow(1 + monthlyRetRate, month);
+        monthlyWithdrawal *= (1 + monthlyInflation);
+      }
+      
+      // Deficit
+      const deficit = requiredNestEgg - accumulated;
+      
+      // Required monthly contribution to eliminate deficit
+      let requiredContribution = monthlyContribution;
+      if (deficit > 0 && monthsToRetirement > 0) {
+        // Future Value of Annuity formula solved for PMT
+        const fvFactor = (Math.pow(1 + monthlyAccRate, monthsToRetirement) - 1) / monthlyAccRate;
+        const currentFV = currentSavings * Math.pow(1 + monthlyAccRate, monthsToRetirement);
+        requiredContribution = (requiredNestEgg - currentFV) / fvFactor;
+      }
+      
+      // Generate retirement phase data
+      let balance = accumulated;
+      const retirementData = [{age: retirementAge, value: balance}];
+      monthlyWithdrawal = adjustedFirstYearIncome;
+      
+      for (let month = 1; month <= monthsInRetirement; month++) {
+        balance = balance * (1 + monthlyRetRate) - monthlyWithdrawal;
+        monthlyWithdrawal *= (1 + monthlyInflation);
+        if (month % 12 === 0) {
+          retirementData.push({age: retirementAge + month/12, value: Math.max(0, balance)});
+        }
+      }
+      
+      // Calculate contributions vs returns
+      const totalContributions = currentSavings + (monthlyContribution * monthsToRetirement);
+      const investmentGains = accumulated - totalContributions;
+      
+      return {
+        requiredNestEgg,
+        accumulated,
+        deficit: Math.max(0, deficit),
+        surplus: deficit < 0 ? Math.abs(deficit) : 0,
+        requiredContribution: Math.max(0, requiredContribution),
+        adjustedFirstYearIncome,
+        yearsToRetirement,
+        yearsInRetirement,
+        accumulationData,
+        retirementData,
+        totalContributions,
+        investmentGains,
+        isOnTrack: deficit <= 0
+      };
+    }
+
+    // Update results display
+    function updateResults(results) {
+      calculationResults = results;
+      
+      document.getElementById('result-needed').textContent = formatCurrency(results.requiredNestEgg);
+      document.getElementById('result-accumulated').textContent = formatCurrency(results.accumulated);
+      document.getElementById('result-deficit').textContent = results.deficit > 0 ? formatCurrency(results.deficit) : formatCurrency(results.surplus) + ' (Excedente)';
+      document.getElementById('result-required-contribution').textContent = formatCurrency(results.requiredContribution);
+      document.getElementById('result-adjusted-income').textContent = formatCurrency(results.adjustedFirstYearIncome);
+      document.getElementById('result-years').textContent = `${results.yearsToRetirement} acumulação + ${results.yearsInRetirement} aposentadoria`;
+      
+      // Update status message
+      const statusEl = document.getElementById('status-message');
+      const statusIcon = document.getElementById('status-icon');
+      const statusTitle = document.getElementById('status-title');
+      const statusText = document.getElementById('status-text');
+      
+      statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-orange-100', 'text-orange-800');
+      
+      if (results.isOnTrack) {
+        statusEl.classList.add('bg-green-100', 'text-green-800');
+        statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+        statusTitle.textContent = '🎉 Parabéns! Você está no caminho certo!';
+        statusText.textContent = `Com seus aportes atuais, você terá ${formatCurrency(results.surplus)} a mais do que o necessário.`;
+      } else if (results.deficit < results.requiredNestEgg * 0.2) {
+        statusEl.classList.add('bg-orange-100', 'text-orange-800');
+        statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
+        statusTitle.textContent = '⚠️ Quase lá!';
+        statusText.textContent = `Aumente seu aporte mensal para ${formatCurrency(results.requiredContribution)} para atingir sua meta.`;
+      } else {
+        statusEl.classList.add('bg-red-100', 'text-red-800');
+        statusIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+        statusTitle.textContent = '📊 Atenção necessária';
+        statusText.textContent = `Você precisa aumentar significativamente seus aportes para ${formatCurrency(results.requiredContribution)}/mês ou considerar trabalhar mais alguns anos.`;
+      }
+      
+      // Update charts
+      updateCharts(results);
+    }
+
+    // Update charts
+    function updateCharts(results) {
+      const allData = [...results.accumulationData, ...results.retirementData.slice(1)];
+      const labels = allData.map(d => d.age);
+      const values = allData.map(d => d.value);
+      
+      // Wealth evolution chart
+      const ctx1 = document.getElementById('wealth-chart').getContext('2d');
+      
+      if (wealthChart) wealthChart.destroy();
+      
+      wealthChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Patrimônio',
+            data: values,
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6
+          }, {
+            label: 'Meta',
+            data: labels.map(age => age >= results.accumulationData[results.accumulationData.length-1].age ? results.requiredNestEgg : null),
+            borderColor: '#F44336',
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (value) => {
+                  if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                  if (value >= 1000) return (value/1000).toFixed(0) + 'K';
+                  return value;
+                }
+              }
+            },
+            x: { title: { display: true, text: 'Idade' } }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+      
+      // Composition chart
+      const ctx2 = document.getElementById('composition-chart').getContext('2d');
+      
+      if (compositionChart) compositionChart.destroy();
+      
+      compositionChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aportes', 'Rendimentos'],
+          datasets: [{
+            data: [results.totalContributions, Math.max(0, results.investmentGains)],
+            backgroundColor: ['#66CFF5', '#4CAF50'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                  return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Update country example
+    function updateCountryExample() {
+      const config = currencyConfig[currentCurrency];
+      document.getElementById('country-name').textContent = config.country;
+      document.getElementById('country-example-text').textContent = config.example;
+    }
+
+    // Save scenario
+    async function saveScenario() {
+      if (scenarios.length >= 999) {
+        showToast('Limite de 999 cenários atingido. Exclua alguns cenários primeiro.', 'warning');
+        return;
+      }
+      
+      const values = getFormValues();
+      const scenarioNumber = scenarios.length + 1;
+      
+      const scenarioData = {
+        scenario_name: `Cenário ${scenarioNumber}`,
+        currency: currentCurrency,
+        current_age: values.currentAge,
+        retirement_age: values.retirementAge,
+        life_expectancy: values.lifeExpectancy,
+        desired_monthly_income: values.desiredIncome,
+        current_savings: values.currentSavings,
+        monthly_contribution: values.monthlyContribution,
+        accumulation_rate: values.accumulationRate * 100,
+        retirement_rate: values.retirementRate * 100,
+        inflation_rate: values.inflationRate * 100,
+        created_at: new Date().toISOString()
+      };
+      
+      document.getElementById('save-scenario-btn').disabled = true;
+      document.getElementById('save-scenario-btn').innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+      
+      const result = await window.dataSdk.create(scenarioData);
+      
+      document.getElementById('save-scenario-btn').disabled = false;
+      document.getElementById('save-scenario-btn').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg> Salvar';
+      
+      if (result.isOk) {
+        showToast('Cenário salvo com sucesso!', 'success');
+      } else {
+        showToast('Erro ao salvar cenário. Tente novamente.', 'error');
+      }
+    }
+
+    // Delete scenario
+    async function deleteScenario(scenario) {
+      const btn = document.querySelector(`[data-delete-id="${scenario.__backendId}"]`);
+      
+      if (deleteConfirmId !== scenario.__backendId) {
+        deleteConfirmId = scenario.__backendId;
+        btn.innerHTML = 'Confirmar?';
+        btn.classList.add('delete-confirm');
+        setTimeout(() => {
+          if (deleteConfirmId === scenario.__backendId) {
+            deleteConfirmId = null;
+            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+            btn.classList.remove('delete-confirm');
+          }
+        }, 3000);
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle></svg>';
+      
+      const result = await window.dataSdk.delete(scenario);
+      
+      if (result.isOk) {
+        showToast('Cenário excluído!', 'success');
+      } else {
+        showToast('Erro ao excluir cenário.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+      }
+      
+      deleteConfirmId = null;
+    }
+
+    // Load scenario
+    function loadScenario(scenario) {
+      currentCurrency = scenario.currency || 'AOA';
+      document.getElementById('currency-select').value = currentCurrency;
+      document.getElementById('current-age').value = scenario.current_age;
+      document.getElementById('retirement-age').value = scenario.retirement_age;
+      document.getElementById('life-expectancy').value = scenario.life_expectancy;
+      document.getElementById('desired-income').value = scenario.desired_monthly_income;
+      document.getElementById('current-savings').value = scenario.current_savings;
+      document.getElementById('monthly-contribution').value = scenario.monthly_contribution;
+      document.getElementById('accumulation-rate').value = scenario.accumulation_rate;
+      document.getElementById('retirement-rate').value = scenario.retirement_rate;
+      document.getElementById('inflation-rate').value = scenario.inflation_rate;
+      
+      updateCountryExample();
+      
+      // Switch to simulator tab
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+      document.querySelector('[data-tab="simulator"]').classList.add('tab-active');
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-simulator').classList.remove('hidden');
+      
+      // Calculate
+      const results = calculateRetirement(getFormValues());
+      updateResults(results);
+      
+      showToast(`${scenario.scenario_name} carregado!`, 'success');
+    }
+
+    // Render scenarios list
+    function renderScenarios(data) {
+      const container = document.getElementById('scenarios-list');
+      document.getElementById('scenarios-count').textContent = data.length;
+      
+      if (data.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-400">
+            <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+            <p>Nenhum cenário salvo ainda.</p>
+            <p class="text-sm">Use o botão "Salvar" no simulador para guardar cenários.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by creation date (newest first)
+      const sorted = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      container.innerHTML = sorted.map(scenario => {
+        const config = currencyConfig[scenario.currency] || currencyConfig.AOA;
+        const date = new Date(scenario.created_at);
+        const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+        
+        return `
+          <div class="scenario-item flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer" data-scenario-id="${scenario.__backendId}">
+            <div class="flex items-center gap-4" onclick="loadScenarioById('${scenario.__backendId}')">
+              <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <span class="text-lg">${config.symbol.charAt(0) === 'R' ? '🇧🇷' : config.symbol.charAt(0) === '€' ? '🇵🇹' : config.symbol.charAt(0) === 'K' ? '🇦🇴' : '💰'}</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">${scenario.scenario_name}</p>
+                <p class="text-sm text-gray-500">${scenario.current_age} → ${scenario.retirement_age} anos • ${scenario.currency} • ${dateStr}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-600">${formatCurrencyForScenario(scenario.monthly_contribution, scenario.currency)}/mês</span>
+              <button data-delete-id="${scenario.__backendId}" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Add delete handlers
+      container.querySelectorAll('[data-delete-id]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.deleteId;
+          const scenario = scenarios.find(s => s.__backendId === id);
+          if (scenario) deleteScenario(scenario);
+        });
+      });
+    }
+
+    function formatCurrencyForScenario(value, currency) {
+      const config = currencyConfig[currency] || currencyConfig.AOA;
+      try {
+        return new Intl.NumberFormat(config.locale, {
+          style: 'currency',
+          currency: currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      } catch (e) {
+        return `${config.symbol} ${Math.round(value).toLocaleString()}`;
+      }
+    }
+
+    function loadScenarioById(id) {
+      const scenario = scenarios.find(s => s.__backendId === id);
+      if (scenario) loadScenario(scenario);
+    }
+
+    // Export JSON
+    function exportJSON() {
+      const data = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        scenarios: scenarios.map(s => ({
+          scenario_name: s.scenario_name,
+          currency: s.currency,
+          current_age: s.current_age,
+          retirement_age: s.retirement_age,
+          life_expectancy: s.life_expectancy,
+          desired_monthly_income: s.desired_monthly_income,
+          current_savings: s.current_savings,
+          monthly_contribution: s.monthly_contribution,
+          accumulation_rate: s.accumulation_rate,
+          retirement_rate: s.retirement_rate,
+          inflation_rate: s.inflation_rate,
+          created_at: s.created_at
+        }))
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `aposentadoria-cenarios-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('Cenários exportados com sucesso!', 'success');
+    }
+
+    // Import JSON
+    async function importJSON(file) {
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        if (!data.scenarios || !Array.isArray(data.scenarios)) {
+          showToast('Arquivo inválido. Formato não reconhecido.', 'error');
+          return;
+        }
+        
+        let imported = 0;
+        for (const scenario of data.scenarios) {
+          if (scenarios.length >= 999) {
+            showToast(`Limite atingido. ${imported} cenários importados.`, 'warning');
+            break;
+          }
+          
+          const result = await window.dataSdk.create({
+            ...scenario,
+            created_at: new Date().toISOString()
+          });
+          
+          if (result.isOk) imported++;
+        }
+        
+        showToast(`${imported} cenários importados com sucesso!`, 'success');
+      } catch (e) {
+        showToast('Erro ao importar arquivo. Verifique o formato.', 'error');
+      }
+    }
+
+    // Export PDF
+    async function exportPDF() {
+      if (!calculationResults) {
+        showToast('Calcule primeiro para exportar.', 'warning');
+        return;
+      }
+      
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPos = margin;
+      
+      // Header
+      pdf.setFillColor(30, 136, 229);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Simulador de Aposentadoria CPLP', margin, 16);
+      
+      yPos = 35;
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, margin, yPos);
+      
+      yPos += 15;
+      
+      // Input data
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Dados de Entrada', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const values = getFormValues();
+      const inputs = [
+        `Moeda: ${currentCurrency}`,
+        `Idade Atual: ${values.currentAge} anos`,
+        `Idade de Aposentadoria: ${values.retirementAge} anos`,
+        `Expectativa de Vida: ${values.lifeExpectancy} anos`,
+        `Renda Mensal Desejada: ${formatCurrency(values.desiredIncome)}`,
+        `Patrimônio Atual: ${formatCurrency(values.currentSavings)}`,
+        `Aporte Mensal: ${formatCurrency(values.monthlyContribution)}`,
+        `Taxa de Retorno (Acumulação): ${(values.accumulationRate * 100).toFixed(1)}%`,
+        `Taxa de Retorno (Aposentadoria): ${(values.retirementRate * 100).toFixed(1)}%`,
+        `Inflação Anual: ${(values.inflationRate * 100).toFixed(1)}%`
+      ];
+      
+      inputs.forEach(input => {
+        pdf.text(input, margin, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 10;
+      
+      // Results
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Resultados', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const results = [
+        `Patrimônio Necessário: ${formatCurrency(calculationResults.requiredNestEgg)}`,
+        `Patrimônio Acumulado: ${formatCurrency(calculationResults.accumulated)}`,
+        `Déficit/Excedente: ${calculationResults.deficit > 0 ? formatCurrency(calculationResults.deficit) : formatCurrency(calculationResults.surplus) + ' (Excedente)'}`,
+        `Aporte Mensal Necessário: ${formatCurrency(calculationResults.requiredContribution)}`,
+        `Renda Ajustada (1º ano): ${formatCurrency(calculationResults.adjustedFirstYearIncome)}`,
+        `Anos de Acumulação: ${calculationResults.yearsToRetirement}`,
+        `Anos de Aposentadoria: ${calculationResults.yearsInRetirement}`
+      ];
+      
+      results.forEach(result => {
+        pdf.text(result, margin, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 15;
+      
+      // Charts
+      try {
+        const chart1 = document.getElementById('wealth-chart');
+        const chart2 = document.getElementById('composition-chart');
+        
+        if (chart1) {
+          const canvas1 = await html2canvas(chart1.parentElement, { scale: 1 });
+          const imgData1 = canvas1.toDataURL('image/png');
+          const imgWidth = 80;
+          const imgHeight = (canvas1.height / canvas1.width) * imgWidth;
+          
+          if (yPos + imgHeight > pageHeight - 20) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          
+          pdf.addImage(imgData1, 'PNG', margin, yPos, imgWidth, imgHeight);
+          
+          if (chart2) {
+            const canvas2 = await html2canvas(chart2.parentElement, { scale: 1 });
+            const imgData2 = canvas2.toDataURL('image/png');
+            pdf.addImage(imgData2, 'PNG', margin + imgWidth + 10, yPos, imgWidth, imgHeight);
+          }
+        }
+      } catch (e) {
+        console.error('Chart export error:', e);
+      }
+      
+      // Footer
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Simulador de Aposentadoria CPLP - Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      }
+      
+      pdf.save(`aposentadoria-simulacao-${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado com sucesso!', 'success');
+    }
+
+    // Export Image
+    async function exportImage() {
+      if (!calculationResults) {
+        showToast('Calcule primeiro para exportar.', 'warning');
+        return;
+      }
+      
+      const content = document.getElementById('tab-simulator');
+      
+      try {
+        const canvas = await html2canvas(content, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `aposentadoria-simulacao-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (e) {
+        showToast('Erro ao exportar imagem.', 'error');
+      }
+    }
+
+    // Data Handler
+    const dataHandler = {
+      onDataChanged(data) {
+        scenarios = data;
+        renderScenarios(data);
+      }
+    };
+
+    // Element SDK Config Change
+    async function onConfigChange(config) {
+      document.getElementById('main-title').textContent = config.app_title || defaultConfig.app_title;
+      document.getElementById('main-subtitle').textContent = config.subtitle || defaultConfig.subtitle;
+    }
+
+    // Initialize
+    async function init() {
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.primary_color || defaultConfig.primary_color,
+                set: (value) => window.elementSdk.setConfig({ primary_color: value })
+              },
+              {
+                get: () => config.secondary_color || defaultConfig.secondary_color,
+                set: (value) => window.elementSdk.setConfig({ secondary_color: value })
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (value) => window.elementSdk.setConfig({ text_color: value })
+              },
+              {
+                get: () => config.accent_color || defaultConfig.accent_color,
+                set: (value) => window.elementSdk.setConfig({ accent_color: value })
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (value) => window.elementSdk.setConfig({ font_family: value })
+            },
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title],
+            ['subtitle', config.subtitle || defaultConfig.subtitle]
+          ])
+        });
+      }
+      
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error('Failed to initialize Data SDK');
+        }
+      }
+      
+      // Event Listeners
+      document.getElementById('currency-select').addEventListener('change', (e) => {
+        currentCurrency = e.target.value;
+        updateCountryExample();
+        if (calculationResults) {
+          updateResults(calculationResults);
+        }
+      });
+      
+      document.getElementById('toggle-advanced').addEventListener('click', () => {
+        const panel = document.getElementById('advanced-panel');
+        const arrow = document.getElementById('advanced-arrow');
+        panel.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+      });
+      
+      document.getElementById('calculate-btn').addEventListener('click', () => {
+        const values = getFormValues();
+        
+        if (values.currentAge >= values.retirementAge) {
+          showToast('A idade atual deve ser menor que a idade de aposentadoria.', 'error');
+          return;
+        }
+        
+        if (values.retirementAge >= values.lifeExpectancy) {
+          showToast('A idade de aposentadoria deve ser menor que a expectativa de vida.', 'error');
+          return;
+        }
+        
+        const results = calculateRetirement(values);
+        updateResults(results);
+        showToast('Cálculo realizado com sucesso!', 'success');
+      });
+      
+      document.getElementById('save-scenario-btn').addEventListener('click', saveScenario);
+      document.getElementById('export-json-btn').addEventListener('click', exportJSON);
+      document.getElementById('import-json-input').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          importJSON(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      document.getElementById('export-pdf-btn').addEventListener('click', exportPDF);
+      document.getElementById('export-image-btn').addEventListener('click', exportImage);
+      
+      // Tab navigation
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+          btn.classList.add('tab-active');
+          
+          document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+          document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+        });
+      });
+      
+      // Initial setup
+      updateCountryExample();
+      
+      // Auto-calculate on load
+      const results = calculateRetirement(getFormValues());
+      updateResults(results);
+    }
+
+    // Make loadScenarioById global
+    window.loadScenarioById = loadScenarioById;
+    
+    // Start
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bb535add09bc13d',t:'MTc2Nzk3NTA3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

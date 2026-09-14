@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Gerador de Gráficos</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    html, body { height: 100%; margin: 0; }
+    .app-wrapper { height: 100%; overflow: auto; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+    .chart-card { border-left: 4px solid #66CFF5; }
+    .btn-primary { background: #66CFF5; }
+    .btn-primary:hover { background: #33BEF2; }
+    .btn-success { background: #4CAF50; }
+    .btn-warning { background: #FF9800; }
+    .btn-danger { background: #F44336; }
+    .toast { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-overlay { background: rgba(0,0,0,0.5); }
+    .hide-for-export { }
+    .exporting .hide-for-export { display: none !important; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #F8F9FA; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div class="app-wrapper bg-gray-50" id="app-container"><!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+     <div class="flex items-center gap-3">
+      <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      <h1 id="app-title" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Gerador de Gráficos</h1>
+     </div>
+     <div class="flex items-center gap-2 flex-wrap hide-for-export"><button onclick="exportAllJSON()" class="flex items-center gap-1 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+       </svg> Exportar JSON </button> <button onclick="document.getElementById('import-json').click()" class="flex items-center gap-1 px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+       </svg> Importar JSON </button> <input type="file" id="import-json" accept=".json" onchange="importJSON(event)" class="hidden"> <button onclick="exportAppImage()" class="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+       </svg> Imagem </button> <button onclick="exportPDF()" class="flex items-center gap-1 px-3 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg> PDF </button>
+     </div>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 overflow-x-auto hide-for-export">
+    <div class="max-w-7xl mx-auto px-4">
+     <div class="flex gap-1" id="main-tabs"><!-- Tabs will be generated by JS -->
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto p-4" id="main-content"><!-- Content generated by JS -->
+   </main><!-- Modal Container -->
+   <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90%] overflow-auto" id="modal-content"><!-- Modal content generated by JS -->
+    </div>
+   </div>
+  </div>
+  <script>
+    // ==================== APP STATE ====================
+    const CHART_TYPES = [
+      { id: 'column', name: 'Coluna', icon: 'bar-chart-2' },
+      { id: 'bar', name: 'Barra', icon: 'align-left' },
+      { id: 'line', name: 'Linha', icon: 'trending-up' },
+      { id: 'area', name: 'Área', icon: 'layers' },
+      { id: 'pie', name: 'Pizza', icon: 'pie-chart' },
+      { id: 'donut', name: 'Donut', icon: 'circle' },
+      { id: 'stacked-column', name: 'Coluna Empilhada', icon: 'bar-chart' },
+      { id: 'stacked-bar', name: 'Barra Empilhada', icon: 'align-justify' },
+      { id: 'stacked-area', name: 'Área Empilhada', icon: 'layers' },
+      { id: 'spline', name: 'Spline', icon: 'activity' },
+      { id: 'step-line', name: 'Linha em Degrau', icon: 'git-commit' },
+      { id: 'bubble', name: 'Bolha', icon: 'target' },
+      { id: 'scatter', name: 'Dispersão', icon: 'grid' }
+    ];
+
+    const SPECIAL_TABS = [
+      { id: 'scenarios', name: 'Cenários', icon: 'bookmark' },
+      { id: 'currency', name: 'Moedas', icon: 'dollar-sign' },
+      { id: 'help', name: 'Ajuda', icon: 'help-circle' }
+    ];
+
+    const CPLP_CURRENCIES = {
+      'AOA': { name: 'Kwanza (Angola)', symbol: 'Kz', rate: 1 },
+      'BRL': { name: 'Real (Brasil)', symbol: 'R$', rate: 0.006 },
+      'CVE': { name: 'Escudo (Cabo Verde)', symbol: '$', rate: 0.12 },
+      'XOF': { name: 'Franco CFA (Guiné-Bissau)', symbol: 'CFA', rate: 0.73 },
+      'MZN': { name: 'Metical (Moçambique)', symbol: 'MT', rate: 0.077 },
+      'STN': { name: 'Dobra (São Tomé)', symbol: 'Db', rate: 0.027 },
+      'EUR': { name: 'Euro (Portugal)', symbol: '€', rate: 0.0011 },
+      'MOP': { name: 'Pataca (Macau)', symbol: 'MOP$', rate: 0.0097 },
+      'USD': { name: 'Dólar (EUA)', symbol: '$', rate: 0.0012 }
+    };
+
+    const TEMPLATES = [
+      {
+        id: 'sales',
+        name: 'Vendas Mensais',
+        type: 'column',
+        data: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'], datasets: [{ label: 'Vendas', data: [12000, 19000, 15000, 25000, 22000, 30000] }] }
+      },
+      {
+        id: 'market',
+        name: 'Quota de Mercado',
+        type: 'pie',
+        data: { labels: ['Empresa A', 'Empresa B', 'Empresa C', 'Outros'], datasets: [{ data: [35, 25, 20, 20] }] }
+      },
+      {
+        id: 'growth',
+        name: 'Crescimento Anual',
+        type: 'line',
+        data: { labels: ['2019', '2020', '2021', '2022', '2023'], datasets: [{ label: 'Receita', data: [50000, 65000, 80000, 95000, 120000] }] }
+      },
+      {
+        id: 'expenses',
+        name: 'Despesas por Categoria',
+        type: 'donut',
+        data: { labels: ['Pessoal', 'Operações', 'Marketing', 'Tecnologia'], datasets: [{ data: [40, 25, 20, 15] }] }
+      },
+      {
+        id: 'comparison',
+        name: 'Comparação Regional',
+        type: 'bar',
+        data: { labels: ['Norte', 'Sul', 'Este', 'Oeste', 'Centro'], datasets: [{ label: 'Vendas', data: [15000, 22000, 18000, 25000, 20000] }] }
+      },
+      {
+        id: 'trend',
+        name: 'Tendência de Vendas',
+        type: 'area',
+        data: { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], datasets: [{ label: 'Unidades', data: [100, 150, 180, 220] }] }
+      },
+      {
+        id: 'budget',
+        name: 'Orçamento vs Real',
+        type: 'stacked-column',
+        data: { labels: ['Q1', 'Q2', 'Q3', 'Q4'], datasets: [{ label: 'Orçamento', data: [30000, 35000, 40000, 45000] }, { label: 'Real', data: [28000, 38000, 42000, 48000] }] }
+      },
+      {
+        id: 'performance',
+        name: 'Desempenho Equipa',
+        type: 'scatter',
+        data: { datasets: [{ label: 'Equipa', data: [{x: 10, y: 20}, {x: 15, y: 25}, {x: 20, y: 30}, {x: 25, y: 28}, {x: 30, y: 35}] }] }
+      },
+      {
+        id: 'distribution',
+        name: 'Distribuição de Produtos',
+        type: 'bubble',
+        data: { datasets: [{ label: 'Produtos', data: [{x: 10, y: 20, r: 15}, {x: 25, y: 30, r: 20}, {x: 40, y: 25, r: 10}, {x: 55, y: 35, r: 25}] }] }
+      },
+      {
+        id: 'progress',
+        name: 'Progresso do Projeto',
+        type: 'step-line',
+        data: { labels: ['Fase 1', 'Fase 2', 'Fase 3', 'Fase 4', 'Fase 5'], datasets: [{ label: 'Conclusão %', data: [20, 40, 60, 80, 100] }] }
+      }
+    ];
+
+    let appState = {
+      activeTab: 'column',
+      charts: {},
+      scenarios: [],
+      savedTags: [],
+      currencies: { ...CPLP_CURRENCIES },
+      filters: {}
+    };
+
+    let chartInstances = {};
+
+    // ==================== ICONS ====================
+    const ICONS = {
+      'bar-chart-2': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 20V10M12 20V4M6 20v-6"/>',
+      'align-left': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 10H3M21 6H3M21 14H3M17 18H3"/>',
+      'trending-up': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M23 6l-9.5 9.5-5-5L1 18"/>',
+      'layers': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+      'pie-chart': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.21 15.89A10 10 0 118 2.83M22 12A10 10 0 0012 2v10z"/>',
+      'circle': '<circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>',
+      'bar-chart': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 20V10M18 20V4M6 20v-4"/>',
+      'align-justify': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 10H3M21 6H3M21 14H3M21 18H3"/>',
+      'activity': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+      'git-commit': '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M1.05 12H7M17.01 12h5.95"/>',
+      'target': '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+      'grid': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
+      'bookmark': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>',
+      'dollar-sign': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
+      'help-circle': '<circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>',
+      'plus': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 5v14M5 12h14"/>',
+      'edit': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+      'copy': '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>',
+      'trash': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>',
+      'download': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+      'image': '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15l-5-5L5 21"/>',
+      'save': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+      'x': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 6L6 18M6 6l12 12"/>',
+      'check': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 6L9 17l-5-5"/>',
+      'search': '<circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35"/>',
+      'tag': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><path d="M7 7h.01"/>',
+      'file-text': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>'
+    };
+
+    function getIcon(name, className = 'w-5 h-5') {
+      return `<svg class="${className} text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
+    }
+
+    // ==================== UTILITIES ====================
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function showToast(message, type = 'info') {
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-orange-500',
+        info: 'bg-blue-500'
+      };
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+      toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="ml-2">${getIcon('x', 'w-4 h-4')}</button>`;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('is-chart-generator', JSON.stringify(appState));
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('is-chart-generator');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+        } catch (e) {
+          console.error('Error loading saved data:', e);
+        }
+      }
+      // Initialize charts object for each type
+      CHART_TYPES.forEach(type => {
+        if (!appState.charts[type.id]) {
+          appState.charts[type.id] = [];
+        }
+      });
+    }
+
+    function formatCurrency(value, currency = 'AOA') {
+      const curr = appState.currencies[currency];
+      if (!curr) return `${value} Kz`;
+      return `${curr.symbol} ${(value * curr.rate).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    // ==================== CHART COLORS ====================
+    const CHART_COLORS = [
+      '#66CFF5', '#4CAF50', '#FFC107', '#FF9800', '#F44336',
+      '#9C27B0', '#00BCD4', '#795548', '#607D8B', '#E91E63',
+      '#3F51B5', '#009688', '#CDDC39', '#FF5722', '#673AB7'
+    ];
+
+    function getChartColors(count) {
+      const colors = [];
+      for (let i = 0; i < count; i++) {
+        colors.push(CHART_COLORS[i % CHART_COLORS.length]);
+      }
+      return colors;
+    }
+
+    // ==================== TABS RENDERING ====================
+    function renderTabs() {
+      const tabsContainer = document.getElementById('main-tabs');
+      let html = '';
+      
+      CHART_TYPES.forEach(type => {
+        const isActive = appState.activeTab === type.id;
+        html += `
+          <button onclick="switchTab('${type.id}')" class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition ${isActive ? 'tab-active text-blue-500' : 'text-gray-600 hover:text-blue-500'}">
+            ${getIcon(type.icon, 'w-4 h-4')}
+            <span class="hidden sm:inline">${type.name}</span>
+          </button>
+        `;
+      });
+      
+      html += '<div class="border-l border-gray-200 mx-2 h-6 self-center"></div>';
+      
+      SPECIAL_TABS.forEach(tab => {
+        const isActive = appState.activeTab === tab.id;
+        html += `
+          <button onclick="switchTab('${tab.id}')" class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition ${isActive ? 'tab-active text-blue-500' : 'text-gray-600 hover:text-blue-500'}">
+            ${getIcon(tab.icon, 'w-4 h-4')}
+            <span class="hidden sm:inline">${tab.name}</span>
+          </button>
+        `;
+      });
+      
+      tabsContainer.innerHTML = html;
+    }
+
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      renderTabs();
+      renderContent();
+      saveToStorage();
+    }
+
+    // ==================== CONTENT RENDERING ====================
+    function renderContent() {
+      const mainContent = document.getElementById('main-content');
+      
+      if (CHART_TYPES.find(t => t.id === appState.activeTab)) {
+        renderChartTab(appState.activeTab);
+      } else if (appState.activeTab === 'scenarios') {
+        renderScenariosTab();
+      } else if (appState.activeTab === 'currency') {
+        renderCurrencyTab();
+      } else if (appState.activeTab === 'help') {
+        renderHelpTab();
+      }
+    }
+
+    // ==================== CHART TAB ====================
+    function renderChartTab(chartType) {
+      const charts = appState.charts[chartType] || [];
+      const filter = appState.filters[chartType] || '';
+      const chartTypeInfo = CHART_TYPES.find(t => t.id === chartType);
+      
+      const filteredCharts = charts.filter(chart => {
+        if (!filter) return true;
+        const searchLower = filter.toLowerCase();
+        return chart.title.toLowerCase().includes(searchLower) ||
+               (chart.data.labels && chart.data.labels.some(l => l.toLowerCase().includes(searchLower))) ||
+               (chart.tags && chart.tags.some(t => t.toLowerCase().includes(searchLower)));
+      });
+
+      document.getElementById('main-content').innerHTML = `
+        <div class="space-y-4">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              ${getIcon(chartTypeInfo.icon)}
+              Gráficos de ${chartTypeInfo.name}
+              <span class="text-sm font-normal text-gray-500">(${filteredCharts.length})</span>
+            </h2>
+            <div class="flex items-center gap-2 hide-for-export">
+              <div class="relative flex-1 sm:w-64">
+                <input type="text" placeholder="Filtrar gráficos..." value="${filter}" 
+                       onkeyup="updateFilter('${chartType}', this.value)"
+                       class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                <div class="absolute left-3 top-1/2 -translate-y-1/2">${getIcon('search', 'w-4 h-4')}</div>
+              </div>
+              <button onclick="openChartEditor('${chartType}')" class="flex items-center gap-1 px-4 py-2 btn-primary text-white rounded-lg text-sm hover:opacity-90 transition">
+                ${getIcon('plus', 'w-4 h-4')}
+                <span class="hidden sm:inline">Novo Gráfico</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="charts-grid-${chartType}">
+            ${filteredCharts.length === 0 ? `
+              <div class="col-span-full text-center py-12 text-gray-500">
+                <div class="mb-4">${getIcon('pie-chart', 'w-16 h-16 mx-auto opacity-30')}</div>
+                <p>Nenhum gráfico criado ainda.</p>
+                <button onclick="openChartEditor('${chartType}')" class="mt-4 text-blue-500 hover:underline hide-for-export">Criar primeiro gráfico</button>
+              </div>
+            ` : filteredCharts.map(chart => renderChartCard(chart, chartType)).join('')}
+          </div>
+        </div>
+      `;
+
+      // Render charts
+      setTimeout(() => {
+        filteredCharts.forEach(chart => {
+          renderChartCanvas(chart);
+        });
+      }, 100);
+    }
+
+    function renderChartCard(chart, chartType) {
+      return `
+        <div class="bg-white rounded-lg border border-gray-200 card-hover transition chart-card overflow-hidden" id="chart-container-${chart.id}">
+          <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-gray-800">${chart.title}</h3>
+              ${chart.tags && chart.tags.length > 0 ? `
+                <div class="flex flex-wrap gap-1 mt-1">
+                  ${chart.tags.map(tag => `<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">${tag}</span>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+            <div class="flex items-center gap-1 hide-for-export">
+              <button onclick="editChart('${chartType}', '${chart.id}')" class="p-1.5 text-gray-400 hover:text-blue-500 transition" title="Editar">
+                ${getIcon('edit', 'w-4 h-4')}
+              </button>
+              <button onclick="cloneChart('${chartType}', '${chart.id}')" class="p-1.5 text-gray-400 hover:text-green-500 transition" title="Clonar">
+                ${getIcon('copy', 'w-4 h-4')}
+              </button>
+              <button onclick="exportChartImage('${chart.id}')" class="p-1.5 text-gray-400 hover:text-purple-500 transition" title="Exportar Imagem">
+                ${getIcon('image', 'w-4 h-4')}
+              </button>
+              <button onclick="exportChartExcel('${chart.id}', '${chartType}')" class="p-1.5 text-gray-400 hover:text-green-500 transition" title="Exportar Excel">
+                ${getIcon('file-text', 'w-4 h-4')}
+              </button>
+              <button onclick="deleteChart('${chartType}', '${chart.id}')" class="p-1.5 text-gray-400 hover:text-red-500 transition" title="Eliminar">
+                ${getIcon('trash', 'w-4 h-4')}
+              </button>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="relative" style="height: 250px;">
+              <canvas id="chart-canvas-${chart.id}"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChartCanvas(chart) {
+      const canvas = document.getElementById(`chart-canvas-${chart.id}`);
+      if (!canvas) return;
+
+      // Destroy existing chart if any
+      if (chartInstances[chart.id]) {
+        chartInstances[chart.id].destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      const chartConfig = getChartConfig(chart);
+      chartInstances[chart.id] = new Chart(ctx, chartConfig);
+    }
+
+    function getChartConfig(chart) {
+      const type = chart.type;
+      const data = chart.data;
+      const colors = getChartColors(data.labels ? data.labels.length : (data.datasets ? data.datasets[0].data.length : 5));
+      
+      let chartType = 'bar';
+      let options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        }
+      };
+
+      // Configure datasets with colors
+      const configuredDatasets = data.datasets.map((ds, idx) => ({
+        ...ds,
+        backgroundColor: type === 'line' || type === 'spline' || type === 'step-line' ? 
+          CHART_COLORS[idx % CHART_COLORS.length] + '40' : 
+          (type === 'pie' || type === 'donut' ? colors : CHART_COLORS[idx % CHART_COLORS.length]),
+        borderColor: type === 'pie' || type === 'donut' ? '#fff' : CHART_COLORS[idx % CHART_COLORS.length],
+        borderWidth: type === 'pie' || type === 'donut' ? 2 : 2,
+        tension: type === 'spline' ? 0.4 : 0,
+        stepped: type === 'step-line' ? true : false,
+        fill: type === 'area' || type === 'stacked-area',
+      }));
+
+      switch (type) {
+        case 'column':
+          chartType = 'bar';
+          break;
+        case 'bar':
+          chartType = 'bar';
+          options.indexAxis = 'y';
+          break;
+        case 'line':
+        case 'spline':
+        case 'step-line':
+          chartType = 'line';
+          break;
+        case 'area':
+          chartType = 'line';
+          break;
+        case 'pie':
+          chartType = 'pie';
+          options.plugins.tooltip = {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const value = context.parsed;
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          };
+          break;
+        case 'donut':
+          chartType = 'doughnut';
+          options.plugins.tooltip = {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const value = context.parsed;
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          };
+          break;
+        case 'stacked-column':
+          chartType = 'bar';
+          options.scales = { x: { stacked: true }, y: { stacked: true } };
+          break;
+        case 'stacked-bar':
+          chartType = 'bar';
+          options.indexAxis = 'y';
+          options.scales = { x: { stacked: true }, y: { stacked: true } };
+          break;
+        case 'stacked-area':
+          chartType = 'line';
+          options.scales = { y: { stacked: true } };
+          break;
+        case 'bubble':
+          chartType = 'bubble';
+          break;
+        case 'scatter':
+          chartType = 'scatter';
+          break;
+      }
+
+      return {
+        type: chartType,
+        data: {
+          labels: data.labels,
+          datasets: configuredDatasets
+        },
+        options
+      };
+    }
+
+    function updateFilter(chartType, value) {
+      appState.filters[chartType] = value;
+      renderChartTab(chartType);
+    }
+
+    // ==================== CHART EDITOR ====================
+    function openChartEditor(chartType, chartId = null) {
+      const chart = chartId ? appState.charts[chartType].find(c => c.id === chartId) : null;
+      const chartTypeInfo = CHART_TYPES.find(t => t.id === chartType);
+      const isScatter = chartType === 'scatter' || chartType === 'bubble';
+      
+      const defaultLabels = chart?.data.labels || ['Item 1', 'Item 2', 'Item 3'];
+      const defaultData = chart?.data.datasets[0]?.data || (isScatter ? [{x: 10, y: 20}, {x: 20, y: 30}] : [100, 200, 150]);
+      
+      document.getElementById('modal-content').innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-800">${chart ? 'Editar' : 'Novo'} Gráfico de ${chartTypeInfo.name}</h2>
+            <button onclick="closeModal()" class="p-2 text-gray-400 hover:text-gray-600">${getIcon('x')}</button>
+          </div>
+
+          <form id="chart-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Título do Gráfico</label>
+              <input type="text" id="chart-title" value="${chart?.title || ''}" placeholder="Ex: Vendas Mensais 2024"
+                     class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500" required>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+              <div class="flex gap-2">
+                <input type="text" id="chart-tags" value="${chart?.tags?.join(', ') || ''}" placeholder="vendas, 2024, mensal"
+                       class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500">
+                ${appState.savedTags.length > 0 ? `
+                  <select onchange="addSavedTag(this.value)" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                    <option value="">Tags salvas...</option>
+                    ${appState.savedTags.map(tag => `<option value="${tag}">${tag}</option>`).join('')}
+                  </select>
+                ` : ''}
+              </div>
+            </div>
+
+            ${!isScatter ? `
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Etiquetas (uma por linha)</label>
+                <textarea id="chart-labels" rows="4" placeholder="Janeiro&#10;Fevereiro&#10;Março"
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 font-mono text-sm">${defaultLabels.join('\n')}</textarea>
+              </div>
+
+              <div id="datasets-container">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Conjuntos de Dados</label>
+                <div class="space-y-3" id="datasets-list">
+                  ${(chart?.data.datasets || [{label: 'Dados', data: defaultData}]).map((ds, idx) => `
+                    <div class="p-3 bg-gray-50 rounded-lg space-y-2 dataset-item">
+                      <div class="flex items-center gap-2">
+                        <input type="text" value="${ds.label || 'Dados ' + (idx + 1)}" placeholder="Nome do conjunto"
+                               class="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm dataset-label">
+                        ${idx > 0 ? `<button type="button" onclick="this.closest('.dataset-item').remove()" class="p-1 text-red-400 hover:text-red-600">${getIcon('trash', 'w-4 h-4')}</button>` : ''}
+                      </div>
+                      <textarea placeholder="Valores (um por linha)&#10;1000&#10;2000&#10;1500" rows="3"
+                                class="w-full px-3 py-1.5 border border-gray-200 rounded text-sm font-mono dataset-values">${Array.isArray(ds.data) ? ds.data.join('\n') : ''}</textarea>
+                    </div>
+                  `).join('')}
+                </div>
+                <button type="button" onclick="addDataset()" class="mt-2 text-sm text-blue-500 hover:underline flex items-center gap-1">
+                  ${getIcon('plus', 'w-4 h-4')} Adicionar conjunto de dados
+                </button>
+              </div>
+            ` : `
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pontos de Dados (formato: x, y${chartType === 'bubble' ? ', raio' : ''})</label>
+                <textarea id="scatter-data" rows="6" placeholder="${chartType === 'bubble' ? '10, 20, 15\n25, 30, 20\n40, 25, 10' : '10, 20\n20, 30\n30, 25'}"
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 font-mono text-sm">${
+                  chart?.data.datasets[0]?.data?.map(d => chartType === 'bubble' ? `${d.x}, ${d.y}, ${d.r}` : `${d.x}, ${d.y}`).join('\n') || ''
+                }</textarea>
+              </div>
+            `}
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+              <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancelar</button>
+              <button type="submit" class="px-6 py-2 btn-primary text-white rounded-lg hover:opacity-90 transition">
+                ${chart ? 'Guardar' : 'Criar'} Gráfico
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.getElementById('chart-form').onsubmit = (e) => {
+        e.preventDefault();
+        saveChart(chartType, chartId, isScatter);
+      };
+
+      showModal();
+    }
+
+    function addDataset() {
+      const container = document.getElementById('datasets-list');
+      const idx = container.children.length;
+      const div = document.createElement('div');
+      div.className = 'p-3 bg-gray-50 rounded-lg space-y-2 dataset-item';
+      div.innerHTML = `
+        <div class="flex items-center gap-2">
+          <input type="text" value="Dados ${idx + 1}" placeholder="Nome do conjunto"
+                 class="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm dataset-label">
+          <button type="button" onclick="this.closest('.dataset-item').remove()" class="p-1 text-red-400 hover:text-red-600">${getIcon('trash', 'w-4 h-4')}</button>
+        </div>
+        <textarea placeholder="Valores (um por linha)" rows="3"
+                  class="w-full px-3 py-1.5 border border-gray-200 rounded text-sm font-mono dataset-values"></textarea>
+      `;
+      container.appendChild(div);
+    }
+
+    function addSavedTag(tag) {
+      if (!tag) return;
+      const input = document.getElementById('chart-tags');
+      const current = input.value.split(',').map(t => t.trim()).filter(t => t);
+      if (!current.includes(tag)) {
+        current.push(tag);
+        input.value = current.join(', ');
+      }
+    }
+
+    function saveChart(chartType, chartId, isScatter) {
+      const title = document.getElementById('chart-title').value.trim();
+      const tags = document.getElementById('chart-tags').value.split(',').map(t => t.trim()).filter(t => t);
+      
+      if (!title) {
+        showToast('Por favor, insira um título para o gráfico.', 'warning');
+        return;
+      }
+
+      let chartData;
+      
+      if (isScatter) {
+        const scatterInput = document.getElementById('scatter-data').value;
+        const points = scatterInput.split('\n').filter(l => l.trim()).map(line => {
+          const parts = line.split(',').map(p => parseFloat(p.trim()));
+          return chartType === 'bubble' ? { x: parts[0], y: parts[1], r: parts[2] || 10 } : { x: parts[0], y: parts[1] };
+        }).filter(p => !isNaN(p.x) && !isNaN(p.y));
+        
+        chartData = {
+          datasets: [{ label: title, data: points }]
+        };
+      } else {
+        const labels = document.getElementById('chart-labels').value.split('\n').map(l => l.trim()).filter(l => l);
+        const datasetItems = document.querySelectorAll('.dataset-item');
+        const datasets = Array.from(datasetItems).map(item => ({
+          label: item.querySelector('.dataset-label').value.trim() || 'Dados',
+          data: item.querySelector('.dataset-values').value.split('\n').map(v => parseFloat(v.trim())).filter(v => !isNaN(v))
+        }));
+        
+        chartData = { labels, datasets };
+      }
+
+      // Save tags
+      tags.forEach(tag => {
+        if (!appState.savedTags.includes(tag)) {
+          appState.savedTags.push(tag);
+        }
+      });
+
+      const chart = {
+        id: chartId || generateId(),
+        type: chartType,
+        title,
+        tags,
+        data: chartData,
+        createdAt: chartId ? appState.charts[chartType].find(c => c.id === chartId)?.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (chartId) {
+        const idx = appState.charts[chartType].findIndex(c => c.id === chartId);
+        if (idx !== -1) {
+          appState.charts[chartType][idx] = chart;
+        }
+      } else {
+        appState.charts[chartType].push(chart);
+      }
+
+      saveToStorage();
+      closeModal();
+      renderChartTab(chartType);
+      showToast(`Gráfico ${chartId ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+    }
+
+    function editChart(chartType, chartId) {
+      openChartEditor(chartType, chartId);
+    }
+
+    function cloneChart(chartType, chartId) {
+      const chart = appState.charts[chartType].find(c => c.id === chartId);
+      if (!chart) return;
+
+      const newChart = {
+        ...JSON.parse(JSON.stringify(chart)),
+        id: generateId(),
+        title: `${chart.title} (Cópia)`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      appState.charts[chartType].push(newChart);
+      saveToStorage();
+      renderChartTab(chartType);
+      showToast('Gráfico clonado com sucesso!', 'success');
+    }
+
+    function deleteChart(chartType, chartId) {
+      // Create inline confirmation
+      const container = document.getElementById(`chart-container-${chartId}`);
+      if (!container) return;
+      
+      const headerDiv = container.querySelector('.p-4.border-b');
+      if (!headerDiv) return;
+      
+      const originalContent = headerDiv.innerHTML;
+      headerDiv.innerHTML = `
+        <div class="flex items-center justify-between bg-red-50 -m-4 p-4 rounded-t-lg">
+          <span class="text-red-700 font-medium">Eliminar este gráfico?</span>
+          <div class="flex gap-2">
+            <button onclick="confirmDeleteChart('${chartType}', '${chartId}')" class="px-3 py-1.5 bg-red-500 text-white rounded text-sm hover:bg-red-600">Confirmar</button>
+            <button onclick="cancelDeleteChart('${chartType}', '${chartId}', '${encodeURIComponent(originalContent)}')" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">Cancelar</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmDeleteChart(chartType, chartId) {
+      const idx = appState.charts[chartType].findIndex(c => c.id === chartId);
+      if (idx !== -1) {
+        appState.charts[chartType].splice(idx, 1);
+        if (chartInstances[chartId]) {
+          chartInstances[chartId].destroy();
+          delete chartInstances[chartId];
+        }
+        saveToStorage();
+        renderChartTab(chartType);
+        showToast('Gráfico eliminado com sucesso!', 'success');
+      }
+    }
+
+    function cancelDeleteChart(chartType, chartId, originalContent) {
+      const container = document.getElementById(`chart-container-${chartId}`);
+      if (!container) return;
+      const headerDiv = container.querySelector('.p-4.border-b, .bg-red-50');
+      if (headerDiv) {
+        const parent = headerDiv.parentElement;
+        const newDiv = document.createElement('div');
+        newDiv.className = 'p-4 border-b border-gray-100 flex items-center justify-between';
+        newDiv.innerHTML = decodeURIComponent(originalContent);
+        parent.replaceChild(newDiv, headerDiv);
+      }
+    }
+
+    // ==================== CHART EXPORT ====================
+    async function exportChartImage(chartId) {
+      const canvas = document.getElementById(`chart-canvas-${chartId}`);
+      if (!canvas) return;
+
+      try {
+        const link = document.createElement('a');
+        link.download = `grafico-${chartId}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (e) {
+        console.error('Export error:', e);
+        showToast('Erro ao exportar imagem.', 'error');
+      }
+    }
+
+    function exportChartExcel(chartId, chartType) {
+      const chart = appState.charts[chartType]?.find(c => c.id === chartId);
+      if (!chart) return;
+
+      try {
+        const wb = XLSX.utils.book_new();
+        let wsData = [];
+
+        if (chart.data.labels) {
+          const headers = ['Etiqueta', ...chart.data.datasets.map(ds => ds.label)];
+          wsData.push(headers);
+          chart.data.labels.forEach((label, idx) => {
+            const row = [label, ...chart.data.datasets.map(ds => ds.data[idx] || 0)];
+            wsData.push(row);
+          });
+        } else {
+          wsData.push(['X', 'Y', chartType === 'bubble' ? 'Raio' : null].filter(Boolean));
+          chart.data.datasets[0].data.forEach(point => {
+            wsData.push([point.x, point.y, chartType === 'bubble' ? point.r : null].filter(v => v !== null));
+          });
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+        XLSX.writeFile(wb, `${chart.title}.xlsx`);
+        showToast('Excel exportado com sucesso!', 'success');
+      } catch (e) {
+        console.error('Excel export error:', e);
+        showToast('Erro ao exportar Excel.', 'error');
+      }
+    }
+
+    // ==================== SCENARIOS TAB ====================
+    function renderScenariosTab() {
+      const filter = appState.filters.scenarios || '';
+      const filteredScenarios = appState.scenarios.filter(s => {
+        if (!filter) return true;
+        return s.name.toLowerCase().includes(filter.toLowerCase());
+      });
+
+      document.getElementById('main-content').innerHTML = `
+        <div class="space-y-6">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              ${getIcon('bookmark')}
+              Cenários Guardados
+              <span class="text-sm font-normal text-gray-500">(${filteredScenarios.length})</span>
+            </h2>
+            <div class="flex items-center gap-2 hide-for-export">
+              <div class="relative flex-1 sm:w-64">
+                <input type="text" placeholder="Filtrar cenários..." value="${filter}"
+                       onkeyup="appState.filters.scenarios = this.value; renderScenariosTab();"
+                       class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                <div class="absolute left-3 top-1/2 -translate-y-1/2">${getIcon('search', 'w-4 h-4')}</div>
+              </div>
+              <button onclick="saveCurrentScenario()" class="flex items-center gap-1 px-4 py-2 btn-primary text-white rounded-lg text-sm hover:opacity-90 transition">
+                ${getIcon('save', 'w-4 h-4')}
+                <span class="hidden sm:inline">Guardar Cenário</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenarios List -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            ${filteredScenarios.length === 0 ? `
+              <div class="col-span-full text-center py-12 text-gray-500">
+                <div class="mb-4">${getIcon('bookmark', 'w-16 h-16 mx-auto opacity-30')}</div>
+                <p>Nenhum cenário guardado.</p>
+                <button onclick="saveCurrentScenario()" class="mt-4 text-blue-500 hover:underline hide-for-export">Guardar cenário atual</button>
+              </div>
+            ` : filteredScenarios.map(scenario => `
+              <div class="bg-white rounded-lg border border-gray-200 card-hover transition chart-card overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h3 class="font-semibold text-gray-800">${scenario.name}</h3>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(scenario.createdAt).toLocaleString('pt-PT')}</p>
+                  </div>
+                  <div class="flex items-center gap-1 hide-for-export">
+                    <button onclick="loadScenario('${scenario.id}')" class="p-1.5 text-gray-400 hover:text-blue-500 transition" title="Carregar">
+                      ${getIcon('download', 'w-4 h-4')}
+                    </button>
+                    <button onclick="editScenarioName('${scenario.id}')" class="p-1.5 text-gray-400 hover:text-green-500 transition" title="Editar">
+                      ${getIcon('edit', 'w-4 h-4')}
+                    </button>
+                    <button onclick="cloneScenario('${scenario.id}')" class="p-1.5 text-gray-400 hover:text-purple-500 transition" title="Clonar">
+                      ${getIcon('copy', 'w-4 h-4')}
+                    </button>
+                    <button onclick="deleteScenario('${scenario.id}')" class="p-1.5 text-gray-400 hover:text-red-500 transition" title="Eliminar">
+                      ${getIcon('trash', 'w-4 h-4')}
+                    </button>
+                  </div>
+                </div>
+                <div class="p-4 text-sm text-gray-600">
+                  <p>${Object.keys(scenario.charts).reduce((sum, key) => sum + scenario.charts[key].length, 0)} gráficos guardados</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Templates Section -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              ${getIcon('file-text')}
+              Templates de Aprendizagem
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              ${TEMPLATES.map(template => `
+                <div class="bg-white rounded-lg border border-gray-200 card-hover transition p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-medium text-gray-800">${template.name}</h4>
+                    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">${CHART_TYPES.find(t => t.id === template.type)?.name || template.type}</span>
+                  </div>
+                  <button onclick="useTemplate('${template.id}')" class="w-full text-center text-sm text-blue-500 hover:underline hide-for-export">
+                    Usar este template
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveCurrentScenario() {
+      const scenarioNum = appState.scenarios.length + 1;
+      const scenario = {
+        id: generateId(),
+        name: `Cenário ${scenarioNum}`,
+        charts: JSON.parse(JSON.stringify(appState.charts)),
+        currencies: JSON.parse(JSON.stringify(appState.currencies)),
+        savedTags: [...appState.savedTags],
+        createdAt: new Date().toISOString()
+      };
+      appState.scenarios.push(scenario);
+      saveToStorage();
+      renderScenariosTab();
+      showToast('Cenário guardado com sucesso!', 'success');
+    }
+
+    function loadScenario(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      // Destroy all existing charts
+      Object.keys(chartInstances).forEach(id => {
+        if (chartInstances[id]) chartInstances[id].destroy();
+      });
+      chartInstances = {};
+
+      appState.charts = JSON.parse(JSON.stringify(scenario.charts));
+      appState.currencies = JSON.parse(JSON.stringify(scenario.currencies));
+      appState.savedTags = [...scenario.savedTags];
+      saveToStorage();
+      appState.activeTab = 'column';
+      renderTabs();
+      renderContent();
+      showToast('Cenário carregado com sucesso!', 'success');
+    }
+
+    function editScenarioName(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      document.getElementById('modal-content').innerHTML = `
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Editar Nome do Cenário</h2>
+          <input type="text" id="scenario-name" value="${scenario.name}" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 mb-4">
+          <div class="flex justify-end gap-3">
+            <button onclick="closeModal()" class="px-4 py-2 text-gray-600">Cancelar</button>
+            <button onclick="updateScenarioName('${scenarioId}')" class="px-4 py-2 btn-primary text-white rounded-lg">Guardar</button>
+          </div>
+        </div>
+      `;
+      showModal();
+    }
+
+    function updateScenarioName(scenarioId) {
+      const name = document.getElementById('scenario-name').value.trim();
+      if (!name) return;
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        scenario.name = name;
+        saveToStorage();
+        closeModal();
+        renderScenariosTab();
+        showToast('Nome atualizado!', 'success');
+      }
+    }
+
+    function cloneScenario(scenarioId) {
+      const scenario = appState.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      const newScenario = {
+        ...JSON.parse(JSON.stringify(scenario)),
+        id: generateId(),
+        name: `${scenario.name} (Cópia)`,
+        createdAt: new Date().toISOString()
+      };
+      appState.scenarios.push(newScenario);
+      saveToStorage();
+      renderScenariosTab();
+      showToast('Cenário clonado!', 'success');
+    }
+
+    function deleteScenario(scenarioId) {
+      const idx = appState.scenarios.findIndex(s => s.id === scenarioId);
+      if (idx !== -1) {
+        appState.scenarios.splice(idx, 1);
+        saveToStorage();
+        renderScenariosTab();
+        showToast('Cenário eliminado!', 'success');
+      }
+    }
+
+    function useTemplate(templateId) {
+      const template = TEMPLATES.find(t => t.id === templateId);
+      if (!template) return;
+
+      const chart = {
+        id: generateId(),
+        type: template.type,
+        title: template.name,
+        tags: ['template'],
+        data: JSON.parse(JSON.stringify(template.data)),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (!appState.charts[template.type]) {
+        appState.charts[template.type] = [];
+      }
+      appState.charts[template.type].push(chart);
+      saveToStorage();
+      appState.activeTab = template.type;
+      renderTabs();
+      renderContent();
+      showToast('Template aplicado com sucesso!', 'success');
+    }
+
+    // ==================== CURRENCY TAB ====================
+    function renderCurrencyTab() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              ${getIcon('dollar-sign')}
+              Taxas de Câmbio (Base: Kwanza - AOA)
+            </h2>
+          </div>
+
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Código</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Moeda</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Símbolo</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Taxa (1 AOA =)</th>
+                  <th class="px-4 py-3 text-right text-sm font-medium text-gray-600 hide-for-export">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                ${Object.entries(appState.currencies).map(([code, curr]) => `
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-800">${code}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${curr.name}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${curr.symbol}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${curr.rate}</td>
+                    <td class="px-4 py-3 text-right hide-for-export">
+                      <button onclick="editCurrency('${code}')" class="p-1.5 text-gray-400 hover:text-blue-500 transition">
+                        ${getIcon('edit', 'w-4 h-4')}
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bg-blue-50 rounded-lg p-4 text-sm text-blue-800">
+            <p class="font-medium mb-2">💡 Como usar as taxas de câmbio:</p>
+            <p>As taxas são usadas automaticamente quando os valores nos gráficos são configurados como moeda. O Kwanza (AOA) é a moeda base com taxa 1.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function editCurrency(code) {
+      const curr = appState.currencies[code];
+      if (!curr) return;
+
+      document.getElementById('modal-content').innerHTML = `
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Editar Taxa - ${code}</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Taxa (1 AOA =)</label>
+              <input type="number" step="0.000001" id="currency-rate" value="${curr.rate}" 
+                     class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeModal()" class="px-4 py-2 text-gray-600">Cancelar</button>
+            <button onclick="updateCurrencyRate('${code}')" class="px-4 py-2 btn-primary text-white rounded-lg">Guardar</button>
+          </div>
+        </div>
+      `;
+      showModal();
+    }
+
+    function updateCurrencyRate(code) {
+      const rate = parseFloat(document.getElementById('currency-rate').value);
+      if (isNaN(rate) || rate <= 0) {
+        showToast('Taxa inválida.', 'error');
+        return;
+      }
+      appState.currencies[code].rate = rate;
+      saveToStorage();
+      closeModal();
+      renderCurrencyTab();
+      showToast('Taxa atualizada!', 'success');
+    }
+
+    // ==================== HELP TAB ====================
+    function renderHelpTab() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="space-y-6 max-w-4xl">
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            ${getIcon('help-circle')}
+            Guia de Utilização
+          </h2>
+
+          <div class="space-y-4">
+            <!-- Introduction -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 chart-card">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">🎯 Sobre o IS Gerador de Gráficos</h3>
+              <p class="text-gray-600 leading-relaxed">
+                O IS Gerador de Gráficos é uma ferramenta profissional para criar visualizações de dados de alta qualidade. 
+                Desenvolvido especialmente para a Comunidade dos Países de Língua Portuguesa (CPLP), oferece suporte 
+                completo para múltiplas moedas e formatos de dados regionais.
+              </p>
+            </div>
+
+            <!-- Chart Types -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 chart-card">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">📊 Tipos de Gráficos Disponíveis</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+                <div><strong>Coluna/Barra:</strong> Comparação de categorias</div>
+                <div><strong>Linha/Spline:</strong> Tendências ao longo do tempo</div>
+                <div><strong>Área:</strong> Volume e proporções</div>
+                <div><strong>Pizza/Donut:</strong> Distribuição percentual</div>
+                <div><strong>Empilhados:</strong> Composição de múltiplas séries</div>
+                <div><strong>Dispersão/Bolha:</strong> Correlações entre variáveis</div>
+              </div>
+            </div>
+
+            <!-- Best Practices -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 chart-card">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Melhores Práticas</h3>
+              <ul class="space-y-2 text-gray-600">
+                <li class="flex items-start gap-2">
+                  <span class="text-green-500 mt-1">${getIcon('check', 'w-4 h-4')}</span>
+                  <span><strong>Escolha o tipo certo:</strong> Use gráficos de pizza para percentuais (máx. 5-7 categorias), linhas para tendências temporais.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-500 mt-1">${getIcon('check', 'w-4 h-4')}</span>
+                  <span><strong>Títulos claros:</strong> Use títulos descritivos que expliquem o que o gráfico mostra.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-500 mt-1">${getIcon('check', 'w-4 h-4')}</span>
+                  <span><strong>Use tags:</strong> Organize seus gráficos com tags para facilitar a filtragem e reutilização.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-500 mt-1">${getIcon('check', 'w-4 h-4')}</span>
+                  <span><strong>Guarde cenários:</strong> Salve configurações completas para diferentes análises ou apresentações.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-500 mt-1">${getIcon('check', 'w-4 h-4')}</span>
+                  <span><strong>Exporte em alta qualidade:</strong> Use a exportação PDF para documentos profissionais.</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Features -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 chart-card">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">🚀 Funcionalidades</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div class="space-y-2">
+                  <p><strong>Gestão de Gráficos:</strong></p>
+                  <ul class="list-disc list-inside pl-2 space-y-1">
+                    <li>Criar múltiplos gráficos por tipo</li>
+                    <li>Editar, clonar e eliminar</li>
+                    <li>Filtrar por título, dados ou tags</li>
+                    <li>Layout responsivo adaptável</li>
+                  </ul>
+                </div>
+                <div class="space-y-2">
+                  <p><strong>Exportação:</strong></p>
+                  <ul class="list-disc list-inside pl-2 space-y-1">
+                    <li>Imagem HD individual ou geral</li>
+                    <li>Excel por gráfico</li>
+                    <li>PDF profissional com paginação</li>
+                    <li>JSON para backup/importação</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Keyboard Shortcuts -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 chart-card">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">⌨️ Dicas de Produtividade</h3>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li>• Use os <strong>templates</strong> na aba Cenários para começar rapidamente</li>
+                <li>• <strong>Clone gráficos</strong> existentes para criar variações</li>
+                <li>• Guarde <strong>cenários completos</strong> antes de fazer grandes alterações</li>
+                <li>• Use o <strong>filtro global</strong> para encontrar gráficos específicos</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== GLOBAL EXPORTS ====================
+    function exportAllJSON() {
+      const data = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        charts: appState.charts,
+        scenarios: appState.scenarios,
+        savedTags: appState.savedTags,
+        currencies: appState.currencies
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `is-graficos-export-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados com sucesso!', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (data.charts) appState.charts = data.charts;
+          if (data.scenarios) appState.scenarios = data.scenarios;
+          if (data.savedTags) appState.savedTags = data.savedTags;
+          if (data.currencies) appState.currencies = { ...CPLP_CURRENCIES, ...data.currencies };
+          
+          // Destroy existing charts
+          Object.keys(chartInstances).forEach(id => {
+            if (chartInstances[id]) chartInstances[id].destroy();
+          });
+          chartInstances = {};
+          
+          saveToStorage();
+          renderContent();
+          showToast('Dados importados com sucesso!', 'success');
+        } catch (err) {
+          console.error('Import error:', err);
+          showToast('Erro ao importar ficheiro.', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportAppImage() {
+      try {
+        const container = document.getElementById('app-container');
+        container.classList.add('exporting');
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false
+        });
+        
+        container.classList.remove('exporting');
+        
+        const link = document.createElement('a');
+        link.download = `is-graficos-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (e) {
+        console.error('Export image error:', e);
+        document.getElementById('app-container').classList.remove('exporting');
+        showToast('Erro ao exportar imagem.', 'error');
+      }
+    }
+
+    async function exportPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        let currentY = margin;
+        let pageNum = 1;
+
+        const addHeader = () => {
+          pdf.setFontSize(10);
+          pdf.setTextColor(100);
+          pdf.text('IS Gerador de Gráficos', margin, 10);
+          pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin, 10, { align: 'right' });
+        };
+
+        const addFooter = () => {
+          pdf.setFontSize(9);
+          pdf.setTextColor(150);
+          pdf.text(`Página ${pageNum}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+        };
+
+        const addNewPage = () => {
+          addFooter();
+          pdf.addPage();
+          pageNum++;
+          currentY = margin + 10;
+          addHeader();
+        };
+
+        addHeader();
+        currentY = 20;
+
+        // Title
+        pdf.setFontSize(18);
+        pdf.setTextColor(30, 136, 229);
+        pdf.text('Relatório de Gráficos', margin, currentY);
+        currentY += 15;
+
+        // Export date
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+        pdf.text(`Exportado em: ${new Date().toLocaleString('pt-PT')}`, margin, currentY);
+        currentY += 15;
+
+        // Charts by type
+        for (const chartType of CHART_TYPES) {
+          const charts = appState.charts[chartType.id] || [];
+          if (charts.length === 0) continue;
+
+          // Section title
+          if (currentY > pageHeight - 60) addNewPage();
+          
+          pdf.setFontSize(14);
+          pdf.setTextColor(50);
+          pdf.text(`${chartType.name} (${charts.length})`, margin, currentY);
+          currentY += 10;
+
+          for (const chart of charts) {
+            if (currentY > pageHeight - 80) addNewPage();
+
+            // Chart title
+            pdf.setFontSize(11);
+            pdf.setTextColor(30);
+            pdf.text(chart.title, margin, currentY);
+            currentY += 5;
+
+            // Get chart canvas and add to PDF
+            const canvas = document.getElementById(`chart-canvas-${chart.id}`);
+            if (canvas) {
+              const imgData = canvas.toDataURL('image/png', 1.0);
+              const chartWidth = 80;
+              const chartHeight = 50;
+              pdf.addImage(imgData, 'PNG', margin, currentY, chartWidth, chartHeight);
+              currentY += chartHeight + 10;
+            }
+          }
+          currentY += 5;
+        }
+
+        addFooter();
+        pdf.save(`is-graficos-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
+        showToast('PDF exportado com sucesso!', 'success');
+      } catch (e) {
+        console.error('PDF export error:', e);
+        showToast('Erro ao exportar PDF.', 'error');
+      }
+    }
+
+    // ==================== MODAL ====================
+    function showModal() {
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-container').classList.add('hidden');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal-container').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-container') closeModal();
+    });
+
+    // ==================== ELEMENT SDK ====================
+    const defaultConfig = {
+      app_title: 'IS Gerador de Gráficos'
+    };
+
+    async function onConfigChange(config) {
+      const titleEl = document.getElementById('app-title');
+      if (titleEl) {
+        titleEl.textContent = config.app_title || defaultConfig.app_title;
+      }
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['app_title', config.app_title || defaultConfig.app_title]
+      ]);
+    }
+
+    // ==================== INITIALIZATION ====================
+    function init() {
+      loadFromStorage();
+      renderTabs();
+      renderContent();
+
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities,
+          mapToEditPanelValues
+        });
+      }
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d695c21775e77d9',t:'MTc3MjU0ODQ0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

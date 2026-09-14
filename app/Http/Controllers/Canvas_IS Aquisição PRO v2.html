@@ -1,0 +1,2041 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Aquisição</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-btn { transition: all 0.2s ease; }
+    .tab-btn:hover { background-color: #E0F4FD; }
+    .tab-btn.active { background-color: #66CFF5; color: white; border-left: 4px solid #FFC107; }
+    #sidebar { transition: all 0.3s ease; }
+    #sidebar.collapsed { width: 0 !important; padding: 0; border-right: none; overflow: hidden; }
+    #toggleSidebar { transition: all 0.2s ease; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      border-left: 4px solid #66CFF5;
+      transition: all 0.2s ease;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .btn-primary { background-color: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background-color: #33BEF2; }
+    .btn-success { background-color: #4CAF50; color: white; transition: all 0.2s ease; }
+    .btn-success:hover { background-color: #388E3C; }
+    .btn-warning { background-color: #FF9800; color: white; transition: all 0.2s ease; }
+    .btn-warning:hover { background-color: #F57C00; }
+    .btn-danger { background-color: #F44336; color: white; transition: all 0.2s ease; }
+    .btn-danger:hover { background-color: #D32F2F; }
+    .input-field { 
+      border: 1px solid #E0E0E0; 
+      border-radius: 8px; 
+      transition: all 0.2s ease;
+    }
+    .input-field:focus { 
+      border-color: #66CFF5; 
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    }
+    .status-pending { color: #FF9800; }
+    .status-approved { color: #4CAF50; }
+    .status-rejected { color: #F44336; }
+    .hide-for-export { }
+    .exporting .hide-for-export { display: none !important; }
+    @media print {
+      .hide-for-export { display: none !important; }
+    }
+    .chart-container { position: relative; }
+    .chart-export-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50" style="background-color: #F8F9FA;">
+  <div id="app" class="h-full overflow-auto">
+   <!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3"><button id="toggleSidebar" onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 transition-all hide-for-export" title="Menu">
+      <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg></button>
+     <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center" style="display: none;">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Aquisição</h1>
+      <p class="text-sm text-gray-500" style="display: none;">Sistema de Gestão de Compras e Orçamentos</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 hide-for-export">
+     <button onclick="exportToJSON()" class="p-2 rounded-lg hover:bg-gray-100 transition-all" title="Exportar JSON">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg></button> <button onclick="importFromJSON()" class="p-2 rounded-lg hover:bg-gray-100 transition-all" title="Importar JSON">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg></button> <button onclick="exportToImage()" class="p-2 rounded-lg hover:bg-gray-100 transition-all" title="Exportar Imagem">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg></button> <button onclick="exportToPDF()" class="p-2 rounded-lg hover:bg-gray-100 transition-all" title="Exportar PDF">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg></button>
+    </div>
+   </header>
+   <div class="flex h-full" style="height: calc(100% - 80px);">
+    <!-- Sidebar -->
+    <nav class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto hide-for-export" id="sidebar">
+     <div class="space-y-1">
+      <button class="tab-btn active w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" data-tab="dashboard">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+       </svg><span class="font-medium">Painel Principal</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="pedidos">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+       </svg><span class="font-medium">Pedidos</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="fornecedores">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+       </svg><span class="font-medium">Fornecedores</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="orcamentos">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg><span class="font-medium">Orçamentos</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="simulador">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+       </svg><span class="font-medium">Simulador</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="cenarios">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+       </svg><span class="font-medium">Cenários Salvos</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="moedas">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg><span class="font-medium">Taxas de Câmbio</span> </button> <button class="tab-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-gray-600" data-tab="ajuda">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg><span class="font-medium">Ajuda e Guia</span> </button>
+     </div>
+    </nav><!-- Main Content -->
+    <main class="flex-1 p-6 overflow-y-auto" id="mainContent">
+     <!-- Dashboard Tab -->
+     <div id="tab-dashboard" class="tab-content">
+      <div class="mb-6 flex items-center justify-between">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Painel Principal</h2>
+        <p class="text-gray-500">Visão geral das suas aquisições</p>
+       </div>
+       <div class="hide-for-export">
+        <input type="text" id="globalSearch" placeholder="Pesquisar em todo o sistema..." class="input-field px-4 py-2 w-64" onkeyup="globalFilter()">
+       </div>
+      </div><!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+       <div class="card p-5">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500 font-medium">Total Pedidos</p>
+          <p id="totalPedidos" class="text-2xl font-bold text-gray-800">0</p>
+         </div>
+         <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5" style="border-left-color: #4CAF50;">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500 font-medium">Aprovados</p>
+          <p id="totalAprovados" class="text-2xl font-bold text-green-600">0</p>
+         </div>
+         <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5" style="border-left-color: #FF9800;">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500 font-medium">Pendentes</p>
+          <p id="totalPendentes" class="text-2xl font-bold text-orange-500">0</p>
+         </div>
+         <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5" style="border-left-color: #FFC107;">
+        <div class="flex items-center justify-between">
+         <div>
+          <p class="text-sm text-gray-500 font-medium">Total Gasto (AOA)</p>
+          <p id="totalGasto" class="text-2xl font-bold text-gray-800">0</p>
+         </div>
+         <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+        </div>
+       </div>
+      </div><!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+       <div class="card p-5 chart-container">
+        <button onclick="exportChartImage('gastosChart')" class="chart-export-btn hide-for-export p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all" title="Exportar gráfico">
+         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Gastos por Categoria</h3>
+        <canvas id="gastosChart" height="200"></canvas>
+       </div>
+       <div class="card p-5 chart-container">
+        <button onclick="exportChartImage('statusChart')" class="chart-export-btn hide-for-export p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all" title="Exportar gráfico">
+         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg></button>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Estado dos Pedidos</h3>
+        <canvas id="statusChart" height="200"></canvas>
+       </div>
+      </div>
+      <div class="card p-5 chart-container">
+       <button onclick="exportChartImage('tendenciaChart')" class="chart-export-btn hide-for-export p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all" title="Exportar gráfico">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg></button>
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Tendência de Gastos (Últimos 6 meses)</h3>
+       <canvas id="tendenciaChart" height="100"></canvas>
+      </div>
+     </div><!-- Pedidos Tab -->
+     <div id="tab-pedidos" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Gestão de Pedidos</h2>
+        <p class="text-gray-500">Controle todas as solicitações de compra</p>
+       </div>
+       <div class="flex gap-2 hide-for-export">
+        <input type="text" id="filterPedidos" placeholder="Filtrar pedidos..." class="input-field px-4 py-2" onkeyup="filterPedidos()"> <select id="filterStatusPedidos" class="input-field px-4 py-2" onchange="filterPedidos()"> <option value="">Todos os estados</option> <option value="pendente">Pendente</option> <option value="aprovado">Aprovado</option> <option value="rejeitado">Rejeitado</option> </select> <button onclick="openPedidoModal()" class="btn-primary px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo Pedido </button>
+       </div>
+      </div>
+      <div class="card overflow-hidden">
+       <table class="w-full">
+        <thead class="bg-gray-50">
+         <tr>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">ID</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Descrição</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Categoria</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Fornecedor</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Valor (AOA)</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Estado</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Data</th>
+          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 hide-for-export">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="pedidosTable" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-gray-500">Nenhum pedido registado</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div><!-- Fornecedores Tab -->
+     <div id="tab-fornecedores" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Gestão de Fornecedores</h2>
+        <p class="text-gray-500">Base de dados de parceiros comerciais</p>
+       </div>
+       <div class="flex gap-2 hide-for-export">
+        <input type="text" id="filterFornecedores" placeholder="Filtrar fornecedores..." class="input-field px-4 py-2" onkeyup="filterFornecedores()"> <button onclick="openFornecedorModal()" class="btn-primary px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo Fornecedor </button>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="fornecedoresGrid">
+       <div class="col-span-full text-center py-8 text-gray-500">
+        Nenhum fornecedor registado
+       </div>
+      </div>
+     </div><!-- Orçamentos Tab -->
+     <div id="tab-orcamentos" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Gestão de Orçamentos</h2>
+        <p class="text-gray-500">Controle de limites e alocações financeiras</p>
+       </div>
+       <div class="flex gap-2 hide-for-export">
+        <input type="text" id="filterOrcamentos" placeholder="Filtrar orçamentos..." class="input-field px-4 py-2" onkeyup="filterOrcamentos()"> <button onclick="openOrcamentoModal()" class="btn-primary px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Novo Orçamento </button>
+       </div>
+      </div>
+      <div id="orcamentosList" class="space-y-4">
+       <div class="text-center py-8 text-gray-500">
+        Nenhum orçamento definido
+       </div>
+      </div>
+     </div><!-- Simulador Tab -->
+     <div id="tab-simulador" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Simulador de Compras</h2>
+        <p class="text-gray-500">Projete e simule cenários de aquisição</p>
+       </div>
+       <div class="flex gap-2 hide-for-export">
+        <button onclick="saveScenario()" class="btn-success px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário </button> <button onclick="resetSimulator()" class="btn-warning px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+         </svg> Limpar </button>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+       <div class="lg:col-span-2 space-y-4">
+        <div class="card p-5">
+         <h3 class="text-lg font-semibold text-gray-800 mb-4">Parâmetros da Simulação</h3>
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hide-for-export">
+          <div>
+           <label class="block text-sm font-medium text-gray-700 mb-1">Orçamento Total (AOA)</label> <input type="number" id="simOrcamento" class="input-field w-full px-4 py-2" value="1000000" onchange="updateSimulation()">
+          </div>
+          <div>
+           <label class="block text-sm font-medium text-gray-700 mb-1">Período (meses)</label> <input type="number" id="simPeriodo" class="input-field w-full px-4 py-2" value="12" onchange="updateSimulation()">
+          </div>
+          <div>
+           <label class="block text-sm font-medium text-gray-700 mb-1">Taxa de Inflação (%)</label> <input type="number" id="simInflacao" class="input-field w-full px-4 py-2" value="20" step="0.1" onchange="updateSimulation()">
+          </div>
+          <div>
+           <label class="block text-sm font-medium text-gray-700 mb-1">Margem de Segurança (%)</label> <input type="number" id="simMargem" class="input-field w-full px-4 py-2" value="10" step="0.1" onchange="updateSimulation()">
+          </div>
+         </div>
+        </div>
+        <div class="card p-5">
+         <h3 class="text-lg font-semibold text-gray-800 mb-4">Itens da Simulação</h3>
+         <div class="hide-for-export mb-4">
+          <button onclick="addSimItem()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium"> + Adicionar Item </button>
+         </div>
+         <div id="simItemsList" class="space-y-3">
+          <p class="text-gray-500 text-center py-4">Adicione itens para simular</p>
+         </div>
+        </div>
+       </div>
+       <div class="space-y-4">
+        <div class="card p-5">
+         <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumo da Simulação</h3>
+         <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+           <span class="text-gray-600">Orçamento Total</span> <span id="simResumoOrcamento" class="font-semibold">0 AOA</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+           <span class="text-gray-600">Total Itens</span> <span id="simResumoItens" class="font-semibold">0 AOA</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+           <span class="text-gray-600">Com Inflação</span> <span id="simResumoInflacao" class="font-semibold">0 AOA</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+           <span class="text-gray-600">Margem Segurança</span> <span id="simResumoMargem" class="font-semibold">0 AOA</span>
+          </div>
+          <div class="flex justify-between items-center py-2">
+           <span class="text-gray-600 font-semibold">Saldo Final</span> <span id="simResumoSaldo" class="font-bold text-lg">0 AOA</span>
+          </div>
+         </div>
+        </div>
+        <div class="card p-5 chart-container">
+         <button onclick="exportChartImage('simChart')" class="chart-export-btn hide-for-export p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all" title="Exportar gráfico">
+          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+         <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribuição</h3>
+         <canvas id="simChart" height="200"></canvas>
+        </div>
+       </div>
+      </div>
+     </div><!-- Cenários Tab -->
+     <div id="tab-cenarios" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Cenários Salvos</h2>
+        <p class="text-gray-500">Gerencie as suas simulações guardadas</p>
+       </div>
+       <div class="flex gap-2 hide-for-export">
+        <input type="text" id="filterCenarios" placeholder="Filtrar cenários..." class="input-field px-4 py-2" onkeyup="filterCenarios()">
+       </div>
+      </div><!-- Templates -->
+      <div class="mb-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-3">Templates de Aprendizagem</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="card p-4 cursor-pointer hover:border-blue-500 hide-for-export" onclick="loadTemplate('basico')">
+         <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+           <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+           </svg>
+          </div>
+          <div>
+           <h4 class="font-semibold text-gray-800">Cenário Básico</h4>
+           <p class="text-sm text-gray-500">Para iniciantes</p>
+          </div>
+         </div>
+         <p class="text-sm text-gray-600">Simulação simples com orçamento fixo e poucos itens.</p>
+        </div>
+        <div class="card p-4 cursor-pointer hover:border-blue-500 hide-for-export" onclick="loadTemplate('intermediario')">
+         <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+           <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+           </svg>
+          </div>
+          <div>
+           <h4 class="font-semibold text-gray-800">Cenário Intermédio</h4>
+           <p class="text-sm text-gray-500">Mais complexo</p>
+          </div>
+         </div>
+         <p class="text-sm text-gray-600">Inclui inflação e margem de segurança.</p>
+        </div>
+        <div class="card p-4 cursor-pointer hover:border-blue-500 hide-for-export" onclick="loadTemplate('avancado')">
+         <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+           <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+           </svg>
+          </div>
+          <div>
+           <h4 class="font-semibold text-gray-800">Cenário Avançado</h4>
+           <p class="text-sm text-gray-500">Completo</p>
+          </div>
+         </div>
+         <p class="text-sm text-gray-600">Simulação completa com múltiplas categorias.</p>
+        </div>
+       </div>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-3">Os Seus Cenários</h3>
+      <div id="cenariosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+       <div class="col-span-full text-center py-8 text-gray-500">
+        Nenhum cenário guardado
+       </div>
+      </div>
+     </div><!-- Moedas Tab -->
+     <div id="tab-moedas" class="tab-content hidden">
+      <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+       <div>
+        <h2 class="text-2xl font-bold text-gray-800">Taxas de Câmbio</h2>
+        <p class="text-gray-500">Configure as taxas de conversão para moedas CPLP e USD</p>
+       </div>
+       <div class="hide-for-export">
+        <button onclick="updateAllRates()" class="btn-primary px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+         </svg> Guardar Alterações </button>
+       </div>
+      </div>
+      <div class="card p-5 mb-6">
+       <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+         <span class="text-xl">🇦🇴</span>
+        </div>
+        <div>
+         <h3 class="font-semibold text-gray-800">Kwanza Angolano (AOA)</h3>
+         <p class="text-sm text-gray-500">Moeda base do sistema</p>
+        </div>
+       </div>
+       <p class="text-sm text-gray-600">Todas as conversões são calculadas com base no Kwanza Angolano.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="moedasGrid">
+       <!-- Currencies will be rendered here -->
+      </div>
+      <div class="card p-5 mt-6 chart-container">
+       <button onclick="exportChartImage('moedasChart')" class="chart-export-btn hide-for-export p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all" title="Exportar gráfico">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg></button>
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Comparação de Taxas</h3>
+       <canvas id="moedasChart" height="150"></canvas>
+      </div>
+     </div><!-- Ajuda Tab -->
+     <div id="tab-ajuda" class="tab-content hidden">
+      <div class="mb-6">
+       <h2 class="text-2xl font-bold text-gray-800">Guia de Utilização</h2>
+       <p class="text-gray-500">Aprenda a utilizar o IS Aquisição de forma eficiente</p>
+      </div>
+      <div class="space-y-4">
+       <div class="card p-5">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">📋 Gestão de Pedidos</h3>
+          <p class="text-gray-600 mb-3">O módulo de pedidos permite registar todas as solicitações de compra da sua organização.</p>
+          <ul class="list-disc list-inside text-gray-600 space-y-1">
+           <li>Registe novos pedidos com descrição, categoria, fornecedor e valor</li>
+           <li>Acompanhe o estado de cada pedido (pendente, aprovado, rejeitado)</li>
+           <li>Filtre pedidos por estado ou texto para encontrar rapidamente</li>
+           <li>Edite ou elimine pedidos conforme necessário</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">🏢 Gestão de Fornecedores</h3>
+          <p class="text-gray-600 mb-3">Mantenha uma base de dados organizada dos seus parceiros comerciais.</p>
+          <ul class="list-disc list-inside text-gray-600 space-y-1">
+           <li>Registe informações de contacto e categoria de cada fornecedor</li>
+           <li>Classifique fornecedores por área de atuação</li>
+           <li>Aceda rapidamente aos dados quando criar novos pedidos</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">💰 Gestão de Orçamentos</h3>
+          <p class="text-gray-600 mb-3">Defina e controle os limites de gastos por categoria.</p>
+          <ul class="list-disc list-inside text-gray-600 space-y-1">
+           <li>Estabeleça orçamentos por departamento ou categoria</li>
+           <li>Visualize o progresso de utilização em tempo real</li>
+           <li>Receba alertas visuais quando se aproximar dos limites</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 Simulador de Compras</h3>
+          <p class="text-gray-600 mb-3">Projete cenários de aquisição antes de comprometer recursos.</p>
+          <ul class="list-disc list-inside text-gray-600 space-y-1">
+           <li>Defina orçamento total, período e parâmetros económicos</li>
+           <li>Adicione itens para simular e veja o impacto em tempo real</li>
+           <li>Considere inflação e margem de segurança nos cálculos</li>
+           <li>Guarde cenários para comparação futura</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5">
+        <div class="flex items-start gap-4">
+         <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+         </div>
+         <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">💱 Taxas de Câmbio</h3>
+          <p class="text-gray-600 mb-3">Configure as taxas de conversão para moedas da CPLP e USD.</p>
+          <ul class="list-disc list-inside text-gray-600 space-y-1">
+           <li>Moeda base: Kwanza Angolano (AOA)</li>
+           <li>Suporte para: Real (BRL), Escudo (CVE), Metical (MZN), Dobra (STN), Pataca (MOP), USD</li>
+           <li>Atualize as taxas manualmente conforme necessário</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+       <div class="card p-5" style="border-left-color: #4CAF50;">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Melhores Práticas</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <div>
+          <h4 class="font-medium text-gray-700 mb-2">Organização</h4>
+          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+           <li>Mantenha os fornecedores atualizados</li>
+           <li>Categorize os pedidos corretamente</li>
+           <li>Defina orçamentos realistas</li>
+          </ul>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700 mb-2">Simulações</h4>
+          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+           <li>Use templates como ponto de partida</li>
+           <li>Considere sempre a inflação</li>
+           <li>Guarde cenários para comparar</li>
+          </ul>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700 mb-2">Backup</h4>
+          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+           <li>Exporte os dados regularmente</li>
+           <li>Mantenha cópias em JSON</li>
+           <li>Use a exportação PDF para relatórios</li>
+          </ul>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700 mb-2">Moedas</h4>
+          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+           <li>Atualize as taxas frequentemente</li>
+           <li>Verifique antes de grandes compras</li>
+           <li>Use o gráfico para comparação</li>
+          </ul>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </main>
+   </div><!-- Modals -->
+   <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div id="modalContent" class="bg-white rounded-xl max-w-lg w-full max-h-[90%] overflow-y-auto">
+     <!-- Modal content will be injected here -->
+    </div>
+   </div><!-- Hidden file input for import --> <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="handleImport(event)">
+  </div>
+  <script>
+    // ==================== CONFIG & STATE ====================
+    const defaultConfig = {
+      app_title: 'IS Aquisição',
+      primary_color: '#66CFF5',
+      secondary_color: '#F8F9FA',
+      success_color: '#4CAF50',
+      warning_color: '#FF9800',
+      danger_color: '#F44336',
+      accent_color: '#FFC107'
+    };
+
+    let config = { ...defaultConfig };
+    let charts = {};
+
+    // Data state
+    let appData = {
+      pedidos: [],
+      fornecedores: [],
+      orcamentos: [],
+      cenarios: [],
+      simulacao: {
+        orcamento: 1000000,
+        periodo: 12,
+        inflacao: 20,
+        margem: 10,
+        itens: []
+      },
+      moedas: {
+        BRL: { nome: 'Real Brasileiro', simbolo: 'R$', bandeira: '🇧🇷', taxa: 165 },
+        CVE: { nome: 'Escudo Cabo-verdiano', simbolo: '$', bandeira: '🇨🇻', taxa: 8.2 },
+        MZN: { nome: 'Metical Moçambicano', simbolo: 'MT', bandeira: '🇲🇿', taxa: 13 },
+        STN: { nome: 'Dobra São-tomense', simbolo: 'Db', bandeira: '🇸🇹', taxa: 37 },
+        MOP: { nome: 'Pataca de Macau', simbolo: 'MOP$', bandeira: '🇲🇴', taxa: 103 },
+        USD: { nome: 'Dólar Americano', simbolo: '$', bandeira: '🇺🇸', taxa: 830 }
+      }
+    };
+
+    // ==================== INITIALIZATION ====================
+    function init() {
+      loadFromStorage();
+      setupTabs();
+      renderAll();
+      initCharts();
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: (cfg) => {
+            config = { ...config, ...cfg };
+            document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+          },
+          mapToCapabilities: () => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['app_title', cfg.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      const btn = document.getElementById('toggleSidebar');
+      if (sidebar.classList.contains('collapsed')) {
+        btn.innerHTML = '<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>';
+      } else {
+        btn.innerHTML = '<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>';
+      }
+    }
+
+    function loadFromStorage() {
+      try {
+        const saved = localStorage.getItem('isAquisicaoData');
+        if (saved) {
+          appData = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Error loading data:', e);
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem('isAquisicaoData', JSON.stringify(appData));
+      } catch (e) {
+        console.error('Error saving data:', e);
+      }
+    }
+
+    // ==================== TAB NAVIGATION ====================
+    function setupTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          switchTab(tab);
+        });
+      });
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabId) btn.classList.add('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      
+      if (tabId === 'dashboard') updateDashboard();
+      if (tabId === 'moedas') renderMoedas();
+    }
+
+    // ==================== RENDER FUNCTIONS ====================
+    function renderAll() {
+      updateDashboard();
+      renderPedidos();
+      renderFornecedores();
+      renderOrcamentos();
+      renderCenarios();
+      renderMoedas();
+      updateSimulation();
+    }
+
+    function updateDashboard() {
+      const total = appData.pedidos.length;
+      const aprovados = appData.pedidos.filter(p => p.estado === 'aprovado').length;
+      const pendentes = appData.pedidos.filter(p => p.estado === 'pendente').length;
+      const totalGasto = appData.pedidos
+        .filter(p => p.estado === 'aprovado')
+        .reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
+
+      document.getElementById('totalPedidos').textContent = total;
+      document.getElementById('totalAprovados').textContent = aprovados;
+      document.getElementById('totalPendentes').textContent = pendentes;
+      document.getElementById('totalGasto').textContent = formatCurrency(totalGasto);
+
+      updateCharts();
+    }
+
+    function renderPedidos() {
+      const tbody = document.getElementById('pedidosTable');
+      if (appData.pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Nenhum pedido registado</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = appData.pedidos.map((p, i) => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm font-medium text-gray-800">#${String(i + 1).padStart(4, '0')}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.descricao)}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.categoria)}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.fornecedor)}</td>
+          <td class="px-4 py-3 text-sm font-medium text-gray-800">${formatCurrency(p.valor)}</td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(p.estado)}">
+              ${p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-500">${formatDate(p.data)}</td>
+          <td class="px-4 py-3 hide-for-export">
+            <div class="flex gap-1">
+              <button onclick="editPedido(${i})" class="p-1 rounded hover:bg-gray-100" title="Editar">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              <button onclick="deletePedido(${i})" class="p-1 rounded hover:bg-red-100" title="Eliminar">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderFornecedores() {
+      const grid = document.getElementById('fornecedoresGrid');
+      if (appData.fornecedores.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum fornecedor registado</div>';
+        return;
+      }
+
+      grid.innerHTML = appData.fornecedores.map((f, i) => `
+        <div class="card p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800">${escapeHtml(f.nome)}</h4>
+                <p class="text-sm text-gray-500">${escapeHtml(f.categoria)}</p>
+              </div>
+            </div>
+            <div class="flex gap-1 hide-for-export">
+              <button onclick="editFornecedor(${i})" class="p-1 rounded hover:bg-gray-100">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              <button onclick="deleteFornecedor(${i})" class="p-1 rounded hover:bg-red-100">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="space-y-1 text-sm text-gray-600">
+            <p>📧 ${escapeHtml(f.email || 'N/A')}</p>
+            <p>📞 ${escapeHtml(f.telefone || 'N/A')}</p>
+            <p>📍 ${escapeHtml(f.endereco || 'N/A')}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderOrcamentos() {
+      const list = document.getElementById('orcamentosList');
+      if (appData.orcamentos.length === 0) {
+        list.innerHTML = '<div class="text-center py-8 text-gray-500">Nenhum orçamento definido</div>';
+        return;
+      }
+
+      list.innerHTML = appData.orcamentos.map((o, i) => {
+        const usado = appData.pedidos
+          .filter(p => p.categoria === o.categoria && p.estado === 'aprovado')
+          .reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
+        const percentagem = o.valor > 0 ? Math.min((usado / o.valor) * 100, 100) : 0;
+        const barColor = percentagem > 90 ? '#F44336' : percentagem > 70 ? '#FF9800' : '#4CAF50';
+
+        return `
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="font-semibold text-gray-800">${escapeHtml(o.categoria)}</h4>
+                <p class="text-sm text-gray-500">${escapeHtml(o.descricao || '')}</p>
+              </div>
+              <div class="flex gap-2 hide-for-export">
+                <button onclick="editOrcamento(${i})" class="p-2 rounded-lg hover:bg-gray-100">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteOrcamento(${i})" class="p-2 rounded-lg hover:bg-red-100">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-sm mb-2">
+              <span class="text-gray-600">Usado: ${formatCurrency(usado)}</span>
+              <span class="font-medium">${percentagem.toFixed(1)}%</span>
+              <span class="text-gray-600">Limite: ${formatCurrency(o.valor)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="h-3 rounded-full transition-all" style="width: ${percentagem}%; background-color: ${barColor};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCenarios() {
+      const grid = document.getElementById('cenariosGrid');
+      if (appData.cenarios.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum cenário guardado</div>';
+        return;
+      }
+
+      grid.innerHTML = appData.cenarios.map((c, i) => `
+        <div class="card p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h4 class="font-semibold text-gray-800">${escapeHtml(c.nome)}</h4>
+              <p class="text-sm text-gray-500">${formatDate(c.data)}</p>
+            </div>
+            <div class="flex gap-1 hide-for-export">
+              <button onclick="loadScenario(${i})" class="p-1 rounded hover:bg-blue-100" title="Carregar">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+              </button>
+              <button onclick="cloneScenario(${i})" class="p-1 rounded hover:bg-green-100" title="Clonar">
+                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </button>
+              <button onclick="deleteScenario(${i})" class="p-1 rounded hover:bg-red-100" title="Eliminar">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="space-y-1 text-sm text-gray-600">
+            <p>💰 Orçamento: ${formatCurrency(c.simulacao.orcamento)}</p>
+            <p>📦 ${c.simulacao.itens.length} itens</p>
+            <p>📈 Inflação: ${c.simulacao.inflacao}%</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderMoedas() {
+      const grid = document.getElementById('moedasGrid');
+      grid.innerHTML = Object.entries(appData.moedas).map(([code, m]) => `
+        <div class="card p-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+              ${m.bandeira}
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">${code}</h4>
+              <p class="text-sm text-gray-500">${m.nome}</p>
+            </div>
+          </div>
+          <div class="hide-for-export">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Taxa (1 ${code} = X AOA)</label>
+            <input type="number" step="0.01" value="${m.taxa}" 
+              onchange="updateCurrencyRate('${code}', this.value)"
+              class="input-field w-full px-3 py-2">
+          </div>
+          <p class="text-sm text-gray-600 mt-3">
+            1 ${code} = <span class="font-semibold">${formatCurrency(m.taxa)}</span>
+          </p>
+        </div>
+      `).join('');
+
+      updateCurrencyChart();
+    }
+
+    // ==================== CHARTS ====================
+    function initCharts() {
+      // Gastos por Categoria
+      const gastosCtx = document.getElementById('gastosChart').getContext('2d');
+      charts.gastos = new Chart(gastosCtx, {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{
+            data: [],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#FF9800', '#F44336', '#9C27B0']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      // Status Chart
+      const statusCtx = document.getElementById('statusChart').getContext('2d');
+      charts.status = new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Aprovados', 'Pendentes', 'Rejeitados'],
+          datasets: [{
+            data: [0, 0, 0],
+            backgroundColor: ['#4CAF50', '#FF9800', '#F44336']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      // Tendência Chart
+      const tendenciaCtx = document.getElementById('tendenciaChart').getContext('2d');
+      charts.tendencia = new Chart(tendenciaCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+          datasets: [{
+            label: 'Gastos (AOA)',
+            data: [0, 0, 0, 0, 0, 0],
+            borderColor: '#66CFF5',
+            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+
+      // Simulador Chart
+      const simCtx = document.getElementById('simChart').getContext('2d');
+      charts.sim = new Chart(simCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Utilizado', 'Disponível'],
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: ['#66CFF5', '#E0E0E0']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      // Moedas Chart
+      const moedasCtx = document.getElementById('moedasChart').getContext('2d');
+      charts.moedas = new Chart(moedasCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(appData.moedas),
+          datasets: [{
+            label: 'Taxa (AOA)',
+            data: Object.values(appData.moedas).map(m => m.taxa),
+            backgroundColor: '#66CFF5'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+
+      updateCharts();
+    }
+
+    function updateCharts() {
+      // Gastos por categoria
+      const categorias = {};
+      appData.pedidos.filter(p => p.estado === 'aprovado').forEach(p => {
+        categorias[p.categoria] = (categorias[p.categoria] || 0) + (parseFloat(p.valor) || 0);
+      });
+      charts.gastos.data.labels = Object.keys(categorias);
+      charts.gastos.data.datasets[0].data = Object.values(categorias);
+      charts.gastos.update();
+
+      // Status
+      const aprovados = appData.pedidos.filter(p => p.estado === 'aprovado').length;
+      const pendentes = appData.pedidos.filter(p => p.estado === 'pendente').length;
+      const rejeitados = appData.pedidos.filter(p => p.estado === 'rejeitado').length;
+      charts.status.data.datasets[0].data = [aprovados, pendentes, rejeitados];
+      charts.status.update();
+
+      // Tendência (simulated monthly data)
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+      const gastosMensais = meses.map(() => Math.random() * 500000);
+      charts.tendencia.data.datasets[0].data = gastosMensais;
+      charts.tendencia.update();
+    }
+
+    function updateSimChart() {
+      const orcamento = parseFloat(document.getElementById('simOrcamento').value) || 0;
+      const totalItens = appData.simulacao.itens.reduce((sum, item) => sum + (parseFloat(item.valor) * parseFloat(item.quantidade)), 0);
+      const inflacao = parseFloat(document.getElementById('simInflacao').value) / 100 || 0;
+      const margem = parseFloat(document.getElementById('simMargem').value) / 100 || 0;
+      
+      const comInflacao = totalItens * (1 + inflacao);
+      const comMargem = comInflacao * (1 + margem);
+      const disponivel = Math.max(0, orcamento - comMargem);
+
+      charts.sim.data.datasets[0].data = [comMargem, disponivel];
+      charts.sim.update();
+    }
+
+    function updateCurrencyChart() {
+      if (charts.moedas) {
+        charts.moedas.data.labels = Object.keys(appData.moedas);
+        charts.moedas.data.datasets[0].data = Object.values(appData.moedas).map(m => m.taxa);
+        charts.moedas.update();
+      }
+    }
+
+    // ==================== SIMULATION ====================
+    function updateSimulation() {
+      const orcamento = parseFloat(document.getElementById('simOrcamento').value) || 0;
+      const inflacao = parseFloat(document.getElementById('simInflacao').value) / 100 || 0;
+      const margem = parseFloat(document.getElementById('simMargem').value) / 100 || 0;
+
+      appData.simulacao.orcamento = orcamento;
+      appData.simulacao.periodo = parseFloat(document.getElementById('simPeriodo').value) || 12;
+      appData.simulacao.inflacao = parseFloat(document.getElementById('simInflacao').value) || 0;
+      appData.simulacao.margem = parseFloat(document.getElementById('simMargem').value) || 0;
+
+      const totalItens = appData.simulacao.itens.reduce((sum, item) => sum + (parseFloat(item.valor) * parseFloat(item.quantidade)), 0);
+      const comInflacao = totalItens * (1 + inflacao);
+      const valorMargem = comInflacao * margem;
+      const totalFinal = comInflacao + valorMargem;
+      const saldo = orcamento - totalFinal;
+
+      document.getElementById('simResumoOrcamento').textContent = formatCurrency(orcamento);
+      document.getElementById('simResumoItens').textContent = formatCurrency(totalItens);
+      document.getElementById('simResumoInflacao').textContent = formatCurrency(comInflacao);
+      document.getElementById('simResumoMargem').textContent = formatCurrency(valorMargem);
+      document.getElementById('simResumoSaldo').textContent = formatCurrency(saldo);
+      document.getElementById('simResumoSaldo').className = `font-bold text-lg ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+      renderSimItems();
+      updateSimChart();
+      saveToStorage();
+    }
+
+    function addSimItem() {
+      appData.simulacao.itens.push({
+        id: Date.now(),
+        nome: 'Novo Item',
+        quantidade: 1,
+        valor: 0
+      });
+      updateSimulation();
+    }
+
+    function removeSimItem(id) {
+      appData.simulacao.itens = appData.simulacao.itens.filter(item => item.id !== id);
+      updateSimulation();
+    }
+
+    function updateSimItem(id, field, value) {
+      const item = appData.simulacao.itens.find(i => i.id === id);
+      if (item) {
+        item[field] = value;
+        updateSimulation();
+      }
+    }
+
+    function renderSimItems() {
+      const list = document.getElementById('simItemsList');
+      if (appData.simulacao.itens.length === 0) {
+        list.innerHTML = '<p class="text-gray-500 text-center py-4">Adicione itens para simular</p>';
+        return;
+      }
+
+      list.innerHTML = appData.simulacao.itens.map(item => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <input type="text" value="${escapeHtml(item.nome)}" 
+            onchange="updateSimItem(${item.id}, 'nome', this.value)"
+            class="input-field flex-1 px-3 py-2 text-sm hide-for-export" placeholder="Nome do item">
+          <span class="flex-1 text-sm text-gray-800">${escapeHtml(item.nome)}</span>
+          <input type="number" value="${item.quantidade}" min="1"
+            onchange="updateSimItem(${item.id}, 'quantidade', this.value)"
+            class="input-field w-20 px-3 py-2 text-sm hide-for-export" placeholder="Qtd">
+          <input type="number" value="${item.valor}" min="0"
+            onchange="updateSimItem(${item.id}, 'valor', this.value)"
+            class="input-field w-32 px-3 py-2 text-sm hide-for-export" placeholder="Valor">
+          <span class="w-32 text-sm font-medium text-gray-800">${formatCurrency(item.valor * item.quantidade)}</span>
+          <button onclick="removeSimItem(${item.id})" class="p-1 rounded hover:bg-red-100 hide-for-export">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function saveScenario() {
+      const count = appData.cenarios.length + 1;
+      const scenario = {
+        nome: `Cenário ${count}`,
+        data: new Date().toISOString(),
+        simulacao: JSON.parse(JSON.stringify(appData.simulacao))
+      };
+      appData.cenarios.push(scenario);
+      saveToStorage();
+      renderCenarios();
+      showToast('Cenário guardado com sucesso!');
+    }
+
+    function loadScenario(index) {
+      const scenario = appData.cenarios[index];
+      appData.simulacao = JSON.parse(JSON.stringify(scenario.simulacao));
+      document.getElementById('simOrcamento').value = appData.simulacao.orcamento;
+      document.getElementById('simPeriodo').value = appData.simulacao.periodo;
+      document.getElementById('simInflacao').value = appData.simulacao.inflacao;
+      document.getElementById('simMargem').value = appData.simulacao.margem;
+      updateSimulation();
+      switchTab('simulador');
+      showToast('Cenário carregado!');
+    }
+
+    function cloneScenario(index) {
+      const scenario = appData.cenarios[index];
+      const cloned = {
+        nome: `${scenario.nome} (Cópia)`,
+        data: new Date().toISOString(),
+        simulacao: JSON.parse(JSON.stringify(scenario.simulacao))
+      };
+      appData.cenarios.push(cloned);
+      saveToStorage();
+      renderCenarios();
+      showToast('Cenário clonado!');
+    }
+
+    function deleteScenario(index) {
+      if (showConfirm('Tem certeza que deseja eliminar este cenário?')) {
+        appData.cenarios.splice(index, 1);
+        saveToStorage();
+        renderCenarios();
+        showToast('Cenário eliminado!');
+      }
+    }
+
+    function resetSimulator() {
+      appData.simulacao = {
+        orcamento: 1000000,
+        periodo: 12,
+        inflacao: 20,
+        margem: 10,
+        itens: []
+      };
+      document.getElementById('simOrcamento').value = 1000000;
+      document.getElementById('simPeriodo').value = 12;
+      document.getElementById('simInflacao').value = 20;
+      document.getElementById('simMargem').value = 10;
+      updateSimulation();
+      showToast('Simulador reiniciado!');
+    }
+
+    function loadTemplate(type) {
+      const templates = {
+        basico: {
+          orcamento: 500000,
+          periodo: 6,
+          inflacao: 15,
+          margem: 5,
+          itens: [
+            { id: Date.now() + 1, nome: 'Material de Escritório', quantidade: 1, valor: 50000 },
+            { id: Date.now() + 2, nome: 'Equipamento Básico', quantidade: 2, valor: 75000 }
+          ]
+        },
+        intermediario: {
+          orcamento: 2000000,
+          periodo: 12,
+          inflacao: 20,
+          margem: 10,
+          itens: [
+            { id: Date.now() + 1, nome: 'Computadores', quantidade: 5, valor: 150000 },
+            { id: Date.now() + 2, nome: 'Mobiliário', quantidade: 10, valor: 50000 },
+            { id: Date.now() + 3, nome: 'Software Licenças', quantidade: 5, valor: 80000 }
+          ]
+        },
+        avancado: {
+          orcamento: 10000000,
+          periodo: 24,
+          inflacao: 25,
+          margem: 15,
+          itens: [
+            { id: Date.now() + 1, nome: 'Frota de Veículos', quantidade: 3, valor: 2000000 },
+            { id: Date.now() + 2, nome: 'Infraestrutura TI', quantidade: 1, valor: 1500000 },
+            { id: Date.now() + 3, nome: 'Equipamento Industrial', quantidade: 2, valor: 800000 },
+            { id: Date.now() + 4, nome: 'Consultoria Externa', quantidade: 1, valor: 500000 }
+          ]
+        }
+      };
+
+      appData.simulacao = JSON.parse(JSON.stringify(templates[type]));
+      document.getElementById('simOrcamento').value = appData.simulacao.orcamento;
+      document.getElementById('simPeriodo').value = appData.simulacao.periodo;
+      document.getElementById('simInflacao').value = appData.simulacao.inflacao;
+      document.getElementById('simMargem').value = appData.simulacao.margem;
+      updateSimulation();
+      switchTab('simulador');
+      showToast(`Template ${type} carregado!`);
+    }
+
+    // ==================== MODALS ====================
+    function openModal(content) {
+      document.getElementById('modalContent').innerHTML = content;
+      document.getElementById('modalOverlay').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target.id === 'modalOverlay') closeModal();
+    });
+
+    // Pedido Modal
+    function openPedidoModal(index = null) {
+      const isEdit = index !== null;
+      const pedido = isEdit ? appData.pedidos[index] : {};
+      
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">${isEdit ? 'Editar Pedido' : 'Novo Pedido'}</h3>
+          <form id="pedidoForm" class="space-y-4">
+            <input type="hidden" id="pedidoIndex" value="${index ?? ''}">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
+              <input type="text" id="pedidoDescricao" required class="input-field w-full px-4 py-2" value="${escapeHtml(pedido.descricao || '')}">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+                <select id="pedidoCategoria" required class="input-field w-full px-4 py-2">
+                  <option value="">Selecionar...</option>
+                  <option value="Tecnologia" ${pedido.categoria === 'Tecnologia' ? 'selected' : ''}>Tecnologia</option>
+                  <option value="Material de Escritório" ${pedido.categoria === 'Material de Escritório' ? 'selected' : ''}>Material de Escritório</option>
+                  <option value="Mobiliário" ${pedido.categoria === 'Mobiliário' ? 'selected' : ''}>Mobiliário</option>
+                  <option value="Serviços" ${pedido.categoria === 'Serviços' ? 'selected' : ''}>Serviços</option>
+                  <option value="Manutenção" ${pedido.categoria === 'Manutenção' ? 'selected' : ''}>Manutenção</option>
+                  <option value="Outros" ${pedido.categoria === 'Outros' ? 'selected' : ''}>Outros</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fornecedor</label>
+                <select id="pedidoFornecedor" class="input-field w-full px-4 py-2">
+                  <option value="">Selecionar...</option>
+                  ${appData.fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${pedido.fornecedor === f.nome ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Valor (AOA) *</label>
+                <input type="number" id="pedidoValor" required min="0" class="input-field w-full px-4 py-2" value="${pedido.valor || ''}">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
+                <select id="pedidoEstado" required class="input-field w-full px-4 py-2">
+                  <option value="pendente" ${pedido.estado === 'pendente' ? 'selected' : ''}>Pendente</option>
+                  <option value="aprovado" ${pedido.estado === 'aprovado' ? 'selected' : ''}>Aprovado</option>
+                  <option value="rejeitado" ${pedido.estado === 'rejeitado' ? 'selected' : ''}>Rejeitado</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="submit" class="btn-primary px-6 py-2 rounded-lg font-medium flex-1">
+                ${isEdit ? 'Guardar Alterações' : 'Criar Pedido'}
+              </button>
+              <button type="button" onclick="closeModal()" class="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      `);
+
+      document.getElementById('pedidoForm').addEventListener('submit', savePedido);
+    }
+
+    function savePedido(e) {
+      e.preventDefault();
+      const index = document.getElementById('pedidoIndex').value;
+      const pedido = {
+        descricao: document.getElementById('pedidoDescricao').value,
+        categoria: document.getElementById('pedidoCategoria').value,
+        fornecedor: document.getElementById('pedidoFornecedor').value,
+        valor: parseFloat(document.getElementById('pedidoValor').value),
+        estado: document.getElementById('pedidoEstado').value,
+        data: index ? appData.pedidos[index].data : new Date().toISOString()
+      };
+
+      if (index !== '') {
+        appData.pedidos[index] = pedido;
+      } else {
+        appData.pedidos.push(pedido);
+      }
+
+      saveToStorage();
+      renderPedidos();
+      updateDashboard();
+      closeModal();
+      showToast(index !== '' ? 'Pedido atualizado!' : 'Pedido criado!');
+    }
+
+    function editPedido(index) {
+      openPedidoModal(index);
+    }
+
+    function deletePedido(index) {
+      if (showConfirm('Tem certeza que deseja eliminar este pedido?')) {
+        appData.pedidos.splice(index, 1);
+        saveToStorage();
+        renderPedidos();
+        updateDashboard();
+        showToast('Pedido eliminado!');
+      }
+    }
+
+    // Fornecedor Modal
+    function openFornecedorModal(index = null) {
+      const isEdit = index !== null;
+      const fornecedor = isEdit ? appData.fornecedores[index] : {};
+      
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">${isEdit ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h3>
+          <form id="fornecedorForm" class="space-y-4">
+            <input type="hidden" id="fornecedorIndex" value="${index ?? ''}">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+              <input type="text" id="fornecedorNome" required class="input-field w-full px-4 py-2" value="${escapeHtml(fornecedor.nome || '')}">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+              <select id="fornecedorCategoria" class="input-field w-full px-4 py-2">
+                <option value="">Selecionar...</option>
+                <option value="Tecnologia" ${fornecedor.categoria === 'Tecnologia' ? 'selected' : ''}>Tecnologia</option>
+                <option value="Material de Escritório" ${fornecedor.categoria === 'Material de Escritório' ? 'selected' : ''}>Material de Escritório</option>
+                <option value="Serviços" ${fornecedor.categoria === 'Serviços' ? 'selected' : ''}>Serviços</option>
+                <option value="Construção" ${fornecedor.categoria === 'Construção' ? 'selected' : ''}>Construção</option>
+                <option value="Outros" ${fornecedor.categoria === 'Outros' ? 'selected' : ''}>Outros</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="fornecedorEmail" class="input-field w-full px-4 py-2" value="${escapeHtml(fornecedor.email || '')}">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <input type="tel" id="fornecedorTelefone" class="input-field w-full px-4 py-2" value="${escapeHtml(fornecedor.telefone || '')}">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+              <input type="text" id="fornecedorEndereco" class="input-field w-full px-4 py-2" value="${escapeHtml(fornecedor.endereco || '')}">
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="submit" class="btn-primary px-6 py-2 rounded-lg font-medium flex-1">
+                ${isEdit ? 'Guardar Alterações' : 'Criar Fornecedor'}
+              </button>
+              <button type="button" onclick="closeModal()" class="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      `);
+
+      document.getElementById('fornecedorForm').addEventListener('submit', saveFornecedor);
+    }
+
+    function saveFornecedor(e) {
+      e.preventDefault();
+      const index = document.getElementById('fornecedorIndex').value;
+      const fornecedor = {
+        nome: document.getElementById('fornecedorNome').value,
+        categoria: document.getElementById('fornecedorCategoria').value,
+        email: document.getElementById('fornecedorEmail').value,
+        telefone: document.getElementById('fornecedorTelefone').value,
+        endereco: document.getElementById('fornecedorEndereco').value
+      };
+
+      if (index !== '') {
+        appData.fornecedores[index] = fornecedor;
+      } else {
+        appData.fornecedores.push(fornecedor);
+      }
+
+      saveToStorage();
+      renderFornecedores();
+      closeModal();
+      showToast(index !== '' ? 'Fornecedor atualizado!' : 'Fornecedor criado!');
+    }
+
+    function editFornecedor(index) {
+      openFornecedorModal(index);
+    }
+
+    function deleteFornecedor(index) {
+      if (showConfirm('Tem certeza que deseja eliminar este fornecedor?')) {
+        appData.fornecedores.splice(index, 1);
+        saveToStorage();
+        renderFornecedores();
+        showToast('Fornecedor eliminado!');
+      }
+    }
+
+    // Orçamento Modal
+    function openOrcamentoModal(index = null) {
+      const isEdit = index !== null;
+      const orcamento = isEdit ? appData.orcamentos[index] : {};
+      
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">${isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</h3>
+          <form id="orcamentoForm" class="space-y-4">
+            <input type="hidden" id="orcamentoIndex" value="${index ?? ''}">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+              <select id="orcamentoCategoria" required class="input-field w-full px-4 py-2">
+                <option value="">Selecionar...</option>
+                <option value="Tecnologia" ${orcamento.categoria === 'Tecnologia' ? 'selected' : ''}>Tecnologia</option>
+                <option value="Material de Escritório" ${orcamento.categoria === 'Material de Escritório' ? 'selected' : ''}>Material de Escritório</option>
+                <option value="Mobiliário" ${orcamento.categoria === 'Mobiliário' ? 'selected' : ''}>Mobiliário</option>
+                <option value="Serviços" ${orcamento.categoria === 'Serviços' ? 'selected' : ''}>Serviços</option>
+                <option value="Manutenção" ${orcamento.categoria === 'Manutenção' ? 'selected' : ''}>Manutenção</option>
+                <option value="Outros" ${orcamento.categoria === 'Outros' ? 'selected' : ''}>Outros</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Valor Limite (AOA) *</label>
+              <input type="number" id="orcamentoValor" required min="0" class="input-field w-full px-4 py-2" value="${orcamento.valor || ''}">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+              <textarea id="orcamentoDescricao" class="input-field w-full px-4 py-2" rows="2">${escapeHtml(orcamento.descricao || '')}</textarea>
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="submit" class="btn-primary px-6 py-2 rounded-lg font-medium flex-1">
+                ${isEdit ? 'Guardar Alterações' : 'Criar Orçamento'}
+              </button>
+              <button type="button" onclick="closeModal()" class="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      `);
+
+      document.getElementById('orcamentoForm').addEventListener('submit', saveOrcamento);
+    }
+
+    function saveOrcamento(e) {
+      e.preventDefault();
+      const index = document.getElementById('orcamentoIndex').value;
+      const orcamento = {
+        categoria: document.getElementById('orcamentoCategoria').value,
+        valor: parseFloat(document.getElementById('orcamentoValor').value),
+        descricao: document.getElementById('orcamentoDescricao').value
+      };
+
+      if (index !== '') {
+        appData.orcamentos[index] = orcamento;
+      } else {
+        appData.orcamentos.push(orcamento);
+      }
+
+      saveToStorage();
+      renderOrcamentos();
+      closeModal();
+      showToast(index !== '' ? 'Orçamento atualizado!' : 'Orçamento criado!');
+    }
+
+    function editOrcamento(index) {
+      openOrcamentoModal(index);
+    }
+
+    function deleteOrcamento(index) {
+      if (showConfirm('Tem certeza que deseja eliminar este orçamento?')) {
+        appData.orcamentos.splice(index, 1);
+        saveToStorage();
+        renderOrcamentos();
+        showToast('Orçamento eliminado!');
+      }
+    }
+
+    // ==================== CURRENCY ====================
+    function updateCurrencyRate(code, value) {
+      appData.moedas[code].taxa = parseFloat(value) || 0;
+    }
+
+    function updateAllRates() {
+      saveToStorage();
+      updateCurrencyChart();
+      showToast('Taxas de câmbio atualizadas!');
+    }
+
+    // ==================== FILTERS ====================
+    function globalFilter() {
+      const query = document.getElementById('globalSearch').value.toLowerCase();
+      // Apply filter across current tab
+      filterPedidos();
+      filterFornecedores();
+      filterOrcamentos();
+      filterCenarios();
+    }
+
+    function filterPedidos() {
+      const query = (document.getElementById('filterPedidos')?.value || document.getElementById('globalSearch')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('filterStatusPedidos')?.value || '';
+      
+      const filtered = appData.pedidos.filter(p => {
+        const matchesQuery = p.descricao.toLowerCase().includes(query) || 
+                           p.categoria.toLowerCase().includes(query) ||
+                           p.fornecedor?.toLowerCase().includes(query);
+        const matchesStatus = !statusFilter || p.estado === statusFilter;
+        return matchesQuery && matchesStatus;
+      });
+
+      const tbody = document.getElementById('pedidosTable');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Nenhum resultado encontrado</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((p, i) => {
+        const originalIndex = appData.pedidos.indexOf(p);
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm font-medium text-gray-800">#${String(originalIndex + 1).padStart(4, '0')}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.descricao)}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.categoria)}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${escapeHtml(p.fornecedor)}</td>
+            <td class="px-4 py-3 text-sm font-medium text-gray-800">${formatCurrency(p.valor)}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(p.estado)}">
+                ${p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-500">${formatDate(p.data)}</td>
+            <td class="px-4 py-3 hide-for-export">
+              <div class="flex gap-1">
+                <button onclick="editPedido(${originalIndex})" class="p-1 rounded hover:bg-gray-100">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deletePedido(${originalIndex})" class="p-1 rounded hover:bg-red-100">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterFornecedores() {
+      const query = (document.getElementById('filterFornecedores')?.value || '').toLowerCase();
+      const filtered = appData.fornecedores.filter(f => 
+        f.nome.toLowerCase().includes(query) || 
+        f.categoria?.toLowerCase().includes(query)
+      );
+
+      const grid = document.getElementById('fornecedoresGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum resultado encontrado</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(f => {
+        const originalIndex = appData.fornecedores.indexOf(f);
+        return `
+          <div class="card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-800">${escapeHtml(f.nome)}</h4>
+                  <p class="text-sm text-gray-500">${escapeHtml(f.categoria)}</p>
+                </div>
+              </div>
+              <div class="flex gap-1 hide-for-export">
+                <button onclick="editFornecedor(${originalIndex})" class="p-1 rounded hover:bg-gray-100">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteFornecedor(${originalIndex})" class="p-1 rounded hover:bg-red-100">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="space-y-1 text-sm text-gray-600">
+              <p>📧 ${escapeHtml(f.email || 'N/A')}</p>
+              <p>📞 ${escapeHtml(f.telefone || 'N/A')}</p>
+              <p>📍 ${escapeHtml(f.endereco || 'N/A')}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterOrcamentos() {
+      const query = (document.getElementById('filterOrcamentos')?.value || '').toLowerCase();
+      const filtered = appData.orcamentos.filter(o => 
+        o.categoria.toLowerCase().includes(query) || 
+        o.descricao?.toLowerCase().includes(query)
+      );
+
+      const list = document.getElementById('orcamentosList');
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="text-center py-8 text-gray-500">Nenhum resultado encontrado</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(o => {
+        const originalIndex = appData.orcamentos.indexOf(o);
+        const usado = appData.pedidos
+          .filter(p => p.categoria === o.categoria && p.estado === 'aprovado')
+          .reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
+        const percentagem = o.valor > 0 ? Math.min((usado / o.valor) * 100, 100) : 0;
+        const barColor = percentagem > 90 ? '#F44336' : percentagem > 70 ? '#FF9800' : '#4CAF50';
+
+        return `
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="font-semibold text-gray-800">${escapeHtml(o.categoria)}</h4>
+                <p class="text-sm text-gray-500">${escapeHtml(o.descricao || '')}</p>
+              </div>
+              <div class="flex gap-2 hide-for-export">
+                <button onclick="editOrcamento(${originalIndex})" class="p-2 rounded-lg hover:bg-gray-100">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteOrcamento(${originalIndex})" class="p-2 rounded-lg hover:bg-red-100">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-sm mb-2">
+              <span class="text-gray-600">Usado: ${formatCurrency(usado)}</span>
+              <span class="font-medium">${percentagem.toFixed(1)}%</span>
+              <span class="text-gray-600">Limite: ${formatCurrency(o.valor)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="h-3 rounded-full transition-all" style="width: ${percentagem}%; background-color: ${barColor};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCenarios() {
+      const query = (document.getElementById('filterCenarios')?.value || '').toLowerCase();
+      const filtered = appData.cenarios.filter(c => 
+        c.nome.toLowerCase().includes(query)
+      );
+
+      const grid = document.getElementById('cenariosGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Nenhum resultado encontrado</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const originalIndex = appData.cenarios.indexOf(c);
+        return `
+          <div class="card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-semibold text-gray-800">${escapeHtml(c.nome)}</h4>
+                <p class="text-sm text-gray-500">${formatDate(c.data)}</p>
+              </div>
+              <div class="flex gap-1 hide-for-export">
+                <button onclick="loadScenario(${originalIndex})" class="p-1 rounded hover:bg-blue-100">
+                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                </button>
+                <button onclick="cloneScenario(${originalIndex})" class="p-1 rounded hover:bg-green-100">
+                  <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteScenario(${originalIndex})" class="p-1 rounded hover:bg-red-100">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="space-y-1 text-sm text-gray-600">
+              <p>💰 Orçamento: ${formatCurrency(c.simulacao.orcamento)}</p>
+              <p>📦 ${c.simulacao.itens.length} itens</p>
+              <p>📈 Inflação: ${c.simulacao.inflacao}%</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==================== EXPORT/IMPORT ====================
+    function exportToJSON() {
+      const dataStr = JSON.stringify(appData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `is-aquisicao-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Dados exportados com sucesso!');
+    }
+
+    function importFromJSON() {
+      document.getElementById('importFileInput').click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          appData = { ...appData, ...imported };
+          saveToStorage();
+          renderAll();
+          showToast('Dados importados com sucesso!');
+        } catch (err) {
+          showToast('Erro ao importar ficheiro!');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportToImage() {
+      const app = document.getElementById('app');
+      app.classList.add('exporting');
+      
+      try {
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#F8F9FA'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `is-aquisicao-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso!');
+      } catch (err) {
+        showToast('Erro ao exportar imagem!');
+      } finally {
+        app.classList.remove('exporting');
+      }
+    }
+
+    async function exportChartImage(chartId) {
+      const chartCanvas = document.getElementById(chartId);
+      if (!chartCanvas) return;
+
+      try {
+        const link = document.createElement('a');
+        link.download = `grafico-${chartId}-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = chartCanvas.toDataURL('image/png', 1.0);
+        link.click();
+        showToast('Gráfico exportado!');
+      } catch (err) {
+        showToast('Erro ao exportar gráfico!');
+      }
+    }
+
+    async function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 25;
+
+      // Header
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pageWidth, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('IS Aquisição - Relatório de Aquisições', margin, 13);
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+
+      // Summary section
+      yPos = 30;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resumo Geral', margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const stats = [
+        `Total de Pedidos: ${appData.pedidos.length}`,
+        `Pedidos Aprovados: ${appData.pedidos.filter(p => p.estado === 'aprovado').length}`,
+        `Pedidos Pendentes: ${appData.pedidos.filter(p => p.estado === 'pendente').length}`,
+        `Total Gasto: ${formatCurrency(appData.pedidos.filter(p => p.estado === 'aprovado').reduce((sum, p) => sum + parseFloat(p.valor || 0), 0))}`,
+        `Fornecedores Registados: ${appData.fornecedores.length}`,
+        `Orçamentos Definidos: ${appData.orcamentos.length}`
+      ];
+
+      stats.forEach(stat => {
+        doc.text(stat, margin, yPos);
+        yPos += 6;
+      });
+
+      // Add charts
+      yPos += 10;
+      if (yPos > pageHeight - 80) {
+        doc.addPage();
+        yPos = 25;
+      }
+
+      // Export each chart as small image
+      const chartIds = ['gastosChart', 'statusChart'];
+      for (let i = 0; i < chartIds.length; i++) {
+        const chartCanvas = document.getElementById(chartIds[i]);
+        if (chartCanvas) {
+          const imgData = chartCanvas.toDataURL('image/png');
+          const chartWidth = 80;
+          const chartHeight = 60;
+          const xPos = margin + (i * (chartWidth + 10));
+          doc.addImage(imgData, 'PNG', xPos, yPos, chartWidth, chartHeight);
+        }
+      }
+
+      yPos += 70;
+
+      // Pedidos table
+      if (yPos > pageHeight - 60) {
+        doc.addPage();
+        yPos = 25;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Lista de Pedidos', margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      appData.pedidos.slice(0, 10).forEach((p, i) => {
+        if (yPos > pageHeight - 20) {
+          doc.addPage();
+          yPos = 25;
+        }
+        doc.text(`${i+1}. ${p.descricao} - ${p.categoria} - ${formatCurrency(p.valor)} - ${p.estado}`, margin, yPos);
+        yPos += 5;
+      });
+
+      // Footer on each page
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`IS Aquisição - Página ${i} de ${totalPages}`, margin, pageHeight - 10);
+        doc.text(`Gerado em ${new Date().toLocaleDateString('pt-PT')}`, pageWidth - margin - 40, pageHeight - 10);
+      }
+
+      doc.save(`is-aquisicao-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF exportado com sucesso!');
+    }
+
+    // ==================== UTILITIES ====================
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-AO', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0) + ' AOA';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      return new Date(dateStr).toLocaleDateString('pt-PT');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getStatusClass(status) {
+      switch (status) {
+        case 'aprovado': return 'bg-green-100 text-green-700';
+        case 'pendente': return 'bg-orange-100 text-orange-700';
+        case 'rejeitado': return 'bg-red-100 text-red-700';
+        default: return 'bg-gray-100 text-gray-700';
+      }
+    }
+
+    // Toast notification
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Confirm dialog replacement
+    function showConfirm(message) {
+      return window.confirm(message); // Will be replaced with custom modal in production
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d6137c5465477d9',t:'MTc3MjQ2MzA2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="pt-PT" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matriz RACI</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; background: rgba(30, 136, 229, 0.05); }
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease; }
+    .card:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); }
+    .card-accent { border-left: 4px solid #66CFF5; }
+    .btn-primary { background: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #33BEF2; transform: translateY(-1px); }
+    .btn-secondary { background: #F8F9FA; color: #424242; border: 1px solid #E0E0E0; transition: all 0.2s ease; }
+    .btn-secondary:hover { background: #E0E0E0; }
+    .btn-success { background: #4CAF50; color: white; }
+    .btn-success:hover { background: #388E3C; }
+    .btn-warning { background: #FF9800; color: white; }
+    .btn-warning:hover { background: #F57C00; }
+    .btn-danger { background: #F44336; color: white; }
+    .btn-danger:hover { background: #D32F2F; }
+    .raci-cell { min-width: 80px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .raci-R { background: #E0F4FD; color: #33BEF2; font-weight: 600; }
+    .raci-A { background: #FFF3E0; color: #E65100; font-weight: 600; }
+    .raci-C { background: #E8F5E9; color: #2E7D32; font-weight: 600; }
+    .raci-I { background: #F3E5F5; color: #7B1FA2; font-weight: 600; }
+    .raci-empty { background: #FAFAFA; color: #9E9E9E; }
+    .input-field { border: 1px solid #E0E0E0; border-radius: 6px; padding: 8px 12px; transition: all 0.2s ease; }
+    .input-field:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .export-hidden { display: none !important; }
+    .chart-container { position: relative; height: 250px; }
+    .scenario-card { border-left: 4px solid #FFC107; }
+    .filter-highlight { background: #FFF9C4; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #F8F9FA; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full flex flex-col overflow-auto">
+   <!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="appTitle" class="text-xl font-bold text-gray-800" style="display: none; display: none;">IS Matriz RACI</h1>
+       <p class="text-sm text-gray-500" style="display: none;">Modelo de Funções e Responsabilidades</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-3 export-hide">
+      <div class="relative">
+       <input type="text" id="globalSearch" placeholder="Filtrar dados..." class="input-field pl-10 w-64" oninput="filterGlobalData()">
+       <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+       </svg>
+      </div><button onclick="exportAppImage()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+       </svg><span class="text-sm">Imagem</span> </button> <button onclick="exportPDF()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+       </svg><span class="text-sm">PDF</span> </button> <button onclick="showImportExportModal()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+       </svg><span class="text-sm">Importar/Exportar</span> </button>
+     </div>
+    </div>
+   </header><!-- Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-6 flex-shrink-0">
+    <div class="flex gap-1 overflow-x-auto">
+     <button onclick="switchTab('matrix')" id="tab-matrix" class="tab-active px-4 py-3 flex items-center gap-2 text-sm font-medium whitespace-nowrap rounded-t-lg transition-all">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg> Matriz RACI </button> <button onclick="switchTab('charts')" id="tab-charts" class="px-4 py-3 flex items-center gap-2 text-sm font-medium text-gray-600 whitespace-nowrap rounded-t-lg transition-all hover:bg-gray-50">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg> Gráficos </button> <button onclick="switchTab('scenarios')" id="tab-scenarios" class="px-4 py-3 flex items-center gap-2 text-sm font-medium text-gray-600 whitespace-nowrap rounded-t-lg transition-all hover:bg-gray-50">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg> Cenários </button> <button onclick="switchTab('currency')" id="tab-currency" class="px-4 py-3 flex items-center gap-2 text-sm font-medium text-gray-600 whitespace-nowrap rounded-t-lg transition-all hover:bg-gray-50">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('help')" id="tab-help" class="px-4 py-3 flex items-center gap-2 text-sm font-medium text-gray-600 whitespace-nowrap rounded-t-lg transition-all hover:bg-gray-50">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 p-6 overflow-auto">
+    <!-- Matrix Tab -->
+    <div id="content-matrix" class="tab-content">
+     <div class="card card-accent p-6 mb-6">
+      <div class="flex items-center justify-between mb-4 export-hide">
+       <div class="flex items-center gap-4">
+        <input type="text" id="matrixTitle" placeholder="Título do Projeto" class="input-field text-lg font-semibold w-80" value="Projeto de Implementação de SI" oninput="saveData()"> <button onclick="saveCurrentScenario()" class="btn-success px-4 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Guardar Cenário </button>
+       </div>
+       <div class="flex items-center gap-2">
+        <button onclick="addColumn()" class="btn-primary px-3 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+         </svg> Coluna </button> <button onclick="addRow()" class="btn-primary px-3 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+         </svg> Linha </button>
+       </div>
+      </div><!-- Matrix Display Title for Export -->
+      <h2 id="matrixDisplayTitle" class="text-xl font-bold text-gray-800 mb-4 hidden">Projeto de Implementação de SI</h2>
+      <div class="overflow-x-auto">
+       <table id="raciTable" class="w-full border-collapse">
+        <thead>
+         <tr id="tableHeader" class="bg-gray-100">
+          <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200 min-w-[200px]">Atividade/Tarefa</th>
+         </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+       </table>
+      </div>
+      <div class="mt-4 flex items-center gap-4 text-sm">
+       <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded flex items-center justify-center raci-R">R</span> <span class="text-gray-600">Responsável</span>
+       </div>
+       <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded flex items-center justify-center raci-A">A</span> <span class="text-gray-600">Aprovador</span>
+       </div>
+       <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded flex items-center justify-center raci-C">C</span> <span class="text-gray-600">Consultado</span>
+       </div>
+       <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded flex items-center justify-center raci-I">I</span> <span class="text-gray-600">Informado</span>
+       </div>
+      </div>
+     </div>
+    </div><!-- Charts Tab -->
+    <div id="content-charts" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card card-accent p-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Distribuição RACI por Função</h3><button onclick="exportChartImage('roleChart')" class="btn-secondary px-3 py-1 rounded text-xs flex items-center gap-1 export-hide">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="roleChart"></canvas>
+       </div>
+      </div>
+      <div class="card card-accent p-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Distribuição RACI Global</h3><button onclick="exportChartImage('globalChart')" class="btn-secondary px-3 py-1 rounded text-xs flex items-center gap-1 export-hide">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="globalChart"></canvas>
+       </div>
+      </div>
+      <div class="card card-accent p-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Carga de Trabalho por Função</h3><button onclick="exportChartImage('workloadChart')" class="btn-secondary px-3 py-1 rounded text-xs flex items-center gap-1 export-hide">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="workloadChart"></canvas>
+       </div>
+      </div>
+      <div class="card card-accent p-6">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Cobertura de Atividades</h3><button onclick="exportChartImage('coverageChart')" class="btn-secondary px-3 py-1 rounded text-xs flex items-center gap-1 export-hide">
+         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+         </svg> HD </button>
+       </div>
+       <div class="chart-container">
+        <canvas id="coverageChart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div><!-- Scenarios Tab -->
+    <div id="content-scenarios" class="tab-content hidden">
+     <div class="card card-accent p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+       <h3 class="font-semibold text-gray-800">Cenários Guardados</h3>
+       <div class="flex items-center gap-3 export-hide">
+        <input type="text" id="scenarioFilter" placeholder="Filtrar cenários..." class="input-field w-64" oninput="filterScenarios()"> <button onclick="createNewScenario()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+         </svg> Novo Cenário </button>
+       </div>
+      </div>
+      <div id="scenariosList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+     </div>
+     <div class="card card-accent p-6">
+      <h3 class="font-semibold text-gray-800 mb-4">Templates de Aprendizagem</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+       <div class="card p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-all" onclick="loadTemplate('software')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Desenvolvimento de Software</h4>
+          <p class="text-xs text-gray-500">Ciclo de vida de desenvolvimento</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-all" onclick="loadTemplate('project')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Gestão de Projetos</h4>
+          <p class="text-xs text-gray-500">PMO e governança</p>
+         </div>
+        </div>
+       </div>
+       <div class="card p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-all" onclick="loadTemplate('hr')">
+        <div class="flex items-center gap-3 mb-2">
+         <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+         </div>
+         <div>
+          <h4 class="font-semibold text-gray-800">Recursos Humanos</h4>
+          <p class="text-xs text-gray-500">Processos de RH</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Currency Tab -->
+    <div id="content-currency" class="tab-content hidden">
+     <div class="card card-accent p-6">
+      <div class="flex items-center justify-between mb-4">
+       <h3 class="font-semibold text-gray-800">Taxas de Câmbio (Base: AOA - Kwanza)</h3><button onclick="addCurrency()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 export-hide">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg> Adicionar Moeda </button>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full">
+        <thead>
+         <tr class="bg-gray-100">
+          <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200">Moeda</th>
+          <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200">Código</th>
+          <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200">Taxa (1 AOA =)</th>
+          <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200">Última Atualização</th>
+          <th class="p-3 text-center font-semibold text-gray-700 border border-gray-200 export-hide">Ações</th>
+         </tr>
+        </thead>
+        <tbody id="currencyTableBody"></tbody>
+       </table>
+      </div>
+      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+       <h4 class="font-semibold text-gray-800 mb-3">Conversor Rápido</h4>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 export-hide">
+        <div>
+         <label class="block text-sm text-gray-600 mb-1">Valor em AOA</label> <input type="number" id="convertAmount" class="input-field w-full" value="1000" oninput="convertCurrency()">
+        </div>
+        <div>
+         <label class="block text-sm text-gray-600 mb-1">Converter para</label> <select id="convertTo" class="input-field w-full" onchange="convertCurrency()"> <option value="USD">USD - Dólar Americano</option> <option value="EUR">EUR - Euro</option> <option value="BRL">BRL - Real Brasileiro</option> </select>
+        </div>
+        <div>
+         <label class="block text-sm text-gray-600 mb-1">Resultado</label>
+         <div id="convertResult" class="input-field w-full bg-gray-100 flex items-center">
+          0.00
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Help Tab -->
+    <div id="content-help" class="tab-content hidden">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card card-accent p-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> O que é a Matriz RACI?</h3>
+       <p class="text-gray-600 mb-4">A Matriz RACI é uma ferramenta de gestão que define claramente as funções e responsabilidades em projetos e processos organizacionais.</p>
+       <ul class="space-y-3">
+        <li class="flex items-start gap-3"><span class="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center raci-R">R</span>
+         <div>
+          <strong class="text-gray-800">Responsável (Responsible)</strong>
+          <p class="text-sm text-gray-600">Pessoa que executa a tarefa ou atividade.</p>
+         </div></li>
+        <li class="flex items-start gap-3"><span class="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center raci-A">A</span>
+         <div>
+          <strong class="text-gray-800">Aprovador (Accountable)</strong>
+          <p class="text-sm text-gray-600">Pessoa com autoridade final e que responde pelo resultado.</p>
+         </div></li>
+        <li class="flex items-start gap-3"><span class="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center raci-C">C</span>
+         <div>
+          <strong class="text-gray-800">Consultado (Consulted)</strong>
+          <p class="text-sm text-gray-600">Pessoa cuja opinião é solicitada (comunicação bidirecional).</p>
+         </div></li>
+        <li class="flex items-start gap-3"><span class="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center raci-I">I</span>
+         <div>
+          <strong class="text-gray-800">Informado (Informed)</strong>
+          <p class="text-sm text-gray-600">Pessoa que é mantida informada sobre o progresso.</p>
+         </div></li>
+       </ul>
+      </div>
+      <div class="card card-accent p-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Melhores Práticas</h3>
+       <ul class="space-y-3 text-gray-600">
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Cada atividade deve ter <strong>apenas um Aprovador (A)</strong></span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Minimize o número de <strong>Consultados (C)</strong> para evitar atrasos</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Evite ter muitos <strong>Responsáveis (R)</strong> por tarefa</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Revise a matriz regularmente com a equipa</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Documente e partilhe a matriz com todos os envolvidos</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+         </svg><span>Use nomes de funções em vez de nomes de pessoas</span></li>
+       </ul>
+      </div>
+      <div class="card card-accent p-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg> Como Usar Esta Aplicação</h3>
+       <ol class="space-y-3 text-gray-600 list-decimal list-inside">
+        <li><strong>Matriz RACI:</strong> Adicione colunas (funções) e linhas (atividades). Clique nas células para alternar entre R, A, C, I.</li>
+        <li><strong>Gráficos:</strong> Visualize a distribuição de responsabilidades em tempo real.</li>
+        <li><strong>Cenários:</strong> Guarde diferentes versões da matriz para comparação.</li>
+        <li><strong>Moedas:</strong> Configure taxas de câmbio para a CPLP.</li>
+        <li><strong>Exportação:</strong> Exporte em JSON, PDF ou imagem.</li>
+       </ol>
+      </div>
+      <div class="card card-accent p-6">
+       <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg> Erros Comuns a Evitar</h3>
+       <ul class="space-y-3 text-gray-600">
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg><span>Múltiplos Aprovadores para a mesma atividade</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg><span>Atividades sem nenhum Responsável</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg><span>Demasiados Consultados, criando gargalos</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg><span>Não atualizar a matriz quando há mudanças na equipa</span></li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div><!-- Import/Export Modal -->
+   <div id="importExportModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeImportExportModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
+     <div class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+       <h3 class="font-semibold text-gray-800">Importar/Exportar Dados</h3><button onclick="closeImportExportModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div class="space-y-4">
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Exportar</label> <button onclick="exportJSON()" class="btn-primary w-full py-3 rounded-lg flex items-center justify-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+         </svg> Exportar JSON </button>
+       </div>
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Importar</label>
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+         <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)"> <label for="importFile" class="cursor-pointer">
+          <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg><p class="text-gray-600">Clique para selecionar ficheiro JSON</p></label>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Scenario Edit Modal -->
+   <div id="scenarioEditModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeScenarioEditModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+     <div class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+       <h3 class="font-semibold text-gray-800">Editar Cenário</h3><button onclick="closeScenarioEditModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div class="space-y-4">
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cenário</label> <input type="text" id="editScenarioName" class="input-field w-full">
+       </div>
+       <div class="flex gap-3">
+        <button onclick="saveScenarioEdit()" class="btn-primary flex-1 py-2 rounded-lg">Guardar</button> <button onclick="closeScenarioEditModal()" class="btn-secondary flex-1 py-2 rounded-lg">Cancelar</button>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // App State
+    let appState = {
+      title: 'IS Matriz RACI',
+      matrixTitle: 'Projeto de Implementação de SI',
+      columns: ['Gestor de Projeto', 'Analista', 'Desenvolvedor', 'Tester'],
+      rows: [
+        { activity: 'Levantamento de Requisitos', values: ['A', 'R', 'C', 'I'] },
+        { activity: 'Análise de Sistema', values: ['C', 'R', 'C', 'I'] },
+        { activity: 'Desenvolvimento', values: ['I', 'C', 'R', 'I'] },
+        { activity: 'Testes', values: ['I', 'C', 'C', 'R'] },
+        { activity: 'Implementação', values: ['A', 'C', 'R', 'C'] }
+      ],
+      scenarios: [],
+      currencies: [
+        { name: 'Dólar Americano', code: 'USD', rate: 0.0012, updated: new Date().toISOString() },
+        { name: 'Euro', code: 'EUR', rate: 0.0011, updated: new Date().toISOString() },
+        { name: 'Real Brasileiro', code: 'BRL', rate: 0.006, updated: new Date().toISOString() },
+        { name: 'Escudo Cabo-verdiano', code: 'CVE', rate: 0.12, updated: new Date().toISOString() },
+        { name: 'Metical Moçambicano', code: 'MZN', rate: 0.076, updated: new Date().toISOString() },
+        { name: 'Dobra São-tomense', code: 'STN', rate: 0.027, updated: new Date().toISOString() }
+      ]
+    };
+
+    let charts = {};
+    let editingScenarioId = null;
+    let globalFilter = '';
+
+    // Default config for Element SDK
+    const defaultConfig = {
+      app_title: 'IS Matriz RACI'
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Register Chart.js plugin
+      if (window.ChartDataLabels) {
+        Chart.register(window.ChartDataLabels);
+      }
+      
+      loadFromLocalStorage();
+      renderMatrix();
+      renderCurrencyTable();
+      renderScenariosList();
+      initCharts();
+      updateCharts();
+      
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            const title = config.app_title || defaultConfig.app_title;
+            document.getElementById('appTitle').textContent = title;
+            appState.title = title;
+            saveData();
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    });
+
+    // LocalStorage Functions
+    function saveData() {
+      localStorage.setItem('isRaciMatrix', JSON.stringify(appState));
+      updateCharts();
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('isRaciMatrix');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+          document.getElementById('matrixTitle').value = appState.matrixTitle;
+          document.getElementById('matrixDisplayTitle').textContent = appState.matrixTitle;
+        } catch (e) {
+          console.error('Error loading data:', e);
+        }
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.classList.remove('tab-active');
+        el.classList.add('text-gray-600');
+      });
+      
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      const tabBtn = document.getElementById(`tab-${tabName}`);
+      tabBtn.classList.add('tab-active');
+      tabBtn.classList.remove('text-gray-600');
+      
+      if (tabName === 'charts') {
+        updateCharts();
+      }
+    }
+
+    // Matrix Functions
+    function renderMatrix() {
+      const header = document.getElementById('tableHeader');
+      const body = document.getElementById('tableBody');
+      
+      // Render header
+      header.innerHTML = `
+        <th class="p-3 text-left font-semibold text-gray-700 border border-gray-200 min-w-[200px]">Atividade/Tarefa</th>
+        ${appState.columns.map((col, i) => `
+          <th class="p-3 border border-gray-200 min-w-[120px]">
+            <input type="text" value="${col}" class="input-field w-full text-center font-semibold text-sm export-hide" onchange="updateColumnName(${i}, this.value)">
+            <span class="hidden font-semibold text-gray-700 export-show">${col}</span>
+            <button onclick="removeColumn(${i})" class="ml-2 text-red-400 hover:text-red-600 export-hide">
+              <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </th>
+        `).join('')}
+      `;
+      
+      // Render body
+      body.innerHTML = appState.rows.map((row, rowIndex) => `
+        <tr class="hover:bg-gray-50 transition-colors ${globalFilter && row.activity.toLowerCase().includes(globalFilter.toLowerCase()) ? 'filter-highlight' : ''}">
+          <td class="p-3 border border-gray-200">
+            <div class="flex items-center gap-2">
+              <input type="text" value="${row.activity}" class="input-field w-full text-sm export-hide" onchange="updateActivityName(${rowIndex}, this.value)">
+              <span class="hidden text-gray-700 export-show">${row.activity}</span>
+              <button onclick="removeRow(${rowIndex})" class="text-red-400 hover:text-red-600 flex-shrink-0 export-hide">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+          ${row.values.map((val, colIndex) => `
+            <td class="raci-cell p-3 border border-gray-200 raci-${val || 'empty'}" onclick="cycleRaciValue(${rowIndex}, ${colIndex})">
+              ${val || '-'}
+            </td>
+          `).join('')}
+        </tr>
+      `).join('');
+      
+      document.getElementById('matrixDisplayTitle').textContent = appState.matrixTitle;
+    }
+
+    function cycleRaciValue(rowIndex, colIndex) {
+      const values = ['', 'R', 'A', 'C', 'I'];
+      const currentValue = appState.rows[rowIndex].values[colIndex] || '';
+      const currentIndex = values.indexOf(currentValue);
+      const nextIndex = (currentIndex + 1) % values.length;
+      appState.rows[rowIndex].values[colIndex] = values[nextIndex];
+      renderMatrix();
+      saveData();
+    }
+
+    function addColumn() {
+      const newColName = `Função ${appState.columns.length + 1}`;
+      appState.columns.push(newColName);
+      appState.rows.forEach(row => row.values.push(''));
+      renderMatrix();
+      saveData();
+      showToast('Coluna adicionada com sucesso', 'success');
+    }
+
+    function removeColumn(index) {
+      if (appState.columns.length <= 1) {
+        showToast('É necessário manter pelo menos uma coluna', 'warning');
+        return;
+      }
+      appState.columns.splice(index, 1);
+      appState.rows.forEach(row => row.values.splice(index, 1));
+      renderMatrix();
+      saveData();
+      showToast('Coluna removida', 'success');
+    }
+
+    function updateColumnName(index, value) {
+      appState.columns[index] = value;
+      saveData();
+    }
+
+    function addRow() {
+      const newRow = {
+        activity: `Atividade ${appState.rows.length + 1}`,
+        values: appState.columns.map(() => '')
+      };
+      appState.rows.push(newRow);
+      renderMatrix();
+      saveData();
+      showToast('Linha adicionada com sucesso', 'success');
+    }
+
+    function removeRow(index) {
+      if (appState.rows.length <= 1) {
+        showToast('É necessário manter pelo menos uma linha', 'warning');
+        return;
+      }
+      appState.rows.splice(index, 1);
+      renderMatrix();
+      saveData();
+      showToast('Linha removida', 'success');
+    }
+
+    function updateActivityName(index, value) {
+      appState.rows[index].activity = value;
+      saveData();
+    }
+
+    function updateMatrixTitle() {
+      appState.matrixTitle = document.getElementById('matrixTitle').value;
+      saveData();
+    }
+
+    // Chart Functions
+    function initCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              font: { family: 'Inter', size: 11 }
+            }
+          }
+        }
+      };
+
+      charts.role = new Chart(document.getElementById('roleChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: {
+          ...chartOptions,
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+
+      charts.global = new Chart(document.getElementById('globalChart'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [] },
+        options: {
+          ...chartOptions,
+          plugins: {
+            ...chartOptions.plugins,
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${context.label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      charts.workload = new Chart(document.getElementById('workloadChart'), {
+        type: 'radar',
+        data: { labels: [], datasets: [] },
+        options: {
+          ...chartOptions,
+          scales: {
+            r: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+
+      charts.coverage = new Chart(document.getElementById('coverageChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: {
+          ...chartOptions,
+          indexAxis: 'y',
+          scales: {
+            x: { beginAtZero: true, max: 100 }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!charts.role) return;
+
+      // Calculate RACI counts per role
+      const roleCounts = appState.columns.map((col, i) => {
+        const counts = { R: 0, A: 0, C: 0, I: 0 };
+        appState.rows.forEach(row => {
+          const val = row.values[i];
+          if (val && counts.hasOwnProperty(val)) counts[val]++;
+        });
+        return counts;
+      });
+
+      // Role Chart
+      charts.role.data = {
+        labels: appState.columns,
+        datasets: [
+          { label: 'Responsável', data: roleCounts.map(c => c.R), backgroundColor: '#66CFF5' },
+          { label: 'Aprovador', data: roleCounts.map(c => c.A), backgroundColor: '#FF9800' },
+          { label: 'Consultado', data: roleCounts.map(c => c.C), backgroundColor: '#4CAF50' },
+          { label: 'Informado', data: roleCounts.map(c => c.I), backgroundColor: '#9C27B0' }
+        ]
+      };
+      charts.role.update();
+
+      // Global Chart
+      const globalCounts = { R: 0, A: 0, C: 0, I: 0 };
+      appState.rows.forEach(row => {
+        row.values.forEach(val => {
+          if (val && globalCounts.hasOwnProperty(val)) globalCounts[val]++;
+        });
+      });
+
+      charts.global.data = {
+        labels: ['Responsável', 'Aprovador', 'Consultado', 'Informado'],
+        datasets: [{
+          data: [globalCounts.R, globalCounts.A, globalCounts.C, globalCounts.I],
+          backgroundColor: ['#66CFF5', '#FF9800', '#4CAF50', '#9C27B0']
+        }]
+      };
+      charts.global.options.plugins.datalabels = {
+        formatter: (value, ctx) => {
+          const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+          const percentage = ((value / total) * 100).toFixed(0);
+          return `${value}\n(${percentage}%)`;
+        },
+        color: '#fff',
+        font: { weight: 'bold', size: 12 }
+      };
+      charts.global.update();
+
+      // Workload Chart
+      charts.workload.data = {
+        labels: appState.columns,
+        datasets: [{
+          label: 'Carga Total',
+          data: roleCounts.map(c => c.R * 3 + c.A * 2 + c.C + c.I * 0.5),
+          backgroundColor: 'rgba(30, 136, 229, 0.2)',
+          borderColor: '#66CFF5',
+          pointBackgroundColor: '#66CFF5'
+        }]
+      };
+      charts.workload.update();
+
+      // Coverage Chart
+      const activityCoverage = appState.rows.map(row => {
+        const filled = row.values.filter(v => v).length;
+        return Math.round((filled / appState.columns.length) * 100);
+      });
+
+      charts.coverage.data = {
+        labels: appState.rows.map(r => r.activity.substring(0, 20) + (r.activity.length > 20 ? '...' : '')),
+        datasets: [{
+          label: 'Cobertura %',
+          data: activityCoverage,
+          backgroundColor: activityCoverage.map(c => c >= 75 ? '#4CAF50' : c >= 50 ? '#FF9800' : '#F44336')
+        }]
+      };
+      charts.coverage.update();
+    }
+
+    async function exportChartImage(chartId) {
+      const canvas = document.getElementById(chartId);
+      const link = document.createElement('a');
+      link.download = `${chartId}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      showToast('Gráfico exportado com sucesso', 'success');
+    }
+
+    async function exportMatrixImage() {
+      // Hide editable elements temporarily
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.add('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.remove('hidden'));
+      document.getElementById('matrixDisplayTitle').classList.remove('hidden');
+      
+      try {
+        const table = document.getElementById('raciTable');
+        const canvas = await html2canvas(table, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#FFFFFF'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `matriz_raci_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Matriz exportada com sucesso', 'success');
+      } catch (e) {
+        console.error('Export error:', e);
+        showToast('Erro ao exportar matriz', 'error');
+      }
+      
+      // Restore editable elements
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.remove('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.add('hidden'));
+      document.getElementById('matrixDisplayTitle').classList.add('hidden');
+    }
+
+    // Scenario Functions
+    function saveCurrentScenario() {
+      const scenarioNumber = appState.scenarios.length + 1;
+      const scenario = {
+        id: Date.now().toString(),
+        name: `Cenário ${scenarioNumber}`,
+        date: new Date().toISOString(),
+        data: {
+          matrixTitle: appState.matrixTitle,
+          columns: [...appState.columns],
+          rows: JSON.parse(JSON.stringify(appState.rows))
+        }
+      };
+      appState.scenarios.push(scenario);
+      saveData();
+      renderScenariosList();
+      showToast(`Cenário ${scenarioNumber} guardado com sucesso`, 'success');
+    }
+
+    function renderScenariosList() {
+      const container = document.getElementById('scenariosList');
+      const filter = document.getElementById('scenarioFilter')?.value?.toLowerCase() || '';
+      
+      const filtered = appState.scenarios.filter(s => 
+        s.name.toLowerCase().includes(filter) || 
+        s.data.matrixTitle.toLowerCase().includes(filter)
+      );
+      
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <p>Nenhum cenário guardado</p>
+            <p class="text-sm">Clique em "Guardar Cenário" na aba Matriz para criar um.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = filtered.map(scenario => `
+        <div class="card scenario-card p-4 hover:shadow-md transition-all">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <h4 class="font-semibold text-gray-800">${scenario.name}</h4>
+              <p class="text-sm text-gray-500">${scenario.data.matrixTitle}</p>
+            </div>
+            <span class="text-xs text-gray-400">${new Date(scenario.date).toLocaleDateString('pt-PT')}</span>
+          </div>
+          <div class="text-xs text-gray-500 mb-3">
+            ${scenario.data.columns.length} funções • ${scenario.data.rows.length} atividades
+          </div>
+          <div class="flex gap-2 export-hide">
+            <button onclick="loadScenario('${scenario.id}')" class="btn-primary px-3 py-1 rounded text-xs flex-1">Carregar</button>
+            <button onclick="cloneScenario('${scenario.id}')" class="btn-secondary px-3 py-1 rounded text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </button>
+            <button onclick="editScenario('${scenario.id}')" class="btn-secondary px-3 py-1 rounded text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button onclick="deleteScenario('${scenario.id}')" class="btn-danger px-3 py-1 rounded text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (scenario) {
+        appState.matrixTitle = scenario.data.matrixTitle;
+        appState.columns = [...scenario.data.columns];
+        appState.rows = JSON.parse(JSON.stringify(scenario.data.rows));
+        document.getElementById('matrixTitle').value = appState.matrixTitle;
+        renderMatrix();
+        saveData();
+        switchTab('matrix');
+        showToast(`Cenário "${scenario.name}" carregado`, 'success');
+      }
+    }
+
+    function cloneScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (scenario) {
+        const clone = {
+          ...JSON.parse(JSON.stringify(scenario)),
+          id: Date.now().toString(),
+          name: `${scenario.name} (Cópia)`,
+          date: new Date().toISOString()
+        };
+        appState.scenarios.push(clone);
+        saveData();
+        renderScenariosList();
+        showToast('Cenário clonado com sucesso', 'success');
+      }
+    }
+
+    function editScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (scenario) {
+        editingScenarioId = id;
+        document.getElementById('editScenarioName').value = scenario.name;
+        document.getElementById('scenarioEditModal').classList.remove('hidden');
+      }
+    }
+
+    function saveScenarioEdit() {
+      if (editingScenarioId) {
+        const scenario = appState.scenarios.find(s => s.id === editingScenarioId);
+        if (scenario) {
+          scenario.name = document.getElementById('editScenarioName').value;
+          saveData();
+          renderScenariosList();
+          showToast('Cenário atualizado', 'success');
+        }
+      }
+      closeScenarioEditModal();
+    }
+
+    function closeScenarioEditModal() {
+      document.getElementById('scenarioEditModal').classList.add('hidden');
+      editingScenarioId = null;
+    }
+
+    function deleteScenario(id) {
+      const index = appState.scenarios.findIndex(s => s.id === id);
+      if (index > -1) {
+        appState.scenarios.splice(index, 1);
+        saveData();
+        renderScenariosList();
+        showToast('Cenário eliminado', 'success');
+      }
+    }
+
+    function createNewScenario() {
+      appState.matrixTitle = 'Novo Projeto';
+      appState.columns = ['Função 1', 'Função 2', 'Função 3'];
+      appState.rows = [
+        { activity: 'Atividade 1', values: ['', '', ''] },
+        { activity: 'Atividade 2', values: ['', '', ''] },
+        { activity: 'Atividade 3', values: ['', '', ''] }
+      ];
+      document.getElementById('matrixTitle').value = appState.matrixTitle;
+      renderMatrix();
+      saveData();
+      switchTab('matrix');
+      showToast('Novo cenário criado - personalize-o!', 'success');
+    }
+
+    function filterScenarios() {
+      renderScenariosList();
+    }
+
+    // Template Functions
+    function loadTemplate(type) {
+      const templates = {
+        software: {
+          title: 'Desenvolvimento de Software',
+          columns: ['Product Owner', 'Scrum Master', 'Dev Lead', 'Developer', 'QA Engineer'],
+          rows: [
+            { activity: 'Definição de Requisitos', values: ['A', 'C', 'C', 'I', 'I'] },
+            { activity: 'Sprint Planning', values: ['R', 'A', 'C', 'C', 'C'] },
+            { activity: 'Desenvolvimento', values: ['I', 'I', 'A', 'R', 'I'] },
+            { activity: 'Code Review', values: ['I', 'I', 'R', 'C', 'I'] },
+            { activity: 'Testes Unitários', values: ['I', 'I', 'C', 'R', 'C'] },
+            { activity: 'Testes de Integração', values: ['I', 'I', 'C', 'C', 'R'] },
+            { activity: 'Deploy', values: ['I', 'C', 'A', 'R', 'C'] },
+            { activity: 'Retrospetiva', values: ['C', 'R', 'C', 'C', 'C'] }
+          ]
+        },
+        project: {
+          title: 'Gestão de Projetos PMO',
+          columns: ['Sponsor', 'PMO Director', 'Project Manager', 'Team Lead', 'Stakeholder'],
+          rows: [
+            { activity: 'Aprovação do Projeto', values: ['A', 'C', 'R', 'I', 'C'] },
+            { activity: 'Definição de Scope', values: ['C', 'C', 'A', 'R', 'C'] },
+            { activity: 'Planeamento', values: ['I', 'C', 'A', 'R', 'I'] },
+            { activity: 'Alocação de Recursos', values: ['A', 'C', 'R', 'C', 'I'] },
+            { activity: 'Execução', values: ['I', 'I', 'A', 'R', 'I'] },
+            { activity: 'Monitorização', values: ['I', 'C', 'R', 'C', 'I'] },
+            { activity: 'Gestão de Riscos', values: ['I', 'C', 'A', 'R', 'C'] },
+            { activity: 'Encerramento', values: ['A', 'C', 'R', 'C', 'I'] }
+          ]
+        },
+        hr: {
+          title: 'Processos de Recursos Humanos',
+          columns: ['HR Director', 'HR Manager', 'Recruiter', 'Hiring Manager', 'Candidate'],
+          rows: [
+            { activity: 'Definição de Vaga', values: ['C', 'C', 'I', 'R', 'I'] },
+            { activity: 'Publicação de Anúncio', values: ['I', 'A', 'R', 'C', 'I'] },
+            { activity: 'Triagem de CVs', values: ['I', 'I', 'R', 'C', 'I'] },
+            { activity: 'Entrevista Inicial', values: ['I', 'I', 'R', 'I', 'C'] },
+            { activity: 'Entrevista Técnica', values: ['I', 'I', 'C', 'R', 'C'] },
+            { activity: 'Proposta Salarial', values: ['A', 'R', 'C', 'C', 'I'] },
+            { activity: 'Contratação', values: ['A', 'R', 'C', 'I', 'C'] },
+            { activity: 'Onboarding', values: ['I', 'A', 'R', 'C', 'C'] }
+          ]
+        }
+      };
+
+      const template = templates[type];
+      if (template) {
+        appState.matrixTitle = template.title;
+        appState.columns = [...template.columns];
+        appState.rows = JSON.parse(JSON.stringify(template.rows));
+        document.getElementById('matrixTitle').value = appState.matrixTitle;
+        renderMatrix();
+        saveData();
+        switchTab('matrix');
+        showToast(`Template "${template.title}" carregado`, 'success');
+      }
+    }
+
+    // Currency Functions
+    function renderCurrencyTable() {
+      const tbody = document.getElementById('currencyTableBody');
+      tbody.innerHTML = appState.currencies.map((currency, index) => `
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="p-3 border border-gray-200">
+            <input type="text" value="${currency.name}" class="input-field w-full export-hide" onchange="updateCurrency(${index}, 'name', this.value)">
+            <span class="hidden export-show">${currency.name}</span>
+          </td>
+          <td class="p-3 border border-gray-200">
+            <input type="text" value="${currency.code}" class="input-field w-24 text-center font-mono export-hide" onchange="updateCurrency(${index}, 'code', this.value)">
+            <span class="hidden export-show font-mono">${currency.code}</span>
+          </td>
+          <td class="p-3 border border-gray-200">
+            <input type="number" step="0.0001" value="${currency.rate}" class="input-field w-32 text-right export-hide" onchange="updateCurrency(${index}, 'rate', parseFloat(this.value))">
+            <span class="hidden export-show">${currency.rate}</span>
+          </td>
+          <td class="p-3 border border-gray-200 text-sm text-gray-500">
+            ${new Date(currency.updated).toLocaleDateString('pt-PT')}
+          </td>
+          <td class="p-3 border border-gray-200 text-center export-hide">
+            <button onclick="removeCurrency(${index})" class="text-red-400 hover:text-red-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+      
+      updateCurrencySelector();
+      convertCurrency();
+    }
+
+    function updateCurrency(index, field, value) {
+      appState.currencies[index][field] = value;
+      appState.currencies[index].updated = new Date().toISOString();
+      renderCurrencyTable();
+      saveData();
+    }
+
+    function addCurrency() {
+      appState.currencies.push({
+        name: 'Nova Moeda',
+        code: 'XXX',
+        rate: 1,
+        updated: new Date().toISOString()
+      });
+      renderCurrencyTable();
+      saveData();
+      showToast('Moeda adicionada', 'success');
+    }
+
+    function removeCurrency(index) {
+      if (appState.currencies.length <= 1) {
+        showToast('É necessário manter pelo menos uma moeda', 'warning');
+        return;
+      }
+      appState.currencies.splice(index, 1);
+      renderCurrencyTable();
+      saveData();
+      showToast('Moeda removida', 'success');
+    }
+
+    function updateCurrencySelector() {
+      const select = document.getElementById('convertTo');
+      select.innerHTML = appState.currencies.map(c => 
+        `<option value="${c.code}">${c.code} - ${c.name}</option>`
+      ).join('');
+    }
+
+    function convertCurrency() {
+      const amount = parseFloat(document.getElementById('convertAmount').value) || 0;
+      const targetCode = document.getElementById('convertTo').value;
+      const target = appState.currencies.find(c => c.code === targetCode);
+      
+      if (target) {
+        const result = (amount * target.rate).toFixed(4);
+        document.getElementById('convertResult').textContent = `${result} ${targetCode}`;
+      }
+    }
+
+    // Global Filter
+    function filterGlobalData() {
+      globalFilter = document.getElementById('globalSearch').value;
+      renderMatrix();
+      renderScenariosList();
+    }
+
+    // Export Functions
+    async function exportAppImage() {
+      // Hide editable elements
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.add('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.remove('hidden'));
+      document.getElementById('matrixDisplayTitle').classList.remove('hidden');
+      
+      try {
+        const app = document.getElementById('app');
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#F8F9FA'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `is_matriz_raci_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso', 'success');
+      } catch (e) {
+        console.error('Export error:', e);
+        showToast('Erro ao exportar imagem', 'error');
+      }
+      
+      // Restore editable elements
+      document.querySelectorAll('.export-hide').forEach(el => el.classList.remove('export-hidden'));
+      document.querySelectorAll('.export-show').forEach(el => el.classList.add('hidden'));
+      document.getElementById('matrixDisplayTitle').classList.add('hidden');
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 30;
+
+      // Header
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 136, 229);
+      pdf.text('IS Matriz RACI', margin, 20);
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth - margin - 40, 20);
+
+      // Title
+      pdf.setFontSize(14);
+      pdf.setTextColor(0);
+      pdf.text(appState.matrixTitle, margin, yPos);
+      yPos += 15;
+
+      // Matrix Table
+      const tableData = appState.rows.map(row => [row.activity, ...row.values.map(v => v || '-')]);
+      const tableHeaders = ['Atividade', ...appState.columns];
+
+      pdf.autoTable ? pdf.autoTable({
+        startY: yPos,
+        head: [tableHeaders],
+        body: tableData,
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [30, 136, 229] }
+      }) : null;
+
+      // Simple table if autoTable not available
+      if (!pdf.autoTable) {
+        pdf.setFontSize(8);
+        let xPos = margin;
+        tableHeaders.forEach((h, i) => {
+          pdf.text(h.substring(0, 15), xPos, yPos);
+          xPos += 35;
+        });
+        yPos += 6;
+        tableData.forEach(row => {
+          xPos = margin;
+          row.forEach((cell, i) => {
+            pdf.text(String(cell).substring(0, 15), xPos, yPos);
+            xPos += 35;
+          });
+          yPos += 5;
+        });
+      }
+
+      // Charts
+      yPos = pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 20 : yPos + 20;
+      
+      if (yPos > pageHeight - 80) {
+        pdf.addPage();
+        yPos = 30;
+      }
+
+      pdf.setFontSize(12);
+      pdf.text('Gráficos de Análise', margin, yPos);
+      yPos += 10;
+
+      const chartIds = ['roleChart', 'globalChart', 'workloadChart', 'coverageChart'];
+      const chartSize = 60;
+      let chartX = margin;
+
+      for (let i = 0; i < chartIds.length; i++) {
+        const canvas = document.getElementById(chartIds[i]);
+        if (canvas) {
+          const imgData = canvas.toDataURL('image/png');
+          
+          if (chartX + chartSize > pageWidth - margin) {
+            chartX = margin;
+            yPos += chartSize + 10;
+          }
+          
+          if (yPos + chartSize > pageHeight - 20) {
+            pdf.addPage();
+            yPos = 30;
+            chartX = margin;
+          }
+          
+          pdf.addImage(imgData, 'PNG', chartX, yPos, chartSize, chartSize);
+          chartX += chartSize + 10;
+        }
+      }
+
+      // Footer
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150);
+        pdf.text(`IS Matriz RACI - Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      }
+
+      pdf.save(`is_matriz_raci_${Date.now()}.pdf`);
+      showToast('PDF exportado com sucesso', 'success');
+    }
+
+    function showImportExportModal() {
+      document.getElementById('importExportModal').classList.remove('hidden');
+    }
+
+    function closeImportExportModal() {
+      document.getElementById('importExportModal').classList.add('hidden');
+    }
+
+    function exportJSON() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `is_matriz_raci_${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      closeImportExportModal();
+      showToast('Dados exportados com sucesso', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          appState = { ...appState, ...imported };
+          document.getElementById('matrixTitle').value = appState.matrixTitle;
+          renderMatrix();
+          renderCurrencyTable();
+          renderScenariosList();
+          updateCharts();
+          saveData();
+          closeImportExportModal();
+          showToast('Dados importados com sucesso', 'success');
+        } catch (err) {
+          console.error('Import error:', err);
+          showToast('Erro ao importar ficheiro', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Toast Notification
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-orange-500',
+        info: 'bg-blue-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2`;
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : 
+            type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+            type === 'warning' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>' :
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d62465a54ea77d9',t:'MTc3MjQ3NDE1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

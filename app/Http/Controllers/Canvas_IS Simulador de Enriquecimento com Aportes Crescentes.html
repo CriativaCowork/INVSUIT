@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Simulador de Enriquecimento com Aportes Crescentes</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+* { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+
+:root {
+  --primary: #66CFF5;
+  --primary-light: #E0F4FD;
+  --bg: #F8F9FA;
+  --border: #E0E0E0;
+  --gold: #FFC107;
+  --green: #4CAF50;
+  --red: #F44336;
+  --orange: #FF9800;
+  --text: #212121;
+  --text-secondary: #757575;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --card-shadow-hover: 0 4px 12px rgba(30,136,229,0.15);
+}
+
+.app-wrapper {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  color: var(--text);
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.header-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  gap: 12px;
+}
+
+.header-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.header-title .prefix {
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  padding: 0 16px;
+  gap: 0;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+}
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+.tab-btn i { width: 16px; height: 16px; }
+
+.tab-content { display: none; padding: 20px; }
+.tab-content.active { display: block; }
+
+.sim-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  border-left: 4px solid var(--primary);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+.sim-card:hover { box-shadow: var(--card-shadow-hover); }
+.sim-card.gold-border { border-left-color: var(--gold); }
+.sim-card.green-border { border-left-color: var(--green); }
+.sim-card.red-border { border-left-color: var(--red); }
+.sim-card.orange-border { border-left-color: var(--orange); }
+
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: #fff;
+  color: var(--text);
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: #33BEF2; }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: #388E3C; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #D32F2F; }
+.btn-gold { background: var(--gold); color: #212121; }
+.btn-gold:hover { background: #FFB300; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-xs { padding: 3px 8px; font-size: 11px; }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.result-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.result-card .label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.result-card .value { font-size: 22px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+.result-card .sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+.chart-container {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 16px;
+}
+.chart-export-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+.chart-export-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.scenario-item {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  border-left: 4px solid var(--primary);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  gap: 10px;
+}
+.scenario-item:hover { box-shadow: var(--card-shadow-hover); }
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: toastIn 0.3s ease;
+  max-width: 300px;
+}
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+.toast.info { background: var(--primary); }
+.toast.warning { background: var(--orange); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--bg); padding: 10px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+tr:hover td { background: #FAFBFC; }
+
+.search-input {
+  padding: 7px 12px 7px 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  width: 100%;
+  max-width: 280px;
+  transition: all 0.2s ease;
+}
+.search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,136,229,0.1); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-primary { background: var(--primary-light); color: var(--primary); }
+.badge-green { background: #E8F5E9; color: var(--green); }
+.badge-gold { background: #FFF8E1; color: #F57F17; }
+
+.inline-confirm {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+.inline-confirm.active { display: inline-flex; }
+
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.info-section { line-height: 1.7; font-size: 14px; color: #444; }
+.info-section h3 { color: var(--primary); font-size: 16px; margin: 20px 0 8px; font-weight: 700; }
+.info-section p { margin-bottom: 12px; }
+.info-section ul { padding-left: 20px; margin-bottom: 12px; }
+.info-section li { margin-bottom: 6px; }
+
+.export-hide { /* elements to hide during image export */ }
+
+@media (max-width: 640px) {
+  .header-title-bar { padding: 8px 12px; }
+  .header-title { font-size: 14px; }
+  .tab-btn { padding: 8px 10px; font-size: 12px; }
+  .tab-content { padding: 12px; }
+  .results-grid { grid-template-columns: repeat(2, 1fr); }
+  .btn { padding: 6px 12px; font-size: 12px; }
+}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrapper" id="appWrapper"><!-- Toast Container -->
+   <div class="toast-container" id="toastContainer"></div><!-- Confirm Modal -->
+   <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+     <h3 style="font-weight:700;font-size:16px;margin-bottom:12px;" id="confirmTitle">Confirmar</h3>
+     <p style="font-size:14px;color:#555;margin-bottom:20px;" id="confirmMsg"></p>
+     <div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button> <button class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
+     </div>
+    </div>
+   </div><!-- Import Modal -->
+   <div class="modal-overlay" id="importModal">
+    <div class="modal-box">
+     <h3 style="font-weight:700;font-size:16px;margin-bottom:12px;">Importar Dados (JSON)</h3><textarea id="importTextarea" class="form-input" rows="8" placeholder="Cole o conteúdo JSON aqui..."></textarea>
+     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;"><button class="btn btn-secondary" onclick="document.getElementById('importModal').classList.remove('active')">Cancelar</button> <button class="btn btn-primary" onclick="doImport()">Importar</button>
+     </div>
+    </div>
+   </div><!-- Header -->
+   <header class="app-header">
+    <div class="header-title-bar" style="display: none;">
+     <div class="header-title" style="display: none;"><span class="prefix">IS</span> <span id="appTitleText" style="display: none;">Simulador de Enriquecimento com Aportes Crescentes</span>
+     </div>
+     <div style="display:flex;gap:6px;align-items:center;" class="export-hide"><button class="btn btn-sm btn-secondary" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px;"></i> JSON</button> <button class="btn btn-sm btn-secondary" onclick="document.getElementById('importModal').classList.add('active')" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px;"></i></button> <button class="btn btn-sm btn-secondary" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px;"></i></button> <button class="btn btn-sm btn-primary" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px;"></i> PDF</button>
+     </div>
+    </div>
+    <nav class="tab-bar" id="tabBar"><button class="tab-btn active" data-tab="simulator"><i data-lucide="trending-up"></i> Simulador</button> <button class="tab-btn" data-tab="results"><i data-lucide="bar-chart-2"></i> Resultados</button> <button class="tab-btn" data-tab="scenarios"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="currencies"><i data-lucide="coins"></i> Moedas</button> <button class="tab-btn" data-tab="guide"><i data-lucide="book-open"></i> Guia</button>
+    </nav>
+   </header><!-- SIMULATOR TAB -->
+   <div class="tab-content active" id="tab-simulator">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;" class="export-hide">
+     <div style="position:relative;flex:1;min-width:200px;"><i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#aaa;"></i> <input type="text" class="search-input" style="width:100%;max-width:100%;" placeholder="Filtrar parâmetros..." id="simFilter" oninput="filterSimFields()">
+     </div>
+    </div>
+    <div id="simFieldsContainer"><!-- Investment Params -->
+     <div class="sim-card" data-filter="investimento inicial capital">
+      <h3 style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i data-lucide="wallet" style="width:18px;height:18px;color:var(--primary);"></i> Parâmetros de Investimento</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+       <div class="form-group"><label class="form-label" for="initialCapital">Capital Inicial (Kz)</label> <input type="number" class="form-input" id="initialCapital" value="500000" min="0" step="1000">
+       </div>
+       <div class="form-group"><label class="form-label" for="monthlyContrib">Aporte Mensal (Kz)</label> <input type="number" class="form-input" id="monthlyContrib" value="50000" min="0" step="1000">
+       </div>
+       <div class="form-group"><label class="form-label" for="contribGrowth">Crescimento Anual do Aporte (%)</label> <input type="number" class="form-input" id="contribGrowth" value="5" min="0" max="100" step="0.5">
+       </div>
+       <div class="form-group"><label class="form-label" for="annualReturn">Retorno Anual (%)</label> <input type="number" class="form-input" id="annualReturn" value="12" min="0" max="200" step="0.5">
+       </div>
+       <div class="form-group"><label class="form-label" for="investYears">Período (Anos)</label> <input type="number" class="form-input" id="investYears" value="20" min="1" max="60" step="1">
+       </div>
+       <div class="form-group"><label class="form-label" for="inflationRate">Inflação Anual (%)</label> <input type="number" class="form-input" id="inflationRate" value="8" min="0" max="100" step="0.5">
+       </div>
+      </div>
+     </div><!-- Goal Params -->
+     <div class="sim-card gold-border" data-filter="meta objetivo independência financeira">
+      <h3 style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i data-lucide="target" style="width:18px;height:18px;color:var(--gold);"></i> Meta de Independência Financeira</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+       <div class="form-group"><label class="form-label" for="goalAmount">Patrimônio Alvo (Kz)</label> <input type="number" class="form-input" id="goalAmount" value="50000000" min="0" step="100000">
+       </div>
+       <div class="form-group"><label class="form-label" for="monthlyExpense">Despesa Mensal Estimada (Kz)</label> <input type="number" class="form-input" id="monthlyExpense" value="300000" min="0" step="10000">
+       </div>
+       <div class="form-group"><label class="form-label" for="withdrawRate">Taxa de Retirada Anual (%)</label> <input type="number" class="form-input" id="withdrawRate" value="4" min="0.5" max="20" step="0.5">
+       </div>
+      </div>
+     </div><!-- Scenario Title -->
+     <div class="sim-card green-border" data-filter="título cenário nome" style="padding:14px 20px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+       <div style="flex:1;min-width:200px;"><label class="form-label" for="scenarioTitle">Título do Cenário</label> <input type="text" class="form-input" id="scenarioTitle" placeholder="Ex: Plano Agressivo 2025">
+       </div>
+      </div>
+     </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;" class="export-hide"><button class="btn btn-primary" onclick="runSimulation()"><i data-lucide="play" style="width:15px;height:15px;"></i> Simular</button> <button class="btn btn-success" onclick="saveScenario()"><i data-lucide="save" style="width:15px;height:15px;"></i> Guardar Cenário</button> <button class="btn btn-secondary" onclick="resetForm()"><i data-lucide="rotate-ccw" style="width:15px;height:15px;"></i> Limpar</button>
+    </div>
+   </div><!-- RESULTS TAB -->
+   <div class="tab-content" id="tab-results">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;" class="export-hide">
+     <div style="position:relative;flex:1;min-width:200px;"><i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#aaa;"></i> <input type="text" class="search-input" style="width:100%;max-width:100%;" placeholder="Filtrar resultados..." id="resultsFilter" oninput="filterResults()">
+     </div><select class="form-select" style="width:auto;min-width:140px;" id="currencyDisplay" onchange="updateResultsCurrency()"> <option value="AOA">Kz (Kwanza)</option> </select>
+    </div>
+    <div id="noResultsMsg" style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><i data-lucide="bar-chart-2" style="width:48px;height:48px;color:var(--border);margin:0 auto 16px;display:block;"></i>
+     <p style="font-size:15px;font-weight:600;">Nenhuma simulação realizada</p>
+     <p style="font-size:13px;">Execute uma simulação na aba Simulador para ver os resultados.</p>
+    </div>
+    <div id="resultsContent" style="display:none;">
+     <div id="resultsSummary"></div><!-- Charts -->
+     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-top:20px;" id="chartsGrid">
+      <div class="chart-container" data-filter="evolução patrimônio gráfico crescimento"><button class="chart-export-btn export-hide" onclick="exportChartImage('growthChart')"><i data-lucide="download" style="width:12px;height:12px;"></i> HD</button>
+       <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;">Evolução do Patrimônio</h4>
+       <canvas id="growthChart" height="220"></canvas>
+      </div>
+      <div class="chart-container" data-filter="composição aportes juros distribuição"><button class="chart-export-btn export-hide" onclick="exportChartImage('compositionChart')"><i data-lucide="download" style="width:12px;height:12px;"></i> HD</button>
+       <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;">Composição do Patrimônio</h4>
+       <canvas id="compositionChart" height="220"></canvas>
+      </div>
+      <div class="chart-container" data-filter="aportes mensais crescimento contribuição"><button class="chart-export-btn export-hide" onclick="exportChartImage('contribChart')"><i data-lucide="download" style="width:12px;height:12px;"></i> HD</button>
+       <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;">Aportes Mensais ao Longo do Tempo</h4>
+       <canvas id="contribChart" height="220"></canvas>
+      </div>
+      <div class="chart-container" data-filter="distribuição final donuts composição percentual"><button class="chart-export-btn export-hide" onclick="exportChartImage('donutChart')"><i data-lucide="download" style="width:12px;height:12px;"></i> HD</button>
+       <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;">Distribuição Final</h4>
+       <canvas id="donutChart" height="220"></canvas>
+      </div>
+     </div><!-- Yearly Table -->
+     <div class="sim-card" style="margin-top:16px;" data-filter="tabela anual detalhes anos">
+      <h4 style="font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="table" style="width:16px;height:16px;color:var(--primary);"></i> Projeção Anual Detalhada</h4>
+      <div class="table-wrap">
+       <table id="yearlyTable">
+        <thead>
+         <tr>
+          <th>Ano</th>
+          <th>Aporte Mensal</th>
+          <th>Aportes Acumulados</th>
+          <th>Juros Acumulados</th>
+          <th>Patrimônio Total</th>
+          <th>Valor Real (Inflação)</th>
+         </tr>
+        </thead>
+        <tbody id="yearlyTableBody"></tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+   </div><!-- SCENARIOS TAB -->
+   <div class="tab-content" id="tab-scenarios">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;" class="export-hide">
+     <div style="position:relative;flex:1;min-width:200px;"><i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#aaa;"></i> <input type="text" class="search-input" style="width:100%;max-width:100%;" placeholder="Filtrar cenários..." id="scenarioFilter" oninput="renderScenarios()">
+     </div><button class="btn btn-sm btn-primary" onclick="switchTab('simulator')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Novo Cenário</button>
+    </div>
+    <div id="scenariosList"></div>
+    <div id="noScenariosMsg" style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><i data-lucide="layers" style="width:48px;height:48px;color:var(--border);margin:0 auto 16px;display:block;"></i>
+     <p style="font-size:15px;font-weight:600;">Nenhum cenário guardado</p>
+     <p style="font-size:13px;">Guarde uma simulação para criar um cenário reutilizável.</p>
+    </div><!-- Templates -->
+    <div style="margin-top:30px;">
+     <h3 style="font-weight:700;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="lightbulb" style="width:18px;height:18px;color:var(--gold);"></i> Templates de Aprendizagem</h3>
+     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+      <div class="sim-card gold-border" style="cursor:pointer;" onclick="loadTemplate('conservative')">
+       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span class="badge badge-green">Conservador</span>
+       </div>
+       <p style="font-size:13px;color:var(--text-secondary);">Capital 200.000 Kz, aportes 30.000 Kz/mês, retorno 8%/ano, 25 anos. Ideal para quem prioriza segurança.</p>
+      </div>
+      <div class="sim-card gold-border" style="cursor:pointer;" onclick="loadTemplate('moderate')">
+       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span class="badge badge-primary">Moderado</span>
+       </div>
+       <p style="font-size:13px;color:var(--text-secondary);">Capital 500.000 Kz, aportes 50.000 Kz/mês, retorno 12%/ano, 20 anos. Equilíbrio entre risco e retorno.</p>
+      </div>
+      <div class="sim-card gold-border" style="cursor:pointer;" onclick="loadTemplate('aggressive')">
+       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span class="badge badge-gold">Agressivo</span>
+       </div>
+       <p style="font-size:13px;color:var(--text-secondary);">Capital 1.000.000 Kz, aportes 100.000 Kz/mês, retorno 18%/ano, 15 anos. Máximo crescimento com maior risco.</p>
+      </div>
+     </div>
+    </div>
+   </div><!-- CURRENCIES TAB -->
+   <div class="tab-content" id="tab-currencies">
+    <div class="sim-card">
+     <h3 style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i data-lucide="coins" style="width:18px;height:18px;color:var(--gold);"></i> Taxas de Câmbio (1 Kz = X Moeda)</h3>
+     <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Edite as taxas de conversão da CPLP e USD em relação ao Kwanza angolano.</p>
+     <div class="currency-grid" id="currencyGrid"></div>
+     <div style="margin-top:16px;display:flex;gap:8px;" class="export-hide"><button class="btn btn-primary btn-sm" onclick="saveCurrencies()"><i data-lucide="save" style="width:14px;height:14px;"></i> Guardar Taxas</button> <button class="btn btn-secondary btn-sm" onclick="resetCurrencies()"><i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> Repor Padrão</button>
+     </div>
+    </div>
+   </div><!-- GUIDE TAB -->
+   <div class="tab-content" id="tab-guide">
+    <div class="sim-card">
+     <div class="info-section">
+      <h3><i data-lucide="info" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> O que é este Simulador?</h3>
+      <p>O <strong>Simulador de Enriquecimento com Aportes Crescentes</strong> é uma ferramenta que projecta o crescimento do seu patrimônio ao longo do tempo, considerando que os seus aportes mensais aumentam anualmente, reflectindo aumentos salariais, promoções ou crescimento de rendimento.</p>
+      <h3><i data-lucide="target" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> Por que é Importante?</h3>
+      <p>A maioria dos simuladores assume aportes fixos, mas na realidade, os nossos rendimentos tendem a crescer ao longo da vida. Este simulador oferece uma projecção mais realista do caminho para a independência financeira.</p>
+      <ul>
+       <li><strong>Aportes crescentes</strong> reflectem a realidade da progressão profissional</li>
+       <li><strong>Juros compostos</strong> amplificam drasticamente o resultado a longo prazo</li>
+       <li><strong>A inflação</strong> é considerada para mostrar o valor real do patrimônio</li>
+       <li><strong>Múltiplos cenários</strong> permitem comparar estratégias diferentes</li>
+      </ul>
+      <h3><i data-lucide="book-open" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> Como Utilizar</h3>
+      <ul>
+       <li><strong>1.</strong> Na aba <em>Simulador</em>, preencha os seus parâmetros financeiros</li>
+       <li><strong>2.</strong> Clique em <em>Simular</em> para gerar a projecção</li>
+       <li><strong>3.</strong> Analise os resultados na aba <em>Resultados</em> com gráficos detalhados</li>
+       <li><strong>4.</strong> Guarde cenários para comparar diferentes estratégias</li>
+       <li><strong>5.</strong> Configure as taxas de câmbio na aba <em>Moedas</em> para ver valores noutras moedas da CPLP</li>
+       <li><strong>6.</strong> Exporte os resultados em PDF, imagem ou JSON</li>
+      </ul>
+      <h3><i data-lucide="star" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> Melhores Práticas</h3>
+      <ul>
+       <li><strong>Comece cedo:</strong> O tempo é o factor mais poderoso dos juros compostos</li>
+       <li><strong>Aumente os aportes:</strong> Mesmo 5% de crescimento anual nos aportes faz uma diferença enorme</li>
+       <li><strong>Diversifique:</strong> Não coloque todos os ovos no mesmo cesto</li>
+       <li><strong>Considere a inflação:</strong> O valor nominal não é o valor real</li>
+       <li><strong>Reveja regularmente:</strong> Ajuste a simulação conforme a sua situação muda</li>
+       <li><strong>Use cenários:</strong> Compare estratégias conservadoras, moderadas e agressivas</li>
+       <li><strong>Taxa de retirada 4%:</strong> A regra clássica para viver dos rendimentos sem consumir o capital</li>
+      </ul>
+      <h3><i data-lucide="calculator" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> Fórmulas Utilizadas</h3>
+      <p><strong>Patrimônio com aportes crescentes:</strong> Cada mês, o patrimônio recebe juros (taxa mensal) mais o aporte daquele mês. O aporte é reajustado anualmente pela taxa de crescimento definida.</p>
+      <p><strong>Valor real:</strong> Patrimônio Nominal ÷ (1 + Inflação)^Anos</p>
+      <p><strong>Renda passiva mensal:</strong> Patrimônio × Taxa de Retirada ÷ 12</p>
+      <p><strong>Anos até meta:</strong> Número de anos até o patrimônio atingir o valor alvo definido</p>
+     </div>
+    </div>
+   </div>
+  </div><!-- end app-wrapper -->
+  <script>
+// ===================== STATE =====================
+let simResult = null;
+let scenarios = [];
+let currencies = {};
+let charts = {};
+let confirmCallback = null;
+
+const DEFAULT_CURRENCIES = {
+  USD: { name: 'Dólar Americano', symbol: '$', rate: 0.0012 },
+  BRL: { name: 'Real Brasileiro', symbol: 'R$', rate: 0.006 },
+  EUR: { name: 'Euro', symbol: '€', rate: 0.0011 },
+  MZN: { name: 'Metical Moçambicano', symbol: 'MT', rate: 0.076 },
+  CVE: { name: 'Escudo Cabo-verdiano', symbol: 'CVE', rate: 0.118 },
+  STN: { name: 'Dobra São-tomense', symbol: 'Db', rate: 0.026 },
+  XOF: { name: 'Franco CFA (Guiné-Bissau)', symbol: 'CFA', rate: 0.72 },
+  MOP: { name: 'Pataca Macaense', symbol: 'MOP$', rate: 0.0096 },
+  TPL: { name: 'Dólar Timorense (USD)', symbol: 'US$', rate: 0.0012 }
+};
+
+// ===================== INIT =====================
+function init() {
+  loadFromStorage();
+  renderCurrencies();
+  renderScenarios();
+  setupTabs();
+  updateCurrencySelect();
+  lucide.createIcons();
+}
+
+// ===================== STORAGE =====================
+function loadFromStorage() {
+  try {
+    const s = localStorage.getItem('is_sim_scenarios');
+    if (s) scenarios = JSON.parse(s);
+    const c = localStorage.getItem('is_sim_currencies');
+    if (c) currencies = JSON.parse(c);
+    else currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+  } catch(e) {
+    scenarios = [];
+    currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+  }
+}
+
+function saveToStorage() {
+  localStorage.setItem('is_sim_scenarios', JSON.stringify(scenarios));
+  localStorage.setItem('is_sim_currencies', JSON.stringify(currencies));
+}
+
+// ===================== TABS =====================
+function setupTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const btn = document.querySelector(`[data-tab="${tabId}"]`);
+  if (btn) btn.classList.add('active');
+  const content = document.getElementById(`tab-${tabId}`);
+  if (content) content.classList.add('active');
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type = 'info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ===================== CONFIRM =====================
+function showConfirm(title, msg, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').classList.add('active');
+  confirmCallback = cb;
+  document.getElementById('confirmOkBtn').onclick = () => { closeConfirm(); if (confirmCallback) confirmCallback(); };
+}
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('active');
+  confirmCallback = null;
+}
+
+// ===================== FILTER =====================
+function filterSimFields() {
+  const q = document.getElementById('simFilter').value.toLowerCase();
+  document.querySelectorAll('#simFieldsContainer .sim-card').forEach(card => {
+    const text = (card.getAttribute('data-filter') || '') + ' ' + card.textContent.toLowerCase();
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+function filterResults() {
+  const q = document.getElementById('resultsFilter').value.toLowerCase();
+  document.querySelectorAll('#chartsGrid .chart-container, #tab-results .sim-card').forEach(el => {
+    const text = (el.getAttribute('data-filter') || '') + ' ' + el.textContent.toLowerCase();
+    el.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+// ===================== FORMAT =====================
+function fmtKz(v) {
+  return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v)) + ' Kz';
+}
+
+function fmtCurrency(v, code) {
+  if (code === 'AOA') return fmtKz(v);
+  const cur = currencies[code];
+  if (!cur) return fmtKz(v);
+  const converted = v * cur.rate;
+  return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(converted) + ' ' + cur.symbol;
+}
+
+function fmtPct(v) { return v.toFixed(1) + '%'; }
+
+// ===================== SIMULATION =====================
+function getFormValues() {
+  return {
+    initialCapital: parseFloat(document.getElementById('initialCapital').value) || 0,
+    monthlyContrib: parseFloat(document.getElementById('monthlyContrib').value) || 0,
+    contribGrowth: parseFloat(document.getElementById('contribGrowth').value) || 0,
+    annualReturn: parseFloat(document.getElementById('annualReturn').value) || 0,
+    investYears: parseInt(document.getElementById('investYears').value) || 1,
+    inflationRate: parseFloat(document.getElementById('inflationRate').value) || 0,
+    goalAmount: parseFloat(document.getElementById('goalAmount').value) || 0,
+    monthlyExpense: parseFloat(document.getElementById('monthlyExpense').value) || 0,
+    withdrawRate: parseFloat(document.getElementById('withdrawRate').value) || 4,
+    title: document.getElementById('scenarioTitle').value || ''
+  };
+}
+
+function setFormValues(v) {
+  document.getElementById('initialCapital').value = v.initialCapital;
+  document.getElementById('monthlyContrib').value = v.monthlyContrib;
+  document.getElementById('contribGrowth').value = v.contribGrowth;
+  document.getElementById('annualReturn').value = v.annualReturn;
+  document.getElementById('investYears').value = v.investYears;
+  document.getElementById('inflationRate').value = v.inflationRate;
+  document.getElementById('goalAmount').value = v.goalAmount;
+  document.getElementById('monthlyExpense').value = v.monthlyExpense;
+  document.getElementById('withdrawRate').value = v.withdrawRate;
+  document.getElementById('scenarioTitle').value = v.title || '';
+}
+
+function runSimulation() {
+  const v = getFormValues();
+  const monthlyRate = v.annualReturn / 100 / 12;
+  const monthlyInflation = v.inflationRate / 100 / 12;
+  const years = v.investYears;
+  const totalMonths = years * 12;
+
+  let balance = v.initialCapital;
+  let totalContribs = v.initialCapital;
+  let currentMonthlyContrib = v.monthlyContrib;
+  let yearlyData = [];
+  let monthlyContribs = [];
+  let goalReachedYear = null;
+
+  for (let year = 1; year <= years; year++) {
+    let yearStart = balance;
+    for (let month = 1; month <= 12; month++) {
+      balance = balance * (1 + monthlyRate) + currentMonthlyContrib;
+      totalContribs += currentMonthlyContrib;
+    }
+    monthlyContribs.push(currentMonthlyContrib);
+    const totalInterest = balance - totalContribs;
+    const realValue = balance / Math.pow(1 + v.inflationRate / 100, year);
+
+    yearlyData.push({
+      year,
+      monthlyContrib: currentMonthlyContrib,
+      totalContribs,
+      totalInterest,
+      balance,
+      realValue
+    });
+
+    if (balance >= v.goalAmount && goalReachedYear === null) {
+      goalReachedYear = year;
+    }
+
+    currentMonthlyContrib *= (1 + v.contribGrowth / 100);
+  }
+
+  const finalBalance = balance;
+  const finalContribs = totalContribs;
+  const finalInterest = finalBalance - finalContribs;
+  const realFinal = finalBalance / Math.pow(1 + v.inflationRate / 100, years);
+  const passiveIncome = finalBalance * (v.withdrawRate / 100) / 12;
+  const yearsOfExpenses = v.monthlyExpense > 0 ? finalBalance / (v.monthlyExpense * 12) : 0;
+
+  simResult = {
+    params: v,
+    yearlyData,
+    monthlyContribs,
+    finalBalance,
+    finalContribs,
+    finalInterest,
+    realFinal,
+    passiveIncome,
+    goalReachedYear,
+    yearsOfExpenses,
+    timestamp: Date.now()
+  };
+
+  showResults();
+  switchTab('results');
+  showToast('Simulação concluída com sucesso!', 'success');
+}
+
+function resetForm() {
+  document.getElementById('initialCapital').value = 500000;
+  document.getElementById('monthlyContrib').value = 50000;
+  document.getElementById('contribGrowth').value = 5;
+  document.getElementById('annualReturn').value = 12;
+  document.getElementById('investYears').value = 20;
+  document.getElementById('inflationRate').value = 8;
+  document.getElementById('goalAmount').value = 50000000;
+  document.getElementById('monthlyExpense').value = 300000;
+  document.getElementById('withdrawRate').value = 4;
+  document.getElementById('scenarioTitle').value = '';
+}
+
+// ===================== RESULTS =====================
+function showResults() {
+  if (!simResult) return;
+  document.getElementById('noResultsMsg').style.display = 'none';
+  document.getElementById('resultsContent').style.display = 'block';
+  updateResultsDisplay();
+  renderCharts();
+}
+
+function updateResultsDisplay() {
+  const r = simResult;
+  const code = document.getElementById('currencyDisplay').value;
+  const fmt = (v) => fmtCurrency(v, code);
+
+  const goalStatus = r.goalReachedYear
+    ? `<span style="color:var(--green);font-weight:600;">Meta atingida no ano ${r.goalReachedYear}</span>`
+    : `<span style="color:var(--orange);font-weight:600;">Meta não atingida no período</span>`;
+
+  document.getElementById('resultsSummary').innerHTML = `
+    <div class="results-grid">
+      <div class="result-card">
+        <div class="label">Patrimônio Final</div>
+        <div class="value" style="font-size:18px;">${fmt(r.finalBalance)}</div>
+        <div class="sub">Nominal</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Valor Real</div>
+        <div class="value" style="font-size:18px;color:var(--green);">${fmt(r.realFinal)}</div>
+        <div class="sub">Ajustado à inflação</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Total Aportes</div>
+        <div class="value" style="font-size:18px;color:var(--text);">${fmt(r.finalContribs)}</div>
+        <div class="sub">${fmtPct(r.finalContribs / r.finalBalance * 100)} do total</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Juros Ganhos</div>
+        <div class="value" style="font-size:18px;color:var(--gold);">${fmt(r.finalInterest)}</div>
+        <div class="sub">${fmtPct(r.finalInterest / r.finalBalance * 100)} do total</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Renda Passiva Mensal</div>
+        <div class="value" style="font-size:18px;color:var(--green);">${fmt(r.passiveIncome)}</div>
+        <div class="sub">Taxa ${r.params.withdrawRate}%/ano</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Meta</div>
+        <div class="value" style="font-size:14px;">${goalStatus}</div>
+        <div class="sub">${r.yearsOfExpenses > 0 ? r.yearsOfExpenses.toFixed(1) + ' anos de despesas cobertas' : ''}</div>
+      </div>
+    </div>
+  `;
+
+  // Table
+  const tbody = document.getElementById('yearlyTableBody');
+  tbody.innerHTML = r.yearlyData.map(d => `
+    <tr>
+      <td style="font-weight:600;">${d.year}</td>
+      <td>${fmt(d.monthlyContrib)}</td>
+      <td>${fmt(d.totalContribs)}</td>
+      <td>${fmt(d.totalInterest)}</td>
+      <td style="font-weight:600;color:var(--primary);">${fmt(d.balance)}</td>
+      <td style="color:var(--green);">${fmt(d.realValue)}</td>
+    </tr>
+  `).join('');
+}
+
+function updateResultsCurrency() { updateResultsDisplay(); }
+
+// ===================== CHARTS =====================
+function renderCharts() {
+  if (!simResult) return;
+  const r = simResult;
+  const labels = r.yearlyData.map(d => `Ano ${d.year}`);
+
+  // Destroy existing
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+
+  // Growth Chart
+  const growthCtx = document.getElementById('growthChart').getContext('2d');
+  charts.growthChart = new Chart(growthCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Patrimônio Nominal', data: r.yearlyData.map(d => d.balance), borderColor: '#66CFF5', backgroundColor: 'rgba(30,136,229,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
+        { label: 'Valor Real', data: r.yearlyData.map(d => d.realValue), borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
+        { label: 'Meta', data: r.yearlyData.map(() => r.params.goalAmount), borderColor: '#FFC107', borderDash: [5,5], pointRadius: 0, fill: false }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } }, scales: { y: { ticks: { callback: v => (v / 1000000).toFixed(1) + 'M' } } } }
+  });
+
+  // Composition Chart
+  const compCtx = document.getElementById('compositionChart').getContext('2d');
+  charts.compositionChart = new Chart(compCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Aportes', data: r.yearlyData.map(d => d.totalContribs), backgroundColor: '#66CFF5' },
+        { label: 'Juros', data: r.yearlyData.map(d => d.totalInterest), backgroundColor: '#FFC107' }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => (v / 1000000).toFixed(1) + 'M' } } } }
+  });
+
+  // Contrib Chart
+  const contribCtx = document.getElementById('contribChart').getContext('2d');
+  charts.contribChart = new Chart(contribCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Aporte Mensal', data: r.monthlyContribs, backgroundColor: '#4CAF50', borderRadius: 4 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => (v / 1000).toFixed(0) + 'K' } } } }
+  });
+
+  // Donut Chart
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  const contribPct = (r.finalContribs / r.finalBalance * 100);
+  const interestPct = (r.finalInterest / r.finalBalance * 100);
+  charts.donutChart = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: [`Aportes: ${contribPct.toFixed(1)}%`, `Juros: ${interestPct.toFixed(1)}%`],
+      datasets: [{ data: [r.finalContribs, r.finalInterest], backgroundColor: ['#66CFF5', '#FFC107'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.parsed;
+              const total = r.finalBalance;
+              const pct = (val / total * 100).toFixed(1);
+              return `${ctx.label}: ${fmtKz(val)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ===================== CHART EXPORT =====================
+function exportChartImage(chartId) {
+  const chart = charts[chartId];
+  if (!chart) return;
+  const url = chart.toBase64Image('image/png', 1);
+  const a = document.createElement('a');
+  a.download = `IS_grafico_${chartId}_${Date.now()}.png`;
+  a.href = url;
+  a.click();
+  showToast('Gráfico exportado em HD!', 'success');
+}
+
+// ===================== SCENARIOS =====================
+function saveScenario() {
+  const v = getFormValues();
+  if (!simResult) {
+    runSimulation();
+  }
+  const count = scenarios.length + 1;
+  const title = v.title || `Cenário ${count}`;
+  const scenario = {
+    id: Date.now().toString(),
+    title,
+    params: v,
+    result: {
+      finalBalance: simResult.finalBalance,
+      finalContribs: simResult.finalContribs,
+      finalInterest: simResult.finalInterest,
+      realFinal: simResult.realFinal,
+      passiveIncome: simResult.passiveIncome,
+      goalReachedYear: simResult.goalReachedYear
+    },
+    createdAt: new Date().toISOString()
+  };
+  scenarios.push(scenario);
+  saveToStorage();
+  renderScenarios();
+  showToast(`"${title}" guardado com sucesso!`, 'success');
+}
+
+function renderScenarios() {
+  const filter = (document.getElementById('scenarioFilter')?.value || '').toLowerCase();
+  const filtered = scenarios.filter(s => {
+    const text = s.title.toLowerCase() + ' ' + s.params.title?.toLowerCase();
+    return text.includes(filter);
+  });
+
+  const container = document.getElementById('scenariosList');
+  const noMsg = document.getElementById('noScenariosMsg');
+
+  if (filtered.length === 0 && scenarios.length === 0) {
+    container.innerHTML = '';
+    noMsg.style.display = 'block';
+    return;
+  }
+  noMsg.style.display = filtered.length === 0 ? 'block' : 'none';
+
+  container.innerHTML = filtered.map((s, i) => `
+    <div class="scenario-item" id="scenario-${s.id}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;">
+          <i data-lucide="layers" style="width:14px;height:14px;color:var(--primary);"></i>
+          <span class="scenario-title-text">${escHtml(s.title)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+          Capital: ${fmtKz(s.params.initialCapital)} · Aporte: ${fmtKz(s.params.monthlyContrib)}/mês · Retorno: ${s.params.annualReturn}% · ${s.params.investYears} anos
+        </div>
+        <div style="font-size:12px;margin-top:2px;">
+          <span style="color:var(--primary);font-weight:600;">Resultado: ${fmtKz(s.result.finalBalance)}</span>
+          ${s.result.goalReachedYear ? `<span class="badge badge-green" style="margin-left:6px;">Meta no ano ${s.result.goalReachedYear}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;" class="export-hide">
+        <button class="btn btn-xs btn-primary" onclick="loadScenario('${s.id}')" title="Carregar"><i data-lucide="upload" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-xs btn-secondary" onclick="cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-xs btn-secondary" onclick="editScenarioTitle('${s.id}')" title="Editar"><i data-lucide="edit" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-xs btn-danger" onclick="deleteScenario('${s.id}')" title="Eliminar"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id) {
+  const s = scenarios.find(x => x.id === id);
+  if (!s) return;
+  setFormValues(s.params);
+  switchTab('simulator');
+  showToast(`Cenário "${s.title}" carregado`, 'info');
+}
+
+function cloneScenario(id) {
+  const s = scenarios.find(x => x.id === id);
+  if (!s) return;
+  const clone = JSON.parse(JSON.stringify(s));
+  clone.id = Date.now().toString();
+  clone.title = s.title + ' (Cópia)';
+  clone.createdAt = new Date().toISOString();
+  scenarios.push(clone);
+  saveToStorage();
+  renderScenarios();
+  showToast(`Cenário clonado como "${clone.title}"`, 'success');
+}
+
+function editScenarioTitle(id) {
+  const s = scenarios.find(x => x.id === id);
+  if (!s) return;
+  const item = document.getElementById(`scenario-${id}`);
+  const titleSpan = item.querySelector('.scenario-title-text');
+  const oldTitle = s.title;
+  titleSpan.innerHTML = `<input type="text" class="form-input" style="padding:4px 8px;font-size:13px;width:200px;" value="${escHtml(oldTitle)}" id="editTitle-${id}" onkeydown="if(event.key==='Enter')confirmEditTitle('${id}')">
+    <button class="btn btn-xs btn-success" onclick="confirmEditTitle('${id}')" style="margin-left:4px;">OK</button>`;
+  document.getElementById(`editTitle-${id}`).focus();
+}
+
+function confirmEditTitle(id) {
+  const input = document.getElementById(`editTitle-${id}`);
+  if (!input) return;
+  const newTitle = input.value.trim();
+  if (!newTitle) { showToast('O título não pode estar vazio', 'error'); return; }
+  const s = scenarios.find(x => x.id === id);
+  if (s) { s.title = newTitle; saveToStorage(); }
+  renderScenarios();
+  showToast('Título actualizado!', 'success');
+}
+
+function deleteScenario(id) {
+  const s = scenarios.find(x => x.id === id);
+  if (!s) return;
+  showConfirm('Eliminar Cenário', `Tem a certeza que deseja eliminar "${s.title}"?`, () => {
+    scenarios = scenarios.filter(x => x.id !== id);
+    saveToStorage();
+    renderScenarios();
+    showToast('Cenário eliminado', 'warning');
+  });
+}
+
+// ===================== TEMPLATES =====================
+function loadTemplate(type) {
+  const templates = {
+    conservative: { initialCapital: 200000, monthlyContrib: 30000, contribGrowth: 3, annualReturn: 8, investYears: 25, inflationRate: 8, goalAmount: 30000000, monthlyExpense: 200000, withdrawRate: 4, title: 'Conservador' },
+    moderate: { initialCapital: 500000, monthlyContrib: 50000, contribGrowth: 5, annualReturn: 12, investYears: 20, inflationRate: 8, goalAmount: 50000000, monthlyExpense: 300000, withdrawRate: 4, title: 'Moderado' },
+    aggressive: { initialCapital: 1000000, monthlyContrib: 100000, contribGrowth: 8, annualReturn: 18, investYears: 15, inflationRate: 8, goalAmount: 80000000, monthlyExpense: 500000, withdrawRate: 4, title: 'Agressivo' }
+  };
+  setFormValues(templates[type]);
+  switchTab('simulator');
+  showToast(`Template "${templates[type].title}" carregado!`, 'info');
+}
+
+// ===================== CURRENCIES =====================
+function renderCurrencies() {
+  const grid = document.getElementById('currencyGrid');
+  grid.innerHTML = Object.entries(currencies).map(([code, cur]) => `
+    <div class="sim-card" style="padding:12px;margin-bottom:0;">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px;">${cur.symbol} ${cur.name}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">${code} · 1 Kz =</div>
+      <input type="number" class="form-input" style="padding:6px 8px;font-size:13px;" value="${cur.rate}" step="0.0001" min="0" data-currency="${code}">
+    </div>
+  `).join('');
+}
+
+function saveCurrencies() {
+  document.querySelectorAll('#currencyGrid input[data-currency]').forEach(input => {
+    const code = input.dataset.currency;
+    if (currencies[code]) currencies[code].rate = parseFloat(input.value) || 0;
+  });
+  saveToStorage();
+  updateCurrencySelect();
+  showToast('Taxas de câmbio guardadas!', 'success');
+}
+
+function resetCurrencies() {
+  currencies = JSON.parse(JSON.stringify(DEFAULT_CURRENCIES));
+  saveToStorage();
+  renderCurrencies();
+  updateCurrencySelect();
+  showToast('Taxas repostas ao padrão', 'info');
+}
+
+function updateCurrencySelect() {
+  const select = document.getElementById('currencyDisplay');
+  const current = select.value;
+  select.innerHTML = '<option value="AOA">Kz (Kwanza)</option>';
+  Object.entries(currencies).forEach(([code, cur]) => {
+    select.innerHTML += `<option value="${code}">${cur.symbol} (${cur.name})</option>`;
+  });
+  select.value = current || 'AOA';
+}
+
+// ===================== EXPORT JSON =====================
+function exportJSON() {
+  const data = { scenarios, currencies, exportedAt: new Date().toISOString(), app: 'IS Simulador de Enriquecimento com Aportes Crescentes' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.download = `IS_simulador_export_${Date.now()}.json`;
+  a.href = URL.createObjectURL(blob);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Dados exportados em JSON!', 'success');
+}
+
+function doImport() {
+  try {
+    const text = document.getElementById('importTextarea').value;
+    const data = JSON.parse(text);
+    if (data.scenarios) scenarios = data.scenarios;
+    if (data.currencies) currencies = data.currencies;
+    saveToStorage();
+    renderScenarios();
+    renderCurrencies();
+    updateCurrencySelect();
+    document.getElementById('importModal').classList.remove('active');
+    document.getElementById('importTextarea').value = '';
+    showToast('Dados importados com sucesso!', 'success');
+  } catch(e) {
+    showToast('Erro ao importar: JSON inválido', 'error');
+  }
+}
+
+// ===================== EXPORT IMAGE =====================
+async function exportAppImage() {
+  showToast('A gerar imagem...', 'info');
+  const els = document.querySelectorAll('.export-hide');
+  els.forEach(e => e.style.display = 'none');
+
+  try {
+    const wrapper = document.getElementById('appWrapper');
+    const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#F8F9FA', scrollY: -window.scrollY, height: wrapper.scrollHeight });
+    const a = document.createElement('a');
+    a.download = `IS_simulador_${Date.now()}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('Imagem exportada!', 'success');
+  } catch(e) {
+    showToast('Erro ao gerar imagem', 'error');
+  }
+
+  els.forEach(e => e.style.display = '');
+}
+
+// ===================== EXPORT PDF =====================
+async function exportPDF() {
+  showToast('A gerar PDF...', 'info');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageW = 210;
+    const pageH = 297;
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    let y = margin;
+    const appName = 'IS Simulador de Enriquecimento com Aportes Crescentes';
+
+    function addHeader() {
+      doc.setFillColor(30, 136, 229);
+      doc.rect(0, 0, pageW, 14, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(appName, margin, 9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('www.investesuite.com', pageW - margin, 9, { align: 'right' });
+      y = 22;
+    }
+
+    function addFooter(pageNum) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(0, pageH - 12, pageW, 12, 'F');
+      doc.setTextColor(120, 120, 120);
+      doc.setFontSize(7);
+      doc.text(`Gerado por ${appName} · www.investesuite.com`, margin, pageH - 5);
+      doc.text(`Página ${pageNum}`, pageW - margin, pageH - 5, { align: 'right' });
+    }
+
+    function checkPage(needed) {
+      if (y + needed > pageH - 20) {
+        addFooter(doc.internal.getNumberOfPages());
+        doc.addPage();
+        addHeader();
+      }
+    }
+
+    // Page 1
+    addHeader();
+    doc.setTextColor(33, 33, 33);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Simulação', margin, y);
+    y += 8;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, margin, y);
+    y += 10;
+
+    if (simResult) {
+      const p = simResult.params;
+      // Parameters
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 136, 229);
+      doc.text('Parâmetros', margin, y);
+      y += 7;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(33, 33, 33);
+
+      const params = [
+        ['Capital Inicial', fmtKz(p.initialCapital)],
+        ['Aporte Mensal', fmtKz(p.monthlyContrib)],
+        ['Crescimento Anual Aporte', p.contribGrowth + '%'],
+        ['Retorno Anual', p.annualReturn + '%'],
+        ['Período', p.investYears + ' anos'],
+        ['Inflação', p.inflationRate + '%'],
+        ['Meta', fmtKz(p.goalAmount)],
+        ['Taxa de Retirada', p.withdrawRate + '%']
+      ];
+
+      params.forEach(([label, val]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(label + ':', margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(val, margin + 55, y);
+        y += 5;
+      });
+      y += 5;
+
+      // Results
+      checkPage(40);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 136, 229);
+      doc.text('Resultados', margin, y);
+      y += 7;
+      doc.setFontSize(9);
+      doc.setTextColor(33, 33, 33);
+
+      const results = [
+        ['Patrimônio Final', fmtKz(simResult.finalBalance)],
+        ['Valor Real', fmtKz(simResult.realFinal)],
+        ['Total Aportes', fmtKz(simResult.finalContribs)],
+        ['Juros Ganhos', fmtKz(simResult.finalInterest)],
+        ['Renda Passiva Mensal', fmtKz(simResult.passiveIncome)],
+        ['Meta Atingida', simResult.goalReachedYear ? `Ano ${simResult.goalReachedYear}` : 'Não atingida']
+      ];
+
+      results.forEach(([label, val]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(label + ':', margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(val, margin + 55, y);
+        y += 5;
+      });
+      y += 8;
+
+      // Charts - small
+      const chartIds = ['growthChart', 'compositionChart', 'contribChart', 'donutChart'];
+      const chartNames = ['Evolução do Patrimônio', 'Composição', 'Aportes Mensais', 'Distribuição Final'];
+
+      for (let i = 0; i < chartIds.length; i++) {
+        const chart = charts[chartIds[i]];
+        if (!chart) continue;
+        checkPage(70);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 136, 229);
+        doc.text(chartNames[i], margin, y);
+        y += 4;
+        const img = chart.toBase64Image('image/png', 2);
+        const chartW = Math.min(contentW, 120);
+        const chartH = chartW * 0.55;
+        doc.addImage(img, 'PNG', margin, y, chartW, chartH);
+        y += chartH + 8;
+      }
+
+      // Table
+      checkPage(30);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 136, 229);
+      doc.text('Projeção Anual', margin, y);
+      y += 6;
+
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100,100,100);
+      const cols = ['Ano', 'Aporte Mensal', 'Aportes Acum.', 'Juros Acum.', 'Patrimônio', 'Valor Real'];
+      const colW = contentW / cols.length;
+      cols.forEach((c, i) => doc.text(c, margin + i * colW, y));
+      y += 1;
+      doc.setDrawColor(200,200,200);
+      doc.line(margin, y, pageW - margin, y);
+      y += 3;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(33,33,33);
+      simResult.yearlyData.forEach(d => {
+        checkPage(6);
+        const row = [d.year.toString(), fmtKz(d.monthlyContrib), fmtKz(d.totalContribs), fmtKz(d.totalInterest), fmtKz(d.balance), fmtKz(d.realValue)];
+        row.forEach((v, i) => doc.text(v, margin + i * colW, y));
+        y += 4.5;
+      });
+    }
+
+    addFooter(doc.internal.getNumberOfPages());
+    doc.save(`IS_simulador_relatorio_${Date.now()}.pdf`);
+    showToast('PDF exportado!', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('Erro ao gerar PDF', 'error');
+  }
+}
+
+// ===================== UTIL =====================
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ===================== ELEMENT SDK =====================
+const defaultConfig = {
+  app_title: 'Simulador de Enriquecimento com Aportes Crescentes',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#212121',
+  primary_color: '#66CFF5',
+  accent_color: '#FFC107',
+  font_family: 'Inter',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const title = config.app_title || defaultConfig.app_title;
+  const el = document.getElementById('appTitleText');
+  if (el) el.textContent = title;
+
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_color || defaultConfig.primary_color;
+  const accent = config.accent_color || defaultConfig.accent_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  document.documentElement.style.setProperty('--primary', primary);
+  document.documentElement.style.setProperty('--bg', bg);
+  document.documentElement.style.setProperty('--text', text);
+  document.documentElement.style.setProperty('--gold', accent);
+
+  const wrapper = document.getElementById('appWrapper');
+  if (wrapper) { wrapper.style.backgroundColor = bg; wrapper.style.color = text; }
+
+  document.querySelectorAll('.sim-card, .chart-container, .scenario-item').forEach(el => {
+    el.style.backgroundColor = surface;
+  });
+
+  document.querySelectorAll('.app-header').forEach(el => {
+    el.style.backgroundColor = surface;
+  });
+
+  document.querySelectorAll('.tab-btn.active').forEach(el => {
+    el.style.color = primary;
+    el.style.borderBottomColor = primary;
+  });
+
+  document.querySelectorAll('.header-title .prefix').forEach(el => {
+    el.style.backgroundColor = primary;
+  });
+
+  document.querySelectorAll('.result-card .value').forEach(el => {
+    if (!el.style.color || el.style.color === 'rgb(30, 136, 229)') el.style.color = primary;
+  });
+
+  document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+  document.querySelectorAll('h1,h2,h3,h4,.header-title,.result-card .value').forEach(el => {
+    el.style.fontFamily = `${font}, Inter, sans-serif`;
+  });
+
+  const baseSize = fontSize;
+  document.querySelectorAll('.form-input,.form-select,td,p,.info-section p,.info-section li').forEach(el => {
+    el.style.fontSize = baseSize + 'px';
+  });
+  document.querySelectorAll('h3,.header-title span:not(.prefix)').forEach(el => {
+    el.style.fontSize = (baseSize * 1.15) + 'px';
+  });
+  document.querySelectorAll('.form-label,th,.badge').forEach(el => {
+    el.style.fontSize = (baseSize * 0.8) + 'px';
+  });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+        { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title]
+    ])
+  });
+}
+
+// Init
+init();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dd25190a036d04e',t:'MTc3MzY0OTAxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

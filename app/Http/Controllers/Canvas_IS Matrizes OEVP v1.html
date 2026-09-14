@@ -1,0 +1,1502 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Matrizes OEVP</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15); transform: translateY(-1px); }
+    .tab-active { border-bottom: 3px solid #66CFF5; color: #66CFF5; }
+    .matrix-cell { transition: all 0.2s ease; }
+    .matrix-cell:hover { background-color: #E0F4FD; }
+    .btn-primary { background-color: #66CFF5; color: white; transition: all 0.2s ease; }
+    .btn-primary:hover { background-color: #33BEF2; }
+    .btn-secondary { background-color: #F8F9FA; border: 1px solid #E0E0E0; transition: all 0.2s ease; }
+    .btn-secondary:hover { background-color: #E0E0E0; }
+    .left-accent { border-left: 4px solid #66CFF5; }
+    .left-accent-yellow { border-left: 4px solid #FFC107; }
+    .left-accent-green { border-left: 4px solid #4CAF50; }
+    .left-accent-red { border-left: 4px solid #F44336; }
+    .left-accent-orange { border-left: 4px solid #FF9800; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #66CFF5; box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1); }
+    .hide-for-export { }
+    .exporting .hide-for-export { display: none !important; }
+    .modal-overlay { background: rgba(0,0,0,0.5); }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .chart-container { position: relative; height: 250px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F8F9FA; }
+    ::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDBDBD; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full flex flex-col overflow-hidden"><!-- Header -->
+   <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+     <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center" style="display: none;">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="appTitle" class="text-lg font-semibold text-gray-800" style="display: none; display: none;">IS Matrizes OEVP</h1>
+      <p class="text-xs text-gray-500" style="display: none;">Simulador de Orientações Estratégicas</p>
+     </div>
+    </div>
+    <div class="flex items-center gap-2 hide-for-export"><button onclick="exportJSON()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2" title="Exportar JSON">
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg><span class="hidden sm:inline">Exportar</span> </button> <button onclick="document.getElementById('importInput').click()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2" title="Importar JSON">
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg><span class="hidden sm:inline">Importar</span> </button> <input type="file" id="importInput" accept=".json" class="hidden" onchange="importJSON(event)"> <button onclick="exportImage()" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center gap-2" title="Exportar Imagem">
+      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg><span class="hidden sm:inline">Imagem</span> </button> <button onclick="exportPDF()" class="btn-primary px-3 py-2 rounded-lg text-sm flex items-center gap-2" title="Exportar PDF">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg><span class="hidden sm:inline">PDF</span> </button>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-white border-b border-gray-200 px-4 flex-shrink-0 overflow-x-auto">
+    <div class="flex gap-1"><button onclick="switchTab('produto')" id="tab-produto" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap tab-active">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg> Produto </button> <button onclick="switchTab('servico')" id="tab-servico" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg> Serviço </button> <button onclick="switchTab('empresa')" id="tab-empresa" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg> Empresa </button> <button onclick="switchTab('cenarios')" id="tab-cenarios" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg> Cenários </button> <button onclick="switchTab('moedas')" id="tab-moedas" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Moedas </button> <button onclick="switchTab('ajuda')" id="tab-ajuda" class="tab-btn px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 whitespace-nowrap">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> Ajuda </button>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 overflow-auto p-4"><!-- Produto Tab -->
+    <div id="content-produto" class="tab-content">
+     <div class="max-w-7xl mx-auto space-y-4"><!-- Title & Filter -->
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex-1 hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Título do Cenário</label> <input type="text" id="titulo-produto" placeholder="Ex: Análise Q4 2024" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateData()">
+        </div>
+        <div class="hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Filtrar por Fase</label> <select id="filter-produto" class="px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="filterMatrix('produto')"> <option value="all">Todas as Fases</option> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+       </div>
+      </div><!-- Matrix -->
+      <div class="bg-white rounded-lg p-4 left-accent card-hover overflow-x-auto">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg> Matriz de Orientação Estratégica - Produto</h3>
+       <div id="matrix-produto" class="min-w-full"></div>
+      </div><!-- Input Panel -->
+      <div class="bg-white rounded-lg p-4 left-accent-yellow card-hover hide-for-export">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg> Dados de Simulação</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Fase do Ciclo</label> <select id="fase-produto" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('produto')"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Posição Competitiva</label> <select id="posicao-produto" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('produto')"> <option value="lider">Líder</option> <option value="seguidor">Seguidor</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Quota de Mercado (%)</label> <input type="number" id="quota-produto" min="0" max="100" value="25" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Investimento (AOA)</label> <input type="number" id="investimento-produto" min="0" value="1000000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+       </div>
+      </div><!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="bg-white rounded-lg p-4 left-accent-green card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg> Evolução por Fase</h3><button onclick="exportChartImage('chart-fase-produto')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-fase-produto"></canvas>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg p-4 left-accent-orange card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+          </svg> Distribuição de Investimento</h3><button onclick="exportChartImage('chart-invest-produto')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-invest-produto"></canvas>
+        </div>
+       </div>
+      </div><!-- Strategic Recommendations -->
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Recomendações Estratégicas</h3>
+       <div id="recomendacoes-produto" class="prose prose-sm max-w-none text-gray-600"></div>
+      </div><!-- Save Scenario Button -->
+      <div class="flex justify-end hide-for-export"><button onclick="saveScenario('produto')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar Cenário </button>
+      </div>
+     </div>
+    </div><!-- Serviço Tab -->
+    <div id="content-servico" class="tab-content hidden">
+     <div class="max-w-7xl mx-auto space-y-4">
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex-1 hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Título do Cenário</label> <input type="text" id="titulo-servico" placeholder="Ex: Análise Serviço Q4 2024" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateData()">
+        </div>
+        <div class="hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Filtrar por Fase</label> <select id="filter-servico" class="px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="filterMatrix('servico')"> <option value="all">Todas as Fases</option> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent card-hover overflow-x-auto">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+        </svg> Matriz de Orientação Estratégica - Serviço</h3>
+       <div id="matrix-servico" class="min-w-full"></div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent-yellow card-hover hide-for-export">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg> Dados de Simulação</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Fase do Ciclo</label> <select id="fase-servico" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('servico')"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Posição Competitiva</label> <select id="posicao-servico" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('servico')"> <option value="lider">Líder</option> <option value="seguidor">Seguidor</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Satisfação do Cliente (%)</label> <input type="number" id="satisfacao-servico" min="0" max="100" value="75" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Investimento (AOA)</label> <input type="number" id="investimento-servico" min="0" value="500000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="bg-white rounded-lg p-4 left-accent-green card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg> Qualidade vs Satisfação</h3><button onclick="exportChartImage('chart-qual-servico')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-qual-servico"></canvas>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg p-4 left-accent-orange card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          </svg> Distribuição de Recursos</h3><button onclick="exportChartImage('chart-recursos-servico')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-recursos-servico"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Recomendações Estratégicas</h3>
+       <div id="recomendacoes-servico" class="prose prose-sm max-w-none text-gray-600"></div>
+      </div>
+      <div class="flex justify-end hide-for-export"><button onclick="saveScenario('servico')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar Cenário </button>
+      </div>
+     </div>
+    </div><!-- Empresa Tab -->
+    <div id="content-empresa" class="tab-content hidden">
+     <div class="max-w-7xl mx-auto space-y-4">
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex-1 hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Título do Cenário</label> <input type="text" id="titulo-empresa" placeholder="Ex: Análise Empresa Q4 2024" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateData()">
+        </div>
+        <div class="hide-for-export"><label class="block text-xs font-medium text-gray-500 mb-1">Filtrar por Fase</label> <select id="filter-empresa" class="px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="filterMatrix('empresa')"> <option value="all">Todas as Fases</option> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent card-hover overflow-x-auto">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+        </svg> Matriz de Orientação Estratégica - Empresa</h3>
+       <div id="matrix-empresa" class="min-w-full"></div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent-yellow card-hover hide-for-export">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg> Dados de Simulação</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Fase do Ciclo</label> <select id="fase-empresa" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('empresa')"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Posição Competitiva</label> <select id="posicao-empresa" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="updateMatrix('empresa')"> <option value="lider">Líder</option> <option value="seguidor">Seguidor</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Receita Anual (AOA)</label> <input type="number" id="receita-empresa" min="0" value="10000000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Nº de Colaboradores</label> <input type="number" id="colaboradores-empresa" min="1" value="50" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="updateCharts()">
+        </div>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="bg-white rounded-lg p-4 left-accent-green card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg> Crescimento Projetado</h3><button onclick="exportChartImage('chart-cresc-empresa')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-cresc-empresa"></canvas>
+        </div>
+       </div>
+       <div class="bg-white rounded-lg p-4 left-accent-orange card-hover">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg> Estrutura Organizacional</h3><button onclick="exportChartImage('chart-org-empresa')" class="hide-for-export p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar Gráfico HD">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg></button>
+        </div>
+        <div class="chart-container">
+         <canvas id="chart-org-empresa"></canvas>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Recomendações Estratégicas</h3>
+       <div id="recomendacoes-empresa" class="prose prose-sm max-w-none text-gray-600"></div>
+      </div>
+      <div class="flex justify-end hide-for-export"><button onclick="saveScenario('empresa')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg> Guardar Cenário </button>
+      </div>
+     </div>
+    </div><!-- Cenários Tab -->
+    <div id="content-cenarios" class="tab-content hidden">
+     <div class="max-w-7xl mx-auto space-y-4">
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+         <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+         </svg> Cenários Guardados</h3>
+        <div class="flex flex-col sm:flex-row gap-2 hide-for-export"><select id="filter-cenarios-tipo" class="px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="filterCenarios()"> <option value="all">Todos os Tipos</option> <option value="produto">Produto</option> <option value="servico">Serviço</option> <option value="empresa">Empresa</option> </select> <input type="text" id="filter-cenarios-texto" placeholder="Pesquisar cenários..." class="px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="filterCenarios()">
+        </div>
+       </div>
+      </div>
+      <div id="lista-cenarios" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><!-- Scenarios will be rendered here -->
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent-yellow card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg> Templates de Aprendizagem</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><button onclick="loadTemplate('startup')" class="p-4 border border-gray-200 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 transition-all">
+         <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg><span class="font-medium text-gray-700">Startup Tecnológica</span>
+         </div><p class="text-xs text-gray-500">Cenário típico de uma startup em fase de introdução com estratégia de diferenciação.</p></button> <button onclick="loadTemplate('pme')" class="p-4 border border-gray-200 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 transition-all">
+         <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg><span class="font-medium text-gray-700">PME em Crescimento</span>
+         </div><p class="text-xs text-gray-500">Pequena/Média empresa na fase de crescimento buscando expansão de mercado.</p></button> <button onclick="loadTemplate('consolidada')" class="p-4 border border-gray-200 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 transition-all">
+         <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg><span class="font-medium text-gray-700">Empresa Consolidada</span>
+         </div><p class="text-xs text-gray-500">Empresa líder de mercado na fase de maturidade focando em manter posição.</p></button>
+       </div>
+      </div>
+     </div>
+    </div><!-- Moedas Tab -->
+    <div id="content-moedas" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto space-y-4">
+      <div class="bg-white rounded-lg p-4 left-accent card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Taxas de Câmbio - CPLP + USD</h3>
+       <p class="text-xs text-gray-500 mb-4">Base: Kwanza Angolano (AOA). Edite as taxas conforme necessário.</p>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="moedas-grid"><!-- Currency rates will be rendered here -->
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-4 left-accent-green card-hover">
+       <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg> Conversor Rápido</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Valor em AOA</label> <input type="number" id="converter-valor" value="1000000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" oninput="convertCurrency()">
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Para Moeda</label> <select id="converter-moeda" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="convertCurrency()"> <option value="BRL">Real Brasileiro (BRL)</option> <option value="CVE">Escudo Cabo-verdiano (CVE)</option> <option value="XOF">Franco CFA (XOF)</option> <option value="MZN">Metical (MZN)</option> <option value="STN">Dobra (STN)</option> <option value="EUR">Euro (EUR)</option> <option value="USD">Dólar (USD)</option> </select>
+        </div>
+        <div><label class="block text-xs font-medium text-gray-500 mb-1">Resultado</label>
+         <div id="converter-resultado" class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700">
+          0.00
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Ajuda Tab -->
+    <div id="content-ajuda" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto space-y-4">
+      <div class="bg-white rounded-lg p-6 left-accent card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> O que é a Matriz OEVP?</h3>
+       <div class="prose prose-sm max-w-none text-gray-600">
+        <p>A <strong>Matriz de Orientações Estratégicas do Ciclo de Vida do Produto (OEVP)</strong> é uma ferramenta de diagnóstico e planeamento estratégico que cruza duas dimensões fundamentais:</p>
+        <ul class="mt-3 space-y-2">
+         <li><strong>Posição Competitiva:</strong> Líder (grande participação de mercado) ou Seguidor (participação reduzida)</li>
+         <li><strong>Fases do Ciclo de Vida:</strong> Introdução, Crescimento, Maturidade e Declínio</li>
+        </ul>
+        <p class="mt-4">Para cada combinação entre fase e posição, a matriz recomenda ações estratégicas específicas, orientando a tomada de decisão conforme o contexto competitivo e temporal do negócio.</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-6 left-accent-green card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg> Como Utilizar o Simulador</h3>
+       <div class="space-y-4">
+        <div class="flex gap-3">
+         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-sm font-semibold text-blue-600">1</span>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700">Selecione a Aba Correta</h4>
+          <p class="text-sm text-gray-500">Escolha entre Produto, Serviço ou Empresa conforme o tipo de análise que deseja realizar.</p>
+         </div>
+        </div>
+        <div class="flex gap-3">
+         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-sm font-semibold text-blue-600">2</span>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700">Defina os Parâmetros</h4>
+          <p class="text-sm text-gray-500">Indique a fase do ciclo de vida, posição competitiva e dados financeiros relevantes.</p>
+         </div>
+        </div>
+        <div class="flex gap-3">
+         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-sm font-semibold text-blue-600">3</span>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700">Analise a Matriz</h4>
+          <p class="text-sm text-gray-500">Observe a célula destacada na matriz e leia as recomendações estratégicas geradas.</p>
+         </div>
+        </div>
+        <div class="flex gap-3">
+         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-sm font-semibold text-blue-600">4</span>
+         </div>
+         <div>
+          <h4 class="font-medium text-gray-700">Guarde e Compare</h4>
+          <p class="text-sm text-gray-500">Guarde cenários para comparação futura e exporte relatórios em PDF ou imagem.</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-6 left-accent-yellow card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg> Melhores Práticas</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+         <h4 class="font-medium text-green-700 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg> Recomendado</h4>
+         <ul class="text-sm text-green-600 space-y-1">
+          <li>• Analise múltiplos cenários</li>
+          <li>• Compare posições estratégicas</li>
+          <li>• Atualize dados regularmente</li>
+          <li>• Documente decisões tomadas</li>
+         </ul>
+        </div>
+        <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+         <h4 class="font-medium text-red-700 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg> Evitar</h4>
+         <ul class="text-sm text-red-600 space-y-1">
+          <li>• Decisões baseadas em dados desatualizados</li>
+          <li>• Ignorar a posição dos concorrentes</li>
+          <li>• Não considerar o contexto local</li>
+          <li>• Aplicar estratégias sem adaptação</li>
+         </ul>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-lg p-6 left-accent-orange card-hover">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg> Relevância para a CPLP</h3>
+       <p class="text-sm text-gray-600">Este simulador foi desenvolvido especificamente para o contexto dos Países de Língua Portuguesa, considerando:</p>
+       <ul class="mt-3 text-sm text-gray-600 space-y-2">
+        <li class="flex items-start gap-2">
+         <svg class="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg><span><strong>Moedas locais:</strong> Suporte para Kwanza, Real, Escudo, Metical, Dobra e outras moedas da CPLP</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg><span><strong>Contexto de mercado:</strong> Estratégias adaptadas à realidade dos mercados lusófonos</span></li>
+        <li class="flex items-start gap-2">
+         <svg class="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg><span><strong>Interface em Português:</strong> Totalmente traduzido e adaptado culturalmente</span></li>
+       </ul>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div><!-- Edit Scenario Modal -->
+   <div id="modal-edit" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeModal('edit')"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+     <h3 class="text-lg font-semibold text-gray-800 mb-4">Editar Cenário</h3><input type="hidden" id="edit-scenario-id">
+     <div class="space-y-4">
+      <div><label class="block text-xs font-medium text-gray-500 mb-1">Título</label> <input type="text" id="edit-titulo" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label class="block text-xs font-medium text-gray-500 mb-1">Fase</label> <select id="edit-fase" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"> <option value="introducao">Introdução</option> <option value="crescimento">Crescimento</option> <option value="maturidade">Maturidade</option> <option value="declinio">Declínio</option> </select>
+       </div>
+       <div><label class="block text-xs font-medium text-gray-500 mb-1">Posição</label> <select id="edit-posicao" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"> <option value="lider">Líder</option> <option value="seguidor">Seguidor</option> </select>
+       </div>
+      </div>
+     </div>
+     <div class="flex justify-end gap-2 mt-6"><button onclick="closeModal('edit')" class="btn-secondary px-4 py-2 rounded-lg text-sm">Cancelar</button> <button onclick="saveEditedScenario()" class="btn-primary px-4 py-2 rounded-lg text-sm">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Delete Confirmation Modal -->
+   <div id="modal-delete" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeModal('delete')"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
+     <h3 class="text-lg font-semibold text-gray-800 mb-2">Eliminar Cenário</h3>
+     <p class="text-sm text-gray-500 mb-6">Tem a certeza que deseja eliminar este cenário? Esta ação não pode ser desfeita.</p><input type="hidden" id="delete-scenario-id">
+     <div class="flex justify-end gap-2"><button onclick="closeModal('delete')" class="btn-secondary px-4 py-2 rounded-lg text-sm">Cancelar</button> <button onclick="confirmDelete()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">Eliminar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // State Management
+    let appState = {
+      currentTab: 'produto',
+      scenarios: [],
+      currencies: {
+        BRL: { name: 'Real Brasileiro', rate: 0.006, symbol: 'R$' },
+        CVE: { name: 'Escudo Cabo-verdiano', rate: 0.12, symbol: '$' },
+        XOF: { name: 'Franco CFA', rate: 0.73, symbol: 'CFA' },
+        MZN: { name: 'Metical Moçambicano', rate: 0.077, symbol: 'MT' },
+        STN: { name: 'Dobra São-tomense', rate: 0.027, symbol: 'Db' },
+        EUR: { name: 'Euro', rate: 0.0011, symbol: '€' },
+        USD: { name: 'Dólar Americano', rate: 0.0012, symbol: '$' }
+      },
+      data: {
+        produto: { titulo: '', fase: 'introducao', posicao: 'lider', quota: 25, investimento: 1000000 },
+        servico: { titulo: '', fase: 'introducao', posicao: 'lider', satisfacao: 75, investimento: 500000 },
+        empresa: { titulo: '', fase: 'introducao', posicao: 'lider', receita: 10000000, colaboradores: 50 }
+      }
+    };
+
+    // Strategic recommendations matrix
+    const strategicMatrix = {
+      introducao: {
+        lider: {
+          estrategias: [
+            'Investir fortemente em I&D para consolidar liderança tecnológica',
+            'Lançar novos produtos/funcionalidades antes da concorrência',
+            'Estabelecer padrões de mercado e criar barreiras à entrada',
+            'Construir marca forte e reconhecimento de mercado'
+          ],
+          acoes: ['Patentear inovações', 'Formar parcerias estratégicas', 'Investir em marketing de awareness']
+        },
+        seguidor: {
+          estrategias: [
+            'Explorar "vácuos" deixados pelo líder em nichos específicos',
+            'Focar em segmentos mal atendidos pelo líder',
+            'Desenvolver versões mais acessíveis ou adaptadas',
+            'Aprender com os erros do pioneiro'
+          ],
+          acoes: ['Monitorar movimentos do líder', 'Identificar pontos fracos', 'Desenvolver diferenciação']
+        }
+      },
+      crescimento: {
+        lider: {
+          estrategias: [
+            'Expandir capacidade produtiva para atender demanda crescente',
+            'Consolidar posição através de aquisições estratégicas',
+            'Diversificar linha de produtos para cobrir mais segmentos',
+            'Investir em canais de distribuição exclusivos'
+          ],
+          acoes: ['Aumentar produção', 'Expandir geograficamente', 'Fidelizar clientes-chave']
+        },
+        seguidor: {
+          estrategias: [
+            'Crescer agressivamente para ganhar participação',
+            'Diferenciar oferta com melhor custo-benefício',
+            'Atacar segmentos onde o líder é mais vulnerável',
+            'Formar alianças para ganhar escala'
+          ],
+          acoes: ['Preços competitivos', 'Marketing agressivo', 'Inovação incremental']
+        }
+      },
+      maturidade: {
+        lider: {
+          estrategias: [
+            'Manter participação através de melhorias de qualidade',
+            'Otimizar custos e eficiência operacional',
+            'Defender posição com programas de fidelização',
+            'Explorar novos mercados geográficos'
+          ],
+          acoes: ['Reduzir custos', 'Melhorar atendimento', 'Renovar produto']
+        },
+        seguidor: {
+          estrategias: [
+            'Avaliar se vale manter-se no mercado',
+            'Se ficar: competir em preço abaixo dos líderes',
+            'Focar em nichos rentáveis ignorados pelos grandes',
+            'Considerar fusão com outros seguidores'
+          ],
+          acoes: ['Análise de rentabilidade', 'Especialização', 'Redução de portfólio']
+        }
+      },
+      declinio: {
+        lider: {
+          estrategias: [
+            'Maximizar retorno do investimento existente',
+            'Reduzir gradualmente investimentos em marketing',
+            'Explorar segmentos residuais rentáveis',
+            'Planejar transição para novos produtos'
+          ],
+          acoes: ['Colheita de lucros', 'Desinvestimento seletivo', 'Migrar para novos mercados']
+        },
+        seguidor: {
+          estrategias: [
+            'Avaliar saída rápida do mercado',
+            'Vender ativos enquanto têm valor',
+            'Atender clientes fiéis remanescentes',
+            'Migrar recursos para oportunidades melhores'
+          ],
+          acoes: ['Liquidação ordenada', 'Venda do negócio', 'Reposicionamento radical']
+        }
+      }
+    };
+
+    // Charts instances
+    let charts = {};
+
+    // Initialize Application
+    function init() {
+      loadFromStorage();
+      renderMatrices();
+      initCharts();
+      renderCurrencies();
+      renderScenarios();
+      updateAllMatrices();
+      updateAllRecommendations();
+      convertCurrency();
+      
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        const defaultConfig = {
+          app_title: 'IS Matrizes OEVP'
+        };
+        
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['app_title', config.app_title || defaultConfig.app_title]
+          ])
+        });
+      }
+    }
+
+    // Storage Functions
+    function saveToStorage() {
+      localStorage.setItem('oevp_state', JSON.stringify(appState));
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('oevp_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        appState = { ...appState, ...parsed };
+        
+        // Restore input values
+        Object.keys(appState.data).forEach(type => {
+          const data = appState.data[type];
+          Object.keys(data).forEach(key => {
+            const el = document.getElementById(`${key}-${type}`);
+            if (el) el.value = data[key];
+          });
+        });
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabName) {
+      appState.currentTab = tabName;
+      
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+      });
+      document.getElementById(`tab-${tabName}`).classList.add('tab-active');
+      
+      // Update content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      
+      // Resize charts if needed
+      if (['produto', 'servico', 'empresa'].includes(tabName)) {
+        setTimeout(() => {
+          Object.values(charts).forEach(chart => {
+            if (chart) chart.resize();
+          });
+        }, 100);
+      }
+    }
+
+    // Matrix Rendering
+    function renderMatrices() {
+      ['produto', 'servico', 'empresa'].forEach(type => {
+        renderMatrix(type);
+      });
+    }
+
+    function renderMatrix(type) {
+      const container = document.getElementById(`matrix-${type}`);
+      const fases = [
+        { id: 'introducao', name: 'Introdução', icon: '🚀' },
+        { id: 'crescimento', name: 'Crescimento', icon: '📈' },
+        { id: 'maturidade', name: 'Maturidade', icon: '⚖️' },
+        { id: 'declinio', name: 'Declínio', icon: '📉' }
+      ];
+      
+      let html = `
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr>
+              <th class="p-3 bg-gray-50 border border-gray-200 font-semibold text-gray-600 text-left">Fase / Posição</th>
+              <th class="p-3 bg-blue-50 border border-gray-200 font-semibold text-blue-700 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                  Líder
+                </div>
+              </th>
+              <th class="p-3 bg-orange-50 border border-gray-200 font-semibold text-orange-700 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  Seguidor
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      fases.forEach(fase => {
+        html += `
+          <tr class="matrix-row" data-fase="${fase.id}">
+            <td class="p-3 bg-gray-50 border border-gray-200 font-medium text-gray-700">
+              <div class="flex items-center gap-2">
+                <span>${fase.icon}</span>
+                ${fase.name}
+              </div>
+            </td>
+            <td class="matrix-cell p-3 border border-gray-200 cursor-pointer" data-fase="${fase.id}" data-posicao="lider" onclick="selectMatrixCell('${type}', '${fase.id}', 'lider')">
+              <div class="text-xs text-gray-600">${getMatrixCellSummary(fase.id, 'lider')}</div>
+            </td>
+            <td class="matrix-cell p-3 border border-gray-200 cursor-pointer" data-fase="${fase.id}" data-posicao="seguidor" onclick="selectMatrixCell('${type}', '${fase.id}', 'seguidor')">
+              <div class="text-xs text-gray-600">${getMatrixCellSummary(fase.id, 'seguidor')}</div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function getMatrixCellSummary(fase, posicao) {
+      const data = strategicMatrix[fase][posicao];
+      return data.estrategias[0].substring(0, 60) + '...';
+    }
+
+    function selectMatrixCell(type, fase, posicao) {
+      document.getElementById(`fase-${type}`).value = fase;
+      document.getElementById(`posicao-${type}`).value = posicao;
+      updateMatrix(type);
+      updateCharts();
+    }
+
+    function updateMatrix(type) {
+      const fase = document.getElementById(`fase-${type}`).value;
+      const posicao = document.getElementById(`posicao-${type}`).value;
+      
+      appState.data[type].fase = fase;
+      appState.data[type].posicao = posicao;
+      saveToStorage();
+      
+      // Highlight selected cell
+      const container = document.getElementById(`matrix-${type}`);
+      container.querySelectorAll('.matrix-cell').forEach(cell => {
+        cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
+        if (cell.dataset.fase === fase && cell.dataset.posicao === posicao) {
+          cell.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
+        }
+      });
+      
+      updateRecommendations(type);
+    }
+
+    function updateAllMatrices() {
+      ['produto', 'servico', 'empresa'].forEach(type => {
+        updateMatrix(type);
+      });
+    }
+
+    function filterMatrix(type) {
+      const filter = document.getElementById(`filter-${type}`).value;
+      const container = document.getElementById(`matrix-${type}`);
+      
+      container.querySelectorAll('.matrix-row').forEach(row => {
+        if (filter === 'all' || row.dataset.fase === filter) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Recommendations
+    function updateRecommendations(type) {
+      const fase = appState.data[type].fase;
+      const posicao = appState.data[type].posicao;
+      const data = strategicMatrix[fase][posicao];
+      
+      const container = document.getElementById(`recomendacoes-${type}`);
+      const faseLabels = {
+        introducao: 'Introdução',
+        crescimento: 'Crescimento',
+        maturidade: 'Maturidade',
+        declinio: 'Declínio'
+      };
+      
+      container.innerHTML = `
+        <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p class="text-sm font-medium text-blue-800">
+            Posição: <span class="capitalize">${posicao}</span> | Fase: ${faseLabels[fase]}
+          </p>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-semibold text-gray-700 mb-2">Estratégias Recomendadas:</h4>
+            <ul class="space-y-2">
+              ${data.estrategias.map(e => `
+                <li class="flex items-start gap-2">
+                  <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>${e}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-700 mb-2">Ações Prioritárias:</h4>
+            <div class="flex flex-wrap gap-2">
+              ${data.acoes.map(a => `<span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">${a}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateAllRecommendations() {
+      ['produto', 'servico', 'empresa'].forEach(type => {
+        updateRecommendations(type);
+      });
+    }
+
+    // Charts
+    function initCharts() {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 15,
+              font: { family: 'Inter', size: 11 }
+            }
+          }
+        }
+      };
+
+      // Produto Charts
+      charts['chart-fase-produto'] = new Chart(document.getElementById('chart-fase-produto'), {
+        type: 'bar',
+        data: {
+          labels: ['Introdução', 'Crescimento', 'Maturidade', 'Declínio'],
+          datasets: [{
+            label: 'Investimento (M AOA)',
+            data: [1, 2.5, 1.5, 0.5],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#F44336']
+          }]
+        },
+        options: chartOptions
+      });
+
+      charts['chart-invest-produto'] = new Chart(document.getElementById('chart-invest-produto'), {
+        type: 'doughnut',
+        data: {
+          labels: ['I&D', 'Marketing', 'Produção', 'Distribuição'],
+          datasets: [{
+            data: [30, 25, 30, 15],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#FF9800']
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Serviço Charts
+      charts['chart-qual-servico'] = new Chart(document.getElementById('chart-qual-servico'), {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+          datasets: [{
+            label: 'Satisfação (%)',
+            data: [70, 72, 75, 73, 78, 80],
+            borderColor: '#4CAF50',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: chartOptions
+      });
+
+      charts['chart-recursos-servico'] = new Chart(document.getElementById('chart-recursos-servico'), {
+        type: 'pie',
+        data: {
+          labels: ['Pessoal', 'Tecnologia', 'Formação', 'Infraestrutura'],
+          datasets: [{
+            data: [40, 25, 20, 15],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#FF9800']
+          }]
+        },
+        options: chartOptions
+      });
+
+      // Empresa Charts
+      charts['chart-cresc-empresa'] = new Chart(document.getElementById('chart-cresc-empresa'), {
+        type: 'bar',
+        data: {
+          labels: ['Ano 1', 'Ano 2', 'Ano 3', 'Ano 4', 'Ano 5'],
+          datasets: [{
+            label: 'Receita Projetada (M AOA)',
+            data: [10, 15, 22, 28, 35],
+            backgroundColor: '#66CFF5'
+          }]
+        },
+        options: chartOptions
+      });
+
+      charts['chart-org-empresa'] = new Chart(document.getElementById('chart-org-empresa'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Operações', 'Comercial', 'Administrativo', 'I&D'],
+          datasets: [{
+            data: [40, 30, 15, 15],
+            backgroundColor: ['#66CFF5', '#4CAF50', '#FFC107', '#FF9800']
+          }]
+        },
+        options: chartOptions
+      });
+    }
+
+    function updateCharts() {
+      const quotaProduto = parseInt(document.getElementById('quota-produto').value) || 25;
+      const investProduto = parseInt(document.getElementById('investimento-produto').value) || 1000000;
+      const satisfacaoServico = parseInt(document.getElementById('satisfacao-servico').value) || 75;
+      const receitaEmpresa = parseInt(document.getElementById('receita-empresa').value) || 10000000;
+      const colaboradores = parseInt(document.getElementById('colaboradores-empresa').value) || 50;
+
+      // Update Produto charts
+      const faseMultipliers = { introducao: 1, crescimento: 2.5, maturidade: 1.5, declinio: 0.5 };
+      const faseProduto = appState.data.produto.fase;
+      
+      charts['chart-fase-produto'].data.datasets[0].data = [
+        faseProduto === 'introducao' ? investProduto / 1000000 : investProduto / 1000000 * 0.3,
+        faseProduto === 'crescimento' ? investProduto / 1000000 : investProduto / 1000000 * 0.5,
+        faseProduto === 'maturidade' ? investProduto / 1000000 : investProduto / 1000000 * 0.4,
+        faseProduto === 'declinio' ? investProduto / 1000000 : investProduto / 1000000 * 0.2
+      ];
+      charts['chart-fase-produto'].update();
+
+      // Update Serviço charts
+      charts['chart-qual-servico'].data.datasets[0].data = [
+        satisfacaoServico - 5,
+        satisfacaoServico - 3,
+        satisfacaoServico,
+        satisfacaoServico - 2,
+        satisfacaoServico + 3,
+        satisfacaoServico + 5
+      ];
+      charts['chart-qual-servico'].update();
+
+      // Update Empresa charts
+      const growthRate = appState.data.empresa.posicao === 'lider' ? 1.4 : 1.2;
+      const projections = [1, 2, 3, 4, 5].map(year => 
+        (receitaEmpresa / 1000000) * Math.pow(growthRate, year - 1)
+      );
+      charts['chart-cresc-empresa'].data.datasets[0].data = projections;
+      charts['chart-cresc-empresa'].update();
+
+      // Update state
+      appState.data.produto.quota = quotaProduto;
+      appState.data.produto.investimento = investProduto;
+      appState.data.servico.satisfacao = satisfacaoServico;
+      appState.data.empresa.receita = receitaEmpresa;
+      appState.data.empresa.colaboradores = colaboradores;
+      saveToStorage();
+    }
+
+    function exportChartImage(chartId) {
+      const canvas = document.getElementById(chartId);
+      const link = document.createElement('a');
+      link.download = `${chartId}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+      showToast('Gráfico exportado com sucesso!', 'success');
+    }
+
+    // Scenario Management
+    function saveScenario(type) {
+      const titulo = document.getElementById(`titulo-${type}`).value || `Cenário ${appState.scenarios.length + 1}`;
+      const scenario = {
+        id: Date.now().toString(),
+        type,
+        titulo,
+        data: { ...appState.data[type] },
+        createdAt: new Date().toISOString()
+      };
+      
+      appState.scenarios.push(scenario);
+      saveToStorage();
+      renderScenarios();
+      showToast(`Cenário "${titulo}" guardado com sucesso!`, 'success');
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('lista-cenarios');
+      const filterTipo = document.getElementById('filter-cenarios-tipo')?.value || 'all';
+      const filterTexto = document.getElementById('filter-cenarios-texto')?.value?.toLowerCase() || '';
+      
+      const filtered = appState.scenarios.filter(s => {
+        const matchTipo = filterTipo === 'all' || s.type === filterTipo;
+        const matchTexto = s.titulo.toLowerCase().includes(filterTexto);
+        return matchTipo && matchTexto;
+      });
+      
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-12 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            <p>Nenhum cenário encontrado</p>
+            <p class="text-sm mt-1">Guarde cenários nas abas Produto, Serviço ou Empresa</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = filtered.map(scenario => {
+        const typeColors = {
+          produto: 'blue',
+          servico: 'green',
+          empresa: 'orange'
+        };
+        const color = typeColors[scenario.type];
+        const typeLabels = { produto: 'Produto', servico: 'Serviço', empresa: 'Empresa' };
+        const faseLabels = { introducao: 'Introdução', crescimento: 'Crescimento', maturidade: 'Maturidade', declinio: 'Declínio' };
+        
+        return `
+          <div class="bg-white rounded-lg p-4 left-accent-${color === 'blue' ? '' : color === 'green' ? 'green' : 'orange'} card-hover" style="border-left-color: ${color === 'blue' ? '#66CFF5' : color === 'green' ? '#4CAF50' : '#FF9800'}">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-semibold text-gray-800">${scenario.titulo}</h4>
+                <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-${color === 'blue' ? 'blue' : color === 'green' ? 'green' : 'orange'}-100 text-${color === 'blue' ? 'blue' : color === 'green' ? 'green' : 'orange'}-700">${typeLabels[scenario.type]}</span>
+              </div>
+              <div class="flex gap-1 hide-for-export">
+                <button onclick="loadScenario('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded transition-colors" title="Carregar">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                </button>
+                <button onclick="cloneScenario('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded transition-colors" title="Clonar">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+                <button onclick="openEditModal('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded transition-colors" title="Editar">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button onclick="openDeleteModal('${scenario.id}')" class="p-1.5 hover:bg-gray-100 rounded transition-colors" title="Eliminar">
+                  <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="text-sm text-gray-600 space-y-1">
+              <p><span class="text-gray-400">Fase:</span> ${faseLabels[scenario.data.fase]}</p>
+              <p><span class="text-gray-400">Posição:</span> <span class="capitalize">${scenario.data.posicao}</span></p>
+              <p class="text-xs text-gray-400 mt-2">${new Date(scenario.createdAt).toLocaleDateString('pt-PT')}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCenarios() {
+      renderScenarios();
+    }
+
+    function loadScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      appState.data[scenario.type] = { ...scenario.data };
+      
+      // Update inputs
+      Object.keys(scenario.data).forEach(key => {
+        const el = document.getElementById(`${key}-${scenario.type}`);
+        if (el) el.value = scenario.data[key];
+      });
+      
+      switchTab(scenario.type);
+      updateMatrix(scenario.type);
+      updateCharts();
+      showToast(`Cenário "${scenario.titulo}" carregado!`, 'success');
+    }
+
+    function cloneScenario(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      const cloned = {
+        ...scenario,
+        id: Date.now().toString(),
+        titulo: `${scenario.titulo} (Cópia)`,
+        createdAt: new Date().toISOString()
+      };
+      
+      appState.scenarios.push(cloned);
+      saveToStorage();
+      renderScenarios();
+      showToast('Cenário clonado com sucesso!', 'success');
+    }
+
+    function openEditModal(id) {
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      document.getElementById('edit-scenario-id').value = id;
+      document.getElementById('edit-titulo').value = scenario.titulo;
+      document.getElementById('edit-fase').value = scenario.data.fase;
+      document.getElementById('edit-posicao').value = scenario.data.posicao;
+      
+      document.getElementById('modal-edit').classList.remove('hidden');
+    }
+
+    function saveEditedScenario() {
+      const id = document.getElementById('edit-scenario-id').value;
+      const scenario = appState.scenarios.find(s => s.id === id);
+      if (!scenario) return;
+      
+      scenario.titulo = document.getElementById('edit-titulo').value;
+      scenario.data.fase = document.getElementById('edit-fase').value;
+      scenario.data.posicao = document.getElementById('edit-posicao').value;
+      
+      saveToStorage();
+      renderScenarios();
+      closeModal('edit');
+      showToast('Cenário atualizado!', 'success');
+    }
+
+    function openDeleteModal(id) {
+      document.getElementById('delete-scenario-id').value = id;
+      document.getElementById('modal-delete').classList.remove('hidden');
+    }
+
+    function confirmDelete() {
+      const id = document.getElementById('delete-scenario-id').value;
+      appState.scenarios = appState.scenarios.filter(s => s.id !== id);
+      saveToStorage();
+      renderScenarios();
+      closeModal('delete');
+      showToast('Cenário eliminado!', 'success');
+    }
+
+    function closeModal(type) {
+      document.getElementById(`modal-${type}`).classList.add('hidden');
+    }
+
+    // Templates
+    function loadTemplate(template) {
+      const templates = {
+        startup: {
+          type: 'produto',
+          titulo: 'Template: Startup Tecnológica',
+          data: { fase: 'introducao', posicao: 'seguidor', quota: 5, investimento: 500000 }
+        },
+        pme: {
+          type: 'empresa',
+          titulo: 'Template: PME em Crescimento',
+          data: { fase: 'crescimento', posicao: 'seguidor', receita: 5000000, colaboradores: 25 }
+        },
+        consolidada: {
+          type: 'empresa',
+          titulo: 'Template: Empresa Consolidada',
+          data: { fase: 'maturidade', posicao: 'lider', receita: 50000000, colaboradores: 200 }
+        }
+      };
+      
+      const t = templates[template];
+      appState.data[t.type] = { ...appState.data[t.type], ...t.data, titulo: t.titulo };
+      
+      Object.keys(t.data).forEach(key => {
+        const el = document.getElementById(`${key}-${t.type}`);
+        if (el) el.value = t.data[key];
+      });
+      document.getElementById(`titulo-${t.type}`).value = t.titulo;
+      
+      switchTab(t.type);
+      updateMatrix(t.type);
+      updateCharts();
+      showToast(`Template "${t.titulo}" carregado!`, 'success');
+    }
+
+    // Currency Management
+    function renderCurrencies() {
+      const container = document.getElementById('moedas-grid');
+      container.innerHTML = Object.entries(appState.currencies).map(([code, currency]) => `
+        <div class="p-4 border border-gray-200 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium text-gray-700">${currency.symbol} ${code}</span>
+            <span class="text-xs text-gray-400">${currency.name}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">1 AOA =</span>
+            <input type="number" step="0.0001" value="${currency.rate}" 
+              class="flex-1 px-2 py-1 border border-gray-200 rounded text-sm hide-for-export"
+              onchange="updateCurrencyRate('${code}', this.value)">
+            <span class="text-sm font-medium text-gray-700 hidden-input-value">${currency.rate.toFixed(4)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateCurrencyRate(code, rate) {
+      appState.currencies[code].rate = parseFloat(rate);
+      saveToStorage();
+      convertCurrency();
+    }
+
+    function convertCurrency() {
+      const valor = parseFloat(document.getElementById('converter-valor').value) || 0;
+      const moeda = document.getElementById('converter-moeda').value;
+      const rate = appState.currencies[moeda].rate;
+      const result = valor * rate;
+      const symbol = appState.currencies[moeda].symbol;
+      
+      document.getElementById('converter-resultado').textContent = `${symbol} ${result.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    // Export Functions
+    function exportJSON() {
+      const data = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        appState: appState
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.download = `oevp_export_${Date.now()}.json`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      showToast('Dados exportados com sucesso!', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.appState) {
+            appState = { ...appState, ...data.appState };
+            saveToStorage();
+            renderScenarios();
+            renderCurrencies();
+            updateAllMatrices();
+            updateCharts();
+            showToast('Dados importados com sucesso!', 'success');
+          }
+        } catch (err) {
+          showToast('Erro ao importar ficheiro!', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function exportImage() {
+      const app = document.getElementById('app');
+      app.classList.add('exporting');
+      
+      try {
+        const canvas = await html2canvas(app, {
+          scale: 2,
+          backgroundColor: '#F8F9FA',
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `oevp_screenshot_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Imagem exportada com sucesso!', 'success');
+      } catch (err) {
+        showToast('Erro ao exportar imagem!', 'error');
+      } finally {
+        app.classList.remove('exporting');
+      }
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = 25;
+      
+      const addHeader = (pageNum) => {
+        pdf.setFillColor(30, 136, 229);
+        pdf.rect(0, 0, pageWidth, 15, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('IS Matrizes OEVP - Simulador de Orientações Estratégicas', margin, 10);
+        pdf.setTextColor(0, 0, 0);
+      };
+      
+      const addFooter = (pageNum) => {
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(0, pageHeight - 10, pageWidth, 10, 'F');
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Página ${pageNum}`, pageWidth / 2, pageHeight - 4, { align: 'center' });
+        pdf.text(new Date().toLocaleDateString('pt-PT'), pageWidth - margin, pageHeight - 4, { align: 'right' });
+      };
+      
+      let pageNum = 1;
+      addHeader(pageNum);
+      addFooter(pageNum);
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30, 136, 229);
+      pdf.text('Relatório de Análise Estratégica', margin, yPos);
+      yPos += 12;
+      
+      // For each type
+      ['produto', 'servico', 'empresa'].forEach((type, idx) => {
+        if (yPos > pageHeight - 60) {
+          pdf.addPage();
+          pageNum++;
+          addHeader(pageNum);
+          addFooter(pageNum);
+          yPos = 25;
+        }
+        
+        const data = appState.data[type];
+        const labels = { produto: 'Produto', servico: 'Serviço', empresa: 'Empresa' };
+        const faseLabels = { introducao: 'Introdução', crescimento: 'Crescimento', maturidade: 'Maturidade', declinio: 'Declínio' };
+        
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(margin, yPos - 5, pageWidth - margin * 2, 35, 'F');
+        
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(30, 136, 229);
+        pdf.text(`${labels[type]}`, margin + 5, yPos);
+        yPos += 8;
+        
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(80, 80, 80);
+        pdf.text(`Título: ${data.titulo || 'Não definido'}`, margin + 5, yPos);
+        yPos += 5;
+        pdf.text(`Fase: ${faseLabels[data.fase]} | Posição: ${data.posicao}`, margin + 5, yPos);
+        yPos += 8;
+        
+        // Get recommendations
+        const recs = strategicMatrix[data.fase][data.posicao];
+        pdf.setFontSize(8);
+        pdf.text('Estratégia principal: ' + recs.estrategias[0].substring(0, 80) + '...', margin + 5, yPos);
+        yPos += 15;
+      });
+      
+      // Add charts (small)
+      yPos += 5;
+      if (yPos > pageHeight - 80) {
+        pdf.addPage();
+        pageNum++;
+        addHeader(pageNum);
+        addFooter(pageNum);
+        yPos = 25;
+      }
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30, 136, 229);
+      pdf.text('Gráficos de Análise', margin, yPos);
+      yPos += 10;
+      
+      const chartIds = ['chart-fase-produto', 'chart-invest-produto', 'chart-qual-servico', 'chart-recursos-servico'];
+      let chartX = margin;
+      
+      for (let i = 0; i < chartIds.length; i++) {
+        if (i === 2) {
+          yPos += 45;
+          chartX = margin;
+          if (yPos > pageHeight - 50) {
+            pdf.addPage();
+            pageNum++;
+            addHeader(pageNum);
+            addFooter(pageNum);
+            yPos = 25;
+          }
+        }
+        
+        const canvas = document.getElementById(chartIds[i]);
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', chartX, yPos, 80, 40);
+        chartX += 90;
+      }
+      
+      pdf.save(`oevp_relatorio_${Date.now()}.pdf`);
+      showToast('PDF exportado com sucesso!', 'success');
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-orange-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm`;
+      toast.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' : 
+            type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' :
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+        </svg>
+        ${message}
+      `;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Update data on input change
+    function updateData() {
+      ['produto', 'servico', 'empresa'].forEach(type => {
+        const titulo = document.getElementById(`titulo-${type}`);
+        if (titulo) appState.data[type].titulo = titulo.value;
+      });
+      saveToStorage();
+    }
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d3fe18f606c06e3',t:'MTc3MjExMzUwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

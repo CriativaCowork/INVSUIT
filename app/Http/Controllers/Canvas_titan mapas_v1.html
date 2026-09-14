@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITAN Mapas - Mapas Mentais Profissionais</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Bibliotecas para exportação -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-blue: #66CFF5;
+            --white: #FFFFFF;
+            --bg-gray: #F8F9FA;
+            --text-gray: #ADB5BD;
+            --dark-bg: #2C2C2C;
+            --dark-text: #E0E0E0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow: hidden;
+        }
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tooltip.show {
+            opacity: 1;
+        }
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #66CFF5 0%, #33BEF2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.5s;
+        }
+        #splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .splash-logo {
+            font-size: 72px;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .splash-logo .titan {
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .splash-logo .mapas {
+            font-weight: 100;
+            letter-spacing: 8px;
+        }
+        .splash-slogan {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            font-style: italic;
+            margin-top: 20px;
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dark-mode header {
+            background: #1f1f1f;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+        .logo .mapas {
+            font-weight: 100;
+            letter-spacing: 2px;
+        }
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 260px;
+            height: calc(100vh - 60px - 50px);
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            padding: 20px;
+            transition: transform 0.3s;
+        }
+        .dark-mode #sidebar {
+            background: #1f1f1f;
+            border-right: 1px solid #3a3a3a;
+        }
+        #sidebar.collapsed {
+            transform: translateX(-260px);
+        }
+        #canvas-container {
+            position: fixed;
+            left: 260px;
+            top: 60px;
+            right: 0;
+            bottom: 50px;
+            background: var(--bg-gray);
+            overflow: hidden;
+            transition: left 0.3s;
+        }
+        .dark-mode #canvas-container {
+            background: #1a1a1a;
+        }
+        #canvas-container.expanded {
+            left: 0;
+        }
+        #mindmap-canvas {
+            position: relative; /* ← crucial para z-index funcionar */
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        #mindmap-canvas:active {
+            cursor: grabbing;
+        }
+        /* Mind Map Node */
+        .mind-node {
+            position: absolute;
+            background: white;
+            border: 2px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 12px 20px;
+            min-width: 120px;
+            max-width: 300px;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+            z-index: 3; /* ← acima das linhas */
+        }
+        .dark-mode .mind-node {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+        .mind-node:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .mind-node.selected {
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+        }
+        .mind-node.root {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .mind-node.collapsed::after {
+            content: '+';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #33BEF2;
+        }
+        .btn-icon {
+            background: transparent;
+            color: #666;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .dark-mode .btn-icon {
+            color: #aaa;
+        }
+        .btn-icon:hover {
+            background: rgba(30, 136, 229, 0.1);
+            color: var(--primary-blue);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .dark-mode .modal-content {
+            background: #2a2a2a;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .dark-mode footer {
+            background: #1f1f1f;
+            border-top: 1px solid #3a3a3a;
+        }
+        .project-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .dark-mode .project-item {
+            border-color: #3a3a3a;
+        }
+        .project-item:hover {
+            background: rgba(30, 136, 229, 0.05);
+            border-color: var(--primary-blue);
+        }
+        .project-item.active {
+            background: rgba(30, 136, 229, 0.1);
+            border-color: var(--primary-blue);
+        }
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 200px;
+            z-index: 10000;
+            display: none;
+        }
+        .dark-mode .context-menu {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+        }
+        .context-menu.show {
+            display: block;
+        }
+        .context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .context-menu-item:hover {
+            background: rgba(30, 136, 229, 0.1);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #e0e0e0;
+            border: 1px solid #e0e0e0;
+        }
+        .calendar-day {
+            background: white;
+            min-height: 100px;
+            padding: 8px;
+            cursor: pointer;
+        }
+        .dark-mode .calendar-day {
+            background: #2a2a2a;
+        }
+        .calendar-day:hover {
+            background: rgba(30, 136, 229, 0.05);
+        }
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-left: 4px solid var(--primary-blue);
+            max-width: 350px;
+            z-index: 9998;
+            animation: slideIn 0.3s;
+        }
+        .dark-mode .notification {
+            background: #2a2a2a;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .dark-mode input, .dark-mode textarea, .dark-mode select {
+            background: #1a1a1a;
+            border-color: #3a3a3a;
+            color: #e0e0e0;
+        }
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        .color-option.selected {
+            border-color: #333;
+        }
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .priority-high {
+            background: #FFE0E0;
+            color: #D32F2F;
+        }
+        .priority-medium {
+            background: #FFF4E0;
+            color: #F57C00;
+        }
+        .priority-low {
+            background: #E0F7FA;
+            color: #0097A7;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-blue);
+            transition: width 0.3s;
+        }
+        .toolbar {
+            position: absolute;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            display: none;
+            gap: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .dark-mode .toolbar {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+        }
+        .toolbar.show {
+            display: flex;
+        }
+        .search-bar {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 8px 36px 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            margin: 0;
+        }
+        .search-bar .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            background: rgba(30, 136, 229, 0.05);
+        }
+        .tab.active {
+            border-bottom-color: var(--primary-blue);
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .template-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dark-mode .template-card {
+            border-color: #3a3a3a;
+        }
+        .template-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        /* SVG connections */
+        #connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .connection-line {
+            stroke: var(--primary-blue);
+            stroke-width: 2;
+            fill: none;
+            pointer-events: none;
+        }
+        .dark-mode .connection-line {
+            stroke: #64B5F6;
+        }
+        .node-icon {
+            display: inline-block;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .date-display {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .outline-item {
+            padding: 6px 12px;
+            margin-left: 20px;
+            border-left: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+        .outline-item:hover {
+            background: rgba(30, 136, 229, 0.05);
+            border-left-color: var(--primary-blue);
+        }
+        .zoom-control {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .dark-mode .zoom-control {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+        }
+        .zoom-level {
+            text-align: center;
+            font-size: 12px;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <span class="titan">TITAN</span>
+            <span class="mapas">Mapas</span>
+        </div>
+        <div class="splash-slogan">"move-te com o progresso"</div>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+    <header id="main-header" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <button id="toggle-sidebar" class="btn-icon" data-tooltip="Alternar Sidebar">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="logo">
+                <span class="titan">TITAN</span>
+                <span class="mapas">Mapas</span>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="global-search" placeholder="Buscar mapas mentais...">
+                <i data-lucide="search" class="search-icon"></i>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn-icon" id="btn-notifications" data-tooltip="Notificações">
+                <i data-lucide="bell"></i>
+            </button>
+            <button class="btn-icon" id="btn-calendar" data-tooltip="Calendário">
+                <i data-lucide="calendar"></i>
+            </button>
+            <button class="btn-icon" id="btn-templates" data-tooltip="Templates">
+                <i data-lucide="layout-template"></i>
+            </button>
+            <button class="btn-icon" id="btn-dark-mode" data-tooltip="Modo Escuro">
+                <i data-lucide="moon"></i>
+            </button>
+            <a href="https://www.titancloud.com" target="_blank" class="btn" style="text-decoration: none;">
+                <i data-lucide="cloud"></i>
+                TITAN Cloud
+            </a>
+        </div>
+    </header>
+    <aside id="sidebar" style="display: none;">
+        <button class="btn" id="btn-new-project" style="width: 100%; margin-bottom: 20px;">
+            <i data-lucide="plus"></i>
+            Novo Projeto
+        </button>
+        <div class="tabs">
+            <div class="tab active" data-tab="projects">Projetos</div>
+            <div class="tab" data-tab="starred">Favoritos</div>
+            <div class="tab" data-tab="trash">Lixeira</div>
+        </div>
+        <div id="projects-list"></div>
+    </aside>
+    <div id="canvas-container" style="display: none;">
+        <svg id="connections-svg"></svg>
+        <div id="mindmap-canvas"></div>
+        <div class="zoom-control">
+            <button class="btn-icon" id="zoom-in" data-tooltip="Aumentar Zoom">
+                <i data-lucide="zoom-in"></i>
+            </button>
+            <div class="zoom-level" id="zoom-level">100%</div>
+            <button class="btn-icon" id="zoom-out" data-tooltip="Diminuir Zoom">
+                <i data-lucide="zoom-out"></i>
+            </button>
+            <button class="btn-icon" id="zoom-reset" data-tooltip="Resetar Zoom">
+                <i data-lucide="maximize"></i>
+            </button>
+        </div>
+        <div id="topic-toolbar" class="toolbar">
+            <button class="btn-icon" data-action="add-child" data-tooltip="Adicionar Filho">
+                <i data-lucide="plus-circle"></i>
+            </button>
+            <button class="btn-icon" data-action="edit-topic" data-tooltip="Editar">
+                <i data-lucide="edit"></i>
+            </button>
+            <button class="btn-icon" data-action="add-icon" data-tooltip="Adicionar Ícone">
+                <i data-lucide="smile"></i>
+            </button>
+            <button class="btn-icon" data-action="add-note" data-tooltip="Adicionar Nota">
+                <i data-lucide="file-text"></i>
+            </button>
+            <button class="btn-icon" data-action="add-link" data-tooltip="Adicionar Link">
+                <i data-lucide="link"></i>
+            </button>
+            <button class="btn-icon" data-action="add-checkbox" data-tooltip="Adicionar Checkbox">
+                <i data-lucide="check-square"></i>
+            </button>
+            <button class="btn-icon" data-action="change-color" data-tooltip="Mudar Cor">
+                <i data-lucide="palette"></i>
+            </button>
+            <button class="btn-icon" data-action="delete-topic" data-tooltip="Deletar">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </div>
+    </div>
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item" data-action="add-sibling">
+            <i data-lucide="plus"></i> Adicionar Irmão
+        </div>
+        <div class="context-menu-item" data-action="add-child">
+            <i data-lucide="plus-circle"></i> Adicionar Filho
+        </div>
+        <div class="context-menu-item" data-action="edit">
+            <i data-lucide="edit"></i> Editar
+        </div>
+        <div class="context-menu-item" data-action="collapse">
+            <i data-lucide="minimize-2"></i> Colapsar/Expandir
+        </div>
+        <div class="context-menu-item" data-action="delete">
+            <i data-lucide="trash-2"></i> Deletar
+        </div>
+    </div>
+    <footer id="main-footer" style="display: none;">
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <button class="btn-icon" id="btn-view-mode" data-tooltip="Alternar Modo de Visualização">
+                <i data-lucide="eye"></i>
+            </button>
+            <span id="view-mode-text" style="font-size: 12px; color: #999;">Modo: Edição</span>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn-icon" id="btn-export" data-tooltip="Exportar">
+                <i data-lucide="download"></i>
+            </button>
+            <button class="btn-icon" id="btn-import" data-tooltip="Importar">
+                <i data-lucide="upload"></i>
+            </button>
+            <button class="btn-icon" id="btn-save" data-tooltip="Salvar">
+                <i data-lucide="save"></i>
+            </button>
+            <button class="btn-icon" id="btn-settings" data-tooltip="Configurações">
+                <i data-lucide="settings"></i>
+            </button>
+        </div>
+    </footer>
+    <div id="new-project-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Novo Projeto</h2>
+            <input type="text" id="project-name" placeholder="Nome do Projeto">
+            <textarea id="project-description" placeholder="Descrição (opcional)" rows="3"></textarea>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Prioridade:</label>
+            <select id="project-priority">
+                <option value="low">Baixa</option>
+                <option value="medium" selected>Média</option>
+                <option value="high">Alta</option>
+            </select>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Data de Vencimento:</label>
+            <input type="date" id="project-due-date">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Cor de Fundo:</label>
+            <div class="color-picker">
+                <div class="color-option" style="background: #66CFF5;" data-color="#66CFF5"></div>
+                <div class="color-option" style="background: #43A047;" data-color="#43A047"></div>
+                <div class="color-option" style="background: #FB8C00;" data-color="#FB8C00"></div>
+                <div class="color-option" style="background: #E53935;" data-color="#E53935"></div>
+                <div class="color-option" style="background: #8E24AA;" data-color="#8E24AA"></div>
+                <div class="color-option" style="background: #00ACC1;" data-color="#00ACC1"></div>
+            </div>
+            <input type="hidden" id="project-color" value="#66CFF5">
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn" id="create-project-btn" style="flex: 1;">Criar Projeto</button>
+                <button class="btn-icon" id="cancel-project-btn" style="padding: 10px 20px;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Exportar Mapa Mental</h2>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Escopo:</label>
+                <label><input type="radio" name="export-scope" value="visible" checked> Área visível</label>
+                <label style="margin-left: 12px;"><input type="radio" name="export-scope" value="full"> Mapa completo</label>
+            </div>
+            <button class="btn" id="export-pdf" style="width: 100%; margin-bottom: 12px;">
+                <i data-lucide="file-text"></i> Exportar como PDF
+            </button>
+            <button class="btn" id="export-image" style="width: 100%; margin-bottom: 12px;">
+                <i data-lucide="image"></i> Exportar como Imagem (PNG)
+            </button>
+            <button class="btn" id="export-json" style="width: 100%; margin-bottom: 12px;">
+                <i data-lucide="code"></i> Exportar como JSON
+            </button>
+            <button class="btn" id="export-html" style="width: 100%; margin-bottom: 12px;">
+                <i data-lucide="globe"></i> Exportar como HTML
+            </button>
+            <button class="btn-icon" id="close-export-modal" style="width: 100%; padding: 10px;">Fechar</button>
+        </div>
+    </div>
+    <div id="calendar-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <h2 style="margin-bottom: 20px;">Calendário</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="btn-icon" id="prev-month">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <h3 id="calendar-month-year"></h3>
+                <button class="btn-icon" id="next-month">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <button class="btn-icon" id="close-calendar-modal" style="width: 100%; margin-top: 20px; padding: 10px;">Fechar</button>
+        </div>
+    </div>
+    <div id="templates-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h2 style="margin-bottom: 20px;">Templates</h2>
+            <div class="templates-grid" id="templates-grid"></div>
+            <button class="btn-icon" id="close-templates-modal" style="width: 100%; margin-top: 20px; padding: 10px;">Fechar</button>
+        </div>
+    </div>
+    <div id="edit-node-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Editar Tópico</h2>
+            <input type="text" id="node-text" placeholder="Texto do tópico">
+            <textarea id="node-notes" placeholder="Notas (opcional)" rows="4"></textarea>
+            <input type="url" id="node-link" placeholder="Link (opcional)">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Ícone:</label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                <button class="btn-icon" data-icon="star"><i data-lucide="star"></i></button>
+                <button class="btn-icon" data-icon="flag"><i data-lucide="flag"></i></button>
+                <button class="btn-icon" data-icon="check"><i data-lucide="check"></i></button>
+                <button class="btn-icon" data-icon="alert-circle"><i data-lucide="alert-circle"></i></button>
+                <button class="btn-icon" data-icon="lightbulb"><i data-lucide="lightbulb"></i></button>
+                <button class="btn-icon" data-icon="heart"><i data-lucide="heart"></i></button>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="node-has-checkbox" class="checkbox">
+                <label for="node-has-checkbox">Adicionar checkbox de tarefa</label>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn" id="save-node-btn" style="flex: 1;">Salvar</button>
+                <button class="btn-icon" id="cancel-node-btn" style="padding: 10px 20px;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        lucide.createIcons();
+        const state = {
+            projects: [],
+            trash: [], // ← nova propriedade
+            currentProject: null,
+            darkMode: false,
+            readOnlyMode: false,
+            zoom: 1,
+            pan: { x: 0, y: 0 },
+            selectedNodes: [],
+            draggedNode: null,
+            isDragging: false,
+            currentEditingNode: null
+        };
+
+        // === Robustez no localStorage ===
+        function loadFromStorage() {
+            const saved = localStorage.getItem('titanMapasData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    state.projects = Array.isArray(data.projects) ? data.projects : [];
+                    state.trash = Array.isArray(data.trash) ? data.trash : [];
+                    state.darkMode = data.darkMode || false;
+                    if (state.darkMode) document.body.classList.add('dark-mode');
+
+                    // LIMPEZA AUTOMÁTICA DA LIXEIRA
+                    const now = new Date();
+                    state.trash = state.trash.filter(p => {
+                        if (!p.deletedAt) return true;
+                        const deleted = new Date(p.deletedAt);
+                        return (now - deleted) / (1000 * 60 * 60 * 24) < 30;
+                    });
+                } catch (e) {
+                    showNotification('Erro ao carregar: dados corrompidos.', 'error');
+                    state.projects = [];
+                    state.trash = [];
+                }
+            }
+        }
+        function saveToStorage() {
+            try {
+                localStorage.setItem('titanMapasData', JSON.stringify({
+                    projects: state.projects,
+                    trash: state.trash,
+                    darkMode: state.darkMode
+                }));
+            } catch (e) {
+                showNotification('Erro ao salvar: armazenamento cheio.', 'error');
+            }
+        }
+
+        // === Splash ===
+        setTimeout(() => {
+            document.getElementById('splash-screen').classList.add('fade-out');
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('main-header').style.display = 'flex';
+                document.getElementById('sidebar').style.display = 'block';
+                document.getElementById('canvas-container').style.display = 'block';
+                document.getElementById('main-footer').style.display = 'flex';
+                loadFromStorage();
+                renderProjectsList();
+                lucide.createIcons();
+            }, 500);
+        }, 2500);
+
+        // === Tooltip ===
+        const tooltip = document.getElementById('tooltip');
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('[data-tooltip]');
+            if (target) {
+                const text = target.getAttribute('data-tooltip');
+                tooltip.textContent = text;
+                tooltip.classList.add('show');
+                const rect = target.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                let top = rect.bottom + 8;
+                let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                if (left < 8) left = 8;
+                if (left + tooltipRect.width > window.innerWidth - 8) {
+                    left = window.innerWidth - tooltipRect.width - 8;
+                }
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+            }
+        });
+        document.addEventListener('mouseout', () => tooltip.classList.remove('show'));
+
+        // === Dark Mode ===
+        document.getElementById('btn-dark-mode').addEventListener('click', () => {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark-mode');
+            saveToStorage();
+            lucide.createIcons();
+        });
+
+        // === Sidebar Toggle ===
+        document.getElementById('toggle-sidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('canvas-container').classList.toggle('expanded');
+        });
+
+        // === View Mode ===
+        let viewMode = 'edit';
+        document.getElementById('btn-view-mode').addEventListener('click', () => {
+            viewMode = viewMode === 'edit' ? 'read' : 'edit';
+            state.readOnlyMode = viewMode === 'read';
+            document.getElementById('view-mode-text').textContent = `Modo: ${viewMode === 'edit' ? 'Edição' : 'Leitura'}`;
+            lucide.createIcons();
+        });
+
+        // === Edição de Projeto ===
+        let isEditingProject = false;
+        let editingProjectId = null;
+
+        function openNewProjectModal() {
+            isEditingProject = false;
+            editingProjectId = null;
+            document.getElementById('create-project-btn').textContent = 'Criar Projeto';
+            document.getElementById('new-project-modal').classList.add('show');
+        }
+
+        function openEditProjectModal(project) {
+            isEditingProject = true;
+            editingProjectId = project.id;
+            document.getElementById('project-name').value = project.name;
+            document.getElementById('project-description').value = project.description || '';
+            document.getElementById('project-priority').value = project.priority;
+            document.getElementById('project-due-date').value = project.dueDate || '';
+            document.getElementById('project-color').value = project.color;
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.getAttribute('data-color') === project.color);
+            });
+            document.getElementById('create-project-btn').textContent = 'Salvar Alterações';
+            document.getElementById('new-project-modal').classList.add('show');
+        }
+
+        document.getElementById('btn-new-project').addEventListener('click', openNewProjectModal);
+        document.getElementById('cancel-project-btn').addEventListener('click', () => {
+            document.getElementById('new-project-modal').classList.remove('show');
+        });
+
+        // Color Picker
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                document.getElementById('project-color').value = option.getAttribute('data-color');
+            });
+        });
+
+        document.getElementById('create-project-btn').addEventListener('click', () => {
+            const name = document.getElementById('project-name').value.trim();
+            if (!name) {
+                showNotification('Por favor, insira um nome para o projeto', 'error');
+                return;
+            }
+            // Validação: não permitir emojis no nome do projeto
+            const emojiRegex = /[\p{Emoji}]/u;
+            if (emojiRegex.test(name)) {
+                showNotification('Emojis não são permitidos no nome do projeto', 'error');
+                return;
+            }
+            if (isEditingProject && editingProjectId) {
+                const proj = state.projects.find(p => p.id === editingProjectId);
+                if (proj) {
+                    proj.name = name;
+                    proj.description = document.getElementById('project-description').value;
+                    proj.priority = document.getElementById('project-priority').value;
+                    proj.dueDate = document.getElementById('project-due-date').value;
+                    proj.color = document.getElementById('project-color').value;
+                    state.currentProject = proj;
+                }
+            } else {
+                const project = {
+                    id: Date.now(),
+                    name: name,
+                    description: document.getElementById('project-description').value,
+                    priority: document.getElementById('project-priority').value,
+                    dueDate: document.getElementById('project-due-date').value,
+                    color: document.getElementById('project-color').value,
+                    createdAt: new Date().toISOString(),
+                    nodes: [{ id: 'root', text: name, x: window.innerWidth / 2 - 130, y: 200, isRoot: true, children: [] }],
+                    starred: false
+                };
+                state.projects.push(project);
+                state.currentProject = project;
+            }
+            saveToStorage();
+            renderProjectsList();
+            renderMindMap();
+            document.getElementById('new-project-modal').classList.remove('show');
+            showNotification(isEditingProject ? 'Projeto atualizado!' : 'Projeto criado com sucesso!', 'success');
+        });
+
+        // === Render Projects List ===
+        function renderProjectsList() {
+            const container = document.getElementById('projects-list');
+            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+            let projectsToShow = state.projects;
+            if (activeTab === 'starred') {
+                projectsToShow = state.projects.filter(p => p.starred);
+            } else if (activeTab === 'trash') {
+                projectsToShow = state.trash;
+            }
+            if (projectsToShow.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhum projeto</p>';
+                return;
+            }
+            container.innerHTML = projectsToShow.map(project => {
+                const daysRemaining = project.dueDate ? 
+                    Math.ceil((new Date(project.dueDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                let buttons = '';
+                if (activeTab === 'trash') {
+                    buttons = `
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-icon btn-restore" data-project-id="${project.id}" data-tooltip="Restaurar">
+                                <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            <button class="btn-icon btn-delete-perm" data-project-id="${project.id}" data-tooltip="Deletar permanentemente">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #f44336;"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    buttons = `
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-icon btn-edit" data-project-id="${project.id}" data-tooltip="Editar projeto">
+                                <i data-lucide="edit" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            <button class="btn-icon btn-star" data-project-id="${project.id}" data-tooltip="${project.starred ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                                <i data-lucide="${project.starred ? 'star-off' : 'star'}" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="project-item ${state.currentProject?.id === project.id ? 'active' : ''}" 
+                         data-project-id="${project.id}" style="border-left: 4px solid ${project.color};">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${project.name}</div>
+                                ${project.description ? `<div style="font-size: 12px; color: #999; margin-bottom: 8px;">${project.description}</div>` : ''}
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <span class="priority-badge priority-${project.priority}">
+                                        ${project.priority === 'high' ? 'Alta' : project.priority === 'medium' ? 'Média' : 'Baixa'}
+                                    </span>
+                                    ${daysRemaining !== null ? `
+                                        <span style="font-size: 11px; color: ${daysRemaining < 0 ? '#D32F2F' : '#999'};">
+                                            ${daysRemaining < 0 ? 'Atrasado' : daysRemaining === 0 ? 'Hoje' : `${daysRemaining}d`}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            ${buttons}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+            container.querySelectorAll('.project-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.btn-star') && !e.target.closest('.btn-edit') && !e.target.closest('.btn-restore') && !e.target.closest('.btn-delete-perm')) {
+                        const projectId = parseInt(item.getAttribute('data-project-id'));
+                        const project = (activeTab === 'trash' ? state.trash : state.projects).find(p => p.id === projectId);
+                        if (project && activeTab !== 'trash') {
+                            state.currentProject = project;
+                            renderProjectsList();
+                            renderMindMap();
+                        }
+                    }
+                });
+            });
+            // Star
+            container.querySelectorAll('.btn-star').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const projectId = parseInt(btn.getAttribute('data-project-id'));
+                    const project = state.projects.find(p => p.id === projectId);
+                    if (project) {
+                        project.starred = !project.starred;
+                        saveToStorage();
+                        renderProjectsList();
+                        showNotification(project.starred ? 'Adicionado aos favoritos' : 'Removido dos favoritos', 'info');
+                    }
+                });
+            });
+            // Edit
+            container.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-project-id'));
+                    const proj = state.projects.find(p => p.id === id);
+                    if (proj) openEditProjectModal(proj);
+                });
+            });
+            // Lixeira
+            container.querySelectorAll('.btn-restore').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-project-id'));
+                    const proj = state.trash.find(p => p.id === id);
+                    if (proj) {
+                        state.projects.push(proj);
+                        state.trash = state.trash.filter(p => p.id !== id);
+                        saveToStorage();
+                        renderProjectsList();
+                        showNotification('Projeto restaurado', 'success');
+                    }
+                });
+            });
+            container.querySelectorAll('.btn-delete-perm').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-project-id'));
+                    state.trash = state.trash.filter(p => p.id !== id);
+                    saveToStorage();
+                    renderProjectsList();
+                    showNotification('Excluído permanentemente', 'success');
+                });
+            });
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderProjectsList();
+            });
+        });
+
+        // === Mind Map ===
+        function renderMindMap() {
+            const canvas = document.getElementById('mindmap-canvas');
+            const svg = document.getElementById('connections-svg');
+            if (!state.currentProject) {
+                canvas.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">Selecione ou crie um projeto</div>';
+                svg.innerHTML = '';
+                return;
+            }
+            canvas.innerHTML = '';
+            svg.innerHTML = '';
+            function renderNode(node, parent = null) {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'mind-node' + (node.isRoot ? ' root' : '') + (node.collapsed ? ' collapsed' : '');
+                nodeEl.setAttribute('data-node-id', node.id);
+                nodeEl.style.left = (node.x * state.zoom + state.pan.x) + 'px';
+                nodeEl.style.top = (node.y * state.zoom + state.pan.y) + 'px';
+                nodeEl.style.transform = `scale(${state.zoom})`;
+                nodeEl.style.transformOrigin = 'top left';
+                if (node.color) nodeEl.style.borderColor = node.color;
+                let content = '';
+                if (node.icon) content += `<i data-lucide="${node.icon}" class="node-icon" style="width: 16px; height: 16px;"></i>`;
+                content += node.text;
+                if (node.hasCheckbox) {
+                    content = `<div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox" ${node.checked ? 'checked' : ''}>
+                        <span>${content}</span>
+                    </div>`;
+                }
+                nodeEl.innerHTML = content;
+                canvas.appendChild(nodeEl);
+                if (parent && !node.collapsed) drawConnection(parent, node);
+                if (node.children && !node.collapsed) node.children.forEach(child => renderNode(child, node));
+                nodeEl.addEventListener('mousedown', (e) => {
+                    if (state.readOnlyMode) return;
+                    e.stopPropagation();
+                    if (!e.shiftKey) state.selectedNodes = [node];
+                    else if (!state.selectedNodes.includes(node)) state.selectedNodes.push(node);
+                    state.draggedNode = node;
+                    state.isDragging = true;
+                    updateSelection();
+                });
+                nodeEl.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    openEditNodeModal(node);
+                });
+                nodeEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e.clientX, e.clientY, node);
+                });
+                lucide.createIcons();
+            }
+            state.currentProject.nodes.forEach(node => renderNode(node));
+        }
+
+        function drawConnection(parent, child) {
+            const svg = document.getElementById('connections-svg');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const parentX = (parent.x + 120) * state.zoom + state.pan.x;
+            const parentY = (parent.y + 20) * state.zoom + state.pan.y;
+            const childX = (child.x) * state.zoom + state.pan.x;
+            const childY = (child.y + 20) * state.zoom + state.pan.y;
+            const midX = (parentX + childX) / 2;
+            const d = `M ${parentX} ${parentY} C ${midX} ${parentY}, ${midX} ${childY}, ${childX} ${childY}`;
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'connection-line');
+            svg.appendChild(path);
+        }
+
+        function updateSelection() {
+            document.querySelectorAll('.mind-node').forEach(el => el.classList.remove('selected'));
+            state.selectedNodes.forEach(node => {
+                const el = document.querySelector(`[data-node-id="${node.id}"]`);
+                if (el) el.classList.add('selected');
+            });
+        }
+
+        // === Canvas Dragging ===
+        let isPanning = false;
+        let panStart = { x: 0, y: 0 };
+        document.getElementById('mindmap-canvas').addEventListener('mousedown', (e) => {
+            if (e.target.id === 'mindmap-canvas') {
+                isPanning = true;
+                panStart = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y };
+            }
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (state.isDragging && state.draggedNode && !state.readOnlyMode) {
+                const dx = e.movementX / state.zoom;
+                const dy = e.movementY / state.zoom;
+                state.selectedNodes.forEach(node => {
+                    node.x += dx;
+                    node.y += dy;
+                });
+                renderMindMap();
+                saveToStorage();
+            } else if (isPanning) {
+                state.pan.x = e.clientX - panStart.x;
+                state.pan.y = e.clientY - panStart.y;
+                renderMindMap();
+            }
+        });
+        document.addEventListener('mouseup', () => {
+            state.isDragging = false;
+            state.draggedNode = null;
+            isPanning = false;
+        });
+
+        // === Zoom ===
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            state.zoom = Math.min(state.zoom + 0.1, 2);
+            document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+            renderMindMap();
+        });
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            state.zoom = Math.max(state.zoom - 0.1, 0.5);
+            document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+            renderMindMap();
+        });
+        document.getElementById('zoom-reset').addEventListener('click', () => {
+            state.zoom = 1;
+            state.pan = { x: 0, y: 0 };
+            document.getElementById('zoom-level').textContent = '100%';
+            renderMindMap();
+        });
+
+        // === Context Menu ===
+        function showContextMenu(x, y, node) {
+            const menu = document.getElementById('context-menu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.classList.add('show');
+            menu.onclick = (e) => {
+                const action = e.target.closest('.context-menu-item')?.getAttribute('data-action');
+                if (!action) return;
+                switch(action) {
+                    case 'add-child': addChildNode(node); break;
+                    case 'add-sibling': addSiblingNode(node); break;
+                    case 'edit': openEditNodeModal(node); break;
+                    case 'collapse': node.collapsed = !node.collapsed; renderMindMap(); saveToStorage(); break;
+                    case 'delete': deleteNode(node); break;
+                }
+                menu.classList.remove('show');
+            };
+        }
+        document.addEventListener('click', () => document.getElementById('context-menu').classList.remove('show'));
+
+        // === Node Operations ===
+        function addChildNode(parent) {
+            const newNode = { id: Date.now().toString(), text: 'Novo tópico', x: parent.x + 200, y: parent.y + (parent.children?.length || 0) * 80, children: [] };
+            if (!parent.children) parent.children = [];
+            parent.children.push(newNode);
+            renderMindMap();
+            saveToStorage();
+            showNotification('Tópico filho adicionado', 'success');
+        }
+        function addSiblingNode(node) {
+            function findParent(nodes, target, parent = null) {
+                for (let n of nodes) {
+                    if (n === target) return parent;
+                    if (n.children && findParent(n.children, target, n)) return n;
+                }
+                return null;
+            }
+            const parent = findParent(state.currentProject.nodes, node);
+            if (parent) {
+                const newNode = { id: Date.now().toString(), text: 'Novo tópico', x: node.x, y: node.y + 80, children: [] };
+                parent.children.push(newNode);
+                renderMindMap();
+                saveToStorage();
+                showNotification('Tópico irmão adicionado', 'success');
+            }
+        }
+        function deleteNode(node) {
+            if (node.isRoot) return showNotification('Não é possível deletar o nó raiz', 'error');
+            function removeNode(nodes, target) {
+                for (let i = 0; i < nodes.length; i++) {
+                    if (nodes[i] === target) {
+                        nodes.splice(i, 1);
+                        return true;
+                    }
+                    if (nodes[i].children && removeNode(nodes[i].children, target)) return true;
+                }
+                return false;
+            }
+            removeNode(state.currentProject.nodes, node);
+            state.selectedNodes = state.selectedNodes.filter(n => n !== node);
+            renderMindMap();
+            saveToStorage();
+            showNotification('Tópico deletado', 'success');
+        }
+
+        // === Edit Node Modal ===
+        function openEditNodeModal(node) {
+            state.currentEditingNode = node;
+            document.getElementById('node-text').value = node.text || '';
+            document.getElementById('node-notes').value = node.notes || '';
+            document.getElementById('node-link').value = node.link || '';
+            document.getElementById('node-has-checkbox').checked = !!node.hasCheckbox;
+            document.getElementById('edit-node-modal').classList.add('show');
+        }
+        document.getElementById('save-node-btn').addEventListener('click', () => {
+            if (state.currentEditingNode) {
+                state.currentEditingNode.text = document.getElementById('node-text').value;
+                state.currentEditingNode.notes = document.getElementById('node-notes').value;
+                state.currentEditingNode.link = document.getElementById('node-link').value;
+                state.currentEditingNode.hasCheckbox = document.getElementById('node-has-checkbox').checked;
+                renderMindMap();
+                saveToStorage();
+                document.getElementById('edit-node-modal').classList.remove('show');
+                showNotification('Tópico atualizado', 'success');
+            }
+        });
+        document.getElementById('cancel-node-btn').addEventListener('click', () => {
+            document.getElementById('edit-node-modal').classList.remove('show');
+        });
+        document.querySelectorAll('[data-icon]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (state.currentEditingNode) {
+                    state.currentEditingNode.icon = btn.getAttribute('data-icon');
+                    showNotification('Ícone adicionado', 'success');
+                }
+            });
+        });
+
+        // === Exportação Avançada ===
+        document.getElementById('btn-export').addEventListener('click', () => {
+            if (!state.currentProject) return showNotification('Selecione um projeto primeiro', 'error');
+            document.getElementById('export-modal').classList.add('show');
+        });
+        document.getElementById('close-export-modal').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.remove('show');
+        });
+        document.getElementById('export-json').addEventListener('click', () => {
+            const dataStr = JSON.stringify(state.currentProject, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${state.currentProject.name.replace(/\s+/g, '_')}.json`;
+            link.click();
+            showNotification('Exportado como JSON', 'success');
+        });
+        document.getElementById('export-html').addEventListener('click', () => {
+            showNotification('Exportação HTML em desenvolvimento', 'info');
+        });
+
+        // Função auxiliar para renderizar mapa completo
+        function renderFullMapForExport(parentEl) {
+            const project = state.currentProject;
+            const clone = JSON.parse(JSON.stringify(project.nodes));
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            function traverse(nodes) {
+                nodes.forEach(node => {
+                    if (!node.collapsed) {
+                        minX = Math.min(minX, node.x);
+                        minY = Math.min(minY, node.y);
+                        maxX = Math.max(maxX, node.x + 300);
+                        maxY = Math.max(maxY, node.y + 60);
+                        if (node.children) traverse(node.children);
+                    }
+                });
+            }
+            traverse(clone);
+            const width = Math.max(800, maxX - minX + 200);
+            const height = Math.max(600, maxY - minY + 200);
+            parentEl.style.width = width + 'px';
+            parentEl.style.height = height + 'px';
+            parentEl.style.position = 'absolute';
+            parentEl.style.left = '-10000px';
+            parentEl.style.background = 'white';
+            function renderNode(node, container) {
+                const el = document.createElement('div');
+                el.className = 'mind-node' + (node.isRoot ? ' root' : '') + (node.collapsed ? ' collapsed' : '');
+                el.style.position = 'absolute';
+                el.style.left = (node.x - minX + 100) + 'px';
+                el.style.top = (node.y - minY + 100) + 'px';
+                el.style.transform = 'scale(1)';
+                el.style.transformOrigin = 'top left';
+                if (node.color) el.style.borderColor = node.color;
+                let content = '';
+                if (node.icon) content += `<i data-lucide="${node.icon}" class="node-icon"></i>`;
+                content += node.text;
+                if (node.hasCheckbox) {
+                    content = `<div class="checkbox-wrapper"><input type="checkbox" disabled ${node.checked ? 'checked' : ''}><span>${content}</span></div>`;
+                }
+                el.innerHTML = content;
+                container.appendChild(el);
+                lucide.createIcons(el);
+                if (node.children && !node.collapsed) node.children.forEach(child => renderNode(child, container));
+            }
+            clone.forEach(node => renderNode(node, parentEl));
+            return { width, height };
+        }
+
+        // Exportar PNG
+        document.getElementById('export-image').addEventListener('click', async () => {
+            const full = document.querySelector('input[name="export-scope"]:checked').value === 'full';
+            let exportEl = document.getElementById('mindmap-canvas');
+            let cleanup = null;
+            if (full) {
+                const tempDiv = document.createElement('div');
+                renderFullMapForExport(tempDiv);
+                document.body.appendChild(tempDiv);
+                exportEl = tempDiv;
+                cleanup = () => tempDiv.remove();
+            }
+            try {
+                const canvas = await html2canvas(exportEl, { useCORS: true, backgroundColor: '#ffffff', scale: 2 });
+                const link = document.createElement('a');
+                link.download = `${state.currentProject.name.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification('Exportado como PNG', 'success');
+            } catch (err) {
+                showNotification('Erro ao exportar imagem', 'error');
+            } finally {
+                if (cleanup) cleanup();
+            }
+        });
+
+        // Exportar PDF
+        document.getElementById('export-pdf').addEventListener('click', async () => {
+            const full = document.querySelector('input[name="export-scope"]:checked').value === 'full';
+            let exportEl = document.getElementById('mindmap-canvas');
+            let cleanup = null;
+            if (full) {
+                const tempDiv = document.createElement('div');
+                renderFullMapForExport(tempDiv);
+                document.body.appendChild(tempDiv);
+                exportEl = tempDiv;
+                cleanup = () => tempDiv.remove();
+            }
+            try {
+                const canvas = await html2canvas(exportEl, { useCORS: true, backgroundColor: '#ffffff', scale: 2 });
+                const { jsPDF } = window.jspdf;
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'px', [canvas.width, canvas.height]);
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`${state.currentProject.name.replace(/\s+/g, '_')}.pdf`);
+                showNotification('Exportado como PDF', 'success');
+            } catch (err) {
+                showNotification('Erro ao exportar PDF', 'error');
+            } finally {
+                if (cleanup) cleanup();
+            }
+        });
+
+        // === Importação ===
+        document.getElementById('btn-import').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const project = JSON.parse(event.target.result);
+                        if (!project.name) throw new Error('Projeto inválido');
+                        project.id = Date.now();
+                        state.projects.push(project);
+                        state.currentProject = project;
+                        saveToStorage();
+                        renderProjectsList();
+                        renderMindMap();
+                        showNotification('Projeto importado com sucesso', 'success');
+                    } catch (err) {
+                        showNotification('Erro ao importar projeto', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
+        // === Save ===
+        document.getElementById('btn-save').addEventListener('click', () => {
+            saveToStorage();
+            showNotification('Projeto salvo com sucesso', 'success');
+        });
+
+        // === Calendar, Templates, Notifications, etc. ===
+        // (mantidos exatamente como no original, pois já funcionam bem)
+
+        let currentCalendarDate = new Date();
+        document.getElementById('btn-calendar').addEventListener('click', () => {
+            renderCalendar();
+            document.getElementById('calendar-modal').classList.add('show');
+        });
+        document.getElementById('close-calendar-modal').addEventListener('click', () => {
+            document.getElementById('calendar-modal').classList.remove('show');
+        });
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+        function renderCalendar() {
+            const monthYear = currentCalendarDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('calendar-month-year').textContent = monthYear;
+            const grid = document.getElementById('calendar-grid');
+            const firstDay = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), 1);
+            const lastDay = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 0);
+            let html = '';
+            ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach(day => {
+                html += `<div style="background: #f0f0f0; padding: 12px; font-weight: 600; text-align: center;">${day}</div>`;
+            });
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                html += '<div class="calendar-day" style="background: #fafafa;"></div>';
+            }
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const date = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), day);
+                const dateStr = date.toISOString().split('T')[0];
+                const projectsOnDate = state.projects.filter(p => p.dueDate === dateStr);
+                html += `
+                    <div class="calendar-day">
+                        <div style="font-weight: 600; margin-bottom: 4px;">${day}</div>
+                        ${projectsOnDate.map(p => `
+                            <div style="background: ${p.color}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-bottom: 2px;">
+                                ${p.name}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        const templateLibrary = {
+            'Brainstorming': { name: 'Brainstorming', icon: 'lightbulb', color: '#FB8C00', nodes: [{ id: 'root', text: 'Ideia Central', x: 400, y: 200, isRoot: true, color: '#FB8C00', children: [{ id: 'node1', text: 'Problema', x: 200, y: 100, icon: 'alert-circle', children: [{ id: 'node1a', text: 'Causa 1', x: 50, y: 50, children: [] }, { id: 'node1b', text: 'Causa 2', x: 50, y: 120, children: [] }] }, { id: 'node2', text: 'Soluções', x: 200, y: 200, icon: 'lightbulb', children: [{ id: 'node2a', text: 'Solução A', x: 50, y: 180, children: [] }, { id: 'node2b', text: 'Solução B', x: 50, y: 250, children: [] }] }, { id: 'node3', text: 'Próximos Passos', x: 200, y: 300, icon: 'arrow-right', children: [] }] }] },
+            'Planejamento de Projeto': { name: 'Planejamento de Projeto', icon: 'folder-tree', color: '#66CFF5', nodes: [{ id: 'root', text: 'Nome do Projeto', x: 400, y: 200, isRoot: true, color: '#66CFF5', children: [{ id: 'node1', text: 'Objetivos', x: 200, y: 80, icon: 'target', children: [{ id: 'node1a', text: 'Objetivo 1', x: 50, y: 40, hasCheckbox: true, children: [] }, { id: 'node1b', text: 'Objetivo 2', x: 50, y: 100, hasCheckbox: true, children: [] }] }, { id: 'node2', text: 'Recursos', x: 200, y: 160, icon: 'package', children: [{ id: 'node2a', text: 'Equipe', x: 50, y: 140, children: [] }, { id: 'node2b', text: 'Orçamento', x: 50, y: 190, children: [] }, { id: 'node2c', text: 'Ferramentas', x: 50, y: 240, children: [] }] }, { id: 'node3', text: 'Cronograma', x: 200, y: 280, icon: 'calendar', children: [{ id: 'node3a', text: 'Fase 1', x: 50, y: 260, children: [] }, { id: 'node3b', text: 'Fase 2', x: 50, y: 310, children: [] }] }, { id: 'node4', text: 'Riscos', x: 200, y: 370, icon: 'alert-triangle', children: [] }] }] },
+            'Organização de Estudos': { name: 'Organização de Estudos', icon: 'book-open', color: '#43A047', nodes: [{ id: 'root', text: 'Plano de Estudos', x: 400, y: 200, isRoot: true, color: '#43A047', children: [{ id: 'node1', text: 'Matérias', x: 200, y: 100, icon: 'book', children: [{ id: 'node1a', text: 'Matemática', x: 50, y: 60, hasCheckbox: true, children: [] }, { id: 'node1b', text: 'Português', x: 50, y: 110, hasCheckbox: true, children: [] }, { id: 'node1c', text: 'História', x: 50, y: 160, hasCheckbox: true, children: [] }] }, { id: 'node2', text: 'Horários', x: 200, y: 230, icon: 'clock', children: [{ id: 'node2a', text: 'Segunda a Sexta', x: 50, y: 210, children: [] }, { id: 'node2b', text: 'Fim de Semana', x: 50, y: 260, children: [] }] }, { id: 'node3', text: 'Recursos', x: 200, y: 330, icon: 'folder', children: [{ id: 'node3a', text: 'Livros', x: 50, y: 310, children: [] }, { id: 'node3b', text: 'Vídeos', x: 50, y: 360, children: [] }] }] }] },
+            'Reunião': { name: 'Reunião', icon: 'users', color: '#8E24AA', nodes: [{ id: 'root', text: 'Pauta da Reunião', x: 400, y: 200, isRoot: true, color: '#8E24AA', children: [{ id: 'node1', text: 'Participantes', x: 200, y: 100, icon: 'users', children: [] }, { id: 'node2', text: 'Tópicos', x: 200, y: 180, icon: 'list', children: [{ id: 'node2a', text: 'Tópico 1', x: 50, y: 150, hasCheckbox: true, children: [] }, { id: 'node2b', text: 'Tópico 2', x: 50, y: 200, hasCheckbox: true, children: [] }] }, { id: 'node3', text: 'Decisões', x: 200, y: 280, icon: 'check-circle', children: [] }, { id: 'node4', text: 'Ações', x: 200, y: 350, icon: 'zap', children: [] }] }] },
+            'Tomada de Decisão': { name: 'Tomada de Decisão', icon: 'git-branch', color: '#E53935', nodes: [{ id: 'root', text: 'Decisão', x: 400, y: 200, isRoot: true, color: '#E53935', children: [{ id: 'node1', text: 'Opção A', x: 200, y: 100, icon: 'circle', children: [{ id: 'node1a', text: 'Prós', x: 50, y: 60, icon: 'thumbs-up', children: [] }, { id: 'node1b', text: 'Contras', x: 50, y: 120, icon: 'thumbs-down', children: [] }] }, { id: 'node2', text: 'Opção B', x: 200, y: 250, icon: 'circle', children: [{ id: 'node2a', text: 'Prós', x: 50, y: 210, icon: 'thumbs-up', children: [] }, { id: 'node2b', text: 'Contras', x: 50, y: 270, icon: 'thumbs-down', children: [] }] }, { id: 'node3', text: 'Conclusão', x: 200, y: 370, icon: 'award', children: [] }] }] },
+            'Marketing Digital': { name: 'Marketing Digital', icon: 'megaphone', color: '#FF5722', nodes: [{ id: 'root', text: 'Estratégia de Marketing', x: 400, y: 200, isRoot: true, color: '#FF5722', children: [{ id: 'node1', text: 'Público-Alvo', x: 200, y: 80, icon: 'users', children: [{ id: 'node1a', text: 'Demografía', x: 50, y: 50, children: [] }, { id: 'node1b', text: 'Interesses', x: 50, y: 110, children: [] }] }, { id: 'node2', text: 'Canais', x: 200, y: 180, icon: 'share-2', children: [{ id: 'node2a', text: 'Redes Sociais', x: 50, y: 150, children: [] }, { id: 'node2b', text: 'Email', x: 50, y: 200, children: [] }, { id: 'node2c', text: 'Blog', x: 50, y: 250, children: [] }] }, { id: 'node3', text: 'Conteúdo', x: 200, y: 310, icon: 'file-text', children: [] }, { id: 'node4', text: 'KPIs', x: 200, y: 380, icon: 'trending-up', children: [] }] }] },
+            'Desenvolvimento de Software': { name: 'Desenvolvimento de Software', icon: 'code', color: '#00ACC1', nodes: [{ id: 'root', text: 'Projeto Software', x: 400, y: 200, isRoot: true, color: '#00ACC1', children: [{ id: 'node1', text: 'Requisitos', x: 200, y: 80, icon: 'clipboard-list', children: [{ id: 'node1a', text: 'Funcionais', x: 50, y: 50, hasCheckbox: true, children: [] }, { id: 'node1b', text: 'Não Funcionais', x: 50, y: 110, hasCheckbox: true, children: [] }] }, { id: 'node2', text: 'Arquitetura', x: 200, y: 180, icon: 'box', children: [{ id: 'node2a', text: 'Frontend', x: 50, y: 150, children: [] }, { id: 'node2b', text: 'Backend', x: 50, y: 200, children: [] }, { id: 'node2c', text: 'Database', x: 50, y: 250, children: [] }] }, { id: 'node3', text: 'Testes', x: 200, y: 310, icon: 'check-square', children: [] }, { id: 'node4', text: 'Deploy', x: 200, y: 380, icon: 'upload-cloud', children: [] }] }] },
+            'Planejamento Financeiro': { name: 'Planejamento Financeiro', icon: 'dollar-sign', color: '#4CAF50', nodes: [{ id: 'root', text: 'Finanças Pessoais', x: 400, y: 200, isRoot: true, color: '#4CAF50', children: [{ id: 'node1', text: 'Receitas', x: 200, y: 100, icon: 'trending-up', children: [{ id: 'node1a', text: 'Salário', x: 50, y: 70, children: [] }, { id: 'node1b', text: 'Investimentos', x: 50, y: 130, children: [] }] }, { id: 'node2', text: 'Despesas', x: 200, y: 210, icon: 'trending-down', children: [{ id: 'node2a', text: 'Fixas', x: 50, y: 180, children: [] }, { id: 'node2b', text: 'Variáveis', x: 50, y: 240, children: [] }] }, { id: 'node3', text: 'Poupança', x: 200, y: 310, icon: 'piggy-bank', children: [] }, { id: 'node4', text: 'Metas', x: 200, y: 380, icon: 'target', children: [] }] }] },
+            'Gestão de Tempo': { name: 'Gestão de Tempo', icon: 'clock', color: '#9C27B0', nodes: [{ id: 'root', text: 'Minha Semana', x: 400, y: 200, isRoot: true, color: '#9C27B0', children: [{ id: 'node1', text: 'Trabalho', x: 200, y: 80, icon: 'briefcase', children: [{ id: 'node1a', text: 'Projetos', x: 50, y: 50, hasCheckbox: true, children: [] }, { id: 'node1b', text: 'Reuniões', x: 50, y: 110, hasCheckbox: true, children: [] }] }, { id: 'node2', text: 'Pessoal', x: 200, y: 190, icon: 'home', children: [{ id: 'node2a', text: 'Família', x: 50, y: 160, children: [] }, { id: 'node2b', text: 'Hobbies', x: 50, y: 220, children: [] }] }, { id: 'node3', text: 'Saúde', x: 200, y: 290, icon: 'heart', children: [{ id: 'node3a', text: 'Exercícios', x: 50, y: 260, children: [] }, { id: 'node3b', text: 'Alimentação', x: 50, y: 320, children: [] }] }, { id: 'node4', text: 'Desenvolvimento', x: 200, y: 380, icon: 'rocket', children: [] }] }] },
+            'Análise SWOT': { name: 'Análise SWOT', icon: 'grid', color: '#FF9800', nodes: [{ id: 'root', text: 'Análise SWOT', x: 400, y: 200, isRoot: true, color: '#FF9800', children: [{ id: 'node1', text: 'Forças (Strengths)', x: 200, y: 80, icon: 'shield', color: '#4CAF50', children: [{ id: 'node1a', text: 'Ponto forte 1', x: 50, y: 50, children: [] }, { id: 'node1b', text: 'Ponto forte 2', x: 50, y: 110, children: [] }] }, { id: 'node2', text: 'Fraquezas (Weaknesses)', x: 200, y: 180, icon: 'alert-circle', color: '#F44336', children: [{ id: 'node2a', text: 'Ponto fraco 1', x: 50, y: 150, children: [] }, { id: 'node2b', text: 'Ponto fraco 2', x: 50, y: 210, children: [] }] }, { id: 'node3', text: 'Oportunidades (Opportunities)', x: 200, y: 280, icon: 'trending-up', color: '#2196F3', children: [{ id: 'node3a', text: 'Oportunidade 1', x: 50, y: 250, children: [] }, { id: 'node3b', text: 'Oportunidade 2', x: 50, y: 310, children: [] }] }, { id: 'node4', text: 'Ameaças (Threats)', x: 200, y: 380, icon: 'alert-triangle', color: '#FF9800', children: [{ id: 'node4a', text: 'Ameaça 1', x: 50, y: 350, children: [] }, { id: 'node4b', text: 'Ameaça 2', x: 50, y: 410, children: [] }] }] }] }
+        };
+        function renderTemplates() {
+            const templates = [
+                { name: 'Brainstorming', icon: 'lightbulb', color: '#FB8C00', description: 'Gere e organize ideias criativas' },
+                { name: 'Planejamento de Projeto', icon: 'folder-tree', color: '#66CFF5', description: 'Planeje objetivos e cronogramas' },
+                { name: 'Organização de Estudos', icon: 'book-open', color: '#43A047', description: 'Organize matérias e horários' },
+                { name: 'Reunião', icon: 'users', color: '#8E24AA', description: 'Estruture pautas e decisões' },
+                { name: 'Tomada de Decisão', icon: 'git-branch', color: '#E53935', description: 'Analise prós e contras' },
+                { name: 'Marketing Digital', icon: 'megaphone', color: '#FF5722', description: 'Planeje estratégias de marketing' },
+                { name: 'Desenvolvimento de Software', icon: 'code', color: '#00ACC1', description: 'Organize requisitos e arquitetura' },
+                { name: 'Planejamento Financeiro', icon: 'dollar-sign', color: '#4CAF50', description: 'Gerencie receitas e despesas' },
+                { name: 'Gestão de Tempo', icon: 'clock', color: '#9C27B0', description: 'Organize sua rotina semanal' },
+                { name: 'Análise SWOT', icon: 'grid', color: '#FF9800', description: 'Análise estratégica completa' }
+            ];
+            const grid = document.getElementById('templates-grid');
+            grid.innerHTML = templates.map(t => `
+                <div class="template-card" data-template="${t.name}" style="cursor: pointer;">
+                    <i data-lucide="${t.icon}" style="width: 48px; height: 48px; color: ${t.color}; margin-bottom: 12px;"></i>
+                    <div style="font-weight: 600; margin-bottom: 8px;">${t.name}</div>
+                    <div style="font-size: 12px; color: #999; text-align: center;">${t.description}</div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+            grid.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const templateName = card.getAttribute('data-template');
+                    applyTemplate(templateName);
+                });
+            });
+        }
+        function applyTemplate(templateName) {
+            const template = templateLibrary[templateName];
+            if (!template) return showNotification('Template não encontrado', 'error');
+            const project = {
+                id: Date.now(),
+                name: template.name,
+                description: `Criado a partir do template ${template.name}`,
+                priority: 'medium',
+                dueDate: '',
+                color: template.color,
+                createdAt: new Date().toISOString(),
+                nodes: JSON.parse(JSON.stringify(template.nodes)),
+                starred: false
+            };
+            state.projects.push(project);
+            state.currentProject = project;
+            saveToStorage();
+            renderProjectsList();
+            renderMindMap();
+            document.getElementById('templates-modal').classList.remove('show');
+            showNotification(`Template "${template.name}" aplicado com sucesso!`, 'success');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info'}" 
+                       style="width: 20px; height: 20px; color: ${type === 'success' ? '#43A047' : type === 'error' ? '#E53935' : '#66CFF5'};"></i>
+                    <div style="flex: 1;">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            lucide.createIcons();
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        document.getElementById('btn-templates').addEventListener('click', () => {
+            renderTemplates();
+            document.getElementById('templates-modal').classList.add('show');
+        });
+        document.getElementById('close-templates-modal').addEventListener('click', () => {
+            document.getElementById('templates-modal').classList.remove('show');
+        });
+
+        // === Global Search ===
+        document.getElementById('global-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (!query) return renderProjectsList();
+            const filtered = state.projects.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                (p.description && p.description.toLowerCase().includes(query))
+            );
+            state.projects = filtered;
+            renderProjectsList();
+        });
+
+        // === Keyboard Shortcuts ===
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveToStorage();
+                        showNotification('Salvo!', 'success');
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        document.getElementById('btn-new-project').click();
+                        break;
+                }
+            }
+            if (e.key === 'Delete' && state.selectedNodes.length > 0) {
+                state.selectedNodes.forEach(node => deleteNode(node));
+                state.selectedNodes = [];
+            }
+        });
+
+        // === Auto-save ===
+        setInterval(() => {
+            if (state.currentProject) saveToStorage();
+        }, 30000);
+
+        // === NOVA FUNÇÃO: Mover para lixeira ===
+        function moveToTrash(project) {
+            project.deletedAt = new Date().toISOString();
+            state.trash.push(project);
+            state.projects = state.projects.filter(p => p.id !== project.id);
+            if (state.currentProject?.id === project.id) {
+                state.currentProject = null;
+            }
+            saveToStorage();
+            renderProjectsList();
+            showNotification('Projeto movido para a lixeira', 'info');
+        }
+
+        // Substituir chamadas de delete de projeto pela lixeira
+        // (no código original, não existe botão de deletar projeto inteiro, então isso só ocorre se você adicionar)
+        // Caso você queira, basta adicionar um botão "lixeira" no projeto-item e chamar moveToTrash
+
+        // Por enquanto, mantemos como está. A lixeira serve para projetos excluídos via UI futura.
+
+    </script>
+</body>
+</html>

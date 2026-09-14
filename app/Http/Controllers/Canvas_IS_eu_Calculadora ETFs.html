@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Calculadora ETFs</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#F8F9FA;color:#333}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#F8F9FA}
+::-webkit-scrollbar-thumb{background:#c4c4c4;border-radius:3px}
+.tab-btn{transition:all .2s ease;border-bottom:3px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:#666;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab-btn:hover{color:#66CFF5;background:rgba(30,136,229,.05)}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;transition:all .2s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#66CFF5;border-radius:8px 0 0 8px}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-gold::before{background:#FFC107}
+.card-green::before{background:#4CAF50}
+.card-red::before{background:#F44336}
+.card-orange::before{background:#FF9800}
+.btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px;border:none}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-warning{background:#FF9800;color:#fff}
+.btn-warning:hover{background:#F57C00}
+.btn-outline{background:#fff;color:#66CFF5;border:1px solid #66CFF5}
+.btn-outline:hover{background:#E0F4FD}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-icon{padding:6px;border-radius:4px;cursor:pointer;transition:all .2s ease;border:none;background:transparent;color:#999}
+.btn-icon:hover{color:#66CFF5;background:rgba(30,136,229,.08)}
+input,select,textarea{border:1px solid #E0E0E0;border-radius:6px;padding:8px 12px;font-size:13px;transition:all .2s ease;background:#fff;width:100%;font-family:'Inter',sans-serif}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+label{font-size:12px;font-weight:500;color:#555;display:block;margin-bottom:4px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s ease;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;transform:scale(.95);transition:transform .2s ease}
+.modal-overlay.show .modal-box{transform:scale(1)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.export-hide{transition:all .2s ease}
+.chart-container{position:relative;padding:16px;background:#fff;border-radius:8px}
+.chart-export-btn{position:absolute;top:8px;right:8px;z-index:10}
+.scenario-card{border-left:4px solid #66CFF5;padding:16px;margin-bottom:12px;background:#fff;border-radius:0 8px 8px 0;border:1px solid #E0E0E0;border-left:4px solid #66CFF5;transition:all .2s ease}
+.scenario-card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease forwards}
+.confirm-inline{display:inline-flex;align-items:center;gap:6px;background:#FFF3E0;border:1px solid #FF9800;border-radius:6px;padding:4px 10px;font-size:12px}
+</style>
+  <script>
+tailwind.config={theme:{extend:{colors:{primary:'#66CFF5',secondary:'#F8F9FA',border:'#E0E0E0',gold:'#FFC107',success:'#4CAF50',danger:'#F44336',warning:'#FF9800'}}}}
+</script>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-root" class="h-full w-full flex flex-col overflow-hidden" style="background:#F8F9FA"><!-- Header -->
+   <header id="app-header" class="w-full bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0" style="z-index:100">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="display: none; background:#66CFF5">
+       <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="main-title" class="text-base font-semibold text-gray-800" style="display: none; display: none; letter-spacing:-.3px">IS Calculadora ETFs</h1>
+       <p id="main-desc" class="text-xs text-gray-400 font-normal" style="display: none;">Simulador de investimento em ETFs europeus para a CPLP</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-2">
+      <div class="relative"><input id="global-search" type="text" placeholder="Filtrar..." class="export-hide text-xs pl-8 pr-3 py-2" style="width:180px"> <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2" style="width:14px;height:14px;color:#aaa"></i>
+      </div><button class="btn btn-outline btn-sm export-hide" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:14px;height:14px"></i> JSON</button> <button class="btn btn-outline btn-sm export-hide" onclick="document.getElementById('importInput').click()" title="Importar JSON"><i data-lucide="upload" style="width:14px;height:14px"></i></button> <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)"> <button class="btn btn-primary btn-sm export-hide" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:14px;height:14px"></i> PDF</button> <button class="btn btn-success btn-sm export-hide" onclick="exportImage()" title="Exportar Imagem"><i data-lucide="image" style="width:14px;height:14px"></i></button>
+     </div>
+    </div>
+   </header><!-- Tabs Nav -->
+   <nav id="tabs-nav" class="w-full bg-white border-b border-gray-200 flex-shrink-0 overflow-x-auto" style="z-index:99">
+    <div class="max-w-7xl mx-auto flex" style="min-width:max-content"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator" style="width:15px;height:15px"></i> Simulador</button> <button class="tab-btn" data-tab="etfs" onclick="switchTab('etfs')"><i data-lucide="bar-chart-3" style="width:15px;height:15px"></i> ETFs Europa</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers" style="width:15px;height:15px"></i> Cenários</button> <button class="tab-btn" data-tab="cambio" onclick="switchTab('cambio')"><i data-lucide="refresh-cw" style="width:15px;height:15px"></i> Câmbio CPLP</button> <button class="tab-btn" data-tab="graficos" onclick="switchTab('graficos')"><i data-lucide="trending-up" style="width:15px;height:15px"></i> Gráficos</button> <button class="tab-btn" data-tab="ajuda" onclick="switchTab('ajuda')"><i data-lucide="help-circle" style="width:15px;height:15px"></i> Guia</button>
+    </div>
+   </nav><!-- Main Content -->
+   <main id="main-content" class="flex-1 overflow-y-auto w-full">
+    <div class="max-w-7xl mx-auto p-4"><!-- TAB: Simulador -->
+     <div id="tab-simulador" class="tab-panel active fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><!-- Formulário -->
+       <div class="lg:col-span-2">
+        <div class="card p-5">
+         <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-gray-700">Parâmetros de Investimento</h2>
+          <div class="flex gap-2 export-hide"><button class="btn btn-success btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:13px;height:13px"></i> Guardar Cenário</button> <button class="btn btn-outline btn-sm" onclick="resetSimulator()"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Limpar</button>
+          </div>
+         </div>
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label for="sim-title">Título do Cenário</label> <input id="sim-title" type="text" value="Meu Investimento" placeholder="Ex: Reforma 2040">
+          </div>
+          <div><label for="sim-etf">ETF Selecionado</label> <select id="sim-etf"> <option value="VWCE">Vanguard FTSE All-World (VWCE)</option> <option value="IWDA">iShares Core MSCI World (IWDA)</option> <option value="CSPX">iShares Core S&amp;P 500 (CSPX)</option> <option value="EUNL">iShares Core MSCI Europe (EUNL)</option> <option value="VUSA">Vanguard S&amp;P 500 (VUSA)</option> <option value="AGGH">iShares Core Global Agg Bond (AGGH)</option> <option value="EMIM">iShares Core MSCI EM IMI (EMIM)</option> <option value="SXR8">iShares Core S&amp;P 500 Acc (SXR8)</option> <option value="CUSTOM">Personalizado</option> </select>
+          </div>
+          <div><label for="sim-initial">Investimento Inicial (AOA)</label> <input id="sim-initial" type="number" value="500000" min="0" step="1000">
+          </div>
+          <div><label for="sim-monthly">Aporte Mensal (AOA)</label> <input id="sim-monthly" type="number" value="50000" min="0" step="1000">
+          </div>
+          <div><label for="sim-years">Período (anos)</label> <input id="sim-years" type="number" value="10" min="1" max="50">
+          </div>
+          <div><label for="sim-rate">Rentabilidade Anual Estimada (%)</label> <input id="sim-rate" type="number" value="8" min="0" max="50" step="0.1">
+          </div>
+          <div><label for="sim-fee">Taxa de Gestão do ETF (%/ano)</label> <input id="sim-fee" type="number" value="0.22" min="0" max="5" step="0.01">
+          </div>
+          <div><label for="sim-inflation">Inflação Estimada (%/ano)</label> <input id="sim-inflation" type="number" value="3" min="0" max="30" step="0.1">
+          </div>
+         </div>
+         <div class="mt-4 flex gap-2 export-hide"><button class="btn btn-primary" onclick="runSimulation()"><i data-lucide="play" style="width:14px;height:14px"></i> Simular Investimento</button>
+         </div>
+        </div>
+       </div><!-- Resumo -->
+       <div>
+        <div class="card card-green p-5 mb-4">
+         <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Resumo da Simulação</h3>
+         <div id="sim-summary" class="space-y-3">
+          <div class="text-center text-gray-400 text-sm py-6"><i data-lucide="bar-chart-3" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#ccc"></i> Clique em "Simular" para ver resultados
+          </div>
+         </div>
+        </div>
+        <div class="card card-gold p-5">
+         <h3 class="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Valor em Outras Moedas</h3>
+         <div id="sim-currencies" class="space-y-2">
+          <p class="text-xs text-gray-400 text-center py-4">Execute uma simulação primeiro</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Gráfico na aba Simulador -->
+      <div class="card p-4 mt-4">
+       <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold text-gray-700">Evolução Patrimonial</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('simChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+       </div>
+       <div class="chart-container" style="height:300px">
+        <canvas id="simChart"></canvas>
+       </div>
+      </div>
+     </div><!-- TAB: ETFs Europa -->
+     <div id="tab-etfs" class="tab-panel fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">ETFs Populares na Europa</h2><input id="etf-search" type="text" placeholder="Filtrar ETFs..." class="export-hide" style="width:200px" oninput="filterETFs()">
+      </div>
+      <div id="etf-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      </div>
+      <div class="card p-4 mt-4">
+       <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold text-gray-700">Comparação de TER (Taxa de Gestão)</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('etfTerChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+       </div>
+       <div class="chart-container" style="height:260px">
+        <canvas id="etfTerChart"></canvas>
+       </div>
+      </div>
+     </div><!-- TAB: Cenários -->
+     <div id="tab-cenarios" class="tab-panel fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">Cenários Guardados</h2>
+       <div class="flex gap-2"><input id="scenario-search" type="text" placeholder="Filtrar cenários..." class="export-hide" style="width:180px" oninput="renderScenarios()"> <button class="btn btn-primary btn-sm export-hide" onclick="switchTab('simulador')"><i data-lucide="plus" style="width:13px;height:13px"></i> Novo</button>
+       </div>
+      </div>
+      <div id="scenarios-list"></div>
+      <div id="scenarios-empty" class="text-center text-gray-400 text-sm py-12" style="display:none"><i data-lucide="layers" style="width:40px;height:40px;margin:0 auto 12px;display:block;color:#ddd"></i> Nenhum cenário guardado ainda.<br>
+       Crie uma simulação e clique em "Guardar Cenário".
+      </div><!-- Templates -->
+      <div class="mt-6">
+       <h3 class="text-sm font-semibold text-gray-700 mb-3">Templates de Aprendizagem</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="templates-list"></div>
+      </div>
+     </div><!-- TAB: Câmbio CPLP -->
+     <div id="tab-cambio" class="tab-panel fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">Taxas de Câmbio</h2>
+       <p class="text-xs text-gray-400">Base: AOA (Kwanza Angolano)</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="currency-cards"></div>
+      <div class="card p-4 mt-4">
+       <h3 class="text-sm font-semibold text-gray-700 mb-3">Conversor Rápido</h3>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div><label for="conv-amount">Montante (AOA)</label> <input id="conv-amount" type="number" value="1000000" min="0" oninput="convertCurrency()">
+        </div>
+        <div><label for="conv-to">Para</label> <select id="conv-to" onchange="convertCurrency()"></select>
+        </div>
+        <div>
+         <p class="text-xs text-gray-500">Resultado</p>
+         <p id="conv-result" class="text-lg font-bold text-gray-800">—</p>
+        </div>
+       </div>
+      </div>
+      <div class="card p-4 mt-4">
+       <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold text-gray-700">Comparação de Taxas</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('currencyChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+       </div>
+       <div class="chart-container" style="height:260px">
+        <canvas id="currencyChart"></canvas>
+       </div>
+      </div>
+     </div><!-- TAB: Gráficos -->
+     <div id="tab-graficos" class="tab-panel fade-in">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-sm font-semibold text-gray-700">Análise Gráfica</h2><select id="graph-scenario" class="export-hide" style="width:200px" onchange="updateGraphTab()"> <option value="">Selecione um cenário</option> </select>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-sm font-semibold text-gray-700">Distribuição do Capital</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('distChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+        </div>
+        <div class="chart-container" style="height:280px">
+         <canvas id="distChart"></canvas>
+        </div>
+       </div>
+       <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-sm font-semibold text-gray-700">Crescimento Anual</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('growthChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+        </div>
+        <div class="chart-container" style="height:280px">
+         <canvas id="growthChart"></canvas>
+        </div>
+       </div>
+       <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-sm font-semibold text-gray-700">Impacto das Taxas</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('feeChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+        </div>
+        <div class="chart-container" style="height:280px">
+         <canvas id="feeChart"></canvas>
+        </div>
+       </div>
+       <div class="card p-4">
+        <div class="flex items-center justify-between mb-2">
+         <h3 class="text-sm font-semibold text-gray-700">Valor Real vs Nominal</h3><button class="btn-icon btn-sm chart-export-btn export-hide" onclick="exportChartImage('realChart')" title="Exportar gráfico HD"><i data-lucide="download" style="width:14px;height:14px"></i></button>
+        </div>
+        <div class="chart-container" style="height:280px">
+         <canvas id="realChart"></canvas>
+        </div>
+       </div>
+      </div>
+     </div><!-- TAB: Guia -->
+     <div id="tab-ajuda" class="tab-panel fade-in">
+      <div class="space-y-4">
+       <div class="card p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="info" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px"></i>O que é este simulador?</h2>
+        <p class="text-sm text-gray-600 leading-relaxed">O <strong>IS Calculadora ETFs</strong> é uma ferramenta de planeamento estratégico financeiro concebida para cidadãos da Comunidade dos Países de Língua Portuguesa (CPLP). Permite simular investimentos em ETFs (Exchange-Traded Funds) europeus usando o Kwanza como moeda base, com conversão automática para todas as moedas da CPLP.</p>
+       </div>
+       <div class="card card-green p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="target" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px"></i>Como utilizar</h2>
+        <ol class="text-sm text-gray-600 space-y-2 list-decimal pl-5">
+         <li><strong>Simulador:</strong> Preencha os parâmetros de investimento (montante inicial, aportes mensais, período e rentabilidade esperada) e clique em "Simular".</li>
+         <li><strong>ETFs Europa:</strong> Consulte os ETFs mais populares na Europa com informações sobre TER, tipo e índice de referência.</li>
+         <li><strong>Cenários:</strong> Guarde e compare diferentes simulações. Pode clonar cenários existentes ou criar novos a partir de templates.</li>
+         <li><strong>Câmbio:</strong> Consulte e edite as taxas de câmbio da CPLP. As conversões são aplicadas automaticamente.</li>
+         <li><strong>Gráficos:</strong> Analise visualmente a evolução patrimonial, distribuição de capital e impacto de taxas.</li>
+        </ol>
+       </div>
+       <div class="card card-gold p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="star" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px"></i>Melhores Práticas</h2>
+        <ul class="text-sm text-gray-600 space-y-2 list-disc pl-5">
+         <li><strong>Diversifique:</strong> Não coloque tudo num único ETF. Combine ETFs globais, europeus e de mercados emergentes.</li>
+         <li><strong>Invista regularmente:</strong> Aportes mensais consistentes (DCA) reduzem o impacto da volatilidade.</li>
+         <li><strong>Pense a longo prazo:</strong> ETFs funcionam melhor em horizontes de 10+ anos. Evite vender por pânico.</li>
+         <li><strong>Atenção às taxas:</strong> Prefira ETFs com TER abaixo de 0.30%. Pequenas diferenças acumulam-se ao longo do tempo.</li>
+         <li><strong>Considere a inflação:</strong> Use o campo de inflação estimada para ver o poder de compra real do seu investimento.</li>
+         <li><strong>Compare cenários:</strong> Guarde várias simulações para comparar estratégias diferentes.</li>
+         <li><strong>Atenção ao câmbio:</strong> Variações cambiais podem afetar significativamente o retorno em moeda local.</li>
+        </ul>
+       </div>
+       <div class="card p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="book-open" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px"></i>O que são ETFs?</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-3">ETFs (Exchange-Traded Funds) são fundos de investimento negociados em bolsa que replicam o desempenho de um índice, setor ou classe de ativos. São uma das formas mais acessíveis e eficientes de investir nos mercados globais.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+         <div class="bg-blue-50 rounded-lg p-3 text-center">
+          <p class="text-2xl font-bold text-blue-600">0.07%</p>
+          <p class="text-xs text-gray-500 mt-1">TER mais baixo disponível</p>
+         </div>
+         <div class="bg-green-50 rounded-lg p-3 text-center">
+          <p class="text-2xl font-bold text-green-600">1000+</p>
+          <p class="text-xs text-gray-500 mt-1">ETFs disponíveis na Europa</p>
+         </div>
+         <div class="bg-amber-50 rounded-lg p-3 text-center">
+          <p class="text-2xl font-bold text-amber-600">€1T+</p>
+          <p class="text-xs text-gray-500 mt-1">Ativos sob gestão</p>
+         </div>
+        </div>
+       </div>
+       <div class="card card-orange p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3"><i data-lucide="alert-triangle" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px"></i>Aviso Legal</h2>
+        <p class="text-sm text-gray-600 leading-relaxed">Esta ferramenta é apenas para fins educativos e de simulação. Não constitui aconselhamento financeiro. Rentabilidades passadas não garantem resultados futuros. Consulte sempre um consultor financeiro antes de investir.</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast container -->
+   <div id="toast" class="toast"></div><!-- Edit Currency Modal -->
+   <div id="currency-modal" class="modal-overlay">
+    <div class="modal-box">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-semibold text-gray-700">Editar Taxa de Câmbio</h3><button class="btn-icon" onclick="closeCurrencyModal()"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+     </div>
+     <div class="space-y-3">
+      <div><label for="modal-currency-name">Moeda</label> <input id="modal-currency-name" type="text" readonly>
+      </div>
+      <div><label for="modal-currency-rate">Taxa (1 unidade = X AOA)</label> <input id="modal-currency-rate" type="number" step="0.01" min="0">
+      </div>
+     </div>
+     <div class="flex gap-2 mt-4 justify-end"><button class="btn btn-outline btn-sm" onclick="closeCurrencyModal()">Cancelar</button> <button class="btn btn-primary btn-sm" onclick="saveCurrencyRate()">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Edit Scenario Modal -->
+   <div id="scenario-modal" class="modal-overlay">
+    <div class="modal-box">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-semibold text-gray-700" id="scenario-modal-title">Editar Cenário</h3><button class="btn-icon" onclick="closeScenarioModal()"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+     </div>
+     <div class="space-y-3">
+      <div>
+       <label for="smod-title">Título</label><input id="smod-title" type="text">
+      </div>
+      <div>
+       <label for="smod-etf">ETF</label><select id="smod-etf"><option value="VWCE">VWCE</option><option value="IWDA">IWDA</option><option value="CSPX">CSPX</option><option value="EUNL">EUNL</option><option value="VUSA">VUSA</option><option value="AGGH">AGGH</option><option value="EMIM">EMIM</option><option value="SXR8">SXR8</option><option value="CUSTOM">Personalizado</option></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div>
+        <label for="smod-initial">Inicial (AOA)</label><input id="smod-initial" type="number" min="0">
+       </div>
+       <div>
+        <label for="smod-monthly">Mensal (AOA)</label><input id="smod-monthly" type="number" min="0">
+       </div>
+       <div>
+        <label for="smod-years">Anos</label><input id="smod-years" type="number" min="1" max="50">
+       </div>
+       <div>
+        <label for="smod-rate">Rent. Anual (%)</label><input id="smod-rate" type="number" step="0.1">
+       </div>
+       <div>
+        <label for="smod-fee">TER (%)</label><input id="smod-fee" type="number" step="0.01">
+       </div>
+       <div>
+        <label for="smod-inflation">Inflação (%)</label><input id="smod-inflation" type="number" step="0.1">
+       </div>
+      </div>
+     </div>
+     <div class="flex gap-2 mt-4 justify-end"><button class="btn btn-outline btn-sm" onclick="closeScenarioModal()">Cancelar</button> <button class="btn btn-primary btn-sm" id="smod-save-btn" onclick="saveEditedScenario()">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Confirm Delete Inline (placed inside scenario cards dynamically) -->
+  </div>
+  <script>
+// ============ DATA ============
+const ETF_DATA = [
+  {ticker:'VWCE',name:'Vanguard FTSE All-World Acc',index:'FTSE All-World',ter:0.22,type:'Ações Globais',aum:'€12B',currency:'EUR'},
+  {ticker:'IWDA',name:'iShares Core MSCI World Acc',index:'MSCI World',ter:0.20,type:'Ações Países Desenvolvidos',aum:'€65B',currency:'EUR'},
+  {ticker:'CSPX',name:'iShares Core S&P 500 Acc',index:'S&P 500',ter:0.07,type:'Ações EUA',aum:'€80B',currency:'USD'},
+  {ticker:'EUNL',name:'iShares Core MSCI Europe Acc',index:'MSCI Europe',ter:0.12,type:'Ações Europa',aum:'€8B',currency:'EUR'},
+  {ticker:'VUSA',name:'Vanguard S&P 500 Dist',index:'S&P 500',ter:0.07,type:'Ações EUA',aum:'€38B',currency:'USD'},
+  {ticker:'AGGH',name:'iShares Core Global Agg Bond',index:'Barclays Global Agg',ter:0.10,type:'Obrigações Globais',aum:'€5B',currency:'EUR'},
+  {ticker:'EMIM',name:'iShares Core MSCI EM IMI Acc',index:'MSCI EM IMI',ter:0.18,type:'Ações Emergentes',aum:'€18B',currency:'USD'},
+  {ticker:'SXR8',name:'iShares Core S&P 500 Acc (DE)',index:'S&P 500',ter:0.07,type:'Ações EUA',aum:'€75B',currency:'EUR'}
+];
+
+let currencies = {
+  USD:{name:'Dólar Americano',code:'USD',flag:'🇺🇸',rate:830},
+  EUR:{name:'Euro',code:'EUR',flag:'🇪🇺',rate:900},
+  BRL:{name:'Real Brasileiro',code:'BRL',flag:'🇧🇷',rate:155},
+  MZN:{name:'Metical Moçambicano',code:'MZN',flag:'🇲🇿',rate:13},
+  CVE:{name:'Escudo Cabo-verdiano',code:'CVE',flag:'🇨🇻',rate:8.2},
+  STN:{name:'Dobra São-tomense',code:'STN',flag:'🇸🇹',rate:36},
+  XOF:{name:'Franco CFA (Guiné-Bissau)',code:'XOF',flag:'🇬🇼',rate:1.37},
+  MOP:{name:'Pataca Macaense',code:'MOP',flag:'🇲🇴',rate:103},
+  TPL:{name:'Dólar Timorense (USD)',code:'TPL',flag:'🇹🇱',rate:830}
+};
+
+let scenarios = [];
+let currentSimResult = null;
+let charts = {};
+let editingScenarioIdx = -1;
+let editingCurrencyCode = '';
+
+const TEMPLATES = [
+  {title:'Conservador 10 Anos',etf:'AGGH',initial:1000000,monthly:30000,years:10,rate:4,fee:0.10,inflation:3,desc:'Perfil conservador com obrigações globais'},
+  {title:'Moderado 15 Anos',etf:'IWDA',initial:500000,monthly:50000,years:15,rate:7,fee:0.20,inflation:3,desc:'Perfil moderado com ações globais'},
+  {title:'Agressivo 20 Anos',etf:'VWCE',initial:200000,monthly:80000,years:20,rate:9,fee:0.22,inflation:3,desc:'Perfil agressivo para longo prazo'},
+  {title:'S&P 500 Focado',etf:'CSPX',initial:1000000,monthly:100000,years:10,rate:10,fee:0.07,inflation:3,desc:'Concentrado no mercado americano'},
+  {title:'Emergentes DCA',etf:'EMIM',initial:0,monthly:60000,years:25,rate:8,fee:0.18,inflation:4,desc:'DCA puro em mercados emergentes'},
+  {title:'Europa Estável',etf:'EUNL',initial:750000,monthly:40000,years:12,rate:6,fee:0.12,inflation:2.5,desc:'Investimento focado na Europa'}
+];
+
+// ============ PERSISTENCE ============
+function loadData(){
+  try{
+    const s=localStorage.getItem('is_etf_scenarios');
+    if(s)scenarios=JSON.parse(s);
+    const c=localStorage.getItem('is_etf_currencies');
+    if(c){const parsed=JSON.parse(c);Object.keys(parsed).forEach(k=>{if(currencies[k])currencies[k].rate=parsed[k]})}
+  }catch(e){}
+}
+function saveData(){
+  localStorage.setItem('is_etf_scenarios',JSON.stringify(scenarios));
+  const rates={};Object.keys(currencies).forEach(k=>{rates[k]=currencies[k].rate});
+  localStorage.setItem('is_etf_currencies',JSON.stringify(rates));
+}
+
+// ============ TAB SWITCHING ============
+function switchTab(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>{p.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active')});
+  const panel=document.getElementById('tab-'+tab);
+  if(panel){panel.classList.add('active');panel.classList.remove('fade-in');void panel.offsetWidth;panel.classList.add('fade-in')}
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  if(tab==='etfs')renderETFs();
+  if(tab==='cenarios')renderScenarios();
+  if(tab==='cambio')renderCurrencies();
+  if(tab==='graficos')populateGraphScenarioSelect();
+  lucide.createIcons();
+}
+
+// ============ FORMATTING ============
+function fmtAOA(v){return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',minimumFractionDigits:0,maximumFractionDigits:0}).format(v)}
+function fmtNum(v,d=0){return new Intl.NumberFormat('pt-AO',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v)}
+function fmtPct(v){return v.toFixed(1)+'%'}
+
+// ============ SIMULATION ============
+function getSimParams(){
+  return{
+    title:document.getElementById('sim-title').value||'Cenário',
+    etf:document.getElementById('sim-etf').value,
+    initial:parseFloat(document.getElementById('sim-initial').value)||0,
+    monthly:parseFloat(document.getElementById('sim-monthly').value)||0,
+    years:parseInt(document.getElementById('sim-years').value)||1,
+    rate:parseFloat(document.getElementById('sim-rate').value)||0,
+    fee:parseFloat(document.getElementById('sim-fee').value)||0,
+    inflation:parseFloat(document.getElementById('sim-inflation').value)||0
+  }
+}
+
+function simulate(p){
+  const months=p.years*12;
+  const monthlyRate=(p.rate/100)/12;
+  const monthlyFee=(p.fee/100)/12;
+  const monthlyInflation=(p.inflation/100)/12;
+  const netMonthlyRate=monthlyRate-monthlyFee;
+  let balance=p.initial;
+  let totalInvested=p.initial;
+  let realBalance=p.initial;
+  const yearly=[{year:0,balance:p.initial,invested:p.initial,real:p.initial,gains:0}];
+  for(let m=1;m<=months;m++){
+    balance=balance*(1+netMonthlyRate)+p.monthly;
+    totalInvested+=p.monthly;
+    realBalance=realBalance*(1+netMonthlyRate-monthlyInflation)+p.monthly;
+    if(m%12===0){
+      yearly.push({year:m/12,balance:Math.round(balance),invested:Math.round(totalInvested),real:Math.round(realBalance),gains:Math.round(balance-totalInvested)})
+    }
+  }
+  if(months%12!==0){
+    yearly.push({year:p.years,balance:Math.round(balance),invested:Math.round(totalInvested),real:Math.round(realBalance),gains:Math.round(balance-totalInvested)})
+  }
+  const totalFees=p.initial*((1+monthlyRate)**months-(1+netMonthlyRate)**months);
+  return{params:p,yearly,finalBalance:Math.round(balance),totalInvested:Math.round(totalInvested),totalGains:Math.round(balance-totalInvested),realValue:Math.round(realBalance),estimatedFees:Math.round(Math.abs(totalFees)),gainPct:totalInvested>0?((balance-totalInvested)/totalInvested*100):0}
+}
+
+function runSimulation(){
+  const p=getSimParams();
+  currentSimResult=simulate(p);
+  renderSimSummary(currentSimResult);
+  renderSimChart(currentSimResult);
+  renderSimCurrencies(currentSimResult.finalBalance);
+  showToast('Simulação concluída','success');
+}
+
+function renderSimSummary(r){
+  const el=document.getElementById('sim-summary');
+  const investedPct=r.totalInvested/(r.finalBalance)*100;
+  const gainsPct=r.totalGains/(r.finalBalance)*100;
+  el.innerHTML=`
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <span class="text-xs text-gray-500">Valor Final</span>
+      <span class="text-sm font-bold text-green-600">${fmtAOA(r.finalBalance)}</span>
+    </div>
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <span class="text-xs text-gray-500">Total Investido</span>
+      <span class="text-sm font-semibold text-gray-700">${fmtAOA(r.totalInvested)}</span>
+    </div>
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <span class="text-xs text-gray-500">Lucro Bruto</span>
+      <span class="text-sm font-semibold text-blue-600">${fmtAOA(r.totalGains)} <span class="text-xs">(${fmtPct(r.gainPct)})</span></span>
+    </div>
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <span class="text-xs text-gray-500">Valor Real (ajustado)</span>
+      <span class="text-sm font-semibold text-gray-600">${fmtAOA(r.realValue)}</span>
+    </div>
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <span class="text-xs text-gray-500">Taxas Estimadas</span>
+      <span class="text-sm font-semibold text-red-500">-${fmtAOA(r.estimatedFees)}</span>
+    </div>
+    <div class="mt-2">
+      <div class="flex gap-1 h-4 rounded-full overflow-hidden bg-gray-100">
+        <div class="bg-blue-500 rounded-l-full" style="width:${investedPct}%" title="Investido: ${fmtPct(investedPct)}"></div>
+        <div class="bg-green-500 rounded-r-full" style="width:${gainsPct}%" title="Lucro: ${fmtPct(gainsPct)}"></div>
+      </div>
+      <div class="flex justify-between mt-1">
+        <span class="text-xs text-blue-500">Investido ${fmtPct(investedPct)}</span>
+        <span class="text-xs text-green-500">Lucro ${fmtPct(gainsPct)}</span>
+      </div>
+    </div>`;
+  lucide.createIcons();
+}
+
+function renderSimCurrencies(valueAOA){
+  const el=document.getElementById('sim-currencies');
+  let html='';
+  Object.values(currencies).forEach(c=>{
+    const converted=valueAOA/c.rate;
+    html+=`<div class="flex justify-between items-center py-1.5 border-b border-gray-50">
+      <span class="text-xs text-gray-500">${c.flag} ${c.code}</span>
+      <span class="text-xs font-semibold text-gray-700">${fmtNum(converted,2)}</span>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderSimChart(r){
+  const ctx=document.getElementById('simChart');
+  if(charts.simChart)charts.simChart.destroy();
+  charts.simChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:r.yearly.map(y=>`Ano ${y.year}`),
+      datasets:[
+        {label:'Valor Total',data:r.yearly.map(y=>y.balance),borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,0.08)',fill:true,tension:0.3,pointRadius:3},
+        {label:'Total Investido',data:r.yearly.map(y=>y.invested),borderColor:'#4CAF50',backgroundColor:'transparent',borderDash:[5,5],tension:0.3,pointRadius:2},
+        {label:'Valor Real',data:r.yearly.map(y=>y.real),borderColor:'#FF9800',backgroundColor:'transparent',borderDash:[3,3],tension:0.3,pointRadius:2}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Inter'},usePointStyle:true,padding:16}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtAOA(ctx.raw)}`}}},scales:{y:{ticks:{callback:v=>fmtNum(v/1000)+'K',font:{size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+// ============ ETFs ============
+function renderETFs(){
+  const search=(document.getElementById('etf-search')?.value||'').toLowerCase();
+  const filtered=ETF_DATA.filter(e=>!search||e.ticker.toLowerCase().includes(search)||e.name.toLowerCase().includes(search)||e.type.toLowerCase().includes(search));
+  const el=document.getElementById('etf-list');
+  el.innerHTML=filtered.map(e=>`
+    <div class="card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-bold text-blue-600">${e.ticker}</span>
+        <span class="badge" style="background:#E0F4FD;color:#66CFF5">${e.currency}</span>
+      </div>
+      <p class="text-xs text-gray-700 font-medium mb-1">${e.name}</p>
+      <p class="text-xs text-gray-400 mb-3">${e.index}</p>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">TER</p><p class="text-sm font-bold text-gray-700">${e.ter}%</p></div>
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">Tipo</p><p class="text-xs font-medium text-gray-600">${e.type.split(' ')[0]}</p></div>
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">AUM</p><p class="text-sm font-bold text-gray-700">${e.aum}</p></div>
+      </div>
+      <button class="btn btn-outline btn-sm w-full mt-3 export-hide" onclick="useETF('${e.ticker}',${e.ter})"><i data-lucide="arrow-right" style="width:12px;height:12px"></i> Usar no Simulador</button>
+    </div>`).join('');
+  renderETFTerChart(filtered);
+  lucide.createIcons();
+}
+function filterETFs(){renderETFs()}
+function useETF(ticker,ter){
+  document.getElementById('sim-etf').value=ticker;
+  document.getElementById('sim-fee').value=ter;
+  switchTab('simulador');
+  showToast(`ETF ${ticker} selecionado`,'info');
+}
+function renderETFTerChart(data){
+  const ctx=document.getElementById('etfTerChart');
+  if(charts.etfTerChart)charts.etfTerChart.destroy();
+  const colors=data.map((_,i)=>`hsl(${210+i*25},70%,55%)`);
+  charts.etfTerChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:data.map(e=>e.ticker),datasets:[{label:'TER (%)',data:data.map(e=>e.ter),backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'600'}},grid:{display:false}}}}
+  });
+}
+
+// ============ SCENARIOS ============
+function saveScenario(){
+  if(!currentSimResult){showToast('Execute uma simulação primeiro','error');return}
+  const idx=scenarios.length+1;
+  const s={...currentSimResult.params,id:Date.now(),name:`Cenário ${idx}`,result:currentSimResult,createdAt:new Date().toISOString()};
+  s.title=s.title||`Cenário ${idx}`;
+  scenarios.push(s);
+  saveData();
+  showToast(`Cenário ${idx} guardado`,'success');
+}
+
+function renderScenarios(){
+  const search=(document.getElementById('scenario-search')?.value||'').toLowerCase();
+  const filtered=scenarios.filter(s=>!search||s.title.toLowerCase().includes(search)||s.etf.toLowerCase().includes(search));
+  const el=document.getElementById('scenarios-list');
+  const empty=document.getElementById('scenarios-empty');
+  if(filtered.length===0){el.innerHTML='';empty.style.display=scenarios.length===0?'block':'block';return}
+  empty.style.display='none';
+  el.innerHTML=filtered.map((s,i)=>{
+    const idx=scenarios.indexOf(s);
+    const r=s.result||simulate(s);
+    return`<div class="scenario-card fade-in" id="sc-${s.id}">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <span class="text-sm font-semibold text-gray-800">${s.title}</span>
+          <span class="badge ml-2" style="background:#E0F4FD;color:#66CFF5">${s.etf}</span>
+        </div>
+        <div class="flex gap-1 export-hide">
+          <button class="btn-icon" onclick="editScenario(${idx})" title="Editar"><i data-lucide="edit" style="width:14px;height:14px"></i></button>
+          <button class="btn-icon" onclick="cloneScenario(${idx})" title="Clonar"><i data-lucide="copy" style="width:14px;height:14px"></i></button>
+          <button class="btn-icon" onclick="loadScenario(${idx})" title="Carregar"><i data-lucide="play" style="width:14px;height:14px"></i></button>
+          <button class="btn-icon" id="del-btn-${s.id}" onclick="confirmDeleteScenario(${idx})" title="Eliminar" style="color:#F44336"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mt-3">
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">Inicial</p><p class="text-xs font-bold">${fmtAOA(s.initial)}</p></div>
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">Mensal</p><p class="text-xs font-bold">${fmtAOA(s.monthly)}</p></div>
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">${s.years} anos @ ${s.rate}%</p><p class="text-xs font-bold text-green-600">${fmtAOA(r.finalBalance)}</p></div>
+        <div class="bg-gray-50 rounded p-2"><p class="text-xs text-gray-400">Lucro</p><p class="text-xs font-bold text-blue-600">${fmtPct(r.gainPct)}</p></div>
+      </div>
+      <div id="confirm-${s.id}" style="display:none" class="mt-2 confirm-inline">
+        <span class="text-xs">Eliminar este cenário?</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteScenario(${idx})">Sim</button>
+        <button class="btn btn-outline btn-sm" onclick="cancelDelete(${s.id})">Não</button>
+      </div>
+      <p class="text-xs text-gray-300 mt-2">${new Date(s.createdAt).toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'})}</p>
+    </div>`}).join('');
+  lucide.createIcons();
+}
+
+function confirmDeleteScenario(idx){
+  const s=scenarios[idx];
+  document.getElementById(`del-btn-${s.id}`).style.display='none';
+  document.getElementById(`confirm-${s.id}`).style.display='flex';
+}
+function cancelDelete(id){
+  document.getElementById(`del-btn-${id}`).style.display='';
+  document.getElementById(`confirm-${id}`).style.display='none';
+}
+function deleteScenario(idx){
+  scenarios.splice(idx,1);saveData();renderScenarios();showToast('Cenário eliminado','success');
+}
+function cloneScenario(idx){
+  const s={...scenarios[idx],id:Date.now(),title:scenarios[idx].title+' (Cópia)',createdAt:new Date().toISOString()};
+  s.result=simulate(s);
+  scenarios.push(s);saveData();renderScenarios();showToast('Cenário clonado','success');
+}
+function loadScenario(idx){
+  const s=scenarios[idx];
+  document.getElementById('sim-title').value=s.title;
+  document.getElementById('sim-etf').value=s.etf;
+  document.getElementById('sim-initial').value=s.initial;
+  document.getElementById('sim-monthly').value=s.monthly;
+  document.getElementById('sim-years').value=s.years;
+  document.getElementById('sim-rate').value=s.rate;
+  document.getElementById('sim-fee').value=s.fee;
+  document.getElementById('sim-inflation').value=s.inflation;
+  switchTab('simulador');
+  runSimulation();
+  showToast('Cenário carregado','info');
+}
+function editScenario(idx){
+  editingScenarioIdx=idx;
+  const s=scenarios[idx];
+  document.getElementById('scenario-modal-title').textContent='Editar Cenário';
+  document.getElementById('smod-title').value=s.title;
+  document.getElementById('smod-etf').value=s.etf;
+  document.getElementById('smod-initial').value=s.initial;
+  document.getElementById('smod-monthly').value=s.monthly;
+  document.getElementById('smod-years').value=s.years;
+  document.getElementById('smod-rate').value=s.rate;
+  document.getElementById('smod-fee').value=s.fee;
+  document.getElementById('smod-inflation').value=s.inflation;
+  document.getElementById('scenario-modal').classList.add('show');
+  lucide.createIcons();
+}
+function closeScenarioModal(){document.getElementById('scenario-modal').classList.remove('show');editingScenarioIdx=-1}
+function saveEditedScenario(){
+  if(editingScenarioIdx<0)return;
+  const s=scenarios[editingScenarioIdx];
+  s.title=document.getElementById('smod-title').value;
+  s.etf=document.getElementById('smod-etf').value;
+  s.initial=parseFloat(document.getElementById('smod-initial').value)||0;
+  s.monthly=parseFloat(document.getElementById('smod-monthly').value)||0;
+  s.years=parseInt(document.getElementById('smod-years').value)||1;
+  s.rate=parseFloat(document.getElementById('smod-rate').value)||0;
+  s.fee=parseFloat(document.getElementById('smod-fee').value)||0;
+  s.inflation=parseFloat(document.getElementById('smod-inflation').value)||0;
+  s.result=simulate(s);
+  saveData();closeScenarioModal();renderScenarios();showToast('Cenário atualizado','success');
+}
+
+function renderTemplates(){
+  const el=document.getElementById('templates-list');
+  el.innerHTML=TEMPLATES.map((t,i)=>`
+    <div class="card card-gold p-4">
+      <h4 class="text-sm font-semibold text-gray-700 mb-1">${t.title}</h4>
+      <p class="text-xs text-gray-400 mb-3">${t.desc}</p>
+      <div class="grid grid-cols-2 gap-2 text-center mb-3">
+        <div class="bg-amber-50 rounded p-1.5"><p class="text-xs text-gray-400">ETF</p><p class="text-xs font-bold">${t.etf}</p></div>
+        <div class="bg-amber-50 rounded p-1.5"><p class="text-xs text-gray-400">Rent.</p><p class="text-xs font-bold">${t.rate}%</p></div>
+      </div>
+      <button class="btn btn-warning btn-sm w-full export-hide" onclick="useTemplate(${i})"><i data-lucide="zap" style="width:12px;height:12px"></i> Usar Template</button>
+    </div>`).join('');
+  lucide.createIcons();
+}
+function useTemplate(i){
+  const t=TEMPLATES[i];
+  document.getElementById('sim-title').value=t.title;
+  document.getElementById('sim-etf').value=t.etf;
+  document.getElementById('sim-initial').value=t.initial;
+  document.getElementById('sim-monthly').value=t.monthly;
+  document.getElementById('sim-years').value=t.years;
+  document.getElementById('sim-rate').value=t.rate;
+  document.getElementById('sim-fee').value=t.fee;
+  document.getElementById('sim-inflation').value=t.inflation;
+  switchTab('simulador');
+  runSimulation();
+  showToast('Template aplicado','info');
+}
+
+// ============ CURRENCIES ============
+function renderCurrencies(){
+  const el=document.getElementById('currency-cards');
+  el.innerHTML=Object.values(currencies).map(c=>`
+    <div class="card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xl">${c.flag}</span>
+        <button class="btn-icon export-hide" onclick="openCurrencyModal('${c.code}')" title="Editar"><i data-lucide="edit" style="width:14px;height:14px"></i></button>
+      </div>
+      <p class="text-sm font-semibold text-gray-700">${c.code}</p>
+      <p class="text-xs text-gray-400 mb-2">${c.name}</p>
+      <p class="text-xs text-gray-500">1 ${c.code} = <strong class="text-gray-800">${fmtNum(c.rate,2)} AOA</strong></p>
+    </div>`).join('');
+  populateConvSelect();
+  convertCurrency();
+  renderCurrencyChart();
+  lucide.createIcons();
+}
+function openCurrencyModal(code){
+  editingCurrencyCode=code;
+  document.getElementById('modal-currency-name').value=`${currencies[code].flag} ${currencies[code].name} (${code})`;
+  document.getElementById('modal-currency-rate').value=currencies[code].rate;
+  document.getElementById('currency-modal').classList.add('show');
+}
+function closeCurrencyModal(){document.getElementById('currency-modal').classList.remove('show')}
+function saveCurrencyRate(){
+  const r=parseFloat(document.getElementById('modal-currency-rate').value);
+  if(r>0){currencies[editingCurrencyCode].rate=r;saveData();renderCurrencies();closeCurrencyModal();showToast('Taxa atualizada','success')}
+}
+function populateConvSelect(){
+  const sel=document.getElementById('conv-to');
+  sel.innerHTML=Object.values(currencies).map(c=>`<option value="${c.code}">${c.flag} ${c.code}</option>`).join('');
+}
+function convertCurrency(){
+  const amount=parseFloat(document.getElementById('conv-amount').value)||0;
+  const code=document.getElementById('conv-to').value;
+  if(!code||!currencies[code])return;
+  const result=amount/currencies[code].rate;
+  document.getElementById('conv-result').textContent=`${fmtNum(result,2)} ${code}`;
+}
+function renderCurrencyChart(){
+  const ctx=document.getElementById('currencyChart');
+  if(charts.currencyChart)charts.currencyChart.destroy();
+  const vals=Object.values(currencies);
+  const total=vals.reduce((s,c)=>s+c.rate,0);
+  charts.currencyChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:vals.map(c=>`${c.flag} ${c.code}`),datasets:[{label:'AOA por unidade',data:vals.map(c=>c.rate),backgroundColor:vals.map((_,i)=>`hsl(${200+i*18},65%,55%)`),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmtNum(c.raw,2)} AOA`}}},scales:{x:{ticks:{font:{size:10}},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+// ============ GRAPHS TAB ============
+function populateGraphScenarioSelect(){
+  const sel=document.getElementById('graph-scenario');
+  sel.innerHTML='<option value="">Selecione um cenário</option>'+scenarios.map((s,i)=>`<option value="${i}">${s.title} (${s.etf})</option>`).join('');
+  if(currentSimResult){sel.innerHTML+='<option value="current">Simulação Atual</option>'}
+}
+function updateGraphTab(){
+  const v=document.getElementById('graph-scenario').value;
+  let r;
+  if(v==='current')r=currentSimResult;
+  else if(v!==''){const s=scenarios[parseInt(v)];r=s.result||simulate(s)}
+  if(!r)return;
+  renderDistChart(r);
+  renderGrowthChart(r);
+  renderFeeChart(r);
+  renderRealChart(r);
+}
+function renderDistChart(r){
+  const ctx=document.getElementById('distChart');
+  if(charts.distChart)charts.distChart.destroy();
+  const total=r.finalBalance;
+  const investedPct=(r.totalInvested/total*100);
+  const gainsPct=(r.totalGains/total*100);
+  charts.distChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:[`Investido (${fmtPct(investedPct)})`,`Lucro (${fmtPct(gainsPct)})`],datasets:[{data:[r.totalInvested,r.totalGains],backgroundColor:['#66CFF5','#4CAF50'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Inter'},usePointStyle:true,padding:12}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmtAOA(c.raw)} (${fmtPct(c.raw/total*100)})`}}}}
+  });
+}
+function renderGrowthChart(r){
+  const ctx=document.getElementById('growthChart');
+  if(charts.growthChart)charts.growthChart.destroy();
+  const annualGrowth=r.yearly.slice(1).map((y,i)=>({year:y.year,growth:y.balance-r.yearly[i].balance}));
+  charts.growthChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:annualGrowth.map(g=>`Ano ${g.year}`),datasets:[{label:'Crescimento Anual',data:annualGrowth.map(g=>g.growth),backgroundColor:'rgba(30,136,229,0.7)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtAOA(c.raw)}}},scales:{y:{ticks:{callback:v=>fmtNum(v/1000)+'K',font:{size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+function renderFeeChart(r){
+  const ctx=document.getElementById('feeChart');
+  if(charts.feeChart)charts.feeChart.destroy();
+  const total=r.finalBalance+r.estimatedFees;
+  const netPct=(r.finalBalance/total*100);
+  const feePct=(r.estimatedFees/total*100);
+  charts.feeChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:[`Valor Líquido (${fmtPct(netPct)})`,`Taxas Pagas (${fmtPct(feePct)})`],datasets:[{data:[r.finalBalance,r.estimatedFees],backgroundColor:['#4CAF50','#F44336'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Inter'},usePointStyle:true,padding:12}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmtAOA(c.raw)}`}}}}
+  });
+}
+function renderRealChart(r){
+  const ctx=document.getElementById('realChart');
+  if(charts.realChart)charts.realChart.destroy();
+  charts.realChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:r.yearly.map(y=>`Ano ${y.year}`),datasets:[
+      {label:'Valor Nominal',data:r.yearly.map(y=>y.balance),borderColor:'#66CFF5',backgroundColor:'rgba(30,136,229,0.06)',fill:true,tension:0.3,pointRadius:3},
+      {label:'Valor Real',data:r.yearly.map(y=>y.real),borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,0.06)',fill:true,tension:0.3,pointRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Inter'},usePointStyle:true,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtAOA(c.raw)}`}}},scales:{y:{ticks:{callback:v=>fmtNum(v/1000)+'K',font:{size:10}},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+// ============ EXPORT / IMPORT ============
+function exportJSON(){
+  const data={scenarios,currencies:Object.fromEntries(Object.entries(currencies).map(([k,v])=>[k,v.rate])),exportedAt:new Date().toISOString(),app:'IS Calculadora ETFs'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`IS_Calculadora_ETFs_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  showToast('JSON exportado','success');
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.scenarios)scenarios=data.scenarios;
+      if(data.currencies){Object.keys(data.currencies).forEach(k=>{if(currencies[k])currencies[k].rate=data.currencies[k]})}
+      saveData();renderScenarios();renderCurrencies();showToast('Dados importados','success');
+    }catch(err){showToast('Ficheiro inválido','error')}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+async function exportImage(){
+  const hides=document.querySelectorAll('.export-hide');
+  hides.forEach(el=>el.style.display='none');
+  await new Promise(r=>setTimeout(r,100));
+  try{
+    const canvas=await html2canvas(document.getElementById('app-root'),{scale:2,backgroundColor:'#F8F9FA',useCORS:true});
+    const link=document.createElement('a');link.download=`IS_Calculadora_ETFs_${new Date().toISOString().slice(0,10)}.png`;
+    link.href=canvas.toDataURL('image/png');link.click();
+    showToast('Imagem exportada','success');
+  }catch(err){showToast('Erro ao exportar imagem','error')}
+  hides.forEach(el=>el.style.display='');
+}
+
+async function exportChartImage(chartId){
+  const chartInstance=charts[chartId];
+  if(!chartInstance)return;
+  const canvas=chartInstance.canvas;
+  const tempCanvas=document.createElement('canvas');
+  tempCanvas.width=canvas.width*2;
+  tempCanvas.height=canvas.height*2;
+  const tctx=tempCanvas.getContext('2d');
+  tctx.scale(2,2);
+  tctx.fillStyle='#ffffff';
+  tctx.fillRect(0,0,canvas.width,canvas.height);
+  tctx.drawImage(canvas,0,0);
+  const link=document.createElement('a');
+  link.download=`IS_ETF_${chartId}_${new Date().toISOString().slice(0,10)}.png`;
+  link.href=tempCanvas.toDataURL('image/png',1.0);
+  link.click();
+  showToast('Gráfico exportado em HD','success');
+}
+
+async function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('p','mm','a4');
+  const pageW=210;const pageH=297;const margin=15;
+  const contentW=pageW-2*margin;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+  const appName='IS Calculadora ETFs';
+
+  function addHeader(pg){
+    doc.setFillColor(30,136,229);
+    doc.rect(0,0,pageW,12,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.text(appName,margin,8);
+    doc.setFont('helvetica','normal');
+    doc.text(`Página ${pg}`,pageW-margin,8,{align:'right'});
+  }
+  function addFooter(){
+    doc.setFillColor(245,245,245);
+    doc.rect(0,pageH-10,pageW,10,'F');
+    doc.setTextColor(120,120,120);
+    doc.setFontSize(6);
+    doc.text(`Gerado por ${appName} · ${dateStr} · www.investesuite.com`,pageW/2,pageH-4,{align:'center'});
+  }
+
+  let page=1;
+  addHeader(page);addFooter();
+  let y=20;
+
+  doc.setTextColor(30,30,30);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text(appName,margin,y);y+=6;
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+  doc.text('Simulador de investimento em ETFs europeus para a CPLP',margin,y);y+=10;
+
+  // Current simulation
+  if(currentSimResult){
+    const r=currentSimResult;
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+    doc.text('Resultado da Simulação',margin,y);y+=7;
+
+    const rows=[
+      ['Título',r.params.title],
+      ['ETF',r.params.etf],
+      ['Investimento Inicial',fmtAOA(r.params.initial)],
+      ['Aporte Mensal',fmtAOA(r.params.monthly)],
+      ['Período',r.params.years+' anos'],
+      ['Rentabilidade',r.params.rate+'%/ano'],
+      ['TER',r.params.fee+'%/ano'],
+      ['Inflação',r.params.inflation+'%/ano'],
+      ['',''],
+      ['Valor Final',fmtAOA(r.finalBalance)],
+      ['Total Investido',fmtAOA(r.totalInvested)],
+      ['Lucro',fmtAOA(r.totalGains)+' ('+fmtPct(r.gainPct)+')'],
+      ['Valor Real',fmtAOA(r.realValue)],
+      ['Taxas Estimadas','-'+fmtAOA(r.estimatedFees)]
+    ];
+    doc.setFontSize(8);
+    rows.forEach(([k,v])=>{
+      if(!k){y+=2;return}
+      doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);doc.text(k,margin,y);
+      doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);doc.text(v,margin+55,y);
+      y+=5;
+    });
+    y+=5;
+
+    // Add sim chart
+    if(charts.simChart){
+      const chartCanvas=charts.simChart.canvas;
+      const imgData=chartCanvas.toDataURL('image/png');
+      const chartW=contentW*0.7;
+      const chartH=chartW*0.45;
+      if(y+chartH>pageH-20){doc.addPage();page++;addHeader(page);addFooter();y=20}
+      doc.addImage(imgData,'PNG',margin+(contentW-chartW)/2,y,chartW,chartH);
+      y+=chartH+8;
+    }
+  }
+
+  // Scenarios
+  if(scenarios.length>0){
+    if(y>pageH-50){doc.addPage();page++;addHeader(page);addFooter();y=20}
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+    doc.text('Cenários Guardados',margin,y);y+=7;
+    doc.setFontSize(7);
+    scenarios.forEach((s,i)=>{
+      if(y>pageH-25){doc.addPage();page++;addHeader(page);addFooter();y=20}
+      const r=s.result||simulate(s);
+      doc.setFont('helvetica','bold');doc.setTextColor(30,136,229);
+      doc.text(`${s.title} (${s.etf})`,margin,y);y+=4;
+      doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+      doc.text(`Inicial: ${fmtAOA(s.initial)} | Mensal: ${fmtAOA(s.monthly)} | ${s.years} anos @ ${s.rate}% | Resultado: ${fmtAOA(r.finalBalance)} (${fmtPct(r.gainPct)} lucro)`,margin,y);
+      y+=6;
+    });
+    y+=4;
+  }
+
+  // Currencies
+  if(y>pageH-50){doc.addPage();page++;addHeader(page);addFooter();y=20}
+  doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+  doc.text('Taxas de Câmbio CPLP',margin,y);y+=7;
+  doc.setFontSize(8);
+  Object.values(currencies).forEach(c=>{
+    doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+    doc.text(`${c.code} (${c.name}): 1 ${c.code} = ${fmtNum(c.rate,2)} AOA`,margin,y);y+=4.5;
+  });
+
+  doc.save(`IS_Calculadora_ETFs_${now.toISOString().slice(0,10)}.pdf`);
+  showToast('PDF exportado','success');
+}
+
+// ============ RESET ============
+function resetSimulator(){
+  document.getElementById('sim-title').value='Meu Investimento';
+  document.getElementById('sim-etf').value='VWCE';
+  document.getElementById('sim-initial').value=500000;
+  document.getElementById('sim-monthly').value=50000;
+  document.getElementById('sim-years').value=10;
+  document.getElementById('sim-rate').value=8;
+  document.getElementById('sim-fee').value=0.22;
+  document.getElementById('sim-inflation').value=3;
+  currentSimResult=null;
+  document.getElementById('sim-summary').innerHTML='<div class="text-center text-gray-400 text-sm py-6"><i data-lucide="bar-chart-3" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#ccc"></i>Clique em "Simular" para ver resultados</div>';
+  document.getElementById('sim-currencies').innerHTML='<p class="text-xs text-gray-400 text-center py-4">Execute uma simulação primeiro</p>';
+  if(charts.simChart){charts.simChart.destroy();charts.simChart=null}
+  showToast('Simulador reiniciado','info');
+  lucide.createIcons();
+}
+
+// ============ GLOBAL SEARCH ============
+document.getElementById('global-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+  if(activeTab==='etfs'){document.getElementById('etf-search').value=q;filterETFs()}
+  if(activeTab==='cenarios'){document.getElementById('scenario-search').value=q;renderScenarios()}
+});
+
+// ============ TOAST ============
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<i data-lucide="${type==='success'?'check-circle':type==='error'?'alert-circle':'info'}" style="width:16px;height:16px"></i> ${msg}`;
+  t.classList.add('show');
+  lucide.createIcons();
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ============ INIT ============
+const defaultConfig={
+  app_title:'IS Calculadora ETFs',
+  app_description:'Simulador de investimento em ETFs europeus para a CPLP',
+  background_color:'#F8F9FA',
+  surface_color:'#FFFFFF',
+  text_color:'#333333',
+  primary_action_color:'#66CFF5',
+  secondary_action_color:'#4CAF50',
+  font_family:'Inter',
+  font_size:14
+};
+
+function applyConfig(config){
+  const bg=config.background_color||defaultConfig.background_color;
+  const surface=config.surface_color||defaultConfig.surface_color;
+  const text=config.text_color||defaultConfig.text_color;
+  const primary=config.primary_action_color||defaultConfig.primary_action_color;
+  const secondary=config.secondary_action_color||defaultConfig.secondary_action_color;
+  const font=config.font_family||defaultConfig.font_family;
+  const fontSize=config.font_size||defaultConfig.font_size;
+
+  document.getElementById('app-root').style.background=bg;
+  document.getElementById('main-title').textContent=config.app_title||defaultConfig.app_title;
+  document.getElementById('main-desc').textContent=config.app_description||defaultConfig.app_description;
+
+  document.body.style.color=text;
+  document.body.style.fontFamily=`${font}, Inter, sans-serif`;
+  document.body.style.fontSize=fontSize+'px';
+
+  document.querySelectorAll('.card').forEach(c=>{c.style.backgroundColor=surface});
+  document.querySelectorAll('.btn-primary').forEach(b=>{b.style.backgroundColor=primary});
+  document.querySelectorAll('.btn-success').forEach(b=>{b.style.backgroundColor=secondary});
+  document.querySelectorAll('h1,h2,h3,.text-sm.font-semibold').forEach(el=>el.style.color=text);
+
+  document.querySelectorAll('.card::before').forEach(el=>{});
+  const style=document.getElementById('dynamic-style')||document.createElement('style');
+  style.id='dynamic-style';
+  style.textContent=`
+    .card::before{background:${primary} !important}
+    .card-gold::before{background:#FFC107 !important}
+    .card-green::before{background:${secondary} !important}
+    .card-red::before{background:#F44336 !important}
+    .card-orange::before{background:#FF9800 !important}
+    .btn-primary{background:${primary} !important}
+    .btn-primary:hover{filter:brightness(0.9)}
+    .btn-success{background:${secondary} !important}
+    .btn-outline{color:${primary} !important;border-color:${primary} !important}
+    .tab-btn.active{color:${primary} !important;border-bottom-color:${primary} !important}
+    .tab-btn:hover{color:${primary} !important}
+    body,.app-text{font-family:${font},Inter,sans-serif !important}
+    input:focus,select:focus{border-color:${primary} !important;box-shadow:0 0 0 3px ${primary}22 !important}
+  `;
+  if(!document.getElementById('dynamic-style'))document.head.appendChild(style);
+}
+
+if(window.elementSdk){
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange:async(config)=>{applyConfig(config)},
+    mapToCapabilities:(config)=>({
+      recolorables:[
+        {get:()=>config.background_color||defaultConfig.background_color,set:v=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})}},
+        {get:()=>config.surface_color||defaultConfig.surface_color,set:v=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})}},
+        {get:()=>config.text_color||defaultConfig.text_color,set:v=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})}},
+        {get:()=>config.primary_action_color||defaultConfig.primary_action_color,set:v=>{config.primary_action_color=v;window.elementSdk.setConfig({primary_action_color:v})}},
+        {get:()=>config.secondary_action_color||defaultConfig.secondary_action_color,set:v=>{config.secondary_action_color=v;window.elementSdk.setConfig({secondary_action_color:v})}}
+      ],
+      borderables:[],
+      fontEditable:{get:()=>config.font_family||defaultConfig.font_family,set:v=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}},
+      fontSizeable:{get:()=>config.font_size||defaultConfig.font_size,set:v=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}}
+    }),
+    mapToEditPanelValues:(config)=>new Map([
+      ['app_title',config.app_title||defaultConfig.app_title],
+      ['app_description',config.app_description||defaultConfig.app_description]
+    ])
+  });
+}
+
+loadData();
+renderTemplates();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddc6fa853a61b23',t:'MTc3Mzc1NTEwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

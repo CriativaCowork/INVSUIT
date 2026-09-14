@@ -1,0 +1,1433 @@
+<!doctype html>
+<html lang="pt" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IS Crédito Habitação</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#F8F9FA;color:#212121}
+.app-wrap{height:100%;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.header-fixed{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #E0E0E0;padding:12px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tabs-fixed{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #E0E0E0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.tabs-fixed::-webkit-scrollbar{height:3px}
+.tabs-fixed::-webkit-scrollbar-thumb{background:#66CFF5;border-radius:3px}
+.tab-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;font-weight:500;color:#757575;border-bottom:2px solid transparent;transition:all .2s ease;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.tab-btn:hover{color:#66CFF5}
+.tab-btn.active{color:#66CFF5;border-bottom-color:#66CFF5;font-weight:600}
+.tab-btn i{width:16px;height:16px}
+.content-area{flex:1;overflow-y:auto;padding:16px 20px 80px}
+.card{background:#fff;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:14px;position:relative;transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.card-accent{border-left:3px solid #66CFF5}
+.card-accent-green{border-left:3px solid #4CAF50}
+.card-accent-gold{border-left:3px solid #FFC107}
+.card-accent-orange{border-left:3px solid #FF9800}
+.card-accent-red{border-left:3px solid #F44336}
+label{font-size:12px;font-weight:500;color:#616161;margin-bottom:4px;display:block}
+input[type="text"],input[type="number"],select,textarea{width:100%;padding:8px 10px;border:1px solid #E0E0E0;border-radius:6px;font-size:13px;transition:border .2s;background:#fff;color:#212121}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#66CFF5;box-shadow:0 0 0 2px rgba(30,136,229,.12)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s ease;border:none}
+.btn-primary{background:#66CFF5;color:#fff}
+.btn-primary:hover{background:#33BEF2}
+.btn-secondary{background:#F5F5F5;color:#616161;border:1px solid #E0E0E0}
+.btn-secondary:hover{background:#EEEEEE}
+.btn-success{background:#4CAF50;color:#fff}
+.btn-success:hover{background:#388E3C}
+.btn-danger{background:#F44336;color:#fff}
+.btn-danger:hover{background:#D32F2F}
+.btn-gold{background:#FFC107;color:#212121}
+.btn-gold:hover{background:#FFB300}
+.btn-orange{background:#FF9800;color:#fff}
+.btn-orange:hover{background:#F57C00}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-xs{padding:3px 7px;font-size:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+@media(max-width:768px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.stat-card{text-align:center;padding:12px;border-radius:8px;background:#F8F9FA}
+.stat-val{font-size:20px;font-weight:700;color:#66CFF5}
+.stat-label{font-size:11px;color:#757575;margin-top:2px}
+.chart-container{position:relative;width:100%;max-width:100%}
+.chart-export-btn{position:absolute;top:4px;right:4px;z-index:5;background:rgba(255,255,255,.9);border:1px solid #E0E0E0;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;color:#757575;transition:all .2s}
+.chart-export-btn:hover{background:#66CFF5;color:#fff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-blue{background:#E0F4FD;color:#66CFF5}
+.badge-green{background:#E8F5E9;color:#4CAF50}
+.badge-gold{background:#FFF8E1;color:#FF8F00}
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 16px;border-radius:6px;font-size:12px;font-weight:500;color:#fff;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-success{background:#4CAF50}
+.toast-error{background:#F44336}
+.toast-info{background:#66CFF5}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:10px;padding:20px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.hidden{display:none!important}
+.export-hide{/* marker class */}
+.amort-table{width:100%;border-collapse:collapse;font-size:11px}
+.amort-table th{background:#F8F9FA;padding:6px 8px;text-align:left;font-weight:600;color:#616161;border-bottom:2px solid #E0E0E0}
+.amort-table td{padding:5px 8px;border-bottom:1px solid #F0F0F0}
+.amort-table tr:hover{background:#F8F9FA}
+.search-input{position:relative}
+.search-input input{padding-left:30px}
+.search-input i{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#9E9E9E;width:16px;height:16px}
+.scenario-card{border:1px solid #E0E0E0;border-radius:8px;padding:12px;transition:all .2s;cursor:pointer;border-left:3px solid #66CFF5}
+.scenario-card:hover{box-shadow:0 4px 12px rgba(30,136,229,.15)}
+.tip-box{background:#E0F4FD;border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid #66CFF5}
+.tip-box p{font-size:12px;color:#424242;line-height:1.6}
+.scrollable-table{max-height:350px;overflow-y:auto}
+.tag-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;background:#E0F4FD;color:#66CFF5;margin:2px}
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrap" id="appWrap"><!-- HEADER -->
+   <header class="header-fixed" id="appHeader">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+     <div>
+      <h1 id="appTitle" style="display: none; display: none; font-size:18px;font-weight:700;color:#212121">IS Crédito Habitação</h1>
+      <p id="appDesc" style="display: none; display: none; font-size:11px;color:#757575;margin-top:2px">Simulador de Crédito Habitação para cidadãos da CPLP</p>
+     </div>
+     <div class="export-hide" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="exportJSON()" title="Exportar JSON"><i data-lucide="download" style="width:13px;height:13px"></i> JSON</button> <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()" title="Importar JSON"><i data-lucide="upload" style="width:13px;height:13px"></i> Importar</button> <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)"> <button class="btn btn-primary btn-sm" onclick="exportPDF()" title="Exportar PDF"><i data-lucide="file-text" style="width:13px;height:13px"></i> PDF</button> <button class="btn btn-secondary btn-sm" onclick="exportAppImage()" title="Exportar Imagem"><i data-lucide="image" style="width:13px;height:13px"></i> Imagem</button>
+     </div>
+    </div>
+   </header><!-- TABS -->
+   <nav class="tabs-fixed" id="tabsNav"><button class="tab-btn active" data-tab="simulador" onclick="switchTab('simulador')"><i data-lucide="calculator"></i> Simulador</button> <button class="tab-btn" data-tab="amortizacao" onclick="switchTab('amortizacao')"><i data-lucide="table"></i> Amortização</button> <button class="tab-btn" data-tab="cenarios" onclick="switchTab('cenarios')"><i data-lucide="layers"></i> Cenários</button> <button class="tab-btn" data-tab="moedas" onclick="switchTab('moedas')"><i data-lucide="coins"></i> Moedas</button> <button class="tab-btn" data-tab="guia" onclick="switchTab('guia')"><i data-lucide="book-open"></i> Guia</button>
+   </nav><!-- CONTENT -->
+   <main class="content-area" id="contentArea"><!-- TAB: SIMULADOR -->
+    <div id="tab-simulador" class="tab-content">
+     <div class="card card-accent" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+       <div><label for="simTitle" style="font-size:11px">Título da Simulação</label> <input type="text" id="simTitle" placeholder="Ex: Apartamento Lisboa T2" style="max-width:300px" class="export-hide"> <span id="simTitleDisplay" class="hidden" style="font-weight:600;font-size:14px"></span>
+       </div>
+       <div class="export-hide" style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="saveScenario()"><i data-lucide="save" style="width:12px;height:12px"></i> Guardar</button> <button class="btn btn-secondary btn-sm" onclick="resetSimulator()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i> Limpar</button>
+       </div>
+      </div>
+     </div>
+     <div class="grid2">
+      <div>
+       <div class="card card-accent">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="home" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Dados do Imóvel</h3>
+        <div class="grid2">
+         <div>
+          <label>Valor do Imóvel (Kz)</label><input type="number" id="propertyValue" placeholder="50 000 000" min="0" oninput="calculate()">
+         </div>
+         <div>
+          <label>Entrada Inicial (Kz)</label><input type="number" id="downPayment" placeholder="10 000 000" min="0" oninput="calculate()">
+         </div>
+        </div>
+        <div style="margin-top:8px">
+         <label>Percentagem de Entrada</label>
+         <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="downPctSlider" min="0" max="90" value="20" oninput="updateDownPct()" style="flex:1"><span id="downPctLabel" style="font-size:12px;font-weight:600;color:#66CFF5">20%</span>
+         </div>
+        </div>
+       </div>
+       <div class="card card-accent">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="percent" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Condições do Empréstimo</h3>
+        <div class="grid2">
+         <div>
+          <label>Taxa de Juro Anual (%)</label><input type="number" id="interestRate" placeholder="15" min="0" max="100" step="0.01" oninput="calculate()">
+         </div>
+         <div>
+          <label>Prazo (anos)</label><input type="number" id="loanTerm" placeholder="20" min="1" max="50" oninput="calculate()">
+         </div>
+        </div>
+        <div style="margin-top:8px" class="grid2">
+         <div>
+          <label>Sistema de Amortização</label><select id="amortSystem" onchange="calculate()"><option value="price">Tabela Price (Francês)</option><option value="sac">SAC (Constante)</option></select>
+         </div>
+         <div>
+          <label>Tipo de Taxa</label><select id="rateType" onchange="calculate()"><option value="fixa">Fixa</option><option value="variavel">Variável (Euribor)</option><option value="mista">Mista</option></select>
+         </div>
+        </div>
+       </div>
+       <div class="card card-accent">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="shield" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Custos Adicionais</h3>
+        <div class="grid2">
+         <div>
+          <label>Seguro de Vida Mensal (Kz)</label><input type="number" id="lifeInsurance" placeholder="15000" min="0" oninput="calculate()">
+         </div>
+         <div>
+          <label>Seguro Multirriscos Mensal (Kz)</label><input type="number" id="multiInsurance" placeholder="5000" min="0" oninput="calculate()">
+         </div>
+        </div>
+        <div class="grid2" style="margin-top:6px">
+         <div>
+          <label>Comissão de Abertura (Kz)</label><input type="number" id="openingFee" placeholder="100000" min="0" oninput="calculate()">
+         </div>
+         <div>
+          <label>Impostos e Escritura (Kz)</label><input type="number" id="taxesFees" placeholder="250000" min="0" oninput="calculate()">
+         </div>
+        </div>
+       </div>
+      </div>
+      <div>
+       <div class="card card-accent-green">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4CAF50"><i data-lucide="bar-chart-3" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Resumo da Simulação</h3>
+        <div class="grid2" style="margin-bottom:10px">
+         <div class="stat-card">
+          <div class="stat-val" id="monthlyPayment">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Prestação Mensal
+          </div>
+         </div>
+         <div class="stat-card">
+          <div class="stat-val" id="totalLoan" style="color:#FF9800">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Valor do Empréstimo
+          </div>
+         </div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px">
+         <div class="stat-card">
+          <div class="stat-val" id="totalInterest" style="color:#F44336">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Total de Juros
+          </div>
+         </div>
+         <div class="stat-card">
+          <div class="stat-val" id="totalCost" style="color:#212121">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Custo Total
+          </div>
+         </div>
+        </div>
+        <div class="grid3">
+         <div class="stat-card">
+          <div style="font-size:14px;font-weight:700;color:#4CAF50" id="ltvRatio">
+           0%
+          </div>
+          <div class="stat-label">
+           LTV (Loan-to-Value)
+          </div>
+         </div>
+         <div class="stat-card">
+          <div style="font-size:14px;font-weight:700;color:#66CFF5" id="totalInsurance">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Seguros (Total)
+          </div>
+         </div>
+         <div class="stat-card">
+          <div style="font-size:14px;font-weight:700;color:#FF9800" id="initialCosts">
+           0 Kz
+          </div>
+          <div class="stat-label">
+           Custos Iniciais
+          </div>
+         </div>
+        </div>
+       </div><!-- Donut Chart -->
+       <div class="card card-accent">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:8px;color:#66CFF5">Distribuição dos Custos</h3>
+        <div class="chart-container" id="donutChartWrap"><button class="chart-export-btn" onclick="exportChartImage('donutChart')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="donutChart" height="220"></canvas>
+        </div>
+       </div><!-- Evolution Chart -->
+       <div class="card card-accent">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:8px;color:#66CFF5">Evolução do Saldo</h3>
+        <div class="chart-container" id="lineChartWrap"><button class="chart-export-btn" onclick="exportChartImage('lineChart')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="lineChart" height="200"></canvas>
+        </div>
+       </div><!-- Payment Breakdown -->
+       <div class="card card-accent-gold">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:8px;color:#FF8F00">Capital vs Juros por Ano</h3>
+        <div class="chart-container" id="barChartWrap"><button class="chart-export-btn" onclick="exportChartImage('barChart')" title="Exportar HD"><i data-lucide="download" style="width:10px;height:10px"></i> HD</button>
+         <canvas id="barChart" height="200"></canvas>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: AMORTIZAÇÃO -->
+    <div id="tab-amortizacao" class="tab-content hidden">
+     <div class="card card-accent">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+       <h3 style="font-size:14px;font-weight:600;color:#66CFF5"><i data-lucide="table" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Tabela de Amortização</h3>
+       <div class="export-hide" style="display:flex;gap:6px;align-items:center">
+        <div class="search-input">
+         <i data-lucide="search"></i><input type="text" id="amortSearch" placeholder="Filtrar mês..." oninput="filterAmortTable()" style="width:150px">
+        </div><select id="amortYearFilter" onchange="filterAmortTable()" style="width:120px;padding:6px 8px;font-size:12px"><option value="">Todos os anos</option></select>
+       </div>
+      </div>
+      <div class="scrollable-table" id="amortTableWrap">
+       <table class="amort-table" id="amortTable">
+        <thead>
+         <tr>
+          <th>Mês</th>
+          <th>Prestação</th>
+          <th>Capital</th>
+          <th>Juros</th>
+          <th>Saldo Devedor</th>
+         </tr>
+        </thead>
+        <tbody id="amortBody"></tbody>
+       </table>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#9E9E9E" id="amortSummary"></div>
+     </div>
+    </div><!-- TAB: CENÁRIOS -->
+    <div id="tab-cenarios" class="tab-content hidden">
+     <div class="card card-accent-gold">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+       <h3 style="font-size:14px;font-weight:600;color:#FF8F00"><i data-lucide="layers" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Cenários Guardados</h3>
+       <div class="export-hide" style="display:flex;gap:6px;align-items:center">
+        <div class="search-input">
+         <i data-lucide="search"></i><input type="text" id="scenarioSearch" placeholder="Pesquisar cenário..." oninput="renderScenarios()" style="width:160px">
+        </div><button class="btn btn-primary btn-sm" onclick="switchTab('simulador')"><i data-lucide="plus" style="width:12px;height:12px"></i> Novo</button>
+       </div>
+      </div>
+      <div id="scenariosList"></div>
+      <div id="noScenarios" style="text-align:center;padding:30px;color:#9E9E9E">
+       <i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto 8px;display:block"></i>
+       <p style="font-size:13px">Nenhum cenário guardado</p>
+       <p style="font-size:11px;margin-top:4px">Use o botão "Guardar" no simulador</p>
+      </div>
+     </div>
+    </div><!-- TAB: MOEDAS -->
+    <div id="tab-moedas" class="tab-content hidden">
+     <div class="card card-accent-orange">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#FF9800"><i data-lucide="coins" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Taxas de Câmbio (Base: Kz)</h3>
+      <p style="font-size:11px;color:#757575;margin-bottom:12px">Edite as taxas de câmbio para converter valores. 1 Kz = X unidades da moeda.</p>
+      <div id="currencyList"></div>
+      <div class="export-hide" style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-primary btn-sm" onclick="addCustomCurrency()"><i data-lucide="plus" style="width:12px;height:12px"></i> Adicionar Moeda</button> <button class="btn btn-secondary btn-sm" onclick="resetCurrencies()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i> Repor Padrão</button>
+      </div>
+     </div>
+     <div class="card card-accent">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="repeat" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Conversor Rápido</h3>
+      <div class="grid3">
+       <div>
+        <label>Valor (Kz)</label><input type="number" id="convertAmount" placeholder="1000000" oninput="convertCurrency()">
+       </div>
+       <div>
+        <label>Para Moeda</label><select id="convertTo" onchange="convertCurrency()"></select>
+       </div>
+       <div>
+        <label>Resultado</label>
+        <div class="stat-card" style="padding:8px">
+         <span id="convertResult" style="font-size:16px;font-weight:700;color:#66CFF5">-</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- TAB: GUIA -->
+    <div id="tab-guia" class="tab-content hidden">
+     <div class="card card-accent">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="book-open" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Como Utilizar</h3>
+      <div class="tip-box">
+       <p><strong>1. Simular:</strong> Preencha os dados do imóvel, taxa de juro e prazo no separador "Simulador". Os resultados atualizam em tempo real.</p>
+      </div>
+      <div class="tip-box">
+       <p><strong>2. Guardar cenários:</strong> Atribua um título e clique em "Guardar". Cada cenário recebe um número automático (Cenário 1, 2, 3...).</p>
+      </div>
+      <div class="tip-box">
+       <p><strong>3. Comparar:</strong> Aceda ao separador "Cenários" para ver, editar, clonar ou eliminar simulações guardadas.</p>
+      </div>
+      <div class="tip-box">
+       <p><strong>4. Amortização:</strong> Consulte a tabela completa mês a mês com filtros por ano.</p>
+      </div>
+      <div class="tip-box">
+       <p><strong>5. Moedas:</strong> Converta valores entre moedas CPLP + USD. Edite as taxas a qualquer momento.</p>
+      </div>
+      <div class="tip-box">
+       <p><strong>6. Exportar:</strong> Use os botões no cabeçalho para exportar em JSON, PDF ou Imagem.</p>
+      </div>
+     </div>
+     <div class="card card-accent-green">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#4CAF50"><i data-lucide="shield" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Importância do Planeamento</h3>
+      <div class="tip-box" style="background:#E8F5E9;border-left-color:#4CAF50">
+       <p>O crédito habitação é tipicamente o maior compromisso financeiro de uma família. Simular diferentes cenários permite:</p>
+      </div>
+      <ul style="font-size:12px;color:#424242;line-height:2;padding-left:20px">
+       <li>Compreender o impacto real das taxas de juro no custo total</li>
+       <li>Comparar sistemas de amortização (Price vs SAC)</li>
+       <li>Planear a entrada inicial ideal (recomendado: mínimo 20%)</li>
+       <li>Antecipar custos com seguros, impostos e comissões</li>
+       <li>Avaliar a taxa de esforço mensal face ao rendimento</li>
+      </ul>
+     </div>
+     <div class="card card-accent-gold">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#FF8F00"><i data-lucide="lightbulb" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Melhores Práticas</h3>
+      <ul style="font-size:12px;color:#424242;line-height:2;padding-left:20px">
+       <li><strong>Entrada mínima de 20%</strong> para evitar custos extra com seguros de crédito</li>
+       <li><strong>Taxa de esforço ≤ 30%</strong> do rendimento líquido mensal</li>
+       <li><strong>Compare sempre</strong> pelo menos 3 propostas de bancos diferentes</li>
+       <li><strong>Considere taxa mista</strong> para equilíbrio entre estabilidade e flexibilidade</li>
+       <li><strong>Reserve 5-10%</strong> do valor do imóvel para custos iniciais</li>
+       <li><strong>Verifique a TAEG</strong> (Taxa Anual Efetiva Global) e não apenas o spread</li>
+       <li><strong>Simule amortizações antecipadas</strong> para perceber a poupança em juros</li>
+      </ul>
+     </div>
+     <div class="card card-accent">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#66CFF5"><i data-lucide="globe" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> Glossário Rápido</h3>
+      <div style="font-size:12px;color:#424242;line-height:1.8">
+       <p><strong>LTV (Loan-to-Value):</strong> Rácio entre o empréstimo e o valor do imóvel. Quanto menor, melhor.</p>
+       <p><strong>Tabela Price:</strong> Prestações fixas ao longo do prazo. Mais juros no início.</p>
+       <p><strong>SAC:</strong> Amortização constante do capital. Prestações decrescem com o tempo.</p>
+       <p><strong>Spread:</strong> Margem do banco sobre a taxa de referência (ex: Euribor).</p>
+       <p><strong>TAEG:</strong> Taxa que inclui todos os custos do crédito, não apenas os juros.</p>
+       <p><strong>Euribor:</strong> Taxa interbancária europeia, usada como referência para créditos de taxa variável.</p>
+      </div>
+     </div>
+    </div>
+   </main><!-- Toast Container -->
+   <div class="toast-container" id="toastContainer"></div><!-- Modal for editing scenarios -->
+   <div class="modal-overlay hidden" id="editModal">
+    <div class="modal-box">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:15px;font-weight:600" id="editModalTitle">Editar Cenário</h3><button onclick="closeEditModal()" style="background:none;border:none;cursor:pointer;color:#757575"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+     </div>
+     <div id="editModalContent"></div>
+    </div>
+   </div><!-- Modal for adding currency -->
+   <div class="modal-overlay hidden" id="currencyModal">
+    <div class="modal-box" style="max-width:360px">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:15px;font-weight:600">Adicionar Moeda</h3><button onclick="closeCurrencyModal()" style="background:none;border:none;cursor:pointer;color:#757575"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+     </div>
+     <div class="grid2">
+      <div>
+       <label>Código (ex: GBP)</label><input type="text" id="newCurrCode" placeholder="GBP" maxlength="5">
+      </div>
+      <div>
+       <label>Nome</label><input type="text" id="newCurrName" placeholder="Libra Esterlina">
+      </div>
+     </div>
+     <div style="margin-top:8px">
+      <label>Taxa (1 Kz = ?)</label><input type="number" id="newCurrRate" placeholder="0.00092" step="any">
+     </div>
+     <div style="margin-top:12px;display:flex;gap:6px;justify-content:flex-end"><button class="btn btn-secondary btn-sm" onclick="closeCurrencyModal()">Cancelar</button> <button class="btn btn-primary btn-sm" onclick="saveNewCurrency()">Guardar</button>
+     </div>
+    </div>
+   </div><!-- Inline confirm for deletes -->
+   <div class="modal-overlay hidden" id="confirmModal">
+    <div class="modal-box" style="max-width:340px;text-align:center"><i data-lucide="alert-triangle" style="width:36px;height:36px;color:#F44336;margin:0 auto 10px;display:block"></i>
+     <p style="font-size:14px;font-weight:600;margin-bottom:6px" id="confirmTitle">Confirmar</p>
+     <p style="font-size:12px;color:#757575;margin-bottom:14px" id="confirmMsg">Tem a certeza?</p>
+     <div style="display:flex;gap:8px;justify-content:center"><button class="btn btn-secondary btn-sm" onclick="closeConfirm()">Cancelar</button> <button class="btn btn-danger btn-sm" id="confirmBtn" onclick="">Eliminar</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ===== STATE =====
+let scenarios = [];
+let amortSchedule = [];
+let donutChartInst = null;
+let lineChartInst = null;
+let barChartInst = null;
+let currentTab = 'simulador';
+let confirmCallback = null;
+
+const defaultCurrencies = [
+  {code:'USD',name:'Dólar Americano',rate:0.0012,flag:'🇺🇸'},
+  {code:'EUR',name:'Euro',rate:0.0011,flag:'🇪🇺'},
+  {code:'BRL',name:'Real Brasileiro',rate:0.006,flag:'🇧🇷'},
+  {code:'CVE',name:'Escudo Cabo-verdiano',rate:0.12,flag:'🇨🇻'},
+  {code:'XOF',name:'Franco CFA (Guiné-Bissau)',rate:0.72,flag:'🇬🇼'},
+  {code:'MZN',name:'Metical Moçambicano',rate:0.077,flag:'🇲🇿'},
+  {code:'STN',name:'Dobra São Tomé',rate:0.027,flag:'🇸🇹'},
+  {code:'MOP',name:'Pataca Macau',rate:0.0097,flag:'🇲🇴'},
+  {code:'TPL',name:'Dólar Timor-Leste (USD)',rate:0.0012,flag:'🇹🇱'}
+];
+
+let currencies = JSON.parse(JSON.stringify(defaultCurrencies));
+
+// ===== LOCALSTORAGE =====
+function saveState(){
+  const state = {scenarios, currencies};
+  try { localStorage.setItem('is_credito_hab', JSON.stringify(state)); } catch(e){}
+}
+function loadState(){
+  try {
+    const s = JSON.parse(localStorage.getItem('is_credito_hab'));
+    if(s){
+      if(s.scenarios) scenarios = s.scenarios;
+      if(s.currencies) currencies = s.currencies;
+    }
+  } catch(e){}
+}
+
+// ===== TABS =====
+function switchTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.add('hidden'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===tab);
+  });
+  if(tab==='cenarios') renderScenarios();
+  if(tab==='moedas') renderCurrencies();
+  if(tab==='amortizacao') renderAmortTable();
+}
+
+// ===== FORMAT =====
+function fmt(n){
+  if(isNaN(n)||n===null||n===undefined) return '0';
+  return Math.round(n).toLocaleString('pt-AO');
+}
+function fmtKz(n){ return fmt(n)+' Kz'; }
+function fmtPct(n){ return (n||0).toFixed(1)+'%'; }
+
+// ===== CALCULATION =====
+function getInputs(){
+  return {
+    propertyValue: parseFloat(document.getElementById('propertyValue').value)||0,
+    downPayment: parseFloat(document.getElementById('downPayment').value)||0,
+    interestRate: parseFloat(document.getElementById('interestRate').value)||0,
+    loanTerm: parseInt(document.getElementById('loanTerm').value)||0,
+    amortSystem: document.getElementById('amortSystem').value,
+    rateType: document.getElementById('rateType').value,
+    lifeInsurance: parseFloat(document.getElementById('lifeInsurance').value)||0,
+    multiInsurance: parseFloat(document.getElementById('multiInsurance').value)||0,
+    openingFee: parseFloat(document.getElementById('openingFee').value)||0,
+    taxesFees: parseFloat(document.getElementById('taxesFees').value)||0,
+    title: document.getElementById('simTitle').value||''
+  };
+}
+
+function calculate(){
+  const inp = getInputs();
+  const loanAmount = Math.max(0, inp.propertyValue - inp.downPayment);
+  const months = inp.loanTerm * 12;
+  const monthlyRate = (inp.interestRate/100)/12;
+
+  if(loanAmount<=0 || months<=0){
+    updateResults(0,0,0,0,inp);
+    amortSchedule = [];
+    updateCharts(inp, []);
+    return;
+  }
+
+  let schedule = [];
+  let totalInterest = 0;
+  let monthlyPayment = 0;
+  let balance = loanAmount;
+
+  if(inp.amortSystem === 'price'){
+    // French system - fixed payments
+    if(monthlyRate > 0){
+      monthlyPayment = loanAmount * (monthlyRate * Math.pow(1+monthlyRate, months)) / (Math.pow(1+monthlyRate, months)-1);
+    } else {
+      monthlyPayment = loanAmount / months;
+    }
+    for(let m=1; m<=months; m++){
+      const interest = balance * monthlyRate;
+      const principal = monthlyPayment - interest;
+      balance = Math.max(0, balance - principal);
+      totalInterest += interest;
+      schedule.push({month:m, payment:monthlyPayment, principal, interest, balance});
+    }
+  } else {
+    // SAC - constant amortization
+    const constPrincipal = loanAmount / months;
+    for(let m=1; m<=months; m++){
+      const interest = balance * monthlyRate;
+      const payment = constPrincipal + interest;
+      balance = Math.max(0, balance - constPrincipal);
+      totalInterest += interest;
+      if(m===1) monthlyPayment = payment;
+      schedule.push({month:m, payment, principal:constPrincipal, interest, balance});
+    }
+  }
+
+  const totalInsurance = (inp.lifeInsurance + inp.multiInsurance) * months;
+  const initialCosts = inp.openingFee + inp.taxesFees + inp.downPayment;
+  const totalCost = loanAmount + totalInterest + totalInsurance + inp.openingFee + inp.taxesFees;
+  const ltv = inp.propertyValue > 0 ? (loanAmount / inp.propertyValue)*100 : 0;
+
+  amortSchedule = schedule;
+
+  document.getElementById('monthlyPayment').textContent = fmtKz(monthlyPayment + inp.lifeInsurance + inp.multiInsurance);
+  document.getElementById('totalLoan').textContent = fmtKz(loanAmount);
+  document.getElementById('totalInterest').textContent = fmtKz(totalInterest);
+  document.getElementById('totalCost').textContent = fmtKz(totalCost);
+  document.getElementById('ltvRatio').textContent = fmtPct(ltv);
+  document.getElementById('totalInsurance').textContent = fmtKz(totalInsurance);
+  document.getElementById('initialCosts').textContent = fmtKz(initialCosts);
+
+  updateCharts(inp, schedule, loanAmount, totalInterest, totalInsurance, inp.openingFee + inp.taxesFees);
+  if(currentTab==='amortizacao') renderAmortTable();
+}
+
+function updateResults(mp, la, ti, tc, inp){}
+
+function updateDownPct(){
+  const pv = parseFloat(document.getElementById('propertyValue').value)||0;
+  const pct = parseInt(document.getElementById('downPctSlider').value);
+  document.getElementById('downPctLabel').textContent = pct+'%';
+  if(pv>0) document.getElementById('downPayment').value = Math.round(pv * pct/100);
+  calculate();
+}
+
+// ===== CHARTS =====
+function updateCharts(inp, schedule, loanAmount, totalInterest, totalInsurance, fees){
+  loanAmount = loanAmount||0;
+  totalInterest = totalInterest||0;
+  totalInsurance = totalInsurance||0;
+  fees = fees||0;
+
+  const total = loanAmount + totalInterest + totalInsurance + fees;
+
+  // Donut
+  const donutData = {
+    labels: [
+      `Capital (${total>0?((loanAmount/total)*100).toFixed(1):'0'}%)`,
+      `Juros (${total>0?((totalInterest/total)*100).toFixed(1):'0'}%)`,
+      `Seguros (${total>0?((totalInsurance/total)*100).toFixed(1):'0'}%)`,
+      `Taxas (${total>0?((fees/total)*100).toFixed(1):'0'}%)`
+    ],
+    datasets:[{
+      data:[loanAmount, totalInterest, totalInsurance, fees],
+      backgroundColor:['#66CFF5','#F44336','#4CAF50','#FF9800'],
+      borderWidth:2,
+      borderColor:'#fff'
+    }]
+  };
+  if(donutChartInst) donutChartInst.destroy();
+  donutChartInst = new Chart(document.getElementById('donutChart'),{
+    type:'doughnut',
+    data:donutData,
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10,family:'Inter'},padding:8,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>{
+          const v = ctx.raw;
+          const pct = total>0?((v/total)*100).toFixed(1):'0';
+          return ` ${fmtKz(v)} (${pct}%)`;
+        }}}
+      }
+    }
+  });
+
+  // Line - balance over time (yearly)
+  const years = [];
+  const balances = [];
+  if(schedule.length>0){
+    for(let y=0; y<=Math.ceil(schedule.length/12); y++){
+      years.push('Ano '+y);
+      if(y===0) balances.push(loanAmount);
+      else {
+        const idx = Math.min(y*12, schedule.length)-1;
+        balances.push(schedule[idx].balance);
+      }
+    }
+  }
+  if(lineChartInst) lineChartInst.destroy();
+  lineChartInst = new Chart(document.getElementById('lineChart'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[{
+        label:'Saldo Devedor (Kz)',
+        data:balances,
+        borderColor:'#66CFF5',
+        backgroundColor:'rgba(30,136,229,.08)',
+        fill:true,
+        tension:.3,
+        pointRadius:2,
+        borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtKz(ctx.raw)}}},
+      scales:{y:{ticks:{callback:v=>fmt(v),font:{size:9}},grid:{color:'#F0F0F0'}},x:{ticks:{font:{size:9}},grid:{display:false}}}
+    }
+  });
+
+  // Bar - yearly capital vs interest
+  const barYears = [];
+  const barCapital = [];
+  const barInterest = [];
+  if(schedule.length>0){
+    const numYears = Math.ceil(schedule.length/12);
+    for(let y=1; y<=numYears; y++){
+      barYears.push('Ano '+y);
+      let yCapital=0, yInterest=0;
+      for(let m=(y-1)*12; m<Math.min(y*12, schedule.length); m++){
+        yCapital += schedule[m].principal;
+        yInterest += schedule[m].interest;
+      }
+      barCapital.push(yCapital);
+      barInterest.push(yInterest);
+    }
+  }
+  if(barChartInst) barChartInst.destroy();
+  barChartInst = new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{
+      labels:barYears,
+      datasets:[
+        {label:'Capital',data:barCapital,backgroundColor:'#66CFF5',borderRadius:3},
+        {label:'Juros',data:barInterest,backgroundColor:'#F44336',borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10,family:'Inter'},usePointStyle:true}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtKz(ctx.raw)}}},
+      scales:{
+        y:{stacked:true,ticks:{callback:v=>fmt(v),font:{size:9}},grid:{color:'#F0F0F0'}},
+        x:{stacked:true,ticks:{font:{size:8}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ===== AMORT TABLE =====
+function renderAmortTable(){
+  const tbody = document.getElementById('amortBody');
+  const yearFilter = document.getElementById('amortYearFilter');
+  const searchVal = (document.getElementById('amortSearch').value||'').toLowerCase();
+  const yearVal = yearFilter.value;
+
+  // Update year filter options
+  if(amortSchedule.length>0){
+    const numYears = Math.ceil(amortSchedule.length/12);
+    const currentOpts = yearFilter.options.length - 1;
+    if(currentOpts !== numYears){
+      yearFilter.innerHTML = '<option value="">Todos os anos</option>';
+      for(let y=1; y<=numYears; y++){
+        yearFilter.innerHTML += `<option value="${y}">Ano ${y}</option>`;
+      }
+    }
+  }
+
+  let filtered = amortSchedule;
+  if(yearVal){
+    const y = parseInt(yearVal);
+    filtered = filtered.filter(r=> Math.ceil(r.month/12)===y);
+  }
+  if(searchVal){
+    filtered = filtered.filter(r=> String(r.month).includes(searchVal));
+  }
+
+  tbody.innerHTML = filtered.map(r=>`<tr>
+    <td>${r.month}</td>
+    <td>${fmtKz(r.payment)}</td>
+    <td>${fmtKz(r.principal)}</td>
+    <td>${fmtKz(r.interest)}</td>
+    <td>${fmtKz(r.balance)}</td>
+  </tr>`).join('');
+
+  document.getElementById('amortSummary').textContent = `A mostrar ${filtered.length} de ${amortSchedule.length} meses`;
+}
+
+function filterAmortTable(){ renderAmortTable(); }
+
+// ===== SCENARIOS =====
+function saveScenario(){
+  const inp = getInputs();
+  if(inp.propertyValue<=0){
+    showToast('Preencha pelo menos o valor do imóvel','error');
+    return;
+  }
+  const num = scenarios.length + 1;
+  const title = inp.title || ('Cenário '+num);
+  const scenario = {
+    id: Date.now().toString(),
+    num,
+    title,
+    data: inp,
+    createdAt: new Date().toISOString()
+  };
+  scenarios.push(scenario);
+  saveState();
+  showToast('Cenário "'+title+'" guardado com sucesso','success');
+  renderScenarios();
+}
+
+function renderScenarios(){
+  const search = (document.getElementById('scenarioSearch')?.value||'').toLowerCase();
+  const list = document.getElementById('scenariosList');
+  const noMsg = document.getElementById('noScenarios');
+
+  let filtered = scenarios;
+  if(search) filtered = filtered.filter(s=>s.title.toLowerCase().includes(search));
+
+  if(filtered.length===0){
+    list.innerHTML = '';
+    noMsg.classList.remove('hidden');
+    return;
+  }
+  noMsg.classList.add('hidden');
+
+  list.innerHTML = filtered.map(s=>{
+    const d = s.data;
+    const loan = d.propertyValue - d.downPayment;
+    return `<div class="scenario-card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#212121">${s.title}</div>
+          <div style="font-size:11px;color:#757575;margin-top:2px">${new Date(s.createdAt).toLocaleDateString('pt-PT')} · ${d.amortSystem==='price'?'Price':'SAC'} · ${d.interestRate}% · ${d.loanTerm} anos</div>
+          <div style="margin-top:4px">
+            <span class="tag-pill">Imóvel: ${fmtKz(d.propertyValue)}</span>
+            <span class="tag-pill" style="background:#E8F5E9;color:#4CAF50">Empréstimo: ${fmtKz(loan)}</span>
+          </div>
+        </div>
+        <div class="export-hide" style="display:flex;gap:4px">
+          <button class="btn btn-sm btn-secondary" onclick="loadScenario('${s.id}')" title="Carregar"><i data-lucide="upload" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-sm btn-secondary" onclick="openEditScenario('${s.id}')" title="Editar"><i data-lucide="edit" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-sm btn-secondary" onclick="cloneScenario('${s.id}')" title="Clonar"><i data-lucide="copy" style="width:11px;height:11px"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDeleteScenario('${s.id}')" title="Eliminar"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function loadScenario(id){
+  const s = scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const d = s.data;
+  document.getElementById('simTitle').value = s.title;
+  document.getElementById('propertyValue').value = d.propertyValue||'';
+  document.getElementById('downPayment').value = d.downPayment||'';
+  document.getElementById('interestRate').value = d.interestRate||'';
+  document.getElementById('loanTerm').value = d.loanTerm||'';
+  document.getElementById('amortSystem').value = d.amortSystem||'price';
+  document.getElementById('rateType').value = d.rateType||'fixa';
+  document.getElementById('lifeInsurance').value = d.lifeInsurance||'';
+  document.getElementById('multiInsurance').value = d.multiInsurance||'';
+  document.getElementById('openingFee').value = d.openingFee||'';
+  document.getElementById('taxesFees').value = d.taxesFees||'';
+  if(d.propertyValue>0 && d.downPayment>=0){
+    const pct = Math.round((d.downPayment/d.propertyValue)*100);
+    document.getElementById('downPctSlider').value = pct;
+    document.getElementById('downPctLabel').textContent = pct+'%';
+  }
+  calculate();
+  switchTab('simulador');
+  showToast('Cenário "'+s.title+'" carregado','info');
+}
+
+function cloneScenario(id){
+  const s = scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const num = scenarios.length + 1;
+  const clone = {
+    id: Date.now().toString(),
+    num,
+    title: s.title + ' (Cópia)',
+    data: JSON.parse(JSON.stringify(s.data)),
+    createdAt: new Date().toISOString()
+  };
+  scenarios.push(clone);
+  saveState();
+  renderScenarios();
+  showToast('Cenário clonado','success');
+}
+
+function confirmDeleteScenario(id){
+  showConfirm('Eliminar Cenário','Tem a certeza que deseja eliminar este cenário?',()=>{
+    scenarios = scenarios.filter(x=>x.id!==id);
+    saveState();
+    renderScenarios();
+    showToast('Cenário eliminado','success');
+  });
+}
+
+function openEditScenario(id){
+  const s = scenarios.find(x=>x.id===id);
+  if(!s) return;
+  const d = s.data;
+  document.getElementById('editModalTitle').textContent = 'Editar: '+s.title;
+  document.getElementById('editModalContent').innerHTML = `
+    <div style="margin-bottom:8px"><label>Título</label><input type="text" id="editTitle" value="${s.title}"></div>
+    <div class="grid2">
+      <div><label>Valor Imóvel (Kz)</label><input type="number" id="editPV" value="${d.propertyValue}"></div>
+      <div><label>Entrada (Kz)</label><input type="number" id="editDP" value="${d.downPayment}"></div>
+    </div>
+    <div class="grid2" style="margin-top:6px">
+      <div><label>Taxa Juro (%)</label><input type="number" id="editIR" value="${d.interestRate}" step="0.01"></div>
+      <div><label>Prazo (anos)</label><input type="number" id="editLT" value="${d.loanTerm}"></div>
+    </div>
+    <div class="grid2" style="margin-top:6px">
+      <div><label>Sistema</label><select id="editAS"><option value="price" ${d.amortSystem==='price'?'selected':''}>Tabela Price</option><option value="sac" ${d.amortSystem==='sac'?'selected':''}>SAC</option></select></div>
+      <div><label>Tipo Taxa</label><select id="editRT"><option value="fixa" ${d.rateType==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${d.rateType==='variavel'?'selected':''}>Variável</option><option value="mista" ${d.rateType==='mista'?'selected':''}>Mista</option></select></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveEditScenario('${id}')">Guardar</button>
+    </div>
+  `;
+  document.getElementById('editModal').classList.remove('hidden');
+  lucide.createIcons();
+}
+
+function saveEditScenario(id){
+  const s = scenarios.find(x=>x.id===id);
+  if(!s) return;
+  s.title = document.getElementById('editTitle').value || s.title;
+  s.data.propertyValue = parseFloat(document.getElementById('editPV').value)||0;
+  s.data.downPayment = parseFloat(document.getElementById('editDP').value)||0;
+  s.data.interestRate = parseFloat(document.getElementById('editIR').value)||0;
+  s.data.loanTerm = parseInt(document.getElementById('editLT').value)||0;
+  s.data.amortSystem = document.getElementById('editAS').value;
+  s.data.rateType = document.getElementById('editRT').value;
+  saveState();
+  closeEditModal();
+  renderScenarios();
+  showToast('Cenário atualizado','success');
+}
+
+function closeEditModal(){ document.getElementById('editModal').classList.add('hidden'); }
+
+function resetSimulator(){
+  ['propertyValue','downPayment','interestRate','loanTerm','lifeInsurance','multiInsurance','openingFee','taxesFees','simTitle'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('amortSystem').value = 'price';
+  document.getElementById('rateType').value = 'fixa';
+  document.getElementById('downPctSlider').value = 20;
+  document.getElementById('downPctLabel').textContent = '20%';
+  amortSchedule = [];
+  calculate();
+  showToast('Simulador limpo','info');
+}
+
+// ===== CURRENCIES =====
+function renderCurrencies(){
+  const list = document.getElementById('currencyList');
+  list.innerHTML = currencies.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #F0F0F0">
+      <span style="font-size:18px">${c.flag||'🏳️'}</span>
+      <div style="flex:1;min-width:0">
+        <span style="font-size:12px;font-weight:600">${c.code}</span>
+        <span style="font-size:11px;color:#757575;margin-left:4px">${c.name}</span>
+      </div>
+      <div class="export-hide" style="display:flex;align-items:center;gap:6px">
+        <input type="number" value="${c.rate}" step="any" style="width:100px;padding:4px 6px;font-size:11px;border:1px solid #E0E0E0;border-radius:4px" onchange="updateCurrencyRate(${i}, this.value)">
+        <button class="btn btn-xs btn-danger" onclick="removeCurrency(${i})" title="Remover" style="padding:3px 5px"><i data-lucide="x" style="width:10px;height:10px"></i></button>
+      </div>
+    </div>
+  `).join('');
+
+  // Update converter select
+  const sel = document.getElementById('convertTo');
+  sel.innerHTML = currencies.map(c=>`<option value="${c.code}">${c.flag} ${c.code} - ${c.name}</option>`).join('');
+  lucide.createIcons();
+}
+
+function updateCurrencyRate(idx, val){
+  currencies[idx].rate = parseFloat(val)||0;
+  saveState();
+  convertCurrency();
+}
+
+function removeCurrency(idx){
+  currencies.splice(idx,1);
+  saveState();
+  renderCurrencies();
+  showToast('Moeda removida','info');
+}
+
+function addCustomCurrency(){
+  document.getElementById('newCurrCode').value='';
+  document.getElementById('newCurrName').value='';
+  document.getElementById('newCurrRate').value='';
+  document.getElementById('currencyModal').classList.remove('hidden');
+}
+
+function saveNewCurrency(){
+  const code = document.getElementById('newCurrCode').value.toUpperCase().trim();
+  const name = document.getElementById('newCurrName').value.trim();
+  const rate = parseFloat(document.getElementById('newCurrRate').value);
+  if(!code||!name||!rate||rate<=0){
+    showToast('Preencha todos os campos','error');
+    return;
+  }
+  if(currencies.find(c=>c.code===code)){
+    showToast('Moeda já existe','error');
+    return;
+  }
+  currencies.push({code,name,rate,flag:'🏳️'});
+  saveState();
+  closeCurrencyModal();
+  renderCurrencies();
+  showToast('Moeda adicionada','success');
+}
+
+function closeCurrencyModal(){ document.getElementById('currencyModal').classList.add('hidden'); }
+
+function resetCurrencies(){
+  currencies = JSON.parse(JSON.stringify(defaultCurrencies));
+  saveState();
+  renderCurrencies();
+  showToast('Moedas repostas','info');
+}
+
+function convertCurrency(){
+  const amount = parseFloat(document.getElementById('convertAmount').value)||0;
+  const code = document.getElementById('convertTo').value;
+  const curr = currencies.find(c=>c.code===code);
+  if(!curr){
+    document.getElementById('convertResult').textContent = '-';
+    return;
+  }
+  const result = amount * curr.rate;
+  document.getElementById('convertResult').textContent = result.toLocaleString('pt-AO',{maximumFractionDigits:2})+' '+code;
+}
+
+// ===== EXPORT/IMPORT =====
+function exportJSON(){
+  const data = {
+    app:'IS Crédito Habitação',
+    version:'1.0',
+    exportedAt: new Date().toISOString(),
+    scenarios,
+    currencies,
+    currentSimulation: getInputs()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'IS_Credito_Habitacao_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON exportado','success');
+}
+
+function importJSON(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(data.scenarios) scenarios = data.scenarios;
+      if(data.currencies) currencies = data.currencies;
+      saveState();
+      renderScenarios();
+      renderCurrencies();
+      if(data.currentSimulation){
+        const d = data.currentSimulation;
+        if(d.propertyValue) document.getElementById('propertyValue').value = d.propertyValue;
+        if(d.downPayment) document.getElementById('downPayment').value = d.downPayment;
+        if(d.interestRate) document.getElementById('interestRate').value = d.interestRate;
+        if(d.loanTerm) document.getElementById('loanTerm').value = d.loanTerm;
+        if(d.amortSystem) document.getElementById('amortSystem').value = d.amortSystem;
+        if(d.rateType) document.getElementById('rateType').value = d.rateType;
+        if(d.lifeInsurance) document.getElementById('lifeInsurance').value = d.lifeInsurance;
+        if(d.multiInsurance) document.getElementById('multiInsurance').value = d.multiInsurance;
+        if(d.openingFee) document.getElementById('openingFee').value = d.openingFee;
+        if(d.taxesFees) document.getElementById('taxesFees').value = d.taxesFees;
+        if(d.title) document.getElementById('simTitle').value = d.title;
+        calculate();
+      }
+      showToast('Dados importados com sucesso','success');
+    } catch(err){
+      showToast('Ficheiro inválido','error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ===== CHART IMAGE EXPORT =====
+function exportChartImage(canvasId){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  // Create high-res copy
+  const ratio = 2;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width * ratio;
+  tempCanvas.height = canvas.height * ratio;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(canvas,0,0,canvas.width,canvas.height);
+  const link = document.createElement('a');
+  link.download = 'IS_Grafico_'+canvasId+'_'+Date.now()+'.png';
+  link.href = tempCanvas.toDataURL('image/png',1.0);
+  link.click();
+  showToast('Gráfico exportado em HD','success');
+}
+
+// ===== APP IMAGE EXPORT =====
+async function exportAppImage(){
+  showToast('A gerar imagem...','info');
+  // Hide export controls
+  const hideEls = document.querySelectorAll('.export-hide');
+  hideEls.forEach(el=>el.style.display='none');
+
+  // Show title display
+  const titleInput = document.getElementById('simTitle');
+  const titleDisplay = document.getElementById('simTitleDisplay');
+  titleDisplay.textContent = titleInput.value || 'IS Crédito Habitação';
+  titleDisplay.classList.remove('hidden');
+  titleInput.classList.add('hidden');
+
+  // Show all inputs as text temporarily
+  const inputs = document.querySelectorAll('#tab-simulador input[type="number"], #tab-simulador input[type="text"]:not(#simTitle), #tab-simulador select');
+  const originals = [];
+  inputs.forEach(inp=>{
+    const span = document.createElement('span');
+    span.style.cssText = 'font-size:13px;font-weight:500;color:#212121;padding:8px 0;display:block';
+    if(inp.tagName==='SELECT'){
+      span.textContent = inp.options[inp.selectedIndex]?.text||'';
+    } else {
+      span.textContent = inp.value || '-';
+    }
+    originals.push({el:inp, next:inp.nextSibling, parent:inp.parentNode, span});
+    inp.parentNode.insertBefore(span, inp);
+    inp.style.display='none';
+  });
+
+  try {
+    const wrap = document.getElementById('appWrap');
+    const contentArea = document.getElementById('contentArea');
+    const origOverflow = contentArea.style.overflow;
+    const origHeight = contentArea.style.height;
+    contentArea.style.overflow = 'visible';
+    contentArea.style.height = 'auto';
+
+    const canvas = await html2canvas(wrap, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#F8F9FA',
+      scrollY: -window.scrollY,
+      height: wrap.scrollHeight,
+      windowHeight: wrap.scrollHeight
+    });
+
+    contentArea.style.overflow = origOverflow;
+    contentArea.style.height = origHeight;
+
+    const link = document.createElement('a');
+    link.download = 'IS_Credito_Habitacao_'+Date.now()+'.png';
+    link.href = canvas.toDataURL('image/png',1.0);
+    link.click();
+    showToast('Imagem exportada','success');
+  } catch(err){
+    showToast('Erro ao exportar imagem','error');
+  }
+
+  // Restore
+  hideEls.forEach(el=>el.style.display='');
+  titleDisplay.classList.add('hidden');
+  titleInput.classList.remove('hidden');
+  originals.forEach(o=>{
+    o.el.style.display='';
+    if(o.span.parentNode) o.span.parentNode.removeChild(o.span);
+  });
+}
+
+// ===== PDF EXPORT =====
+async function exportPDF(){
+  showToast('A gerar PDF...','info');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p','mm','a4');
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const usable = pw - 2*margin;
+  let y = 25;
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});
+  const appName = document.getElementById('appTitle').textContent || 'IS Crédito Habitação';
+
+  function header(){
+    doc.setFillColor(30,136,229);
+    doc.rect(0,0,pw,18,  'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.text(appName, margin, 11);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.text(dateStr, pw-margin, 11, {align:'right'});
+    y = 25;
+  }
+
+  function footer(pageNum, totalPages){
+    doc.setFillColor(248,249,250);
+    doc.rect(0,ph-12,pw,12,'F');
+    doc.setTextColor(158,158,158);
+    doc.setFontSize(7);
+    doc.text(`Gerado por ${appName} · ${dateStr} · www.investesuite.com`, margin, ph-5);
+    doc.text(`Página ${pageNum}`, pw-margin, ph-5, {align:'right'});
+  }
+
+  function checkPage(needed){
+    if(y+needed > ph-18){
+      footer(doc.internal.getNumberOfPages());
+      doc.addPage();
+      header();
+    }
+  }
+
+  header();
+
+  // Title
+  const simTitle = document.getElementById('simTitle').value || 'Simulação';
+  doc.setTextColor(33,33,33);
+  doc.setFontSize(14);
+  doc.setFont('helvetica','bold');
+  doc.text(simTitle, margin, y);
+  y+=8;
+
+  // Summary
+  const inp = getInputs();
+  const loanAmount = Math.max(0, inp.propertyValue - inp.downPayment);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(97,97,97);
+
+  const summaryItems = [
+    ['Valor do Imóvel', fmtKz(inp.propertyValue)],
+    ['Entrada Inicial', fmtKz(inp.downPayment)],
+    ['Valor do Empréstimo', fmtKz(loanAmount)],
+    ['Taxa de Juro', inp.interestRate+'%'],
+    ['Prazo', inp.loanTerm+' anos'],
+    ['Sistema', inp.amortSystem==='price'?'Tabela Price':'SAC'],
+    ['Tipo de Taxa', inp.rateType.charAt(0).toUpperCase()+inp.rateType.slice(1)],
+    ['Prestação Mensal', document.getElementById('monthlyPayment').textContent],
+    ['Total de Juros', document.getElementById('totalInterest').textContent],
+    ['Custo Total', document.getElementById('totalCost').textContent],
+    ['LTV', document.getElementById('ltvRatio').textContent]
+  ];
+
+  summaryItems.forEach(([label, val])=>{
+    checkPage(5);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(97,97,97);
+    doc.text(label+':', margin, y);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(33,33,33);
+    doc.text(val, margin+50, y);
+    y+=5;
+  });
+
+  y+=6;
+
+  // Charts - small size
+  const chartIds = ['donutChart','lineChart','barChart'];
+  const chartTitles = ['Distribuição dos Custos','Evolução do Saldo','Capital vs Juros por Ano'];
+  for(let i=0; i<chartIds.length; i++){
+    checkPage(50);
+    const canvas = document.getElementById(chartIds[i]);
+    if(canvas){
+      doc.setFontSize(10);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(30,136,229);
+      doc.text(chartTitles[i], margin, y);
+      y+=4;
+      const imgData = canvas.toDataURL('image/png',1.0);
+      const chartW = Math.min(usable*0.55, 90);
+      const chartH = chartW * 0.65;
+      doc.addImage(imgData, 'PNG', margin, y, chartW, chartH);
+      y += chartH + 8;
+    }
+  }
+
+  // Amort table first 24 months
+  if(amortSchedule.length>0){
+    checkPage(12);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(30,136,229);
+    doc.text('Tabela de Amortização (primeiros 24 meses)', margin, y);
+    y+=6;
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(97,97,97);
+    const cols = ['Mês','Prestação','Capital','Juros','Saldo'];
+    const colW = usable/5;
+    cols.forEach((c,ci)=>doc.text(c, margin+ci*colW, y));
+    y+=1;
+    doc.setDrawColor(224,224,224);
+    doc.line(margin,y,pw-margin,y);
+    y+=3;
+
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(66,66,66);
+    const showRows = amortSchedule.slice(0,24);
+    showRows.forEach(r=>{
+      checkPage(4);
+      doc.text(String(r.month), margin, y);
+      doc.text(fmt(r.payment), margin+colW, y);
+      doc.text(fmt(r.principal), margin+2*colW, y);
+      doc.text(fmt(r.interest), margin+3*colW, y);
+      doc.text(fmt(r.balance), margin+4*colW, y);
+      y+=3.5;
+    });
+    if(amortSchedule.length>24){
+      y+=2;
+      doc.setFontSize(7);
+      doc.setTextColor(158,158,158);
+      doc.text(`... mais ${amortSchedule.length-24} meses não mostrados`, margin, y);
+      y+=4;
+    }
+  }
+
+  // Add footers to all pages
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let p=1; p<=totalPages; p++){
+    doc.setPage(p);
+    footer(p, totalPages);
+  }
+
+  doc.save('IS_Credito_Habitacao_'+new Date().toISOString().split('T')[0]+'.pdf');
+  showToast('PDF exportado','success');
+}
+
+// ===== TOAST =====
+function showToast(msg, type){
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-'+(type||'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(()=>{ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
+}
+
+// ===== CONFIRM =====
+function showConfirm(title, msg, cb){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmBtn').onclick = function(){
+    if(confirmCallback) confirmCallback();
+    closeConfirm();
+  };
+  document.getElementById('confirmModal').classList.remove('hidden');
+  lucide.createIcons();
+}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.add('hidden');
+  confirmCallback = null;
+}
+
+// ===== ELEMENT SDK =====
+const defaultConfig = {
+  app_title: 'IS Crédito Habitação',
+  app_description: 'Simulador de Crédito Habitação para cidadãos da CPLP',
+  background_color: '#F8F9FA',
+  surface_color: '#FFFFFF',
+  text_color: '#212121',
+  primary_action_color: '#66CFF5',
+  secondary_action_color: '#4CAF50',
+  font_family: 'Inter',
+  font_size: 13
+};
+
+function applyConfig(config){
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  document.body.style.background = bg;
+  document.body.style.color = text;
+  document.body.style.fontFamily = `${font}, Inter, sans-serif`;
+  document.body.style.fontSize = fontSize+'px';
+
+  document.querySelectorAll('.card, .modal-box, .scenario-card').forEach(el=>{
+    el.style.backgroundColor = surface;
+  });
+
+  const headerEl = document.getElementById('appHeader');
+  if(headerEl) headerEl.style.backgroundColor = surface;
+
+  const tabsEl = document.getElementById('tabsNav');
+  if(tabsEl) tabsEl.style.backgroundColor = surface;
+
+  const titleEl = document.getElementById('appTitle');
+  if(titleEl){
+    titleEl.textContent = config.app_title || defaultConfig.app_title;
+    titleEl.style.color = text;
+    titleEl.style.fontFamily = `${font}, Inter, sans-serif`;
+    titleEl.style.fontSize = (fontSize*1.4)+'px';
+  }
+
+  const descEl = document.getElementById('appDesc');
+  if(descEl){
+    descEl.textContent = config.app_description || defaultConfig.app_description;
+  }
+
+  document.querySelectorAll('.btn-primary').forEach(el=>{
+    el.style.backgroundColor = primary;
+  });
+  document.querySelectorAll('.btn-success').forEach(el=>{
+    el.style.backgroundColor = secondary;
+  });
+
+  document.querySelectorAll('.stat-val').forEach((el,i)=>{
+    if(i===0) el.style.color = primary;
+  });
+
+  document.querySelectorAll('.tab-btn.active').forEach(el=>{
+    el.style.color = primary;
+    el.style.borderBottomColor = primary;
+  });
+}
+
+if(window.elementSdk){
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => {
+      applyConfig(config);
+    },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get:()=>config.background_color||defaultConfig.background_color, set:(v)=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})} },
+        { get:()=>config.surface_color||defaultConfig.surface_color, set:(v)=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})} },
+        { get:()=>config.text_color||defaultConfig.text_color, set:(v)=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})} },
+        { get:()=>config.primary_action_color||defaultConfig.primary_action_color, set:(v)=>{config.primary_action_color=v;window.elementSdk.setConfig({primary_action_color:v})} },
+        { get:()=>config.secondary_action_color||defaultConfig.secondary_action_color, set:(v)=>{config.secondary_action_color=v;window.elementSdk.setConfig({secondary_action_color:v})} }
+      ],
+      borderables: [],
+      fontEditable: {
+        get:()=>config.font_family||defaultConfig.font_family,
+        set:(v)=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})}
+      },
+      fontSizeable: {
+        get:()=>config.font_size||defaultConfig.font_size,
+        set:(v)=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})}
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['app_description', config.app_description || defaultConfig.app_description]
+    ])
+  });
+}
+
+// ===== INIT =====
+loadState();
+renderCurrencies();
+calculate();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ddb79a3457e1b23',t:'MTc3Mzc0NTAyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
